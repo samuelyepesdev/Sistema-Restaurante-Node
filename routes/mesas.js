@@ -17,10 +17,13 @@ router.get('/', async (req, res) => {
                 WHERE p.mesa_id = m.id AND p.estado NOT IN ('cerrado','cancelado')
             ) AS pedidos_abiertos
             FROM mesas m
-            ORDER BY m.numero
+            ORDER BY CAST(m.numero AS UNSIGNED), m.numero
         `);
 
-        res.render('mesas', { mesas: mesas || [] });
+        res.render('mesas', { 
+            mesas: mesas || [],
+            user: req.user
+        });
     } catch (error) {
         console.error('Error al cargar mesas:', error);
         res.status(500).render('error', { 
@@ -38,7 +41,7 @@ router.get('/listar', async (req, res) => {
                 WHERE p.mesa_id = m.id AND p.estado NOT IN ('cerrado','cancelado')
             ) AS pedidos_abiertos
             FROM mesas m
-            ORDER BY m.numero
+            ORDER BY CAST(m.numero AS UNSIGNED), m.numero
         `);
         res.json(mesas);
     } catch (error) {
@@ -47,7 +50,7 @@ router.get('/listar', async (req, res) => {
     }
 });
 
-// POST /mesas/crear - API: crear mesa (opcional, para administración rápida)
+// POST /mesas/crear - API: crear mesa individual
 router.post('/crear', async (req, res) => {
     try {
         const { numero, descripcion } = req.body || {};
@@ -59,7 +62,107 @@ router.post('/crear', async (req, res) => {
         res.status(201).json({ id: result.insertId });
     } catch (error) {
         console.error('Error al crear mesa:', error);
+        if (error.code === 'ER_DUP_ENTRY') {
+            return res.status(400).json({ error: 'Ya existe una mesa con ese número' });
+        }
         res.status(500).json({ error: 'Error al crear mesa' });
+    }
+});
+
+// POST /mesas/crear-masivas - API: crear múltiples mesas de una vez
+router.post('/crear-masivas', async (req, res) => {
+    try {
+        const { cantidad, prefijo } = req.body || {};
+        
+        if (!cantidad || cantidad < 1 || cantidad > 100) {
+            return res.status(400).json({ error: 'La cantidad debe estar entre 1 y 100' });
+        }
+
+        const connection = await db.getConnection();
+        try {
+            await connection.beginTransaction();
+
+            // Get existing mesa numbers to avoid duplicates
+            const [existing] = await connection.query('SELECT numero FROM mesas');
+            const existingNumbers = new Set(existing.map(m => m.numero));
+
+            const created = [];
+            const errors = [];
+            
+            // Find starting number if no prefix
+            let startNumber = 1;
+            if (!prefijo) {
+                // Find the highest numeric mesa number
+                const numericMesas = existing
+                    .map(m => {
+                        const num = parseInt(m.numero);
+                        return isNaN(num) ? 0 : num;
+                    })
+                    .filter(n => n > 0);
+                
+                if (numericMesas.length > 0) {
+                    startNumber = Math.max(...numericMesas) + 1;
+                }
+            } else {
+                // With prefix, find highest number with this prefix
+                const prefixPattern = new RegExp(`^${prefijo}(\\d+)$`);
+                const prefixedMesas = existing
+                    .map(m => {
+                        const match = m.numero.match(prefixPattern);
+                        return match ? parseInt(match[1]) : 0;
+                    })
+                    .filter(n => n > 0);
+                
+                if (prefixedMesas.length > 0) {
+                    startNumber = Math.max(...prefixedMesas) + 1;
+                }
+            }
+
+            // Create mesas starting from startNumber
+            for (let i = 0; i < cantidad; i++) {
+                const numeroMesa = prefijo ? `${prefijo}${startNumber + i}` : String(startNumber + i);
+                
+                // Double check if already exists (shouldn't happen, but safety check)
+                if (existingNumbers.has(numeroMesa)) {
+                    errors.push(`Mesa ${numeroMesa} ya existe`);
+                    continue;
+                }
+
+                try {
+                    const [result] = await connection.query(
+                        'INSERT INTO mesas (numero, descripcion, estado) VALUES (?, ?, ?)',
+                        [numeroMesa, null, 'libre']
+                    );
+                    created.push({ id: result.insertId, numero: numeroMesa });
+                    existingNumbers.add(numeroMesa); // Add to set to avoid duplicates in same batch
+                } catch (error) {
+                    if (error.code === 'ER_DUP_ENTRY') {
+                        errors.push(`Mesa ${numeroMesa} ya existe`);
+                    } else {
+                        throw error;
+                    }
+                }
+            }
+
+            await connection.commit();
+            connection.release();
+
+            res.status(201).json({
+                success: true,
+                creadas: created.length,
+                errores: errors.length,
+                mesas: created,
+                mensajes: errors,
+                desde: prefijo ? `${prefijo}${startNumber}` : startNumber
+            });
+        } catch (error) {
+            await connection.rollback();
+            connection.release();
+            throw error;
+        }
+    } catch (error) {
+        console.error('Error al crear mesas masivas:', error);
+        res.status(500).json({ error: 'Error al crear mesas' });
     }
 });
 

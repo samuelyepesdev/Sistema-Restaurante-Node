@@ -53,7 +53,8 @@ router.get('/', async (req, res) => {
                     pie_pagina: '',
                     ancho_papel: 80,
                     font_size: 1
-                }
+                },
+                user: req.user
             });
         }
 
@@ -62,7 +63,10 @@ router.get('/', async (req, res) => {
         delete configSinImagenes.logo_data;
         delete configSinImagenes.qr_data;
 
-        res.render('configuracion', { config: configSinImagenes });
+        res.render('configuracion', { 
+            config: configSinImagenes,
+            user: req.user 
+        });
     } catch (error) {
         console.error('Error al obtener configuración:', error);
         res.status(500).json({ error: 'Error al obtener configuración' });

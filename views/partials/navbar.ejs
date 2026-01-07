@@ -1,7 +1,7 @@
 <% 
 // Navbar partial with user info and logout
-// Receives: user (from req.user)
-const user = typeof user !== 'undefined' ? user : null;
+// Receives: user (from req.user) - passed as parameter in include()
+// User variable is available directly from the include context, no need to redeclare
 %>
 <nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4">
     <div class="container-fluid">

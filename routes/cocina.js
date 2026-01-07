@@ -19,7 +19,10 @@ router.get('/', async (req, res) => {
             ORDER BY COALESCE(i.enviado_at, i.created_at) ASC, i.id ASC
         `);
 
-        res.render('cocina', { items: items || [] });
+        res.render('cocina', { 
+            items: items || [],
+            user: req.user
+        });
     } catch (error) {
         console.error('Error al cargar cocina:', error);
         res.status(500).render('error', { error: { message: 'Error al cargar cocina', stack: error.stack } });

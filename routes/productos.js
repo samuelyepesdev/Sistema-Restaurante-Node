@@ -7,7 +7,10 @@ let ExcelJS; // import perezoso para template/import
 router.get('/', async (req, res) => {
     try {
         const [productos] = await db.query('SELECT * FROM productos ORDER BY nombre');
-        res.render('productos', { productos: productos || [] });
+        res.render('productos', { 
+            productos: productos || [],
+            user: req.user
+        });
     } catch (error) {
         console.error('Error al obtener productos:', error);
         res.status(500).render('error', { 

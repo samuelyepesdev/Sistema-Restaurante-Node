@@ -6,7 +6,10 @@ const db = require('../config/database');
 router.get('/', async (req, res) => {
     try {
         const [clientes] = await db.query('SELECT * FROM clientes ORDER BY nombre');
-        res.render('clientes', { clientes: clientes || [] });
+        res.render('clientes', { 
+            clientes: clientes || [],
+            user: req.user
+        });
     } catch (error) {
         console.error('Error al obtener clientes:', error);
         res.status(500).render('error', { 

@@ -29,7 +29,10 @@ router.get('/', async (req, res) => {
         query += ` ORDER BY f.fecha DESC`;
 
         const [ventas] = await db.query(query, params);
-        res.render('ventas', { ventas });
+        res.render('ventas', { 
+            ventas,
+            user: req.user
+        });
     } catch (error) {
         console.error('Error al obtener ventas:', error);
         res.status(500).send('Error al cargar el historial de ventas');

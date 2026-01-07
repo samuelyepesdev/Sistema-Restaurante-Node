@@ -144,31 +144,7 @@
     </style>
 </head>
 <body>
-    <nav class="navbar navbar-expand-lg navbar-dark mb-4">
-        <div class="container">
-            <a class="navbar-brand" href="/">Sistema de Facturación</a>
-            <div class="d-flex">
-                <a href="/mesas" class="btn btn-outline-light me-2" data-bs-toggle="tooltip" title="Mesas">
-                    <i class="bi bi-grid"></i>
-                </a>
-                <a href="/cocina" class="btn btn-outline-light me-2" data-bs-toggle="tooltip" title="Cocina">
-                    <i class="bi bi-egg-fried"></i>
-                </a>
-                <a href="/ventas" class="btn btn-outline-light me-2" data-bs-toggle="tooltip" title="Historial de Ventas">
-                    <i class="bi bi-receipt"></i>
-                </a>
-                <a href="/productos" class="btn btn-outline-light me-2" data-bs-toggle="tooltip" title="Gestionar Productos">
-                    <i class="bi bi-box"></i>
-                </a>
-                <a href="/clientes" class="btn btn-outline-light me-2" data-bs-toggle="tooltip" title="Gestionar Clientes">
-                    <i class="bi bi-people"></i>
-                </a>
-                <a href="/configuracion" class="btn btn-outline-light" data-bs-toggle="tooltip" title="Configuración">
-                    <i class="bi bi-gear"></i>
-                </a>
-            </div>
-        </div>
-    </nav>
+    <%- include('partials/navbar', { user: typeof user !== 'undefined' ? user : null }) %>
 
     <div class="container">
         <!-- Información del Cliente -->

@@ -18,15 +18,7 @@
     </style>
 </head>
 <body>
-    <nav class="navbar navbar-expand-lg navbar-dark mb-4">
-        <div class="container">
-            <a class="navbar-brand" href="/">Sistema de Facturación</a>
-            <div class="d-flex">
-                <a href="/mesas" class="btn btn-outline-light me-2"><i class="bi bi-grid"></i></a>
-                <a href="/" class="btn btn-outline-light"><i class="bi bi-receipt"></i></a>
-            </div>
-        </div>
-    </nav>
+    <%- include('partials/navbar', { user: typeof user !== 'undefined' ? user : null }) %>
 
     <div class="container">
         <h4 class="mb-3"><i class="bi bi-egg-fried me-2"></i>Cola de Cocina</h4>
