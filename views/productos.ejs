@@ -65,12 +65,25 @@
             </div>
             <div class="card-body">
                 <div class="row mb-4">
-                    <div class="col">
+                    <div class="col-md-4">
+                        <div class="input-group">
+                            <span class="input-group-text">
+                                <i class="bi bi-tag"></i>
+                            </span>
+                            <select class="form-control" id="filtroCategoria">
+                                <option value="">Todas las categorías</option>
+                                <% categorias.forEach(function(categoria) { %>
+                                    <option value="<%= categoria.id %>"><%= categoria.nombre %></option>
+                                <% }); %>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-8">
                         <div class="input-group search-box ms-auto">
                             <span class="input-group-text">
                                 <i class="bi bi-search"></i>
                             </span>
-                            <input type="text" class="form-control" id="buscarProducto" placeholder="Buscar producto...">
+                            <input type="text" class="form-control" id="buscarProducto" placeholder="Buscar producto por nombre o código...">
                         </div>
                     </div>
                 </div>
@@ -88,7 +101,7 @@
                         </thead>
                         <tbody id="productosTabla">
                             <% productos.forEach(function(producto) { %>
-                                <tr>
+                                <tr data-categoria-id="<%= producto.categoria_id || '' %>">
                                     <td><%= producto.codigo %></td>
                                     <td><%= producto.nombre %></td>
                                     <td><span class="badge bg-secondary"><%= producto.categoria_nombre || 'Sin categoría' %></span></td>
@@ -174,6 +187,6 @@
     <script src="/js/modules/FormManager.js"></script>
     <script src="/js/modules/TableManager.js"></script>
     <!-- Load main script -->
-    <script src="/js/productos-refactored.js"></script>
+    <script src="/js/productos.js"></script>
 </body>
 </html> 

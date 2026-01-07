@@ -43,13 +43,19 @@ class ProductManager {
         if (searchInput) {
             this.searchManager = new SearchManager(
                 searchInput,
-                (searchTerm) => this.handleSearch(searchTerm),
+                (searchTerm) => this.applyFilters(),
                 {
                     debounceMs: 300,
                     minLength: 0,
-                    onClear: () => this.clearSearch()
+                    onClear: () => this.applyFilters()
                 }
             );
+        }
+
+        // Setup category filter
+        const categoriaFilter = document.getElementById('filtroCategoria');
+        if (categoriaFilter) {
+            categoriaFilter.addEventListener('change', () => this.applyFilters());
         }
 
         // Setup keyboard shortcuts
@@ -135,16 +141,41 @@ class ProductManager {
     }
 
     /**
-     * Handle search
+     * Handle search - now combined with category filter
      */
     handleSearch(searchTerm) {
+        this.applyFilters();
+    }
+
+    /**
+     * Apply filters (search text + category)
+     */
+    applyFilters() {
         if (!this.tableManager) return;
 
+        const searchTerm = (document.getElementById('buscarProducto')?.value || '').toLowerCase();
+        const categoriaId = document.getElementById('filtroCategoria')?.value || '';
+
         this.tableManager.filterRows((row) => {
-            const codigo = row.cells[0]?.textContent.toLowerCase() || '';
-            const nombre = row.cells[1]?.textContent.toLowerCase() || '';
-            const categoria = row.cells[2]?.textContent.toLowerCase() || '';
-            return codigo.includes(searchTerm) || nombre.includes(searchTerm) || categoria.includes(searchTerm);
+            // Filter by category
+            if (categoriaId) {
+                const rowCategoriaId = row.getAttribute('data-categoria-id') || '';
+                if (rowCategoriaId !== categoriaId) {
+                    return false;
+                }
+            }
+
+            // Filter by search term
+            if (searchTerm) {
+                const codigo = row.cells[0]?.textContent.toLowerCase() || '';
+                const nombre = row.cells[1]?.textContent.toLowerCase() || '';
+                const categoria = row.cells[2]?.textContent.toLowerCase() || '';
+                if (!codigo.includes(searchTerm) && !nombre.includes(searchTerm) && !categoria.includes(searchTerm)) {
+                    return false;
+                }
+            }
+
+            return true;
         });
     }
 
@@ -154,6 +185,9 @@ class ProductManager {
     clearSearch() {
         if (this.tableManager) {
             this.tableManager.clearFilters();
+        }
+        if (document.getElementById('filtroCategoria')) {
+            document.getElementById('filtroCategoria').value = '';
         }
     }
 
