@@ -1,0 +1,125 @@
+/**
+ * ConfiguracionService - Business logic layer for configuration
+ * Handles print configuration business logic
+ * Related to: routes/configuracion.js, repositories/ConfiguracionRepository.js
+ */
+
+const ConfiguracionRepository = require('../repositories/ConfiguracionRepository');
+
+class ConfiguracionService {
+    /**
+     * Get configuration for view (with image URLs)
+     * @returns {Promise<Object>} Configuration object
+     */
+    static async getForView() {
+        let config = await ConfiguracionRepository.findOne();
+
+        if (!config) {
+            // Return default values
+            return {
+                nombre_negocio: '',
+                direccion: '',
+                telefono: '',
+                nit: '',
+                pie_pagina: '',
+                ancho_papel: 80,
+                font_size: 1
+            };
+        }
+
+        // Convert images to data URLs if they exist
+        const configSinImagenes = { ...config };
+        if (configSinImagenes.logo_data) {
+            const logoBuffer = Buffer.from(configSinImagenes.logo_data);
+            configSinImagenes.logo_src = `data:image/${configSinImagenes.logo_tipo};base64,${logoBuffer.toString('base64')}`;
+        }
+        if (configSinImagenes.qr_data) {
+            const qrBuffer = Buffer.from(configSinImagenes.qr_data);
+            configSinImagenes.qr_src = `data:image/${configSinImagenes.qr_tipo};base64,${qrBuffer.toString('base64')}`;
+        }
+
+        delete configSinImagenes.logo_data;
+        delete configSinImagenes.qr_data;
+
+        return configSinImagenes;
+    }
+
+    /**
+     * Get configuration for preview
+     * @returns {Promise<Object>} Configuration object with image URLs
+     * @throws {Error} If configuration not found
+     */
+    static async getForPreview() {
+        const config = await ConfiguracionRepository.findOne();
+        if (!config) {
+            throw new Error('No se ha configurado la información de impresión');
+        }
+
+        // Convert images to data URLs
+        if (config.logo_data) {
+            const logoBuffer = Buffer.from(config.logo_data);
+            config.logo_src = `data:image/${config.logo_tipo};base64,${logoBuffer.toString('base64')}`;
+        }
+        if (config.qr_data) {
+            const qrBuffer = Buffer.from(config.qr_data);
+            config.qr_src = `data:image/${config.qr_tipo};base64,${qrBuffer.toString('base64')}`;
+        }
+
+        return config;
+    }
+
+    /**
+     * Save configuration
+     * @param {Object} configData - Configuration data
+     * @param {Object} files - Uploaded files (logo, qr)
+     * @returns {Promise<void>}
+     */
+    static async save(configData, files) {
+        const {
+            nombre_negocio, direccion, telefono, nit, pie_pagina,
+            ancho_papel, font_size
+        } = configData;
+
+        const existingConfig = await ConfiguracionRepository.findOne();
+
+        const configToSave = {
+            nombre_negocio,
+            direccion: direccion || null,
+            telefono: telefono || null,
+            nit: nit || null,
+            pie_pagina: pie_pagina || null,
+            ancho_papel: ancho_papel || 80,
+            font_size: font_size || 1
+        };
+
+        if (files?.logo) {
+            configToSave.logo_data = files.logo[0].buffer;
+            configToSave.logo_tipo = files.logo[0].mimetype.split('/')[1];
+        }
+        if (files?.qr) {
+            configToSave.qr_data = files.qr[0].buffer;
+            configToSave.qr_tipo = files.qr[0].mimetype.split('/')[1];
+        }
+
+        if (!existingConfig) {
+            await ConfiguracionRepository.create(configToSave);
+        } else {
+            configToSave.id = existingConfig.id;
+            await ConfiguracionRepository.update(existingConfig.id, configToSave);
+        }
+    }
+
+    /**
+     * Initialize configuration if it doesn't exist
+     * @returns {Promise<void>}
+     */
+    static async initializeIfNeeded() {
+        const config = await ConfiguracionRepository.findOne();
+        if (!config) {
+            await ConfiguracionRepository.createInitial();
+        }
+    }
+}
+
+module.exports = ConfiguracionService;
+
