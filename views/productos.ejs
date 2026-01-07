@@ -81,9 +81,8 @@
                             <tr>
                                 <th>Código</th>
                                 <th>Nombre</th>
-                                <th class="text-end">Precio KG</th>
-                                <th class="text-end">Precio UND</th>
-                                <th class="text-end">Precio LB</th>
+                                <th>Categoría</th>
+                                <th class="text-end">Precio Unitario</th>
                                 <th class="text-center">Acciones</th>
                             </tr>
                         </thead>
@@ -92,9 +91,8 @@
                                 <tr>
                                     <td><%= producto.codigo %></td>
                                     <td><%= producto.nombre %></td>
-                                    <td class="text-end">$<%= (Number(producto.precio_kg) || 0).toFixed(2) %></td>
+                                    <td><span class="badge bg-secondary"><%= producto.categoria_nombre || 'Sin categoría' %></span></td>
                                     <td class="text-end">$<%= (Number(producto.precio_unidad) || 0).toFixed(2) %></td>
-                                    <td class="text-end">$<%= (Number(producto.precio_libra) || 0).toFixed(2) %></td>
                                     <td class="text-center">
                                         <div class="action-buttons">
                                             <button class="btn btn-sm btn-outline-primary me-1" 
@@ -140,25 +138,18 @@
                             <label class="form-label">Nombre</label>
                             <input type="text" class="form-control" id="nombre" required>
                         </div>
-                        <div class="row">
-                            <div class="col-md-4">
-                                <div class="mb-3">
-                                    <label class="form-label">Precio KG</label>
-                                    <input type="number" class="form-control" id="precioKg" step="0.01" min="0" required>
-                                </div>
-                            </div>
-                            <div class="col-md-4">
-                                <div class="mb-3">
-                                    <label class="form-label">Precio UND</label>
-                                    <input type="number" class="form-control" id="precioUnidad" step="0.01" min="0" required>
-                                </div>
-                            </div>
-                            <div class="col-md-4">
-                                <div class="mb-3">
-                                    <label class="form-label">Precio LB</label>
-                                    <input type="number" class="form-control" id="precioLibra" step="0.01" min="0" required>
-                                </div>
-                            </div>
+                        <div class="mb-3">
+                            <label class="form-label">Categoría</label>
+                            <select class="form-control" id="categoriaId" required>
+                                <option value="">Seleccione una categoría</option>
+                                <% categorias.forEach(function(categoria) { %>
+                                    <option value="<%= categoria.id %>"><%= categoria.nombre %></option>
+                                <% }); %>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Precio Unitario</label>
+                            <input type="number" class="form-control" id="precioUnidad" step="0.01" min="0" required>
                         </div>
                     </form>
                 </div>

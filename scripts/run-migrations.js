@@ -81,10 +81,11 @@ async function runMigrations() {
         console.log('✓ Conexión a base de datos exitosa\n');
         
         // Migration files in order
-        const migrations = [
-            path.join(__dirname, '..', 'database.sql'),
-            path.join(__dirname, '..', 'database', 'migrations', '001_create_users_and_roles.sql')
-        ];
+               const migrations = [
+                   path.join(__dirname, '..', 'database.sql'),
+                   path.join(__dirname, '..', 'database', 'migrations', '001_create_users_and_roles.sql'),
+                   path.join(__dirname, '..', 'database', 'migrations', '002_add_categorias_to_productos.sql')
+               ];
         
         // Check if files exist
         for (const migration of migrations) {

@@ -25,7 +25,7 @@ class ProductManager {
             titleElementId: 'modalTitle',
             createTitle: 'Nuevo Producto',
             editTitle: 'Editar Producto',
-            resetFields: ['productoId'],
+            resetFields: ['productoId', 'categoriaId'],
             onSubmit: (data, isEdit, id) => this.handleSubmit(data, isEdit, id),
             onEdit: (id) => this.handleEdit(id)
         });
@@ -79,9 +79,8 @@ class ProductManager {
         const productData = {
             codigo: data.codigo || document.getElementById('codigo').value,
             nombre: data.nombre || document.getElementById('nombre').value,
-            precio_kg: parseFloat(data.precioKg || document.getElementById('precioKg').value) || 0,
-            precio_unidad: parseFloat(data.precioUnidad || document.getElementById('precioUnidad').value) || 0,
-            precio_libra: parseFloat(data.precioLibra || document.getElementById('precioLibra').value) || 0
+            categoria_id: data.categoriaId || document.getElementById('categoriaId').value,
+            precio_unidad: parseFloat(data.precioUnidad || document.getElementById('precioUnidad').value) || 0
         };
 
         try {
@@ -106,9 +105,8 @@ class ProductManager {
             document.getElementById('productoId').value = producto.id;
             document.getElementById('codigo').value = producto.codigo;
             document.getElementById('nombre').value = producto.nombre;
-            document.getElementById('precioKg').value = producto.precio_kg;
+            document.getElementById('categoriaId').value = producto.categoria_id || '';
             document.getElementById('precioUnidad').value = producto.precio_unidad;
-            document.getElementById('precioLibra').value = producto.precio_libra;
         } catch (error) {
             AlertManager.alert('Error al cargar el producto', 'error');
         }
@@ -145,7 +143,8 @@ class ProductManager {
         this.tableManager.filterRows((row) => {
             const codigo = row.cells[0]?.textContent.toLowerCase() || '';
             const nombre = row.cells[1]?.textContent.toLowerCase() || '';
-            return codigo.includes(searchTerm) || nombre.includes(searchTerm);
+            const categoria = row.cells[2]?.textContent.toLowerCase() || '';
+            return codigo.includes(searchTerm) || nombre.includes(searchTerm) || categoria.includes(searchTerm);
         });
     }
 
