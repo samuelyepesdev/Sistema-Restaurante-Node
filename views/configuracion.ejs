@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Configuración de Impresión</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container mt-4">
+        <h2 class="mb-4">Configuración de Factura</h2>
+        
+        <form action="/configuracion" method="POST" enctype="multipart/form-data">
+            <div class="card mb-4">
+                <div class="card-header">
+                    Datos del Negocio
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Nombre del Negocio</label>
+                            <input type="text" class="form-control" name="nombre_negocio" value="<%= config.nombre_negocio || '' %>" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">NIT/RUT</label>
+                            <input type="text" class="form-control" name="nit" value="<%= config.nit || '' %>">
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Dirección</label>
+                            <input type="text" class="form-control" name="direccion" value="<%= config.direccion || '' %>">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Teléfono</label>
+                            <input type="text" class="form-control" name="telefono" value="<%= config.telefono || '' %>">
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Logo del Negocio</label>
+                            <input type="file" class="form-control" name="logo" accept="image/*">
+                            <% if (config.logo_src) { %>
+                                <img src="<%= config.logo_src %>" alt="Logo actual" class="mt-2" style="max-width: 200px;">
+                            <% } %>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">QR para Transferencias</label>
+                            <input type="file" class="form-control" name="qr" accept="image/*">
+                            <% if (config.qr_src) { %>
+                                <img src="<%= config.qr_src %>" alt="QR actual" class="mt-2" style="max-width: 150px;">
+                            <% } %>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Pie de Página</label>
+                            <textarea class="form-control" name="pie_pagina" rows="3"><%= config.pie_pagina || '' %></textarea>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mb-4">
+                <div class="card-header">
+                    Formato de Impresión
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <label class="form-label">Ancho del Papel (mm)</label>
+                            <input type="number" class="form-control" name="ancho_papel" value="<%= config.ancho_papel || 80 %>" min="58" max="80">
+                            <small class="text-muted">Recomendado: 80mm para facturas estándar</small>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Tamaño de Fuente</label>
+                            <select class="form-control" name="font_size">
+                                <option value="1" <%= (config.font_size || 1) == 1 ? 'selected' : '' %>>Normal</option>
+                                <option value="2" <%= (config.font_size || 1) == 2 ? 'selected' : '' %>>Grande</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-primary">Guardar Configuración</button>
+                <a href="/" class="btn btn-secondary">Volver</a>
+            </div>
+        </form>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html> 

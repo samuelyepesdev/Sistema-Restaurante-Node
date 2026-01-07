@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Historial de Ventas</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+        .navbar {
+            background-color: #2c3e50;
+            box-shadow: 0 2px 4px rgba(0,0,0,.1);
+        }
+        .navbar-brand {
+            color: white !important;
+            font-weight: bold;
+        }
+        .card {
+            border: none;
+            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.05);
+            margin-bottom: 1.5rem;
+        }
+        .card-header {
+            background-color: #fff;
+            border-bottom: 2px solid #f8f9fa;
+            font-weight: 600;
+        }
+        .search-box {
+            max-width: 300px;
+        }
+        .table th {
+            border-top: none;
+        }
+        .action-buttons .btn {
+            padding: 0.25rem 0.5rem;
+        }
+        .date-filter {
+            max-width: 200px;
+        }
+        .table-container {
+            max-height: calc(100vh - 300px);
+            overflow-y: auto;
+        }
+        /* Estilo para las alertas personalizadas */
+        .custom-alert {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+            min-width: 300px;
+            padding: 15px 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            animation: slideIn 0.3s ease-out;
+        }
+        .custom-alert.success {
+            background-color: #d4edda;
+            border-left: 4px solid #28a745;
+            color: #155724;
+        }
+        .custom-alert.error {
+            background-color: #f8d7da;
+            border-left: 4px solid #dc3545;
+            color: #721c24;
+        }
+        .custom-alert.warning {
+            background-color: #fff3cd;
+            border-left: 4px solid #ffc107;
+            color: #856404;
+        }
+        @keyframes slideIn {
+            from { transform: translateX(100%); }
+            to { transform: translateX(0); }
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark mb-4">
+        <div class="container">
+            <a class="navbar-brand" href="/">Sistema de Facturación</a>
+            <div class="d-flex">
+                <a href="/" class="btn btn-outline-light me-2">
+                    <i class="bi bi-house-fill"></i>
+                </a>
+                <a href="/productos" class="btn btn-outline-light me-2">
+                    <i class="bi bi-box"></i>
+                </a>
+                <a href="/configuracion" class="btn btn-outline-light">
+                    <i class="bi bi-gear"></i>
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="card">
+            <div class="card-header">
+                <div class="row g-2 align-items-center">
+                    <div class="col-md-3">
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-calendar3"></i></span>
+                            <input type="date" id="fechaDesde" class="form-control" placeholder="Desde">
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-calendar3"></i></span>
+                            <input type="date" id="fechaHasta" class="form-control" placeholder="Hasta">
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-search"></i></span>
+                            <input type="text" id="buscarVentas" class="form-control" placeholder="Buscar por cliente o # factura">
+                        </div>
+                    </div>
+                    <div class="col-md-3 d-flex justify-content-end gap-2">
+                        <button class="btn btn-primary" id="filtrarVentas"><i class="bi bi-funnel"></i> Filtrar</button>
+                        <button class="btn btn-success" id="exportarVentas"><i class="bi bi-file-earmark-excel"></i> Exportar</button>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="table-container">
+                    <table class="table table-hover">
+                        <thead class="table-light sticky-top">
+                            <tr>
+                                <th>Factura #</th>
+                                <th>Fecha</th>
+                                <th>Cliente</th>
+                                <th>Forma de Pago</th>
+                                <th class="text-end">Total</th>
+                                <th class="text-center">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="ventasTabla">
+                            <% ventas.forEach(function(venta) { %>
+                                <tr>
+                                    <td><%= venta.id %></td>
+                                    <td><%= new Date(venta.fecha).toLocaleString() %></td>
+                                    <td><%= venta.cliente_nombre %></td>
+                                    <td><%= venta.forma_pago.charAt(0).toUpperCase() + venta.forma_pago.slice(1) %></td>
+                                    <td class="text-end" data-total="<%= venta.total %>">$<%= Number(venta.total).toFixed(2) %></td>
+                                    <td class="text-center">
+                                        <button class="btn btn-sm btn-outline-info me-1 btn-detalles" 
+                                                data-factura-id="<%= venta.id %>"
+                                                data-bs-toggle="tooltip" 
+                                                data-bs-title="Ver detalles">
+                                            <i class="bi bi-eye"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-primary btn-reimprimir" 
+                                                data-factura-id="<%= venta.id %>"
+                                                data-bs-toggle="tooltip" 
+                                                data-bs-title="Reimprimir factura">
+                                            <i class="bi bi-printer"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                            <% }); %>
+                        </tbody>
+                        <tfoot class="table-light fw-bold">
+                            <tr>
+                                <td colspan="3" class="text-end">Total Efectivo:</td>
+                                <td colspan="2" class="text-end" id="totalEfectivo">$0.00</td>
+                                <td></td>
+                            </tr>
+                            <tr>
+                                <td colspan="3" class="text-end">Total Transferencia:</td>
+                                <td colspan="2" class="text-end" id="totalTransferencia">$0.00</td>
+                                <td></td>
+                            </tr>
+                            <tr>
+                                <td colspan="3" class="text-end">Total General:</td>
+                                <td colspan="2" class="text-end" id="totalGeneral">$0.00</td>
+                                <td></td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para mostrar facturas -->
+    <div class="modal fade" id="facturaModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Factura</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <iframe id="facturaFrame" style="width: 100%; height: 600px; border: none;"></iframe>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                    <button type="button" class="btn btn-primary" onclick="imprimirFactura()">
+                        <i class="bi bi-printer"></i> Imprimir
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para detalles de factura -->
+    <div class="modal fade" id="detallesModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Detalles de Factura</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <h6>Información del Cliente</h6>
+                            <div id="detallesCliente"></div>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>Información de la Factura</h6>
+                            <div id="detallesFactura"></div>
+                        </div>
+                    </div>
+                    <h6>Productos</h6>
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Producto</th>
+                                    <th class="text-end">Cantidad</th>
+                                    <th>Unidad</th>
+                                    <th class="text-end">Precio Unit.</th>
+                                    <th class="text-end">Subtotal</th>
+                                </tr>
+                            </thead>
+                            <tbody id="detallesProductos"></tbody>
+                            <tfoot class="table-light fw-bold">
+                                <tr>
+                                    <td colspan="4" class="text-end">Total:</td>
+                                    <td class="text-end" id="detallesTotal"></td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        const facturaModal = new bootstrap.Modal(document.getElementById('facturaModal'));
+        const detallesModal = new bootstrap.Modal(document.getElementById('detallesModal'));
+        
+        // Función para mostrar alertas personalizadas
+        function mostrarAlerta(mensaje, tipo = 'success') {
+            const alertaDiv = document.createElement('div');
+            alertaDiv.className = `custom-alert ${tipo}`;
+            alertaDiv.innerHTML = `
+                <div class="alert-content">
+                    <i class="bi ${tipo === 'success' ? 'bi-check-circle' : 
+                                  tipo === 'error' ? 'bi-x-circle' : 
+                                  'bi-exclamation-triangle'} me-2"></i>
+                    ${mensaje}
+                </div>
+                <button type="button" class="btn-close btn-close-white ms-3" onclick="this.parentElement.remove()"></button>
+            `;
+            document.body.appendChild(alertaDiv);
+            setTimeout(() => alertaDiv.remove(), 5000);
+        }
+
+        function mostrarFactura(id) {
+            document.getElementById('facturaFrame').src = `/api/facturas/${id}/imprimir`;
+            document.querySelector('#facturaModal .modal-title').textContent = `Factura #${id}`;
+            facturaModal.show();
+        }
+
+        function mostrarDetalles(id) {
+            $.ajax({
+                url: `/api/facturas/${id}/detalles`,
+                success: function(data) {
+                    // Información del cliente
+                    $('#detallesCliente').html(`
+                        <p><strong>Nombre:</strong> ${data.cliente.nombre}</p>
+                        <p><strong>Dirección:</strong> ${data.cliente.direccion || 'No especificada'}</p>
+                        <p><strong>Teléfono:</strong> ${data.cliente.telefono || 'No especificado'}</p>
+                    `);
+
+                    // Información de la factura
+                    $('#detallesFactura').html(`
+                        <p><strong>Factura #:</strong> ${data.factura.id}</p>
+                        <p><strong>Fecha:</strong> ${new Date(data.factura.fecha).toLocaleString()}</p>
+                        <p><strong>Forma de Pago:</strong> ${data.factura.forma_pago.charAt(0).toUpperCase() + data.factura.forma_pago.slice(1)}</p>
+                    `);
+
+                    // Productos
+                    const tbody = $('#detallesProductos');
+                    tbody.empty();
+                    let totalGeneral = 0;
+                    
+                    data.productos.forEach(producto => {
+                        const cantidad = producto.cantidad || 0;
+                        const precio = producto.precio || 0;
+                        const subtotal = producto.subtotal || 0;
+                        totalGeneral += subtotal;
+                        
+                        tbody.append(`
+                            <tr>
+                                <td>${producto.nombre}</td>
+                                <td class="text-end">${cantidad.toFixed(2)}</td>
+                                <td>${producto.unidad || 'N/A'}</td>
+                                <td class="text-end">$${precio.toFixed(2)}</td>
+                                <td class="text-end">$${subtotal.toFixed(2)}</td>
+                            </tr>
+                        `);
+                    });
+
+                    $('#detallesTotal').text(`$${totalGeneral.toFixed(2)}`);
+                    detallesModal.show();
+                },
+                error: function() {
+                    mostrarAlerta('Error al cargar los detalles de la factura', 'error');
+                }
+            });
+        }
+
+        function imprimirFactura() {
+            const frame = document.getElementById('facturaFrame');
+            frame.contentWindow.print();
+        }
+
+        document.getElementById('filtrarVentas').addEventListener('click', function() {
+            const desde = document.getElementById('fechaDesde').value;
+            const hasta = document.getElementById('fechaHasta').value;
+            const q = document.getElementById('buscarVentas').value || '';
+            if (!desde || !hasta) {
+                mostrarAlerta('Por favor seleccione ambas fechas', 'warning');
+                return;
+            }
+            const params = new URLSearchParams({ desde, hasta, q });
+            window.location.href = `/ventas?${params.toString()}`;
+        });
+
+        document.getElementById('exportarVentas').addEventListener('click', function(){
+            const desde = document.getElementById('fechaDesde').value;
+            const hasta = document.getElementById('fechaHasta').value;
+            const q = document.getElementById('buscarVentas').value || '';
+            const params = new URLSearchParams();
+            if (desde && hasta) { params.set('desde', desde); params.set('hasta', hasta); }
+            if (q) params.set('q', q);
+            window.open(`/ventas/export?${params.toString()}`, '_blank');
+        });
+
+        // Establecer valores iniciales desde la URL o defaults
+        (function initFiltrosDesdeURL(){
+            const p = new URLSearchParams(window.location.search);
+            const desde = p.get('desde');
+            const hasta = p.get('hasta');
+            const q = p.get('q') || '';
+            if (desde) document.getElementById('fechaDesde').value = desde;
+            if (hasta) document.getElementById('fechaHasta').value = hasta;
+            if (q) document.getElementById('buscarVentas').value = q;
+            if (!desde || !hasta) {
+                const hoy = new Date();
+                const hace30Dias = new Date();
+                hace30Dias.setDate(hace30Dias.getDate() - 30);
+                document.getElementById('fechaDesde').value = document.getElementById('fechaDesde').value || hace30Dias.toISOString().split('T')[0];
+                document.getElementById('fechaHasta').value = document.getElementById('fechaHasta').value || hoy.toISOString().split('T')[0];
+            }
+        })();
+
+        // Inicializar tooltips
+        const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
+        const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl));
+
+        // Función para calcular el total general
+        function calcularTotales() {
+            const totales = document.querySelectorAll('tbody#ventasTabla td[data-total]');
+            let total = 0, tef = 0, ttr = 0;
+            document.querySelectorAll('#ventasTabla tr').forEach(tr => {
+                const totalEl = tr.querySelector('[data-total]');
+                const forma = tr.children[3]?.innerText?.trim().toLowerCase();
+                const val = Number(totalEl?.dataset.total||0);
+                total += val;
+                if (forma === 'efectivo') tef += val; else if (forma === 'transferencia') ttr += val;
+            });
+            document.getElementById('totalGeneral').textContent = `$${total.toFixed(2)}`;
+            document.getElementById('totalEfectivo').textContent = `$${tef.toFixed(2)}`;
+            document.getElementById('totalTransferencia').textContent = `$${ttr.toFixed(2)}`;
+        }
+
+        // Calcular total al cargar la página
+        calcularTotales();
+
+        // Manejador para reimprimir facturas y ver detalles
+        document.querySelectorAll('.btn-reimprimir').forEach(button => {
+            button.addEventListener('click', function() {
+                const facturaId = this.getAttribute('data-factura-id');
+                mostrarFactura(facturaId);
+            });
+        });
+
+        document.querySelectorAll('.btn-detalles').forEach(button => {
+            button.addEventListener('click', function() {
+                const facturaId = this.getAttribute('data-factura-id');
+                mostrarDetalles(facturaId);
+            });
+        });
+    </script>
+</body>
+</html> 

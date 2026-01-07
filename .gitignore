@@ -1,0 +1,20 @@
+# Dependencias y artefactos
+node_modules/
+dist/
+public/uploads/
+
+# Archivos de entorno
+.env
+.env.*
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# SO/Editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+

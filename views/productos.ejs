@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Productos</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+        .navbar {
+            background-color: #2c3e50;
+            box-shadow: 0 2px 4px rgba(0,0,0,.1);
+        }
+        .navbar-brand {
+            color: white !important;
+            font-weight: bold;
+        }
+        .card {
+            border: none;
+            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.05);
+            margin-bottom: 1.5rem;
+        }
+        .card-header {
+            background-color: #fff;
+            border-bottom: 2px solid #f8f9fa;
+            font-weight: 600;
+        }
+        .search-box {
+            max-width: 300px;
+        }
+        .table th {
+            border-top: none;
+        }
+        .action-buttons .btn {
+            padding: 0.25rem 0.5rem;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark mb-4">
+        <div class="container">
+            <a class="navbar-brand" href="/">Sistema de Facturación</a>
+            <div class="d-flex">
+                <a href="/" class="btn btn-outline-light me-2">
+                    <i class="bi bi-house-fill"></i>
+                </a>
+                <a href="/configuracion" class="btn btn-outline-light">
+                    <i class="bi bi-gear"></i>
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <div>
+                    <i class="bi bi-box-fill me-2"></i>
+                    Gestión de Productos
+                </div>
+                <div class="btn-group">
+                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#nuevoProductoModal">
+                        <i class="bi bi-plus-lg me-1"></i>
+                        Nuevo Producto
+                    </button>
+                    <button id="btnDescargarPlantilla" class="btn btn-outline-success">
+                        <i class="bi bi-file-earmark-excel"></i> Plantilla Excel
+                    </button>
+                    <button id="btnImportarProductos" class="btn btn-outline-primary">
+                        <i class="bi bi-upload"></i> Importar Excel
+                    </button>
+                    <input type="file" id="archivoImport" accept=".xlsx" class="d-none">
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="row mb-4">
+                    <div class="col">
+                        <div class="input-group search-box ms-auto">
+                            <span class="input-group-text">
+                                <i class="bi bi-search"></i>
+                            </span>
+                            <input type="text" class="form-control" id="buscarProducto" placeholder="Buscar producto...">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Código</th>
+                                <th>Nombre</th>
+                                <th class="text-end">Precio KG</th>
+                                <th class="text-end">Precio UND</th>
+                                <th class="text-end">Precio LB</th>
+                                <th class="text-center">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="productosTabla">
+                            <% productos.forEach(function(producto) { %>
+                                <tr>
+                                    <td><%= producto.codigo %></td>
+                                    <td><%= producto.nombre %></td>
+                                    <td class="text-end">$<%= (Number(producto.precio_kg) || 0).toFixed(2) %></td>
+                                    <td class="text-end">$<%= (Number(producto.precio_unidad) || 0).toFixed(2) %></td>
+                                    <td class="text-end">$<%= (Number(producto.precio_libra) || 0).toFixed(2) %></td>
+                                    <td class="text-center">
+                                        <div class="action-buttons">
+                                            <button class="btn btn-sm btn-outline-primary me-1" 
+                                                    data-id="<%= producto.id %>" 
+                                                    data-action="editar">
+                                                <i class="bi bi-pencil"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-outline-danger"
+                                                    data-id="<%= producto.id %>"
+                                                    data-action="eliminar">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            <% }); %>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Nuevo/Editar Producto -->
+    <div class="modal fade" id="nuevoProductoModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="bi bi-box-fill me-2"></i>
+                        <span id="modalTitle">Nuevo Producto</span>
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="formProducto">
+                        <input type="hidden" id="productoId">
+                        <div class="mb-3">
+                            <label class="form-label">Código</label>
+                            <input type="text" class="form-control" id="codigo" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Nombre</label>
+                            <input type="text" class="form-control" id="nombre" required>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label class="form-label">Precio KG</label>
+                                    <input type="number" class="form-control" id="precioKg" step="0.01" min="0" required>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label class="form-label">Precio UND</label>
+                                    <input type="number" class="form-control" id="precioUnidad" step="0.01" min="0" required>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label class="form-label">Precio LB</label>
+                                    <input type="number" class="form-control" id="precioLibra" step="0.01" min="0" required>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" id="guardarProducto">
+                        <i class="bi bi-save me-1"></i>
+                        Guardar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/js/productos.js"></script>
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Delegación de eventos para los botones de acción
+        document.querySelector('.table').addEventListener('click', function(e) {
+            const button = e.target.closest('button');
+            if (!button) return;
+
+            const id = button.dataset.id;
+            const action = button.dataset.action;
+
+            if (action === 'editar') {
+                editarProducto(id);
+            } else if (action === 'eliminar') {
+                if (confirm('¿Está seguro de que desea eliminar este producto?')) {
+                    eliminarProducto(id);
+                }
+            }
+        });
+
+        // Descargar plantilla
+        document.getElementById('btnDescargarPlantilla').addEventListener('click', function(){
+            window.open('/api/productos/plantilla','_blank');
+        });
+
+        // Importar productos
+        const input = document.getElementById('archivoImport');
+        document.getElementById('btnImportarProductos').addEventListener('click', ()=> input.click());
+        input.addEventListener('change', async function(){
+            if (!this.files.length) return;
+            const fd = new FormData();
+            fd.append('archivo', this.files[0]);
+            const btn = document.getElementById('btnImportarProductos');
+            btn.disabled = true; btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Importando...';
+            try{
+                const resp = await fetch('/api/productos/importar', { method:'POST', body: fd });
+                const data = await resp.json();
+                if(!resp.ok) throw new Error(data.error||'Error al importar');
+                alert('Importación completa: ' + data.inserted + ' filas.');
+                location.reload();
+            }catch(err){ alert(err.message); }
+            finally{ btn.disabled=false; btn.innerHTML = '<i class="bi bi-upload"></i> Importar Excel'; this.value=''; }
+        });
+    });
+    </script>
+</body>
+</html> 
