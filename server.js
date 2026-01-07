@@ -68,12 +68,13 @@ const mesasRoutes = require('./routes/mesas');
 const cocinaRoutes = require('./routes/cocina');
 const configuracionRoutes = require('./routes/configuracion');
 const ventasRoutes = require('./routes/ventas');
+const dashboardRoutes = require('./routes/dashboard');
 
 // Ruta principal - redirige según autenticación
 app.get('/', optionalAuth, (req, res) => {
     if (req.user) {
         // Usuario autenticado, mostrar dashboard
-        res.render('index', { user: req.user });
+        res.redirect('/dashboard');
     } else {
         // No autenticado, redirigir a login
         res.redirect('/auth/login');
@@ -93,6 +94,8 @@ app.use('/cocina', requireAuth, cocinaRoutes);
 app.use('/api/cocina', requireAuth, cocinaRoutes);
 app.use('/configuracion', requireAuth, configuracionRoutes);
 app.use('/ventas', requireAuth, ventasRoutes);
+app.use('/dashboard', requireAuth, dashboardRoutes);
+app.use('/api/dashboard', requireAuth, dashboardRoutes);
 
 
 // Manejo de errores 404

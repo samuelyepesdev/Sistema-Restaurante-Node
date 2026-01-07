@@ -1,0 +1,246 @@
+/**
+ * StatsRepository - Data access layer for statistics
+ * Handles all SQL queries related to sales statistics and analytics
+ * Related to: routes/dashboard.js, services/StatsService.js
+ */
+
+const db = require('../config/database');
+
+class StatsRepository {
+    /**
+     * Get total sales amount
+     * @param {Object} filters - Date filters (optional)
+     * @param {string} filters.desde - Start date
+     * @param {string} filters.hasta - End date
+     * @returns {Promise<number>} Total sales amount
+     */
+    static async getTotalSales(filters = {}) {
+        let query = 'SELECT COALESCE(SUM(total), 0) AS total FROM facturas WHERE 1=1';
+        const params = [];
+
+        if (filters.desde && filters.hasta) {
+            query += ' AND DATE(fecha) BETWEEN ? AND ?';
+            params.push(filters.desde, filters.hasta);
+        }
+
+        const [result] = await db.query(query, params);
+        return parseFloat(result[0]?.total || 0);
+    }
+
+    /**
+     * Get total number of invoices
+     * @param {Object} filters - Date filters (optional)
+     * @returns {Promise<number>} Total invoices count
+     */
+    static async getTotalInvoices(filters = {}) {
+        let query = 'SELECT COUNT(*) AS total FROM facturas WHERE 1=1';
+        const params = [];
+
+        if (filters.desde && filters.hasta) {
+            query += ' AND DATE(fecha) BETWEEN ? AND ?';
+            params.push(filters.desde, filters.hasta);
+        }
+
+        const [result] = await db.query(query, params);
+        return parseInt(result[0]?.total || 0);
+    }
+
+    /**
+     * Get sales by payment method
+     * @param {Object} filters - Date filters (optional)
+     * @returns {Promise<Array>} Array of sales grouped by payment method
+     */
+    static async getSalesByPaymentMethod(filters = {}) {
+        let query = `
+            SELECT forma_pago, COUNT(*) AS cantidad, SUM(total) AS total
+            FROM facturas
+            WHERE 1=1
+        `;
+        const params = [];
+
+        if (filters.desde && filters.hasta) {
+            query += ' AND DATE(fecha) BETWEEN ? AND ?';
+            params.push(filters.desde, filters.hasta);
+        }
+
+        query += ' GROUP BY forma_pago';
+
+        const [result] = await db.query(query, params);
+        return result.map(row => ({
+            forma_pago: row.forma_pago,
+            cantidad: parseInt(row.cantidad),
+            total: parseFloat(row.total || 0)
+        }));
+    }
+
+    /**
+     * Get top selling products
+     * @param {number} limit - Number of products to return (default: 10)
+     * @param {Object} filters - Date filters (optional)
+     * @returns {Promise<Array>} Array of top selling products
+     */
+    static async getTopProducts(limit = 10, filters = {}) {
+        let query = `
+            SELECT 
+                p.id,
+                p.nombre,
+                p.codigo,
+                c.nombre AS categoria_nombre,
+                SUM(df.cantidad) AS total_cantidad,
+                SUM(df.subtotal) AS total_ventas,
+                COUNT(DISTINCT df.factura_id) AS facturas_count
+            FROM detalle_factura df
+            INNER JOIN productos p ON df.producto_id = p.id
+            LEFT JOIN categorias c ON p.categoria_id = c.id
+            INNER JOIN facturas f ON df.factura_id = f.id
+            WHERE 1=1
+        `;
+        const params = [];
+
+        if (filters.desde && filters.hasta) {
+            query += ' AND DATE(f.fecha) BETWEEN ? AND ?';
+            params.push(filters.desde, filters.hasta);
+        }
+
+        query += `
+            GROUP BY p.id, p.nombre, p.codigo, c.nombre
+            ORDER BY total_ventas DESC
+            LIMIT ?
+        `;
+        params.push(limit);
+
+        const [result] = await db.query(query, params);
+        return result.map(row => ({
+            id: row.id,
+            nombre: row.nombre,
+            codigo: row.codigo,
+            categoria_nombre: row.categoria_nombre || 'Sin categoría',
+            total_cantidad: parseFloat(row.total_cantidad || 0),
+            total_ventas: parseFloat(row.total_ventas || 0),
+            facturas_count: parseInt(row.facturas_count || 0)
+        }));
+    }
+
+    /**
+     * Get sales by category
+     * @param {Object} filters - Date filters (optional)
+     * @returns {Promise<Array>} Array of sales grouped by category
+     */
+    static async getSalesByCategory(filters = {}) {
+        let query = `
+            SELECT 
+                COALESCE(c.nombre, 'Sin categoría') AS categoria_nombre,
+                COUNT(DISTINCT df.factura_id) AS facturas_count,
+                SUM(df.cantidad) AS total_cantidad,
+                SUM(df.subtotal) AS total_ventas
+            FROM detalle_factura df
+            INNER JOIN productos p ON df.producto_id = p.id
+            LEFT JOIN categorias c ON p.categoria_id = c.id
+            INNER JOIN facturas f ON df.factura_id = f.id
+            WHERE 1=1
+        `;
+        const params = [];
+
+        if (filters.desde && filters.hasta) {
+            query += ' AND DATE(f.fecha) BETWEEN ? AND ?';
+            params.push(filters.desde, filters.hasta);
+        }
+
+        query += ' GROUP BY c.id, c.nombre ORDER BY total_ventas DESC';
+
+        const [result] = await db.query(query, params);
+        return result.map(row => ({
+            categoria_nombre: row.categoria_nombre,
+            facturas_count: parseInt(row.facturas_count || 0),
+            total_cantidad: parseFloat(row.total_cantidad || 0),
+            total_ventas: parseFloat(row.total_ventas || 0)
+        }));
+    }
+
+    /**
+     * Get top products by category
+     * @param {number} limit - Number of products per category (default: 5)
+     * @param {Object} filters - Date filters (optional)
+     * @returns {Promise<Array>} Array of top products grouped by category
+     */
+    static async getTopProductsByCategory(limit = 5, filters = {}) {
+        let query = `
+            SELECT 
+                c.id AS categoria_id,
+                COALESCE(c.nombre, 'Sin categoría') AS categoria_nombre,
+                p.id AS producto_id,
+                p.nombre AS producto_nombre,
+                p.codigo,
+                SUM(df.cantidad) AS total_cantidad,
+                SUM(df.subtotal) AS total_ventas
+            FROM detalle_factura df
+            INNER JOIN productos p ON df.producto_id = p.id
+            LEFT JOIN categorias c ON p.categoria_id = c.id
+            INNER JOIN facturas f ON df.factura_id = f.id
+            WHERE 1=1
+        `;
+        const params = [];
+
+        if (filters.desde && filters.hasta) {
+            query += ' AND DATE(f.fecha) BETWEEN ? AND ?';
+            params.push(filters.desde, filters.hasta);
+        }
+
+        query += `
+            GROUP BY c.id, c.nombre, p.id, p.nombre, p.codigo
+            ORDER BY categoria_nombre, total_ventas DESC
+        `;
+
+        const [result] = await db.query(query, params);
+        
+        // Group by category and limit products per category
+        const grouped = {};
+        result.forEach(row => {
+            const categoria = row.categoria_nombre;
+            if (!grouped[categoria]) {
+                grouped[categoria] = [];
+            }
+            if (grouped[categoria].length < limit) {
+                grouped[categoria].push({
+                    producto_id: row.producto_id,
+                    producto_nombre: row.producto_nombre,
+                    codigo: row.codigo,
+                    total_cantidad: parseFloat(row.total_cantidad || 0),
+                    total_ventas: parseFloat(row.total_ventas || 0)
+                });
+            }
+        });
+
+        return Object.keys(grouped).map(categoria => ({
+            categoria_nombre: categoria,
+            productos: grouped[categoria]
+        }));
+    }
+
+    /**
+     * Get daily sales for the last N days
+     * @param {number} days - Number of days (default: 30)
+     * @returns {Promise<Array>} Array of daily sales
+     */
+    static async getDailySales(days = 30) {
+        const query = `
+            SELECT 
+                DATE(fecha) AS fecha,
+                COUNT(*) AS cantidad_facturas,
+                SUM(total) AS total_ventas
+            FROM facturas
+            WHERE fecha >= DATE_SUB(CURDATE(), INTERVAL ? DAY)
+            GROUP BY DATE(fecha)
+            ORDER BY fecha ASC
+        `;
+        const [result] = await db.query(query, [days]);
+        return result.map(row => ({
+            fecha: row.fecha.toISOString().split('T')[0],
+            cantidad_facturas: parseInt(row.cantidad_facturas || 0),
+            total_ventas: parseFloat(row.total_ventas || 0)
+        }));
+    }
+}
+
+module.exports = StatsRepository;
+
