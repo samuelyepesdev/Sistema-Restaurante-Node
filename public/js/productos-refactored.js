@@ -86,9 +86,9 @@ class ProductManager {
 
         try {
             if (isEdit) {
-                await ApiClient.put(`/api/productos/${id}`, productData);
+                await ApiClient.put(`/productos/${id}`, productData);
             } else {
-                await ApiClient.post('/api/productos', productData);
+                await ApiClient.post('/productos', productData);
             }
             
             Utils.reload();
@@ -102,7 +102,7 @@ class ProductManager {
      */
     async handleEdit(id) {
         try {
-            const producto = await ApiClient.get(`/api/productos/${id}`);
+            const producto = await ApiClient.get(`/productos/${id}`);
             document.getElementById('productoId').value = producto.id;
             document.getElementById('codigo').value = producto.codigo;
             document.getElementById('nombre').value = producto.nombre;
@@ -129,7 +129,7 @@ class ProductManager {
         if (!confirmed) return;
 
         try {
-            await ApiClient.delete(`/api/productos/${id}`);
+            await ApiClient.delete(`/productos/${id}`);
             Utils.reload();
         } catch (error) {
             AlertManager.alert(error.message, 'error');

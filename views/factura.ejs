@@ -107,10 +107,12 @@
     </style>
 </head>
 <body>
+    <% if (typeof isPreview === 'undefined' || !isPreview) { %>
     <div class="no-print" style="text-align: center; margin-bottom: 20px;">
         <button onclick="window.print()" class="print-button">Imprimir Factura</button>
         <button onclick="window.location.href='/'" class="print-button" style="background: #6c757d;">Volver</button>
     </div>
+    <% } %>
 
     <div class="factura">
         <% if (config.logo_src) { %>
