@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const db = require('../db');
+const db = require('../config/database');
 
 // Ruta principal de ventas con filtros opcionales por fecha
 router.get('/', async (req, res) => {

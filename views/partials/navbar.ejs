@@ -1,0 +1,100 @@
+<% 
+// Navbar partial with user info and logout
+// Receives: user (from req.user)
+const user = typeof user !== 'undefined' ? user : null;
+%>
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="/">
+            <i class="bi bi-shop"></i> Sistema Restaurante
+        </a>
+        
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav me-auto">
+                <li class="nav-item">
+                    <a class="nav-link" href="/">
+                        <i class="bi bi-house"></i> Inicio
+                    </a>
+                </li>
+                <% if (user && user.permisos && user.permisos.includes('productos.ver')) { %>
+                <li class="nav-item">
+                    <a class="nav-link" href="/productos">
+                        <i class="bi bi-box-seam"></i> Productos
+                    </a>
+                </li>
+                <% } %>
+                <% if (user && user.permisos && user.permisos.includes('clientes.ver')) { %>
+                <li class="nav-item">
+                    <a class="nav-link" href="/clientes">
+                        <i class="bi bi-people"></i> Clientes
+                    </a>
+                </li>
+                <% } %>
+                <% if (user && user.permisos && user.permisos.includes('mesas.ver')) { %>
+                <li class="nav-item">
+                    <a class="nav-link" href="/mesas">
+                        <i class="bi bi-table"></i> Mesas
+                    </a>
+                </li>
+                <% } %>
+                <% if (user && user.permisos && user.permisos.includes('cocina.ver')) { %>
+                <li class="nav-item">
+                    <a class="nav-link" href="/cocina">
+                        <i class="bi bi-fire"></i> Cocina
+                    </a>
+                </li>
+                <% } %>
+                <% if (user && user.permisos && user.permisos.includes('ventas.ver')) { %>
+                <li class="nav-item">
+                    <a class="nav-link" href="/ventas">
+                        <i class="bi bi-graph-up"></i> Ventas
+                    </a>
+                </li>
+                <% } %>
+                <% if (user && user.permisos && user.permisos.includes('configuracion.ver')) { %>
+                <li class="nav-item">
+                    <a class="nav-link" href="/configuracion">
+                        <i class="bi bi-gear"></i> Configuración
+                    </a>
+                </li>
+                <% } %>
+            </ul>
+            
+            <ul class="navbar-nav">
+                <% if (user) { %>
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown">
+                        <i class="bi bi-person-circle"></i> 
+                        <%= user.nombre_completo || user.username %>
+                        <span class="badge bg-secondary ms-1"><%= user.rol %></span>
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li>
+                            <h6 class="dropdown-header">
+                                <%= user.email || 'Sin email' %>
+                            </h6>
+                        </li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li>
+                            <a class="dropdown-item" href="/auth/logout">
+                                <i class="bi bi-box-arrow-right"></i> Cerrar Sesión
+                            </a>
+                        </li>
+                    </ul>
+                </li>
+                <% } else { %>
+                <li class="nav-item">
+                    <a class="nav-link" href="/auth/login">
+                        <i class="bi bi-box-arrow-in-right"></i> Iniciar Sesión
+                    </a>
+                </li>
+                <% } %>
+            </ul>
+        </div>
+    </div>
+</nav>
+

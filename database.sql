@@ -1,5 +1,5 @@
-CREATE DATABASE IF NOT EXISTS reconocimiento;
-USE reconocimiento;
+CREATE DATABASE IF NOT EXISTS restaurante;
+USE restaurante;
 
 CREATE TABLE IF NOT EXISTS productos (
     id INT AUTO_INCREMENT PRIMARY KEY,

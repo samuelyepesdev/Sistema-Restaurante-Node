@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const db = require('../db');
+const db = require('../config/database');
 
 // Rutas para la vista/cola de cocina
 // - Renderiza pedidos/items en orden de envío (FIFO por enviado_at, luego created_at)

@@ -1,10 +1,11 @@
 require('dotenv').config();
 const express = require('express');
 const bodyParser = require('body-parser');
+const cookieParser = require('cookie-parser');
 const path = require('path');
 const fs = require('fs');
 const app = express();
-const db = require('./db');
+const db = require('./config/database');
 
 // Crear directorios necesarios
 const createRequiredDirectories = () => {
@@ -30,6 +31,9 @@ createRequiredDirectories();
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 
+// Cookie parser for JWT tokens
+app.use(cookieParser());
+
 // Aumentar el límite de tamaño del cuerpo de la petición
 app.use(express.json({limit: '50mb'}));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
@@ -49,7 +53,14 @@ app.use((req, res, next) => {
     next();
 });
 
-// Rutas
+// Middleware de autenticación
+const { requireAuth, optionalAuth } = require('./middleware/auth');
+
+// Rutas de autenticación (públicas)
+const authRoutes = require('./routes/auth');
+app.use('/auth', authRoutes);
+
+// Rutas protegidas
 const productosRoutes = require('./routes/productos');
 const clientesRoutes = require('./routes/clientes');
 const facturasRoutes = require('./routes/facturas');
@@ -58,40 +69,31 @@ const cocinaRoutes = require('./routes/cocina');
 const configuracionRoutes = require('./routes/configuracion');
 const ventasRoutes = require('./routes/ventas');
 
-// Ruta principal
-app.get('/', (req, res) => {
-    res.render('index');
-});
-
-// Usar las rutas
-app.use('/productos', productosRoutes);
-app.use('/api/productos', productosRoutes);
-app.use('/clientes', clientesRoutes);
-app.use('/api/clientes', clientesRoutes);
-app.use('/facturas', facturasRoutes);
-app.use('/api/facturas', facturasRoutes);
-app.use('/mesas', mesasRoutes);
-app.use('/api/mesas', mesasRoutes);
-app.use('/cocina', cocinaRoutes);
-app.use('/api/cocina', cocinaRoutes);
-app.use('/configuracion', configuracionRoutes);
-app.use('/ventas', ventasRoutes);
-
-// Ruta para la página de productos
-app.get('/productos', async (req, res) => {
-    try {
-        const [productos] = await db.query('SELECT * FROM productos ORDER BY nombre');
-        res.render('productos', { productos: productos || [] });
-    } catch (error) {
-        console.error('Error al obtener productos:', error);
-        res.status(500).render('error', { 
-            error: {
-                message: 'Error al obtener productos',
-                stack: process.env.NODE_ENV === 'development' ? error.stack : ''
-            }
-        });
+// Ruta principal - redirige según autenticación
+app.get('/', optionalAuth, (req, res) => {
+    if (req.user) {
+        // Usuario autenticado, mostrar dashboard
+        res.render('index', { user: req.user });
+    } else {
+        // No autenticado, redirigir a login
+        res.redirect('/auth/login');
     }
 });
+
+// Proteger todas las rutas con autenticación
+app.use('/productos', requireAuth, productosRoutes);
+app.use('/api/productos', requireAuth, productosRoutes);
+app.use('/clientes', requireAuth, clientesRoutes);
+app.use('/api/clientes', requireAuth, clientesRoutes);
+app.use('/facturas', requireAuth, facturasRoutes);
+app.use('/api/facturas', requireAuth, facturasRoutes);
+app.use('/mesas', requireAuth, mesasRoutes);
+app.use('/api/mesas', requireAuth, mesasRoutes);
+app.use('/cocina', requireAuth, cocinaRoutes);
+app.use('/api/cocina', requireAuth, cocinaRoutes);
+app.use('/configuracion', requireAuth, configuracionRoutes);
+app.use('/ventas', requireAuth, ventasRoutes);
+
 
 // Manejo de errores 404
 app.use((req, res, next) => {

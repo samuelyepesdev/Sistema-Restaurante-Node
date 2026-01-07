@@ -1,0 +1,63 @@
+// Script to create admin user with hashed password
+// Usage: node scripts/create-admin.js
+
+require('dotenv').config();
+const bcrypt = require('bcrypt');
+const db = require('../config/database');
+
+async function createAdmin() {
+    try {
+        const username = process.env.ADMIN_USERNAME || 'admin';
+        const password = process.env.ADMIN_PASSWORD || 'admin123';
+        const email = process.env.ADMIN_EMAIL || 'admin@restaurante.com';
+        const nombreCompleto = process.env.ADMIN_NOMBRE || 'Administrador';
+
+        console.log('Creando usuario administrador...');
+        console.log(`Usuario: ${username}`);
+        console.log(`Email: ${email}`);
+
+        // Hash password
+        const passwordHash = await bcrypt.hash(password, 10);
+        console.log('Contraseña hasheada correctamente');
+
+        // Get admin role ID
+        const [roles] = await db.query('SELECT id FROM roles WHERE nombre = ?', ['admin']);
+        if (roles.length === 0) {
+            throw new Error('Rol admin no encontrado. Ejecuta primero la migración de base de datos.');
+        }
+        const rolId = roles[0].id;
+
+        // Check if user exists
+        const [existing] = await db.query('SELECT id FROM usuarios WHERE username = ?', [username]);
+        
+        if (existing.length > 0) {
+            // Update existing user
+            await db.query(
+                'UPDATE usuarios SET password_hash = ?, email = ?, nombre_completo = ?, rol_id = ?, activo = TRUE WHERE username = ?',
+                [passwordHash, email, nombreCompleto, rolId, username]
+            );
+            console.log(`✓ Usuario ${username} actualizado correctamente`);
+        } else {
+            // Create new user
+            const [result] = await db.query(
+                'INSERT INTO usuarios (username, password_hash, email, nombre_completo, rol_id, activo) VALUES (?, ?, ?, ?, ?, TRUE)',
+                [username, passwordHash, email, nombreCompleto, rolId]
+            );
+            console.log(`✓ Usuario ${username} creado correctamente (ID: ${result.insertId})`);
+        }
+
+        console.log('\n✓ Usuario administrador configurado correctamente');
+        console.log(`\nCredenciales de acceso:`);
+        console.log(`  Usuario: ${username}`);
+        console.log(`  Contraseña: ${password}`);
+        console.log(`\n⚠️  IMPORTANTE: Cambia la contraseña después del primer inicio de sesión`);
+
+        process.exit(0);
+    } catch (error) {
+        console.error('Error al crear usuario administrador:', error);
+        process.exit(1);
+    }
+}
+
+createAdmin();
+
