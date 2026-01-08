@@ -7,9 +7,10 @@
 const express = require('express');
 const router = express.Router();
 const StatsService = require('../services/StatsService');
+const { requireRole } = require('../middleware/auth');
 
-// GET /dashboard - Dashboard page
-router.get('/', async (req, res) => {
+// GET /dashboard - Dashboard page (only for admin)
+router.get('/', requireRole('admin'), async (req, res) => {
     try {
         res.render('dashboard', { 
             user: req.user 
@@ -25,8 +26,8 @@ router.get('/', async (req, res) => {
     }
 });
 
-// GET /api/dashboard/stats - Get dashboard statistics
-router.get('/stats', async (req, res) => {
+// GET /api/dashboard/stats - Get dashboard statistics (only for admin)
+router.get('/stats', requireRole('admin'), async (req, res) => {
     try {
         const filters = {
             desde: req.query.desde,

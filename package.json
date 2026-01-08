@@ -20,7 +20,8 @@
     "dev": "nodemon server.js",
     "build": "pkg . --public --target node18-win-x64",
     "migrate": "node scripts/run-migrations.js",
-    "create-admin": "node scripts/create-admin.js"
+    "create-admin": "node scripts/create-admin.js",
+    "create-test-users": "node scripts/create-test-users.js"
   },
   "dependencies": {
     "bcrypt": "^5.1.1",

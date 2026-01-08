@@ -10,7 +10,7 @@ const VentaService = require('../services/VentaService');
 const ConfiguracionService = require('../services/ConfiguracionService');
 let ExcelJS; // Lazy import for Excel export
 
-// GET /ventas - Sales page with filters
+// GET /ventas - Sales page with filters and tables ready to pay
 router.get('/', async (req, res) => {
     try {
         const filters = {
@@ -18,9 +18,13 @@ router.get('/', async (req, res) => {
             hasta: req.query.hasta,
             q: req.query.q
         };
-        const ventas = await VentaService.getWithFilters(filters);
+        const [ventas, mesasListas] = await Promise.all([
+            VentaService.getWithFilters(filters),
+            VentaService.getTablesReadyToPay()
+        ]);
         res.render('ventas', { 
             ventas,
+            mesasListas: mesasListas || [],
             user: req.user
         });
     } catch (error) {

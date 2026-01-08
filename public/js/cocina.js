@@ -6,6 +6,18 @@
 $(function(){
     // Allow opening tab directly with ?tab=listos
     function activarTabDesdeQuery(){
+        // For mesero role, always show "Listos" tab
+        const userRole = document.body.getAttribute('data-user-role') || '';
+        if (userRole === 'mesero') {
+            const triggerEl = document.querySelector('#tabListos-tab');
+            if(triggerEl){
+                const tabObj = new bootstrap.Tab(triggerEl);
+                tabObj.show();
+            }
+            return;
+        }
+        
+        // For other roles, allow query parameter
         const params = new URLSearchParams(window.location.search);
         const tab = params.get('tab');
         if(tab === 'listos'){

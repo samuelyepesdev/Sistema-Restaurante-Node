@@ -70,11 +70,23 @@ const configuracionRoutes = require('./routes/configuracion');
 const ventasRoutes = require('./routes/ventas');
 const dashboardRoutes = require('./routes/dashboard');
 
-// Ruta principal - redirige según autenticación
+// Ruta principal - redirige según autenticación y rol
 app.get('/', optionalAuth, (req, res) => {
     if (req.user) {
-        // Usuario autenticado, mostrar dashboard
-        res.redirect('/dashboard');
+        // Usuario autenticado, redirigir según rol
+        const rol = req.user.rol;
+        if (rol === 'admin') {
+            res.redirect('/dashboard');
+        } else if (rol === 'mesero') {
+            res.redirect('/mesas');
+        } else if (rol === 'cocinero') {
+            res.redirect('/cocina');
+        } else if (rol === 'cajero') {
+            res.redirect('/ventas');
+        } else {
+            // Rol desconocido, redirigir a mesas por defecto
+            res.redirect('/mesas');
+        }
     } else {
         // No autenticado, redirigir a login
         res.redirect('/auth/login');

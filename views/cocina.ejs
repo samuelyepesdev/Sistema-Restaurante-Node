@@ -46,24 +46,27 @@
         }
     </style>
 </head>
-<body>
+<body data-user-role="<%= user && user.rol ? user.rol : '' %>">
     <%- include('partials/navbar', { user: typeof user !== 'undefined' ? user : null }) %>
 
     <div class="container">
         <h4 class="mb-3"><i class="bi bi-egg-fried me-2"></i>Cola de Cocina</h4>
         <ul class="nav nav-tabs" id="tabsCocina" role="tablist">
+            <% if (user && user.rol !== 'mesero') { %>
             <li class="nav-item" role="presentation">
                 <a class="nav-link active" id="tabCola-tab" data-bs-toggle="tab" href="#tabCola" data-bs-target="#tabCola" role="tab" aria-controls="tabCola" aria-selected="true">
                     En cocina
                 </a>
             </li>
+            <% } %>
             <li class="nav-item" role="presentation">
-                <a class="nav-link" id="tabListos-tab" data-bs-toggle="tab" href="#tabListos" data-bs-target="#tabListos" role="tab" aria-controls="tabListos" aria-selected="false">
+                <a class="nav-link <%= user && user.rol === 'mesero' ? 'active' : '' %>" id="tabListos-tab" data-bs-toggle="tab" href="#tabListos" data-bs-target="#tabListos" role="tab" aria-controls="tabListos" aria-selected="<%= user && user.rol === 'mesero' ? 'true' : 'false' %>">
                     Listos
                 </a>
             </li>
         </ul>
         <div class="tab-content pt-3">
+            <% if (user && user.rol !== 'mesero') { %>
             <div class="tab-pane fade show active" id="tabCola" role="tabpanel" aria-labelledby="tabCola-tab">
                 <div class="card">
                     <div class="card-header">En cola / Preparando</div>
@@ -72,7 +75,8 @@
                     </div>
                 </div>
             </div>
-            <div class="tab-pane fade" id="tabListos" role="tabpanel" aria-labelledby="tabListos-tab">
+            <% } %>
+            <div class="tab-pane fade <%= user && user.rol === 'mesero' ? 'show active' : '' %>" id="tabListos" role="tabpanel" aria-labelledby="tabListos-tab">
                 <div class="card">
                     <div class="card-header">Listos</div>
                     <div class="card-body">

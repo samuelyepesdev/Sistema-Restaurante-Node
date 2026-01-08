@@ -13,7 +13,7 @@ class VentaService {
      * @returns {Promise<Array>} Array of sales
      */
     static async getWithFilters(filters) {
-        return await VentaRepository.findWithFilters(filters);
+        return await VentaRepository.getAllWithFilters(filters);
     }
 
     /**
@@ -22,7 +22,15 @@ class VentaService {
      * @returns {Promise<Array>} Array of sales data
      */
     static async getForExport(filters) {
-        return await VentaRepository.findForExport(filters);
+        return await VentaRepository.getForExport(filters);
+    }
+
+    /**
+     * Get tables with orders ready to pay
+     * @returns {Promise<Array>} Array of tables with orders ready to pay
+     */
+    static async getTablesReadyToPay() {
+        return await VentaRepository.getTablesWithOrdersReadyToPay();
     }
 }
 
