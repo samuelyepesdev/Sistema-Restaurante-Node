@@ -18,12 +18,17 @@
 ```bash
 npm install
 ```
+4. Configurar variables de entorno (opcional):
+```bash
+cp .env.example .env
+# Edita .env con tus configuraciones personalizadas
+```
 4. Variables de entorno (opcional):
    - El sistema usa estos valores por defecto (ver `config/database.js`):
      - `DB_HOST=localhost`
      - `DB_USER=root`
      - `DB_PASSWORD=111`
-     - `DB_NAME=reconocimiento`
+     - `DB_NAME=restaurante`
      - `PORT=3000`
    - Puedes sobreescribirlos creando un archivo `.env` o exportando variables.
 

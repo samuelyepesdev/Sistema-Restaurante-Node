@@ -139,7 +139,7 @@ app.use((err, req, res, next) => {
     }
 });
 
-const PORT = process.env.PORT || 3002;
+const PORT = process.env.PORT || 3000;
 
 // Verificar la conexión a la base de datos antes de iniciar el servidor
 async function startServer() {
