@@ -47,6 +47,52 @@
             background-color: #198754;
             color: white;
         }
+        
+        /* Estilos para sidebar de factura */
+        #canvasFactura .offcanvas-body {
+            padding: 0;
+            overflow: hidden;
+        }
+        #facturaFrame {
+            width: 100%;
+            height: 100%;
+            border: none;
+            background: white;
+        }
+        #canvasFactura .offcanvas-header {
+            padding: 1rem 1.5rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        #canvasFactura .offcanvas-title {
+            color: white;
+            font-weight: 600;
+        }
+        #canvasFactura .btn-close {
+            filter: invert(1);
+        }
+        #btnImprimirFactura {
+            background: rgba(255,255,255,0.2);
+            border-color: rgba(255,255,255,0.3);
+            color: white;
+        }
+        #btnImprimirFactura:hover {
+            background: rgba(255,255,255,0.3);
+            border-color: rgba(255,255,255,0.5);
+            color: white;
+        }
+        
+        /* Mejorar visualización del iframe */
+        #facturaFrame {
+            background: #f8f9fa;
+        }
+        
+        /* Responsive para sidebar de factura */
+        @media (max-width: 768px) {
+            #canvasFactura {
+                width: 100% !important;
+            }
+        }
     </style>
  </head>
 <body>
@@ -90,6 +136,32 @@
                     </div>
                 </div>
             <% }) %>
+        </div>
+    </div>
+
+    <!-- Offcanvas Factura -->
+    <div class="offcanvas offcanvas-end" tabindex="-1" id="canvasFactura" style="width: 650px; max-width: 90vw;">
+        <div class="offcanvas-header">
+            <h5 class="offcanvas-title">
+                <i class="bi bi-receipt-cutoff me-2"></i>Factura <span id="facturaNumero"></span>
+            </h5>
+            <div class="d-flex align-items-center gap-2">
+                <button type="button" class="btn btn-sm btn-outline-light" id="btnImprimirFactura" title="Imprimir factura">
+                    <i class="bi bi-printer me-1"></i>Imprimir
+                </button>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas"></button>
+            </div>
+        </div>
+        <div class="offcanvas-body p-0 position-relative">
+            <div id="facturaLoading" class="d-flex align-items-center justify-content-center" style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(255,255,255,0.9); z-index: 10;">
+                <div class="text-center">
+                    <div class="spinner-border text-primary mb-2" role="status">
+                        <span class="visually-hidden">Cargando...</span>
+                    </div>
+                    <div>Cargando factura...</div>
+                </div>
+            </div>
+            <iframe id="facturaFrame" style="width: 100%; height: 100%; border: none; min-height: 600px;" onload="document.getElementById('facturaLoading').style.display='none';"></iframe>
         </div>
     </div>
 

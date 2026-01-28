@@ -386,12 +386,25 @@ $(function() {
         const data = await resp.json();
         if(!resp.ok) throw new Error(data.error || 'Error al facturar');
         
+        // Cerrar loading inmediatamente
         Swal.close();
         
-        // Mostrar información de cambio si es efectivo
+        // Cerrar modal de pago y offcanvas de pedido ANTES de mostrar factura
+        const modalPago = bootstrap.Modal.getInstance(document.getElementById('modalPago'));
+        if(modalPago) modalPago.hide();
+        canvas.hide();
+        
+        // Mostrar factura INMEDIATAMENTE (sin esperar modales)
+        mostrarFacturaEnSidebar(data.factura_id, {
+          formaPago: formaPagoSeleccionada,
+          total: total,
+          recibido: montoRecibido
+        });
+        
+        // Mostrar información de cambio de forma no bloqueante (toast)
         if(formaPagoSeleccionada === 'efectivo' && montoRecibido > total){
           const cambio = montoRecibido - total;
-          await Swal.fire({
+          Swal.fire({
             icon: 'success',
             title: 'Factura generada',
             html: `
@@ -401,17 +414,12 @@ $(function() {
                 <p class="fs-4 text-success"><strong>Cambio:</strong> ${formatear(cambio)}</p>
               </div>
             `,
-            confirmButtonText: 'Ver Factura'
-          });
-        } else {
-          await Swal.fire({
-            icon: 'success',
-            title: 'Factura generada exitosamente',
-            confirmButtonText: 'Ver Factura'
+            timer: 5000,
+            timerProgressBar: true,
+            showConfirmButton: true,
+            confirmButtonText: 'Cerrar'
           });
         }
-        
-        window.location.href = `/api/facturas/${data.factura_id}/imprimir`;
       } catch(err){
         Swal.fire({icon:'error', title: err.message});
       }
@@ -461,6 +469,72 @@ $(function() {
     $('#montoCambio').text(formatear(cambio));
     $('#montoRecibido').text(formatear(recibido));
     $('#infoCambio').slideDown();
+  }
+  
+  // Función para mostrar factura en sidebar (optimizada para carga inmediata)
+  function mostrarFacturaEnSidebar(facturaId, infoPago = null){
+    const facturaCanvas = new bootstrap.Offcanvas(document.getElementById('canvasFactura'));
+    const facturaFrame = document.getElementById('facturaFrame');
+    const facturaLoading = document.getElementById('facturaLoading');
+    const facturaNumero = document.getElementById('facturaNumero');
+    
+    // Mostrar sidebar INMEDIATAMENTE (antes de cargar el iframe)
+    facturaCanvas.show();
+    
+    // Mostrar loading
+    facturaLoading.style.display = 'flex';
+    
+    // Actualizar número de factura
+    facturaNumero.textContent = `#${facturaId}`;
+    
+    // Si hay información de pago, mostrarla en el header
+    if(infoPago && infoPago.formaPago === 'efectivo' && infoPago.recibido > infoPago.total){
+      const cambio = infoPago.recibido - infoPago.total;
+      // Puedes agregar un badge o texto adicional aquí si quieres
+    }
+    
+    // Cargar factura en iframe (se carga mientras el sidebar ya está visible)
+    facturaFrame.src = `/api/facturas/${facturaId}/imprimir`;
+    
+    // Ocultar loading cuando el iframe carga
+    facturaFrame.onload = function(){
+      facturaLoading.style.display = 'none';
+    };
+    
+    // Handler para imprimir
+    $('#btnImprimirFactura').off('click').on('click', function(){
+      if(facturaFrame.contentWindow){
+        try {
+          facturaFrame.contentWindow.print();
+        } catch(e) {
+          console.error('Error al imprimir:', e);
+          Swal.fire({
+            icon: 'warning',
+            title: 'No se pudo abrir la impresión',
+            text: 'Por favor, intente cerrar y abrir la factura nuevamente'
+          });
+        }
+      }
+    });
+    
+    // Cuando se cierra el sidebar, limpiar iframe para liberar memoria
+    $('#canvasFactura').off('hidden.bs.offcanvas').on('hidden.bs.offcanvas', function(){
+      facturaFrame.src = 'about:blank';
+      facturaNumero.textContent = '';
+      facturaLoading.style.display = 'flex';
+      facturaFrame.onload = null; // Limpiar handler
+    });
+    
+    // Manejar errores de carga
+    facturaFrame.onerror = function(){
+      facturaLoading.innerHTML = `
+        <div class="text-center text-danger">
+          <i class="bi bi-exclamation-triangle display-4 d-block mb-2"></i>
+          <div>Error al cargar la factura</div>
+          <button class="btn btn-primary mt-3" onclick="location.reload()">Recargar página</button>
+        </div>
+      `;
+    };
   }
 
   // Ocultar temporalmente el panel lateral (offcanvas) durante modales para evitar bloquear copiar/pegar
