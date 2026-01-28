@@ -299,20 +299,36 @@ $(document).ready(function() {
         const cliente = e.params.data;
         $('#direccionCliente').text(cliente.direccion || 'No especificada');
         $('#telefonoCliente').text(cliente.telefono || 'No especificado');
-        $('#infoCliente').show();
+        $('#infoCliente').slideDown();
+        updateStepIndicator(1, true);
+        updateStepIndicator(2, false);
+    });
+    
+    // Función para actualizar indicadores de pasos
+    function updateStepIndicator(stepNum, completed) {
+        const step = $(`#step${stepNum}`);
+        step.removeClass('active completed');
+        if (completed) {
+            step.addClass('completed');
+            step.find('.step-number').html('<i class="bi bi-check"></i>');
+        } else if (stepNum === getCurrentStep()) {
+            step.addClass('active');
+        }
+    }
+    
+    function getCurrentStep() {
+        if (productosFactura.length > 0) return 3;
+        if ($('#cliente').val()) return 2;
+        return 1;
+    }
+    
+    // Actualizar pasos al cargar
+    $(document).ready(function() {
+        updateStepIndicator(getCurrentStep(), false);
     });
 
-    // Reemplazar el select2 con un input simple para búsqueda de productos
-    const productoInput = $(`
-        <input type="text" 
-               id="buscarProductoInput" 
-               class="form-control" 
-               placeholder="Buscar producto... (Ctrl+B o /)"
-               autocomplete="off">
-    `).insertAfter('#producto');
-    
-    // Ocultar el select original
-    $('#producto').hide();
+    // Usar el input de producto que ya existe en el HTML
+    const productoInput = $('#producto');
 
     // Manejar la búsqueda de productos
     let timeoutId;
@@ -362,8 +378,9 @@ $(document).ready(function() {
 
     // Función para seleccionar un producto
     function seleccionarProducto(producto) {
-        $('#producto').val(producto.id).trigger('change');
+        productoSeleccionado = producto;
         productoInput.val(producto.codigo + ' - ' + producto.nombre);
+        $('#producto_id').val(producto.id);
         $('#resultadosProductos').hide();
         const unidadMedida = $('#unidadMedida').val();
         actualizarPrecioSegunUnidad(producto, unidadMedida);
@@ -424,13 +441,15 @@ $(document).ready(function() {
         $('#precio').val(precio);
     }
 
+    // Variable para almacenar producto seleccionado
+    let productoSeleccionado = null;
+    
     // Agregar producto a la factura
     $('#agregarProducto').click(function() {
-        const producto = $('#producto').select2('data')[0];
-        if (!producto) {
+        if (!productoSeleccionado) {
             swalBootstrap.fire({
                 title: 'Producto Requerido',
-                text: 'Por favor seleccione un producto para continuar',
+                text: 'Por favor busque y seleccione un producto primero',
                 icon: 'warning',
                 confirmButtonText: 'Entendido',
                 customClass: {
@@ -440,56 +459,92 @@ $(document).ready(function() {
                 },
                 buttonsStyling: false
             });
+            productoInput.focus();
             return;
         }
 
         const cantidad = 1;
         const unidadMedida = $('#unidadMedida').val();
-        const precio = parseFloat($('#precio').val());
+        const precio = parseFloat($('#precio').val()) || productoSeleccionado.precio_unidad || 0;
+        
+        if (!precio || precio <= 0) {
+            mostrarAlerta('warning', 'Por favor ingrese un precio válido');
+            $('#precio').focus();
+            return;
+        }
+        
         const subtotal = cantidad * precio;
 
         productosFactura.push({
-            id: producto.id,
-            codigo: producto.codigo,
-            nombre: producto.nombre,
+            id: productoSeleccionado.id,
+            codigo: productoSeleccionado.codigo,
+            nombre: productoSeleccionado.nombre,
             cantidad: cantidad,
             precio_unitario: precio,
             unidad_medida: unidadMedida,
             subtotal: subtotal
         });
 
-        actualizarTablaProductos();
+        actualizarTablaProductos(true);
         limpiarFormularioProducto();
-        $('#producto').focus();
+        
+        // Feedback visual
+        mostrarAlerta('success', `Producto "${productoSeleccionado.nombre}" agregado`);
+        
+        // Enfocar búsqueda para siguiente producto
+        setTimeout(() => {
+            productoInput.focus();
+        }, 100);
     });
 
     // Función para actualizar la tabla de productos
-    function actualizarTablaProductos() {
+    function actualizarTablaProductos(highlightNew = false) {
         const tbody = $('#productosTabla');
+        
+        if (productosFactura.length === 0) {
+            tbody.html(`
+                <tr>
+                    <td colspan="6" class="empty-state">
+                        <i class="bi bi-cart-x"></i>
+                        <div>No hay productos agregados</div>
+                        <small class="text-muted">Busca y agrega productos usando el formulario de arriba</small>
+                    </td>
+                </tr>
+            `);
+            $('#totalFactura').text('0.00');
+            updateStepIndicator(2, false);
+            updateStepIndicator(3, false);
+            return;
+        }
+        
         tbody.empty();
-
         totalFactura = 0;
+        
         productosFactura.forEach((item, index) => {
             totalFactura += item.subtotal;
+            const rowClass = highlightNew && index === productosFactura.length - 1 ? 'new-item' : '';
             tbody.append(`
-                <tr>
-                    <td>${item.codigo} - ${item.nombre}</td>
-                    <td>${item.unidad_medida}</td>
-                    <td class="text-end">$${item.precio_unitario.toFixed(2)}</td>
-                    <td class="text-end">$${item.subtotal.toFixed(2)}</td>
+                <tr class="${rowClass}">
+                    <td>
+                        <strong>${item.codigo}</strong><br>
+                        <small class="text-muted">${item.nombre}</small>
+                    </td>
+                    <td><span class="badge bg-secondary">${item.unidad_medida}</span></td>
+                    <td class="text-end fw-bold">$${item.precio_unitario.toFixed(2)}</td>
+                    <td class="text-end fw-bold text-success">$${item.subtotal.toFixed(2)}</td>
                     <td class="text-center">
                         <div class="btn-group btn-group-sm" role="group">
                             <button type="button" class="btn btn-outline-secondary btn-menos-cantidad" data-index="${index}" title="Quitar cantidad">
                                 <i class="bi bi-dash"></i>
                             </button>
-                            <span class="btn btn-outline-secondary disabled px-2">${item.cantidad}</span>
+                            <span class="btn btn-outline-secondary disabled px-3 fw-bold">${item.cantidad}</span>
                             <button type="button" class="btn btn-outline-secondary btn-mas-cantidad" data-index="${index}" title="Agregar cantidad">
                                 <i class="bi bi-plus"></i>
                             </button>
                         </div>
                     </td>
                     <td class="text-center">
-                        <button class="btn btn-sm btn-outline-danger" onclick="eliminarProductoFactura(${index})">
+                        <button class="btn btn-sm btn-outline-danger" onclick="eliminarProductoFactura(${index})" title="Eliminar producto">
                             <i class="bi bi-trash"></i>
                         </button>
                     </td>
@@ -498,6 +553,14 @@ $(document).ready(function() {
         });
 
         $('#totalFactura').text(totalFactura.toFixed(2));
+        updateStepIndicator(2, true);
+        updateStepIndicator(3, false);
+        
+        // Animación del total
+        $('.footer-total').addClass('animate__animated animate__pulse');
+        setTimeout(() => {
+            $('.footer-total').removeClass('animate__animated animate__pulse');
+        }, 1000);
     }
 
     // Delegación: botones +/- cantidad en la tabla
@@ -525,8 +588,11 @@ $(document).ready(function() {
 
     // Función para limpiar el formulario de producto
     function limpiarFormularioProducto() {
-        $('#producto').val(null).trigger('change');
+        productoSeleccionado = null;
+        productoInput.val('');
+        $('#producto_id').val('');
         $('#precio').val('');
+        $('#resultadosProductos').hide();
     }
 
     // Función para limpiar el formulario
@@ -537,6 +603,14 @@ $(document).ready(function() {
         $('#cliente').val(null).trigger('change');
         $('#infoCliente').hide();
         $('#formaPago').val('efectivo');
+        
+        // Resetear pasos
+        $('.step').removeClass('active completed');
+        $('#step1').addClass('active');
+        $('#step1 .step-number').text('1');
+        $('#step2 .step-number').text('2');
+        $('#step3 .step-number').text('3');
+        $('#step4 .step-number').text('4');
         
         // Limpiar el ID del pedido
         localStorage.removeItem('pedidoActualId');

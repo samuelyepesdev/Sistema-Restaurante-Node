@@ -13,6 +13,40 @@
         .mesa-card{border:none;box-shadow:0 .5rem 1rem rgba(0,0,0,.05);transition:transform .1s}
         .mesa-card:hover{transform:translateY(-2px)}
         .estado-badge{position:absolute;top:.75rem;right:.75rem}
+        
+        /* Estilos para modal de pago */
+        .payment-card {
+            border-color: #dee2e6 !important;
+        }
+        .payment-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 16px rgba(0,0,0,0.15);
+        }
+        .payment-card.selected {
+            border-color: #0d6efd !important;
+            background: linear-gradient(135deg, #e7f1ff 0%, #cfe2ff 100%);
+        }
+        .payment-card[data-payment-type="efectivo"].selected {
+            border-color: #198754 !important;
+            background: linear-gradient(135deg, #d1e7dd 0%, #a3cfbb 100%);
+        }
+        .denominacion-btn {
+            padding: 1rem;
+            font-size: 1.1rem;
+            font-weight: 600;
+            border: 2px solid #dee2e6;
+            transition: all 0.2s;
+        }
+        .denominacion-btn:hover {
+            border-color: #198754;
+            background-color: #d1e7dd;
+            transform: scale(1.05);
+        }
+        .denominacion-btn.selected {
+            border-color: #198754;
+            background-color: #198754;
+            color: white;
+        }
     </style>
  </head>
 <body>
@@ -104,6 +138,104 @@
                         <button id="btnMoverMesa" class="btn btn-outline-secondary"><i class="bi bi-arrow-left-right me-1"></i>Mover a mesa</button>
                     <button id="btnEnviarCocina" class="btn btn-warning"><i class="bi bi-send me-1"></i>Enviar a cocina</button>
                     <button id="btnFacturarPedido" class="btn btn-success"><i class="bi bi-cash-coin me-1"></i>Facturar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Pago para Facturar -->
+    <div class="modal fade" id="modalPago" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title">
+                        <i class="bi bi-cash-coin me-2"></i>Seleccionar Forma de Pago
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="text-center mb-4">
+                        <h4 class="mb-1">Total a Pagar</h4>
+                        <h2 class="text-primary fw-bold" id="modalTotalPago">$0.00</h2>
+                    </div>
+                    
+                    <div class="row g-3 mb-4">
+                        <!-- Card Efectivo -->
+                        <div class="col-md-6">
+                            <div class="card h-100 border-2 payment-card" data-payment-type="efectivo" style="cursor: pointer; transition: all 0.3s;">
+                                <div class="card-body text-center p-4">
+                                    <i class="bi bi-cash-stack display-4 text-success mb-3"></i>
+                                    <h5 class="card-title">Efectivo</h5>
+                                    <p class="text-muted small mb-0">Pago en efectivo</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Card Transferencia -->
+                        <div class="col-md-6">
+                            <div class="card h-100 border-2 payment-card" data-payment-type="transferencia" style="cursor: pointer; transition: all 0.3s;">
+                                <div class="card-body text-center p-4">
+                                    <i class="bi bi-credit-card display-4 text-primary mb-3"></i>
+                                    <h5 class="card-title">Transferencia</h5>
+                                    <p class="text-muted small mb-0">Pago por transferencia</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Panel de Efectivo (oculto inicialmente) -->
+                    <div id="panelEfectivo" style="display: none;">
+                        <h6 class="mb-3"><i class="bi bi-cash-stack me-2"></i>Seleccione Denominación o Ingrese Monto</h6>
+                        
+                        <!-- Denominaciones -->
+                        <div id="denominacionesContainer" class="row g-2 mb-3">
+                            <!-- Se llenará dinámicamente -->
+                        </div>
+                        
+                        <!-- Campo manual -->
+                        <div class="input-group input-group-lg">
+                            <span class="input-group-text">
+                                <i class="bi bi-keyboard"></i>
+                            </span>
+                            <input type="number" 
+                                   id="montoManual" 
+                                   class="form-control" 
+                                   placeholder="Ingrese el monto recibido..."
+                                   step="100"
+                                   min="0">
+                            <button class="btn btn-success" id="btnUsarMontoManual">
+                                <i class="bi bi-check-lg"></i> Usar
+                            </button>
+                        </div>
+                        
+                        <!-- Información de cambio -->
+                        <div id="infoCambio" class="alert alert-info mt-3" style="display: none;">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <strong>Cambio:</strong>
+                                    <span id="montoCambio" class="fs-4 ms-2">$0.00</span>
+                                </div>
+                                <div>
+                                    <strong>Recibido:</strong>
+                                    <span id="montoRecibido" class="ms-2">$0.00</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Panel de Transferencia (oculto inicialmente) -->
+                    <div id="panelTransferencia" style="display: none;">
+                        <div class="alert alert-info">
+                            <i class="bi bi-info-circle me-2"></i>
+                            Se generará la factura con forma de pago: <strong>Transferencia</strong>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-success" id="btnConfirmarPago" disabled>
+                        <i class="bi bi-check-lg me-2"></i>Confirmar Pago
+                    </button>
                 </div>
             </div>
         </div>

@@ -9,6 +9,26 @@ $(document).ready(function() {
     function actualizarLocalStorage() {
         localStorage.setItem('pedidos', JSON.stringify(pedidosGuardados));
     }
+    
+    // Función para actualizar indicadores de pasos
+    function updateStepIndicator(stepNum, completed) {
+        const step = $(`#step${stepNum}`);
+        if (!step.length) return; // Si no existe el elemento, salir
+        step.removeClass('active completed');
+        if (completed) {
+            step.addClass('completed');
+            step.find('.step-number').html('<i class="bi bi-check"></i>');
+        } else if (stepNum === getCurrentStep()) {
+            step.addClass('active');
+        }
+    }
+    
+    function getCurrentStep() {
+        const productosFactura = window.productosFactura || [];
+        if (productosFactura.length > 0) return 3;
+        if ($('#cliente').val() || $('#cliente_id').val()) return 2;
+        return 1;
+    }
 
     // Búsqueda de clientes
     $('#cliente').on('keyup', function() {
@@ -77,7 +97,13 @@ $(document).ready(function() {
         $('#telefonoCliente').text(cliente.telefono || 'No especificado');
         
         // Mostrar el panel de información
-        $('#infoCliente').show();
+        $('#infoCliente').slideDown();
+        
+        // Actualizar pasos
+        if (typeof updateStepIndicator === 'function') {
+            updateStepIndicator(1, true);
+            updateStepIndicator(2, false);
+        }
     }
 
     // Función para seleccionar producto
@@ -358,18 +384,27 @@ $(document).ready(function() {
     // Generar factura
     $('#generarFactura').click(function() {
         console.log('=== INICIO GENERACIÓN DE FACTURA ===');
-        const cliente_id = $('#cliente_id').val();
+        const cliente_id = $('#cliente_id').val() || $('#cliente').val();
         const forma_pago = $('#formaPago').val();
         
         if (!cliente_id) {
-            mostrarAlerta('warning', 'Por favor seleccione un cliente');
+            mostrarAlerta('warning', 'Por favor seleccione un cliente primero');
+            // Resaltar paso 1
+            $('#step1').addClass('animate__animated animate__shakeX');
+            setTimeout(() => $('#step1').removeClass('animate__animated animate__shakeX'), 1000);
             return;
         }
 
         if (productosFactura.length === 0) {
             mostrarAlerta('warning', 'Agregue al menos un producto a la factura');
+            // Resaltar paso 2
+            $('#step2').addClass('animate__animated animate__shakeX');
+            setTimeout(() => $('#step2').removeClass('animate__animated animate__shakeX'), 1000);
             return;
         }
+        
+        // Marcar paso 4 como activo
+        updateStepIndicator(4, false);
 
         const factura = {
             cliente_id: cliente_id,
@@ -420,6 +455,11 @@ $(document).ready(function() {
                     $('#facturaFrame').attr('src', iframeUrl);
                     facturaModal.show();
 
+                    // Marcar paso 4 como completado
+                    if (typeof updateStepIndicator === 'function') {
+                        updateStepIndicator(4, true);
+                    }
+                    
                     // Limpiar el formulario
                     limpiarFormulario();
                     mostrarAlerta('success', 'Factura generada exitosamente');

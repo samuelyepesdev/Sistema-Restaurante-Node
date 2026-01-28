@@ -225,25 +225,243 @@ $(function() {
   // primera carga
   refreshMesas();
 
-  // Facturar pedido
+  // Facturar pedido - Usa cliente predeterminado automáticamente
   $('#btnFacturarPedido').on('click', async function(){
     try{
-      const cliente = await runWithOffcanvasHidden(() => seleccionarClienteConBusqueda());
-      if(!cliente) return; // cancelado
-      const cliente_id = cliente.id;
-      const forma_pago = await runWithOffcanvasHidden(async () => {
-        const { value } = await Swal.fire({ title:'Forma de pago', input:'select', inputOptions:{ efectivo:'Efectivo', transferencia:'Transferencia'}, inputValue:'efectivo', showCancelButton:true });
-        return value;
+      if(!pedidoActual || !pedidoActual.id){
+        Swal.fire({icon:'error', title: 'No hay pedido activo'});
+        return;
+      }
+      
+      if(items.length === 0){
+        Swal.fire({icon:'warning', title: 'El pedido no tiene items'});
+        return;
+      }
+      
+      // Calcular total del pedido desde los items actuales
+      let totalPedido = 0;
+      items.forEach(it => {
+        const cantidad = Number(it.cantidad || 0);
+        const precio = Number((it.precio_unitario != null ? it.precio_unitario : it.precio) || 0);
+        const subtotal = Number(it.subtotal != null ? it.subtotal : (cantidad * precio));
+        totalPedido += subtotal;
       });
-      if(!forma_pago) return;
-      const resp = await fetch(`/api/mesas/pedidos/${pedidoActual.id}/facturar`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ cliente_id, forma_pago }) });
-      const data = await resp.json();
-      if(!resp.ok) throw new Error(data.error||'Error al facturar');
-      window.location.href = `/api/facturas/${data.factura_id}/imprimir`;
+      
+      if(totalPedido <= 0){
+        Swal.fire({icon:'warning', title: 'El total del pedido es cero'});
+        return;
+      }
+      
+      // Obtener cliente predeterminado automáticamente
+      const cliente = await getOrCreateConsumidorFinal();
+      if(!cliente || !cliente.id){
+        Swal.fire({icon:'error', title: 'No se pudo obtener el cliente predeterminado'});
+        return;
+      }
+      
+      // Mostrar modal de pago
+      await mostrarModalPago(totalPedido, cliente.id);
     }catch(err){
       Swal.fire({icon:'error', title: err.message});
     }
   });
+  
+  // Función para mostrar modal de pago
+  async function mostrarModalPago(total, clienteId){
+    const modal = new bootstrap.Modal(document.getElementById('modalPago'));
+    let formaPagoSeleccionada = null;
+    let montoRecibido = null;
+    
+    // Actualizar total en modal
+    $('#modalTotalPago').text(formatear(total));
+    
+    // Generar denominaciones según el total
+    generarDenominaciones(total);
+    
+    // Resetear estado
+    $('.payment-card').removeClass('selected');
+    $('#panelEfectivo').hide();
+    $('#panelTransferencia').hide();
+    $('#btnConfirmarPago').prop('disabled', true);
+    $('#montoManual').val('');
+    $('#infoCambio').hide();
+    
+    // Handlers para seleccionar tipo de pago
+    $('.payment-card').off('click').on('click', function(){
+      $('.payment-card').removeClass('selected');
+      $(this).addClass('selected');
+      formaPagoSeleccionada = $(this).data('payment-type');
+      
+      if(formaPagoSeleccionada === 'efectivo'){
+        $('#panelEfectivo').slideDown();
+        $('#panelTransferencia').slideUp();
+        $('#btnConfirmarPago').prop('disabled', true);
+      } else {
+        $('#panelTransferencia').slideDown();
+        $('#panelEfectivo').slideUp();
+        $('#btnConfirmarPago').prop('disabled', false);
+        montoRecibido = total; // Transferencia siempre es el total exacto
+      }
+    });
+    
+    // Handler para denominaciones
+    $('.denominacion-btn').off('click').on('click', function(){
+      $('.denominacion-btn').removeClass('selected');
+      $(this).addClass('selected');
+      montoRecibido = parseFloat($(this).data('valor'));
+      $('#montoManual').val(montoRecibido);
+      calcularCambio(total, montoRecibido);
+      $('#btnConfirmarPago').prop('disabled', false);
+    });
+    
+    // Handler para monto manual
+    function usarMontoManual(){
+      const valor = parseFloat($('#montoManual').val()) || 0;
+      if(valor < total){
+        Swal.fire({icon:'warning', title: 'El monto debe ser mayor o igual al total'});
+        return;
+      }
+      montoRecibido = valor;
+      $('.denominacion-btn').removeClass('selected');
+      calcularCambio(total, valor);
+      $('#btnConfirmarPago').prop('disabled', false);
+    }
+    
+    $('#montoManual').off('input keypress').on('input', function(){
+      const valor = parseFloat($(this).val()) || 0;
+      if(valor > 0){
+        $('.denominacion-btn').removeClass('selected');
+        if(valor >= total){
+          calcularCambio(total, valor);
+          montoRecibido = valor;
+          $('#btnConfirmarPago').prop('disabled', false);
+        } else {
+          $('#infoCambio').hide();
+          $('#btnConfirmarPago').prop('disabled', true);
+        }
+      } else {
+        $('#infoCambio').hide();
+        $('#btnConfirmarPago').prop('disabled', true);
+      }
+    }).on('keypress', function(e){
+      if(e.which === 13){ // Enter
+        e.preventDefault();
+        usarMontoManual();
+      }
+    });
+    
+    $('#btnUsarMontoManual').off('click').on('click', usarMontoManual);
+    
+    // Handler para confirmar pago
+    $('#btnConfirmarPago').off('click').on('click', async function(){
+      if(!formaPagoSeleccionada){
+        Swal.fire({icon:'warning', title: 'Seleccione una forma de pago'});
+        return;
+      }
+      
+      if(formaPagoSeleccionada === 'efectivo' && (!montoRecibido || montoRecibido < total)){
+        Swal.fire({icon:'warning', title: 'El monto recibido debe ser mayor o igual al total'});
+        return;
+      }
+      
+      // Cerrar modal
+      modal.hide();
+      
+      // Mostrar loading
+      Swal.fire({
+        title: 'Generando factura...',
+        allowOutsideClick: false,
+        didOpen: () => Swal.showLoading()
+      });
+      
+      try{
+        const resp = await fetch(`/api/mesas/pedidos/${pedidoActual.id}/facturar`, {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({
+            cliente_id: clienteId,
+            forma_pago: formaPagoSeleccionada
+          })
+        });
+        const data = await resp.json();
+        if(!resp.ok) throw new Error(data.error || 'Error al facturar');
+        
+        Swal.close();
+        
+        // Mostrar información de cambio si es efectivo
+        if(formaPagoSeleccionada === 'efectivo' && montoRecibido > total){
+          const cambio = montoRecibido - total;
+          await Swal.fire({
+            icon: 'success',
+            title: 'Factura generada',
+            html: `
+              <div class="text-start">
+                <p><strong>Total:</strong> ${formatear(total)}</p>
+                <p><strong>Recibido:</strong> ${formatear(montoRecibido)}</p>
+                <p class="fs-4 text-success"><strong>Cambio:</strong> ${formatear(cambio)}</p>
+              </div>
+            `,
+            confirmButtonText: 'Ver Factura'
+          });
+        } else {
+          await Swal.fire({
+            icon: 'success',
+            title: 'Factura generada exitosamente',
+            confirmButtonText: 'Ver Factura'
+          });
+        }
+        
+        window.location.href = `/api/facturas/${data.factura_id}/imprimir`;
+      } catch(err){
+        Swal.fire({icon:'error', title: err.message});
+      }
+    });
+    
+    modal.show();
+  }
+  
+  // Función para generar denominaciones según el total
+  function generarDenominaciones(total){
+    const denominaciones = [10000, 20000, 50000, 100000, 200000, 500000];
+    const container = $('#denominacionesContainer');
+    container.empty();
+    
+    // Filtrar denominaciones que sean mayores o iguales al total
+    const disponibles = denominaciones.filter(d => d >= total);
+    
+    if(disponibles.length === 0){
+      // Si el total es muy grande, mostrar solo la más grande
+      container.html(`
+        <div class="col-12">
+          <button class="btn denominacion-btn w-100" data-valor="${denominaciones[denominaciones.length - 1]}">
+            $${denominaciones[denominaciones.length - 1].toLocaleString('es-CO')}
+          </button>
+        </div>
+      `);
+    } else {
+      disponibles.forEach(denom => {
+        container.append(`
+          <div class="col-6 col-md-4">
+            <button class="btn denominacion-btn w-100" data-valor="${denom}">
+              $${denom.toLocaleString('es-CO')}
+            </button>
+          </div>
+        `);
+      });
+    }
+  }
+  
+  // Función para calcular cambio
+  function calcularCambio(total, recibido){
+    if(recibido < total){
+      $('#infoCambio').hide();
+      return;
+    }
+    const cambio = recibido - total;
+    $('#montoCambio').text(formatear(cambio));
+    $('#montoRecibido').text(formatear(recibido));
+    $('#infoCambio').slideDown();
+  }
 
   // Ocultar temporalmente el panel lateral (offcanvas) durante modales para evitar bloquear copiar/pegar
   async function runWithOffcanvasHidden(action){
