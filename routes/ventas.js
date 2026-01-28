@@ -29,7 +29,10 @@ router.get('/', async (req, res) => {
         });
     } catch (error) {
         console.error('Error al obtener ventas:', error);
-        res.status(500).send('Error al cargar el historial de ventas');
+        res.status(500).render('error', {
+            error: error,
+            user: req.user
+        });
     }
 });
 

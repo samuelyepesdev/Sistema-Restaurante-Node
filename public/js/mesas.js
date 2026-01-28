@@ -22,15 +22,58 @@ $(function() {
           <td>${it.producto_nombre || it.nombre || it.producto_id}</td>
           <td class="text-end">${cantidad}</td>
           <td class="text-end">${formatear(precio)}</td>
-          <td class="text-end">${formatear(subtotal)}</td>
+          <td class="text-end d-flex align-items-center justify-content-end gap-1">
+            <button class="btn btn-sm btn-outline-secondary btn-menos-item" data-item-id="${it.id}" data-cantidad="${cantidad}" title="Quitar cantidad"><i class="bi bi-dash"></i></button>
+            <span>${formatear(subtotal)}</span>
+            <button class="btn btn-sm btn-outline-secondary btn-mas-item" data-item-id="${it.id}" data-cantidad="${cantidad}" title="Agregar cantidad"><i class="bi bi-plus"></i></button>
+          </td>
           <td class="text-end">
-            <button class="btn btn-sm btn-outline-danger" data-idx="${idx}"><i class="bi bi-trash"></i></button>
+            <button class="btn btn-sm btn-outline-danger btn-eliminar-item" data-idx="${idx}" data-item-id="${it.id}"><i class="bi bi-trash"></i></button>
           </td>
         </tr>
       `);
     });
     $('#totalPedido').text(formatear(total));
   }
+
+  // +/- cantidad en items del pedido (mesa)
+  $(document).on('click', '.btn-mas-item', async function(){
+    const id = $(this).data('item-id');
+    const cant = Number($(this).data('cantidad')) + 1;
+    try {
+      const r = await fetch(`/api/mesas/items/${id}/cantidad`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ cantidad: cant }) });
+      const data = await r.json();
+      if (!r.ok) throw new Error(data.error || 'Error');
+      await cargarPedido(pedidoActual.id);
+    } catch (e) { Swal.fire({ icon: 'error', title: e.message }); }
+  });
+
+  $(document).on('click', '.btn-menos-item', async function(){
+    const id = $(this).data('item-id');
+    const cant = Number($(this).data('cantidad'));
+    if (cant <= 1) return;
+    try {
+      const r = await fetch(`/api/mesas/items/${id}/cantidad`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ cantidad: cant - 1 }) });
+      const data = await r.json();
+      if (!r.ok) throw new Error(data.error || 'Error');
+      await cargarPedido(pedidoActual.id);
+    } catch (e) { Swal.fire({ icon: 'error', title: e.message }); }
+  });
+
+  $(document).on('click', '.btn-eliminar-item', async function(){
+    const idx = $(this).data('idx');
+    const itemId = $(this).data('item-id');
+    const it = items[idx];
+    if (!it) return;
+    const ok = await Swal.fire({ title: '¿Eliminar este item?', icon: 'question', showCancelButton: true, confirmButtonText: 'Sí', cancelButtonText: 'Cancelar' });
+    if (!ok.isConfirmed) return;
+    try {
+      const r = await fetch(`/api/mesas/items/${itemId}`, { method: 'DELETE' });
+      if (!r.ok) { const d = await r.json(); throw new Error(d.error || 'Error'); }
+      await cargarPedido(pedidoActual.id);
+      Swal.fire({ icon: 'success', title: 'Item eliminado' });
+    } catch (e) { Swal.fire({ icon: 'error', title: e.message }); }
+  });
 
   // Cargar pedido por mesa
   async function abrirPedido(mesaId, mesaNumero){
@@ -83,24 +126,9 @@ $(function() {
     }, 250);
   });
 
-  // Selección rápida: UND por defecto + nota para cocina (oculta offcanvas durante todo el flujo)
+  // Selección rápida: cantidad 1 por defecto + nota para cocina (oculta offcanvas durante todo el flujo)
   async function seleccionarProducto(p){
     await runWithOffcanvasHidden(async () => {
-      const cantidadRes = await Swal.fire({
-        title: `Cantidad para ${p.nombre}`,
-        input: 'number', inputValue: 1, inputAttributes:{ step: '0.1', min: '0.1' },
-        showCancelButton: true,
-        didOpen: () => {
-          const inp = document.querySelector('.swal2-input');
-          if (inp) {
-            ['keydown','keyup','keypress','paste','copy','cut','contextmenu'].forEach(evt => {
-              inp.addEventListener(evt, e => e.stopPropagation());
-            });
-          }
-        }
-      });
-      if(!cantidadRes.value) return;
-
       const notaRes = await Swal.fire({
         title: 'Nota para cocina (opcional)',
         input: 'text', inputPlaceholder: 'Ej: sin cebolla, sin queso...', showCancelButton: true,
@@ -113,14 +141,14 @@ $(function() {
           }
         }
       });
+      if (!notaRes.isConfirmed) return;
       const unidad = 'UND';
       const precio = p.precio_unidad;
-      const body = { producto_id: p.id, cantidad: Number(cantidadRes.value), unidad, precio: Number(precio), nota: notaRes.value || '' };
+      const body = { producto_id: p.id, cantidad: 1, unidad, precio: Number(precio), nota: (notaRes.value || '').trim() };
       const resp = await fetch(`/api/mesas/pedidos/${pedidoActual.id}/items`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) });
       const data = await resp.json();
       if(!resp.ok) return Swal.fire({icon:'error', title: data.error||'Error al agregar'});
       await cargarPedido(pedidoActual.id);
-      // limpiar y enfocar el buscador para el siguiente producto
       $('#buscarProductoMesa').val('').focus();
     });
   }

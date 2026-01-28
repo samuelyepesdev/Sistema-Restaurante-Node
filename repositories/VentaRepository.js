@@ -17,9 +17,8 @@ class VentaRepository {
      */
     static async getAllWithFilters(filters) {
         let query = `
-            SELECT f.*, 
-                   c.nombre AS cliente_nombre,
-                   c.identificacion AS cliente_identificacion
+            SELECT f.id, f.fecha, f.cliente_id, f.forma_pago, f.total,
+                   c.nombre AS cliente_nombre
             FROM facturas f
             LEFT JOIN clientes c ON f.cliente_id = c.id
             WHERE 1=1
@@ -37,7 +36,7 @@ class VentaRepository {
         }
 
         if (filters.q) {
-            query += ` AND (f.numero LIKE ? OR c.nombre LIKE ? OR c.identificacion LIKE ?)`;
+            query += ` AND (CAST(f.id AS CHAR) LIKE ? OR c.nombre LIKE ? OR c.telefono LIKE ?)`;
             const searchTerm = `%${filters.q}%`;
             params.push(searchTerm, searchTerm, searchTerm);
         }
@@ -56,13 +55,10 @@ class VentaRepository {
     static async getForExport(filters) {
         let query = `
             SELECT 
-                f.numero AS factura_numero,
+                f.id,
                 f.fecha,
-                c.nombre AS cliente_nombre,
-                c.identificacion AS cliente_identificacion,
+                c.nombre AS cliente,
                 f.forma_pago,
-                f.subtotal,
-                f.iva,
                 f.total
             FROM facturas f
             LEFT JOIN clientes c ON f.cliente_id = c.id
@@ -81,7 +77,7 @@ class VentaRepository {
         }
 
         if (filters.q) {
-            query += ` AND (f.numero LIKE ? OR c.nombre LIKE ? OR c.identificacion LIKE ?)`;
+            query += ` AND (CAST(f.id AS CHAR) LIKE ? OR c.nombre LIKE ? OR c.telefono LIKE ?)`;
             const searchTerm = `%${filters.q}%`;
             params.push(searchTerm, searchTerm, searchTerm);
         }

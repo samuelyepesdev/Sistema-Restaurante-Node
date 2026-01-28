@@ -229,6 +229,35 @@ router.get('/pedidos/:pedidoId', async (req, res) => {
     }
 });
 
+// PUT /api/mesas/items/:itemId/cantidad - actualizar cantidad (debe ir antes de otras rutas /items/:id)
+const updateItemCantidad = async (req, res) => {
+    try {
+        const itemId = req.params.itemId;
+        const { cantidad } = req.body || {};
+        const cant = parseFloat(cantidad);
+        if (cant == null || isNaN(cant) || cant < 0.01) {
+            return res.status(400).json({ error: 'cantidad inválida (mínimo 0.01)' });
+        }
+        const [rows] = await db.query(
+            'SELECT precio_unitario FROM pedido_items WHERE id = ?',
+            [itemId]
+        );
+        if (rows.length === 0) return res.status(404).json({ error: 'Item no encontrado' });
+        const precio = Number(rows[0].precio_unitario);
+        const subtotal = (cant * precio).toFixed(2);
+        await db.query(
+            'UPDATE pedido_items SET cantidad = ?, subtotal = ? WHERE id = ?',
+            [cant, subtotal, itemId]
+        );
+        res.json({ message: 'Cantidad actualizada', subtotal: parseFloat(subtotal) });
+    } catch (error) {
+        console.error('Error al actualizar cantidad:', error);
+        res.status(500).json({ error: 'Error al actualizar cantidad' });
+    }
+};
+router.put('/items/:itemId/cantidad', updateItemCantidad);
+router.patch('/items/:itemId/cantidad', updateItemCantidad);
+
 // POST /mesas/pedidos/:pedidoId/items - API: agregar item al pedido
 router.post('/pedidos/:pedidoId/items', async (req, res) => {
     try {
@@ -247,6 +276,19 @@ router.post('/pedidos/:pedidoId/items', async (req, res) => {
     } catch (error) {
         console.error('Error al agregar item:', error);
         res.status(500).json({ error: 'Error al agregar item' });
+    }
+});
+
+// DELETE /mesas/items/:itemId - API: eliminar item del pedido
+router.delete('/items/:itemId', async (req, res) => {
+    try {
+        const itemId = req.params.itemId;
+        const [result] = await db.query('DELETE FROM pedido_items WHERE id = ?', [itemId]);
+        if (result.affectedRows === 0) return res.status(404).json({ error: 'Item no encontrado' });
+        res.json({ message: 'Item eliminado' });
+    } catch (error) {
+        console.error('Error al eliminar item:', error);
+        res.status(500).json({ error: 'Error al eliminar item' });
     }
 });
 

@@ -261,8 +261,8 @@ $(document).ready(function() {
         e.preventDefault();
     });
 
-    // Manejar la navegación con teclas
-    $('#cantidad').on('keydown', function(e) {
+    // Enter en precio agrega producto
+    $('#precio').on('keydown', function(e) {
         if (e.key === 'Enter') {
             e.preventDefault();
             $('#agregarProducto').click();
@@ -367,7 +367,7 @@ $(document).ready(function() {
         $('#resultadosProductos').hide();
         const unidadMedida = $('#unidadMedida').val();
         actualizarPrecioSegunUnidad(producto, unidadMedida);
-        $('#cantidad').focus();
+        $('#precio').focus();
     }
 
     // Actualizar los manejadores de teclas rápidas
@@ -443,12 +443,7 @@ $(document).ready(function() {
             return;
         }
 
-        const cantidad = parseFloat($('#cantidad').val());
-        if (!cantidad || cantidad <= 0) {
-            mostrarAlerta('warning', 'Por favor ingrese una cantidad válida');
-            return;
-        }
-
+        const cantidad = 1;
         const unidadMedida = $('#unidadMedida').val();
         const precio = parseFloat($('#precio').val());
         const subtotal = cantidad * precio;
@@ -479,10 +474,20 @@ $(document).ready(function() {
             tbody.append(`
                 <tr>
                     <td>${item.codigo} - ${item.nombre}</td>
-                    <td class="text-end">${item.cantidad}</td>
                     <td>${item.unidad_medida}</td>
                     <td class="text-end">$${item.precio_unitario.toFixed(2)}</td>
                     <td class="text-end">$${item.subtotal.toFixed(2)}</td>
+                    <td class="text-center">
+                        <div class="btn-group btn-group-sm" role="group">
+                            <button type="button" class="btn btn-outline-secondary btn-menos-cantidad" data-index="${index}" title="Quitar cantidad">
+                                <i class="bi bi-dash"></i>
+                            </button>
+                            <span class="btn btn-outline-secondary disabled px-2">${item.cantidad}</span>
+                            <button type="button" class="btn btn-outline-secondary btn-mas-cantidad" data-index="${index}" title="Agregar cantidad">
+                                <i class="bi bi-plus"></i>
+                            </button>
+                        </div>
+                    </td>
                     <td class="text-center">
                         <button class="btn btn-sm btn-outline-danger" onclick="eliminarProductoFactura(${index})">
                             <i class="bi bi-trash"></i>
@@ -495,10 +500,32 @@ $(document).ready(function() {
         $('#totalFactura').text(totalFactura.toFixed(2));
     }
 
+    // Delegación: botones +/- cantidad en la tabla
+    $(document).on('click', '.btn-mas-cantidad', function() {
+        const index = parseInt($(this).data('index'), 10);
+        if (isNaN(index) || index < 0 || index >= productosFactura.length) return;
+        const item = productosFactura[index];
+        item.cantidad = (item.cantidad || 1) + 1;
+        item.subtotal = item.cantidad * item.precio_unitario;
+        actualizarTablaProductos();
+    });
+
+    $(document).on('click', '.btn-menos-cantidad', function() {
+        const index = parseInt($(this).data('index'), 10);
+        if (isNaN(index) || index < 0 || index >= productosFactura.length) return;
+        const item = productosFactura[index];
+        if (item.cantidad <= 1) {
+            productosFactura.splice(index, 1);
+        } else {
+            item.cantidad -= 1;
+            item.subtotal = item.cantidad * item.precio_unitario;
+        }
+        actualizarTablaProductos();
+    });
+
     // Función para limpiar el formulario de producto
     function limpiarFormularioProducto() {
         $('#producto').val(null).trigger('change');
-        $('#cantidad').val('');
         $('#precio').val('');
     }
 
