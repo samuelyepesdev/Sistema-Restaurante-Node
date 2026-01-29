@@ -12,20 +12,21 @@ class ProductService {
      * Get all products with categories for view rendering
      * @returns {Promise<Object>} Object with products and categories arrays
      */
-    static async getAllForView() {
-        const productos = await ProductRepository.findAll();
-        const categorias = await CategoryRepository.findAllActive();
+    static async getAllForView(tenantId) {
+        const productos = await ProductRepository.findAll(tenantId);
+        const categorias = await CategoryRepository.findAllActive(tenantId);
         return { productos, categorias };
     }
 
     /**
-     * Get product by ID
+     * Get product by ID (within tenant)
      * @param {number} id - Product ID
+     * @param {number} tenantId - Tenant ID
      * @returns {Promise<Object>} Product object
      * @throws {Error} If product not found
      */
-    static async getById(id) {
-        const producto = await ProductRepository.findById(id);
+    static async getById(id, tenantId) {
+        const producto = await ProductRepository.findById(id, tenantId);
         if (!producto) {
             throw new Error('Producto no encontrado');
         }
@@ -33,15 +34,16 @@ class ProductService {
     }
 
     /**
-     * Search products
+     * Search products (within tenant)
      * @param {string} query - Search term
+     * @param {number} tenantId - Tenant ID
      * @returns {Promise<Array>} Array of products
      */
-    static async search(query) {
+    static async search(query, tenantId) {
         if (!query || query.trim().length === 0) {
             return [];
         }
-        return await ProductRepository.search(query.trim(), 10);
+        return await ProductRepository.search(query.trim(), tenantId, 10);
     }
 
     /**
@@ -50,24 +52,22 @@ class ProductService {
      * @returns {Promise<Object>} Created product result
      * @throws {Error} If validation fails or duplicate code
      */
-    static async create(productData) {
+    static async create(tenantId, productData) {
         const { codigo, nombre, precio_unidad, categoria_id } = productData;
 
-        // Validate required fields
         if (!codigo || !nombre) {
             throw new Error('El código y nombre son requeridos');
         }
 
-        // Validate category exists
         if (categoria_id) {
-            const category = await CategoryRepository.findById(categoria_id);
+            const category = await CategoryRepository.findById(categoria_id, tenantId);
             if (!category) {
                 throw new Error('Categoría no encontrada');
             }
         }
 
         try {
-            const result = await ProductRepository.create({
+            const result = await ProductRepository.create(tenantId, {
                 codigo: codigo.trim(),
                 nombre: nombre.trim(),
                 precio_unidad: parseFloat(precio_unidad) || 0,
@@ -93,30 +93,27 @@ class ProductService {
      * @returns {Promise<Object>} Update result
      * @throws {Error} If product not found or validation fails
      */
-    static async update(id, productData) {
+    static async update(id, tenantId, productData) {
         const { codigo, nombre, precio_unidad, categoria_id } = productData;
 
-        // Validate required fields
         if (!codigo || !nombre) {
             throw new Error('El código y nombre son requeridos');
         }
 
-        // Check if product exists
-        const existingProduct = await ProductRepository.findById(id);
+        const existingProduct = await ProductRepository.findById(id, tenantId);
         if (!existingProduct) {
             throw new Error('Producto no encontrado');
         }
 
-        // Validate category exists
         if (categoria_id) {
-            const category = await CategoryRepository.findById(categoria_id);
+            const category = await CategoryRepository.findById(categoria_id, tenantId);
             if (!category) {
                 throw new Error('Categoría no encontrada');
             }
         }
 
         try {
-            const result = await ProductRepository.update(id, {
+            const result = await ProductRepository.update(id, tenantId, {
                 codigo: codigo.trim(),
                 nombre: nombre.trim(),
                 precio_unidad: parseFloat(precio_unidad) || 0,
@@ -142,13 +139,13 @@ class ProductService {
      * @returns {Promise<Object>} Delete result
      * @throws {Error} If product not found
      */
-    static async delete(id) {
-        const producto = await ProductRepository.findById(id);
+    static async delete(id, tenantId) {
+        const producto = await ProductRepository.findById(id, tenantId);
         if (!producto) {
             throw new Error('Producto no encontrado');
         }
 
-        const result = await ProductRepository.delete(id);
+        const result = await ProductRepository.delete(id, tenantId);
         if (result.affectedRows === 0) {
             throw new Error('No se pudo eliminar el producto');
         }
@@ -161,17 +158,15 @@ class ProductService {
      * @param {Array<Object>} rows - Array of product objects from Excel
      * @returns {Promise<Object>} Import result with count
      */
-    static async importFromExcel(rows) {
+    static async importFromExcel(tenantId, rows) {
         if (!rows || rows.length === 0) {
             throw new Error('No hay registros válidos para importar');
         }
 
-        // Get category map for name to ID conversion
-        const categoryMap = await CategoryRepository.getCategoryMap();
+        const categoryMap = await CategoryRepository.getCategoryMap(tenantId);
 
-        // Transform rows to include category_id
         const products = rows.map(row => {
-            const categoriaId = categoryMap.get(row.categoria.toLowerCase()) || 1; // Default to first category if not found
+            const categoriaId = categoryMap.get(row.categoria.toLowerCase()) || 1;
             return {
                 codigo: row.codigo,
                 nombre: row.nombre,
@@ -180,7 +175,7 @@ class ProductService {
             };
         });
 
-        await ProductRepository.bulkUpsert(products);
+        await ProductRepository.bulkUpsert(tenantId, products);
 
         return { inserted: products.length };
     }

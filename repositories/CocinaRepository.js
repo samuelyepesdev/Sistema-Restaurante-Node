@@ -8,33 +8,38 @@ const db = require('../config/database');
 
 class CocinaRepository {
     /**
-     * Get kitchen queue (items in 'enviado', 'preparando', 'listo' states)
+     * Get kitchen queue (items in 'enviado', 'preparando', 'listo' states) for tenant
+     * @param {number} tenantId - Tenant ID
      * @returns {Promise<Array>} Array of kitchen items
      */
-    static async getQueue() {
+    static async getQueue(tenantId) {
         const [items] = await db.query(`
             SELECT i.*, p.mesa_id, m.numero AS mesa_numero, pr.nombre AS producto_nombre
             FROM pedido_items i
             JOIN pedidos p ON p.id = i.pedido_id
             JOIN mesas m ON m.id = p.mesa_id
             JOIN productos pr ON pr.id = i.producto_id
-            WHERE i.estado IN ('enviado','preparando','listo')
+            WHERE p.tenant_id = ? AND i.estado IN ('enviado','preparando','listo')
             ORDER BY COALESCE(i.enviado_at, i.created_at) ASC, i.id ASC
-        `);
+        `, [tenantId]);
         return items;
     }
 
     /**
-     * Update item state in kitchen
+     * Update item state in kitchen (item must belong to tenant)
      * @param {number} id - Item ID
+     * @param {number} tenantId - Tenant ID
      * @param {string} estado - New state ('preparando' or 'listo')
      * @returns {Promise<Object>} Update result
      */
-    static async updateItemEstado(id, estado) {
+    static async updateItemEstado(id, tenantId, estado) {
         const timestampField = estado === 'preparando' ? 'preparado_at' : 'listo_at';
         const [result] = await db.query(
-            `UPDATE pedido_items SET estado = ?, ${timestampField} = NOW() WHERE id = ? AND estado IN ('enviado','preparando')`,
-            [estado, id]
+            `UPDATE pedido_items pi
+             INNER JOIN pedidos p ON pi.pedido_id = p.id
+             SET pi.estado = ?, pi.${timestampField} = NOW()
+             WHERE pi.id = ? AND p.tenant_id = ? AND pi.estado IN ('enviado','preparando')`,
+            [estado, id, tenantId]
         );
         return result;
     }

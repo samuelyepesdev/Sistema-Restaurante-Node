@@ -20,18 +20,17 @@ const upload = multer({
     }
 });
 
-// Initialize configuration if needed (called once on module load)
-ConfiguracionService.initializeIfNeeded().catch(err => {
-    console.error('Error al inicializar configuración:', err);
-});
-
-// GET /configuracion - Configuration page
+// GET /configuracion - Configuration page (del tenant)
 router.get('/', async (req, res) => {
     try {
-        const config = await ConfiguracionService.getForView();
+        const tenantId = req.tenant?.id;
+        if (!tenantId) return res.status(403).render('error', { error: { message: 'Contexto de tenant no disponible' } });
+        await ConfiguracionService.initializeIfNeeded(tenantId);
+        const config = await ConfiguracionService.getForView(tenantId);
         res.render('configuracion', { 
             config,
-            user: req.user 
+            user: req.user,
+            tenant: req.tenant
         });
     } catch (error) {
         console.error('Error al obtener configuración:', error);
@@ -39,13 +38,15 @@ router.get('/', async (req, res) => {
     }
 });
 
-// POST /configuracion - Save configuration
+// POST /configuracion - Save configuration (del tenant)
 router.post('/', upload.fields([
     { name: 'logo', maxCount: 1 },
     { name: 'qr', maxCount: 1 }
 ]), async (req, res) => {
     try {
-        await ConfiguracionService.save(req.body, req.files);
+        const tenantId = req.tenant?.id;
+        if (!tenantId) return res.status(403).redirect('/configuracion');
+        await ConfiguracionService.save(tenantId, req.body, req.files);
         res.redirect('/configuracion');
     } catch (error) {
         console.error('Error en el procesamiento:', error);
@@ -58,10 +59,12 @@ router.get('/impresoras', (req, res) => {
     res.json([]);
 });
 
-// GET /configuracion/preview - Invoice preview with example data
+// GET /configuracion/preview - Invoice preview with example data (del tenant)
 router.get('/preview', async (req, res) => {
     try {
-        const config = await ConfiguracionService.getForPreview();
+        const tenantId = req.tenant?.id;
+        if (!tenantId) return res.status(403).json({ error: 'Contexto de tenant no disponible' });
+        const config = await ConfiguracionService.getForPreview(tenantId);
 
         // Example data for preview
         const facturaEjemplo = {

@@ -11,8 +11,8 @@ class CategoryService {
      * Get all active categories
      * @returns {Promise<Array>} Array of categories
      */
-    static async getAllActive() {
-        return await CategoryRepository.findAllActive();
+    static async getAllActive(tenantId) {
+        return await CategoryRepository.findAllActive(tenantId);
     }
 }
 

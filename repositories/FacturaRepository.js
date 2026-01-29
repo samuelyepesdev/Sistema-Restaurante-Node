@@ -16,15 +16,14 @@ class FacturaRepository {
      * @param {Array<Object>} facturaData.productos - Array of products
      * @returns {Promise<Object>} Created invoice with insertId
      */
-    static async createWithDetails(facturaData) {
+    static async createWithDetails(tenantId, facturaData) {
         const connection = await db.getConnection();
         try {
             await connection.beginTransaction();
 
-            // Insert invoice
             const [result] = await connection.query(
-                'INSERT INTO facturas (cliente_id, total, forma_pago) VALUES (?, ?, ?)',
-                [facturaData.cliente_id, facturaData.total, facturaData.forma_pago]
+                'INSERT INTO facturas (tenant_id, cliente_id, total, forma_pago) VALUES (?, ?, ?, ?)',
+                [tenantId, facturaData.cliente_id, facturaData.total, facturaData.forma_pago]
             );
 
             const factura_id = result.insertId;
@@ -60,13 +59,13 @@ class FacturaRepository {
      * @param {number} id - Invoice ID
      * @returns {Promise<Object|null>} Invoice object or null
      */
-    static async findByIdWithClient(id) {
+    static async findByIdWithClient(id, tenantId) {
         const [facturas] = await db.query(`
             SELECT f.*, c.nombre as cliente_nombre, c.direccion, c.telefono
             FROM facturas f
             JOIN clientes c ON f.cliente_id = c.id
-            WHERE f.id = ?
-        `, [id]);
+            WHERE f.id = ? AND f.tenant_id = ?
+        `, [id, tenantId]);
         return facturas[0] || null;
     }
 
@@ -90,13 +89,13 @@ class FacturaRepository {
      * @param {number} id - Invoice ID
      * @returns {Promise<Object>} Invoice details object
      */
-    static async getDetailsForAPI(id) {
+    static async getDetailsForAPI(id, tenantId) {
         const [facturas] = await db.query(`
             SELECT f.*, c.nombre as cliente_nombre, c.direccion, c.telefono 
             FROM facturas f 
             JOIN clientes c ON f.cliente_id = c.id 
-            WHERE f.id = ?
-        `, [id]);
+            WHERE f.id = ? AND f.tenant_id = ?
+        `, [id, tenantId]);
 
         if (facturas.length === 0) {
             return null;

@@ -11,13 +11,14 @@ class ProductRepository {
      * Get all products with their categories
      * @returns {Promise<Array>} Array of products
      */
-    static async findAll() {
+    static async findAll(tenantId) {
         const [productos] = await db.query(`
             SELECT p.*, c.nombre as categoria_nombre 
             FROM productos p 
             LEFT JOIN categorias c ON p.categoria_id = c.id 
+            WHERE p.tenant_id = ?
             ORDER BY p.nombre
-        `);
+        `, [tenantId]);
         return productos;
     }
 
@@ -26,13 +27,13 @@ class ProductRepository {
      * @param {number} id - Product ID
      * @returns {Promise<Object|null>} Product object or null
      */
-    static async findById(id) {
+    static async findById(id, tenantId) {
         const [productos] = await db.query(`
             SELECT p.*, c.nombre as categoria_nombre 
             FROM productos p 
             LEFT JOIN categorias c ON p.categoria_id = c.id 
-            WHERE p.id = ?
-        `, [id]);
+            WHERE p.id = ? AND p.tenant_id = ?
+        `, [id, tenantId]);
         return productos[0] || null;
     }
 
@@ -42,14 +43,14 @@ class ProductRepository {
      * @param {number} limit - Maximum results (default: 10)
      * @returns {Promise<Array>} Array of products
      */
-    static async search(query, limit = 10) {
+    static async search(query, tenantId, limit = 10) {
         const searchTerm = `%${query}%`;
         const [productos] = await db.query(`
             SELECT * FROM productos 
-            WHERE nombre LIKE ? OR codigo LIKE ?
+            WHERE tenant_id = ? AND (nombre LIKE ? OR codigo LIKE ?)
             ORDER BY nombre
             LIMIT ?
-        `, [searchTerm, searchTerm, limit]);
+        `, [tenantId, searchTerm, searchTerm, limit]);
         return productos;
     }
 
@@ -62,11 +63,11 @@ class ProductRepository {
      * @param {number} productData.categoria_id - Category ID
      * @returns {Promise<Object>} Created product with insertId
      */
-    static async create(productData) {
+    static async create(tenantId, productData) {
         const { codigo, nombre, precio_unidad, categoria_id } = productData;
         const result = await db.query(
-            'INSERT INTO productos (codigo, nombre, precio_unidad, categoria_id) VALUES (?, ?, ?, ?)',
-            [codigo, nombre, precio_unidad || 0, categoria_id || 1]
+            'INSERT INTO productos (tenant_id, codigo, nombre, precio_unidad, categoria_id) VALUES (?, ?, ?, ?, ?)',
+            [tenantId, codigo, nombre, precio_unidad || 0, categoria_id || 1]
         );
         return result;
     }
@@ -77,11 +78,11 @@ class ProductRepository {
      * @param {Object} productData - Product data to update
      * @returns {Promise<Object>} Update result
      */
-    static async update(id, productData) {
+    static async update(id, tenantId, productData) {
         const { codigo, nombre, precio_unidad, categoria_id } = productData;
         const result = await db.query(
-            'UPDATE productos SET codigo = ?, nombre = ?, precio_unidad = ?, categoria_id = ? WHERE id = ?',
-            [codigo, nombre, precio_unidad || 0, categoria_id || 1, id]
+            'UPDATE productos SET codigo = ?, nombre = ?, precio_unidad = ?, categoria_id = ? WHERE id = ? AND tenant_id = ?',
+            [codigo, nombre, precio_unidad || 0, categoria_id || 1, id, tenantId]
         );
         return result;
     }
@@ -91,8 +92,8 @@ class ProductRepository {
      * @param {number} id - Product ID
      * @returns {Promise<Object>} Delete result
      */
-    static async delete(id) {
-        const result = await db.query('DELETE FROM productos WHERE id = ?', [id]);
+    static async delete(id, tenantId) {
+        const result = await db.query('DELETE FROM productos WHERE id = ? AND tenant_id = ?', [id, tenantId]);
         return result;
     }
 
@@ -101,14 +102,14 @@ class ProductRepository {
      * @param {Array<Object>} products - Array of product objects
      * @returns {Promise<void>}
      */
-    static async bulkUpsert(products) {
+    static async bulkUpsert(tenantId, products) {
         const connection = await db.getConnection();
         try {
             await connection.beginTransaction();
             for (const p of products) {
                 await connection.query(
-                    'INSERT INTO productos (codigo, nombre, categoria_id, precio_unidad) VALUES (?,?,?,?) ON DUPLICATE KEY UPDATE nombre=VALUES(nombre), categoria_id=VALUES(categoria_id), precio_unidad=VALUES(precio_unidad)',
-                    [p.codigo, p.nombre, p.categoria_id, p.precio_unidad]
+                    'INSERT INTO productos (tenant_id, codigo, nombre, categoria_id, precio_unidad) VALUES (?,?,?,?,?) ON DUPLICATE KEY UPDATE nombre=VALUES(nombre), categoria_id=VALUES(categoria_id), precio_unidad=VALUES(precio_unidad)',
+                    [tenantId, p.codigo, p.nombre, p.categoria_id, p.precio_unidad]
                 );
             }
             await connection.commit();

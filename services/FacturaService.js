@@ -12,14 +12,14 @@ class FacturaService {
      * @param {Object} facturaData - Invoice data
      * @returns {Promise<Object>} Created invoice result
      */
-    static async create(facturaData) {
+    static async create(tenantId, facturaData) {
         const { cliente_id, total, forma_pago, productos } = facturaData;
 
         if (!cliente_id || !productos || productos.length === 0) {
             throw new Error('Datos incompletos');
         }
 
-        const result = await FacturaRepository.createWithDetails({
+        const result = await FacturaRepository.createWithDetails(tenantId, {
             cliente_id,
             total,
             forma_pago,
@@ -35,8 +35,8 @@ class FacturaService {
      * @returns {Promise<Object>} Invoice data with client and details
      * @throws {Error} If invoice not found
      */
-    static async getByIdForPrint(id) {
-        const factura = await FacturaRepository.findByIdWithClient(id);
+    static async getByIdForPrint(id, tenantId) {
+        const factura = await FacturaRepository.findByIdWithClient(id, tenantId);
         if (!factura) {
             throw new Error('Factura no encontrada');
         }
@@ -50,13 +50,14 @@ class FacturaService {
     }
 
     /**
-     * Get invoice details for API
+     * Get invoice details for API (within tenant)
      * @param {number} id - Invoice ID
+     * @param {number} tenantId - Tenant ID
      * @returns {Promise<Object>} Invoice details object
      * @throws {Error} If invoice not found
      */
-    static async getDetails(id) {
-        const details = await FacturaRepository.getDetailsForAPI(id);
+    static async getDetails(id, tenantId) {
+        const details = await FacturaRepository.getDetailsForAPI(id, tenantId);
         if (!details) {
             throw new Error('Factura no encontrada');
         }

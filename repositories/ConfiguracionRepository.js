@@ -8,34 +8,37 @@ const db = require('../config/database');
 
 class ConfiguracionRepository {
     /**
-     * Get configuration (first record)
+     * Get configuration for tenant (first record for that tenant)
+     * @param {number} tenantId - Tenant ID
      * @returns {Promise<Object|null>} Configuration object or null
      */
-    static async findOne() {
-        const [config] = await db.query('SELECT * FROM configuracion_impresion LIMIT 1');
+    static async findOne(tenantId) {
+        const [config] = await db.query('SELECT * FROM configuracion_impresion WHERE tenant_id = ? LIMIT 1', [tenantId]);
         return config[0] || null;
     }
 
     /**
-     * Create initial configuration
+     * Create initial configuration for tenant
+     * @param {number} tenantId - Tenant ID
      * @returns {Promise<Object>} Created configuration with insertId
      */
-    static async createInitial() {
-        const result = await db.query(`
+    static async createInitial(tenantId) {
+        const [result] = await db.query(`
             INSERT INTO configuracion_impresion 
-            (nombre_negocio, direccion, telefono, pie_pagina) 
+            (tenant_id, nombre_negocio, direccion, telefono, pie_pagina) 
             VALUES 
-            ('Mi Negocio', 'Dirección del Negocio', 'Teléfono', '¡Gracias por su compra!')
-        `);
+            (?, 'Mi Negocio', 'Dirección del Negocio', 'Teléfono', '¡Gracias por su compra!')
+        `, [tenantId]);
         return result;
     }
 
     /**
-     * Create new configuration
+     * Create new configuration for tenant
+     * @param {number} tenantId - Tenant ID
      * @param {Object} configData - Configuration data
      * @returns {Promise<Object>} Created configuration with insertId
      */
-    static async create(configData) {
+    static async create(tenantId, configData) {
         const {
             nombre_negocio, direccion, telefono, nit, pie_pagina,
             ancho_papel, font_size, logo_data, logo_tipo, qr_data, qr_tipo
@@ -43,9 +46,9 @@ class ConfiguracionRepository {
 
         let sql = `
             INSERT INTO configuracion_impresion 
-            (nombre_negocio, direccion, telefono, nit, pie_pagina, ancho_papel, font_size
+            (tenant_id, nombre_negocio, direccion, telefono, nit, pie_pagina, ancho_papel, font_size
         `;
-        const values = [nombre_negocio, direccion || null, telefono || null, nit || null, pie_pagina || null, ancho_papel || 80, font_size || 1];
+        const values = [tenantId, nombre_negocio, direccion || null, telefono || null, nit || null, pie_pagina || null, ancho_papel || 80, font_size || 1];
 
         if (logo_data) {
             sql += ', logo_data, logo_tipo';
@@ -62,12 +65,13 @@ class ConfiguracionRepository {
     }
 
     /**
-     * Update configuration
+     * Update configuration (for tenant)
      * @param {number} id - Configuration ID
+     * @param {number} tenantId - Tenant ID
      * @param {Object} configData - Configuration data to update
      * @returns {Promise<Object>} Update result
      */
-    static async update(id, configData) {
+    static async update(id, tenantId, configData) {
         const {
             nombre_negocio, direccion, telefono, nit, pie_pagina,
             ancho_papel, font_size, logo_data, logo_tipo, qr_data, qr_tipo
@@ -88,8 +92,8 @@ class ConfiguracionRepository {
             sql += ', qr_data = ?, qr_tipo = ?';
             values.push(qr_data, qr_tipo);
         }
-        sql += ' WHERE id = ?';
-        values.push(id);
+        sql += ' WHERE id = ? AND tenant_id = ?';
+        values.push(id, tenantId);
 
         const result = await db.query(sql, values);
         return result;

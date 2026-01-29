@@ -37,7 +37,7 @@ Este script:
    - Dashboard y Ventas mostrarán solo datos de Sucursal Sur.
 5. Con **mesero_principal** verás datos del tenant Principal.
 
-**Nota:** Las pantallas Mesas y Productos aún no filtran por tenant en el backend; cuando se refactorice esos módulos para usar `req.tenant.id`, cada usuario verá solo sus mesas/productos. El seeder deja listos los datos (mesas 10–12 para Norte, 20–22 para Sur, productos N-* y S-*) para cuando eso esté implementado.
+**Nota:** Mesas, Productos, Clientes, Cocina, Ventas, Dashboard y Configuración ya filtran por tenant: cada usuario solo ve y gestiona datos de su restaurante/local.
 
 ## Archivo SQL de referencia
 

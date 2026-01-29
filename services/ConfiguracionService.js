@@ -11,8 +11,8 @@ class ConfiguracionService {
      * Get configuration for view (with image URLs)
      * @returns {Promise<Object>} Configuration object
      */
-    static async getForView() {
-        let config = await ConfiguracionRepository.findOne();
+    static async getForView(tenantId) {
+        let config = await ConfiguracionRepository.findOne(tenantId);
 
         if (!config) {
             // Return default values
@@ -74,13 +74,13 @@ class ConfiguracionService {
      * @param {Object} files - Uploaded files (logo, qr)
      * @returns {Promise<void>}
      */
-    static async save(configData, files) {
+    static async save(tenantId, configData, files) {
         const {
             nombre_negocio, direccion, telefono, nit, pie_pagina,
             ancho_papel, font_size
         } = configData;
 
-        const existingConfig = await ConfiguracionRepository.findOne();
+        const existingConfig = await ConfiguracionRepository.findOne(tenantId);
 
         const configToSave = {
             nombre_negocio,
@@ -102,10 +102,10 @@ class ConfiguracionService {
         }
 
         if (!existingConfig) {
-            await ConfiguracionRepository.create(configToSave);
+            await ConfiguracionRepository.create(tenantId, configToSave);
         } else {
             configToSave.id = existingConfig.id;
-            await ConfiguracionRepository.update(existingConfig.id, configToSave);
+            await ConfiguracionRepository.update(existingConfig.id, tenantId, configToSave);
         }
     }
 
@@ -113,10 +113,10 @@ class ConfiguracionService {
      * Initialize configuration if it doesn't exist
      * @returns {Promise<void>}
      */
-    static async initializeIfNeeded() {
-        const config = await ConfiguracionRepository.findOne();
+    static async initializeIfNeeded(tenantId) {
+        const config = await ConfiguracionRepository.findOne(tenantId);
         if (!config) {
-            await ConfiguracionRepository.createInitial();
+            await ConfiguracionRepository.createInitial(tenantId);
         }
     }
 }

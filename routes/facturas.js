@@ -8,10 +8,12 @@ const express = require('express');
 const router = express.Router();
 const FacturaService = require('../services/FacturaService');
 
-// POST /facturas - Create new invoice
+// POST /facturas - Create new invoice (del tenant)
 router.post('/', async (req, res) => {
     try {
-        const result = await FacturaService.create(req.body);
+        const tenantId = req.tenant?.id;
+        if (!tenantId) return res.status(403).json({ error: 'Contexto de tenant no disponible' });
+        const result = await FacturaService.create(tenantId, req.body);
         res.status(201).json(result);
     } catch (error) {
         console.error('Error al crear factura:', error);
@@ -22,15 +24,16 @@ router.post('/', async (req, res) => {
     }
 });
 
-// GET /facturas/:id/imprimir - Print invoice view
+// GET /facturas/:id/imprimir - Print invoice view (solo si factura pertenece al tenant)
 router.get('/:id/imprimir', async (req, res) => {
     try {
+        const tenantId = req.tenant?.id;
+        if (!tenantId) return res.status(403).json({ error: 'Contexto de tenant no disponible' });
         const ConfiguracionService = require('../services/ConfiguracionService');
         const facturaId = parseInt(req.params.id);
-        const { factura, detalles } = await FacturaService.getByIdForPrint(facturaId);
+        const { factura, detalles } = await FacturaService.getByIdForPrint(facturaId, tenantId);
         
-        // Get configuration for printing
-        const config = await ConfiguracionService.getForPreview();
+        const config = await ConfiguracionService.getForPreview(tenantId);
         
         res.render('factura', {
             factura,
@@ -46,11 +49,13 @@ router.get('/:id/imprimir', async (req, res) => {
     }
 });
 
-// GET /facturas/:id/detalles - Get invoice details for API
+// GET /facturas/:id/detalles - Get invoice details for API (del tenant)
 router.get('/:id/detalles', async (req, res) => {
     try {
+        const tenantId = req.tenant?.id;
+        if (!tenantId) return res.status(403).json({ error: 'Contexto de tenant no disponible' });
         const facturaId = parseInt(req.params.id);
-        const details = await FacturaService.getDetails(facturaId);
+        const details = await FacturaService.getDetails(facturaId, tenantId);
         res.json(details);
     } catch (error) {
         console.error('Error al obtener detalles de la factura:', error);

@@ -10,14 +10,17 @@ const ProductService = require('../services/ProductService');
 const CategoryService = require('../services/CategoryService');
 let ExcelJS; // Lazy import for Excel template/import
 
-// GET /productos - Show products page
+// GET /productos - Show products page (solo del tenant)
 router.get('/', async (req, res) => {
     try {
-        const { productos, categorias } = await ProductService.getAllForView();
+        const tenantId = req.tenant?.id;
+        if (!tenantId) return res.status(403).render('error', { error: { message: 'Contexto de tenant no disponible' } });
+        const { productos, categorias } = await ProductService.getAllForView(tenantId);
         res.render('productos', { 
             productos: productos || [],
             categorias: categorias || [],
-            user: req.user
+            user: req.user,
+            tenant: req.tenant
         });
     } catch (error) {
         console.error('Error al obtener productos:', error);
@@ -30,10 +33,12 @@ router.get('/', async (req, res) => {
     }
 });
 
-// GET /productos/categorias - Get all categories
+// GET /productos/categorias - Get all categories (del tenant)
 router.get('/categorias', async (req, res) => {
     try {
-        const categorias = await CategoryService.getAllActive();
+        const tenantId = req.tenant?.id;
+        if (!tenantId) return res.status(403).json({ error: 'Contexto de tenant no disponible' });
+        const categorias = await CategoryService.getAllActive(tenantId);
         res.json(categorias);
     } catch (error) {
         console.error('Error al obtener categorías:', error);
@@ -41,11 +46,13 @@ router.get('/categorias', async (req, res) => {
     }
 });
 
-// GET /productos/buscar - Search products
+// GET /productos/buscar - Search products (del tenant)
 router.get('/buscar', async (req, res) => {
     try {
+        const tenantId = req.tenant?.id;
+        if (!tenantId) return res.status(403).json({ error: 'Contexto de tenant no disponible' });
         const query = req.query.q || '';
-        const productos = await ProductService.search(query);
+        const productos = await ProductService.search(query, tenantId);
         res.json(productos);
     } catch (error) {
         console.error('Error al buscar productos:', error);
@@ -53,10 +60,12 @@ router.get('/buscar', async (req, res) => {
     }
 });
 
-// GET /productos/:id - Get product by ID
+// GET /productos/:id - Get product by ID (del tenant)
 router.get('/:id(\\d+)', async (req, res) => {
     try {
-        const producto = await ProductService.getById(parseInt(req.params.id));
+        const tenantId = req.tenant?.id;
+        if (!tenantId) return res.status(403).json({ error: 'Contexto de tenant no disponible' });
+        const producto = await ProductService.getById(parseInt(req.params.id), tenantId);
         res.json(producto);
     } catch (error) {
         console.error('Error al obtener producto:', error);
@@ -67,10 +76,12 @@ router.get('/:id(\\d+)', async (req, res) => {
     }
 });
 
-// POST /productos - Create new product
+// POST /productos - Create new product (del tenant)
 router.post('/', async (req, res) => {
     try {
-        const result = await ProductService.create(req.body);
+        const tenantId = req.tenant?.id;
+        if (!tenantId) return res.status(403).json({ error: 'Contexto de tenant no disponible' });
+        const result = await ProductService.create(tenantId, req.body);
         res.status(201).json(result);
     } catch (error) {
         console.error('Error al crear producto:', error);
@@ -81,10 +92,12 @@ router.post('/', async (req, res) => {
     }
 });
 
-// PUT /productos/:id - Update product
+// PUT /productos/:id - Update product (del tenant)
 router.put('/:id', async (req, res) => {
     try {
-        const result = await ProductService.update(parseInt(req.params.id), req.body);
+        const tenantId = req.tenant?.id;
+        if (!tenantId) return res.status(403).json({ error: 'Contexto de tenant no disponible' });
+        const result = await ProductService.update(parseInt(req.params.id), tenantId, req.body);
         res.json(result);
     } catch (error) {
         console.error('Error al actualizar producto:', error);
@@ -96,10 +109,12 @@ router.put('/:id', async (req, res) => {
     }
 });
 
-// DELETE /productos/:id - Delete product
+// DELETE /productos/:id - Delete product (del tenant)
 router.delete('/:id', async (req, res) => {
     try {
-        const result = await ProductService.delete(parseInt(req.params.id));
+        const tenantId = req.tenant?.id;
+        if (!tenantId) return res.status(403).json({ error: 'Contexto de tenant no disponible' });
+        const result = await ProductService.delete(parseInt(req.params.id), tenantId);
         res.json(result);
     } catch (error) {
         console.error('Error al eliminar producto:', error);
@@ -236,7 +251,9 @@ router.post('/importar', upload.single('archivo'), async (req, res) => {
             });
         });
 
-        const result = await ProductService.importFromExcel(rows);
+        const tenantId = req.tenant?.id;
+        if (!tenantId) return res.status(403).json({ error: 'Contexto de tenant no disponible' });
+        const result = await ProductService.importFromExcel(tenantId, rows);
         res.json(result);
     } catch (error) {
         console.error('Error al importar:', error);

@@ -11,8 +11,8 @@ class ClienteRepository {
      * Get all clients
      * @returns {Promise<Array>} Array of clients
      */
-    static async findAll() {
-        const [clientes] = await db.query('SELECT * FROM clientes ORDER BY nombre');
+    static async findAll(tenantId) {
+        const [clientes] = await db.query('SELECT * FROM clientes WHERE tenant_id = ? ORDER BY nombre', [tenantId]);
         return clientes;
     }
 
@@ -21,8 +21,8 @@ class ClienteRepository {
      * @param {number} id - Client ID
      * @returns {Promise<Object|null>} Client object or null
      */
-    static async findById(id) {
-        const [clientes] = await db.query('SELECT * FROM clientes WHERE id = ?', [id]);
+    static async findById(id, tenantId) {
+        const [clientes] = await db.query('SELECT * FROM clientes WHERE id = ? AND tenant_id = ?', [id, tenantId]);
         return clientes[0] || null;
     }
 
@@ -32,14 +32,14 @@ class ClienteRepository {
      * @param {number} limit - Maximum results (default: 10)
      * @returns {Promise<Array>} Array of clients
      */
-    static async search(query, limit = 10) {
+    static async search(query, tenantId, limit = 10) {
         const searchTerm = `%${query}%`;
         const [clientes] = await db.query(`
             SELECT * FROM clientes 
-            WHERE nombre LIKE ? OR telefono LIKE ?
+            WHERE tenant_id = ? AND (nombre LIKE ? OR telefono LIKE ?)
             ORDER BY nombre
             LIMIT ?
-        `, [searchTerm, searchTerm, limit]);
+        `, [tenantId, searchTerm, searchTerm, limit]);
         return clientes;
     }
 
@@ -51,11 +51,11 @@ class ClienteRepository {
      * @param {string} clientData.telefono - Client phone (optional)
      * @returns {Promise<Object>} Created client with insertId
      */
-    static async create(clientData) {
+    static async create(tenantId, clientData) {
         const { nombre, direccion, telefono } = clientData;
         const [result] = await db.query(
-            'INSERT INTO clientes (nombre, direccion, telefono) VALUES (?, ?, ?)',
-            [nombre, direccion || null, telefono || null]
+            'INSERT INTO clientes (tenant_id, nombre, direccion, telefono) VALUES (?, ?, ?, ?)',
+            [tenantId, nombre, direccion || null, telefono || null]
         );
         return result;
     }
@@ -66,11 +66,11 @@ class ClienteRepository {
      * @param {Object} clientData - Client data to update
      * @returns {Promise<Object>} Update result
      */
-    static async update(id, clientData) {
+    static async update(id, tenantId, clientData) {
         const { nombre, direccion, telefono } = clientData;
         const result = await db.query(
-            'UPDATE clientes SET nombre = ?, direccion = ?, telefono = ? WHERE id = ?',
-            [nombre, direccion || null, telefono || null, id]
+            'UPDATE clientes SET nombre = ?, direccion = ?, telefono = ? WHERE id = ? AND tenant_id = ?',
+            [nombre, direccion || null, telefono || null, id, tenantId]
         );
         return result;
     }
@@ -80,8 +80,8 @@ class ClienteRepository {
      * @param {number} id - Client ID
      * @returns {Promise<Object>} Delete result
      */
-    static async delete(id) {
-        const result = await db.query('DELETE FROM clientes WHERE id = ?', [id]);
+    static async delete(id, tenantId) {
+        const result = await db.query('DELETE FROM clientes WHERE id = ? AND tenant_id = ?', [id, tenantId]);
         return result;
     }
 }
