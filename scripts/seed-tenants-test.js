@@ -137,22 +137,6 @@ async function seedDatosPorTenant(tenantIds) {
     }
     console.log('   Productos de prueba creados para Norte y Sur.');
 
-    // Mesas por tenant (números únicos: 10,11,12 para Norte; 20,21,22 para Sur)
-    const mesasNorte = ['10', '11', '12'];
-    const mesasSur = ['20', '21', '22'];
-    for (const num of mesasNorte) {
-        await db.query(
-            'INSERT IGNORE INTO mesas (tenant_id, numero, descripcion, estado) VALUES (?, ?, ?, ?)',
-            [norteId, num, `Mesa ${num} Norte`, 'libre']
-        );
-    }
-    for (const num of mesasSur) {
-        await db.query(
-            'INSERT IGNORE INTO mesas (tenant_id, numero, descripcion, estado) VALUES (?, ?, ?, ?)',
-            [surId, num, `Mesa ${num} Sur`, 'libre']
-        );
-    }
-    console.log('   Mesas de prueba creadas: 10,11,12 (Norte) y 20,21,22 (Sur).');
 }
 
 async function run() {
