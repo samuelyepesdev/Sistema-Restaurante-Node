@@ -181,7 +181,9 @@
                         localStorage.setItem('user', JSON.stringify(data.user));
                     }
 
-                    // Show success and redirect
+                    // Redirect: superadmin solo va a gestión de restaurantes
+                    const rol = (data.user.rol || '').toString().toLowerCase();
+                    const isSuperadmin = rol === 'superadmin';
                     Swal.fire({
                         icon: 'success',
                         title: '¡Bienvenido!',
@@ -189,7 +191,7 @@
                         timer: 1500,
                         showConfirmButton: false
                     }).then(() => {
-                        window.location.href = '/';
+                        window.location.href = isSuperadmin ? '/admin/tenants' : '/';
                     });
 
                 } catch (error) {

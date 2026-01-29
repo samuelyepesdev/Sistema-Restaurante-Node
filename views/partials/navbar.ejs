@@ -1,11 +1,11 @@
 <% 
 // Navbar partial with user info and logout
-// Receives: user (from req.user) - passed as parameter in include()
-// User variable is available directly from the include context, no need to redeclare
+const isSuperadmin = user && String(user.rol || '').toLowerCase() === 'superadmin';
+const brandHref = isSuperadmin ? '/admin/tenants' : '/';
 %>
 <nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4">
     <div class="container-fluid">
-        <a class="navbar-brand" href="/">
+        <a class="navbar-brand" href="<%= brandHref %>">
             <i class="bi bi-shop"></i> <%= typeof tenant !== 'undefined' && tenant ? tenant.nombre : 'Sistema Restaurante' %>
         </a>
         
@@ -15,6 +15,13 @@
         
         <div class="collapse navbar-collapse" id="navbarNav">
             <ul class="navbar-nav me-auto">
+                <% if (isSuperadmin) { %>
+                <li class="nav-item">
+                    <a class="nav-link active" href="/admin/tenants">
+                        <i class="bi bi-building"></i> Restaurantes
+                    </a>
+                </li>
+                <% } else { %>
                 <% if (user && user.rol === 'admin') { %>
                 <li class="nav-item">
                     <a class="nav-link" href="/dashboard">
@@ -69,6 +76,7 @@
                         <i class="bi bi-gear"></i> Configuración
                     </a>
                 </li>
+                <% } %>
                 <% } %>
             </ul>
             

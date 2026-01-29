@@ -28,13 +28,24 @@ router.get('/', async (req, res) => {
 
 router.post('/', async (req, res) => {
     try {
-        const { nombre, slug, config } = req.body;
-        const { id: tenantId } = await TenantService.createTenant({ nombre, slug, config: JSON.parse(config || '{}') });
+        const { nombre, slug, config, admin_username, admin_password, admin_email, admin_nombre_completo } = req.body;
+        if (!nombre || !slug || !admin_username || !admin_password) {
+            return res.status(400).send('Faltan nombre del restaurante, slug, usuario admin o contraseña.');
+        }
+        const tenant = await TenantService.createTenant({ nombre, slug, config: JSON.parse(config || '{}') });
+        const tenantId = tenant.id;
+        await TenantUserService.createTenantUser(tenantId, {
+            username: admin_username,
+            password: admin_password,
+            email: admin_email || null,
+            nombre_completo: admin_nombre_completo || null,
+            rol_nombre: 'admin'
+        });
         await TenantAuditService.log({
             tenantId,
             userId: req.user?.id || null,
             accion: 'crear_tenant',
-            detalles: `Clave slug=${slug}`
+            detalles: `slug=${slug} admin=${admin_username}`
         });
         res.redirect('/admin/tenants');
     } catch (error) {

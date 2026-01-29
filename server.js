@@ -54,11 +54,11 @@ app.use((req, res, next) => {
 });
 
 // Middleware de autenticación y tenant
-const { requireAuth, optionalAuth } = require('./middleware/auth');
+const { requireAuth, optionalAuth, restrictSuperadminToAdmin } = require('./middleware/auth');
 const { attachTenantContext } = require('./middleware/tenant');
 
-// Chain: requireAuth -> attachTenantContext (for protected routes)
-const requireAuthWithTenant = [requireAuth, attachTenantContext];
+// Rutas de app: superadmin solo puede ver /admin/tenants; el resto requiere tenant
+const requireAuthWithTenant = [requireAuth, restrictSuperadminToAdmin, attachTenantContext];
 
 // Rutas de autenticación (públicas)
 const authRoutes = require('./routes/auth');
@@ -78,9 +78,10 @@ const adminTenantsRoutes = require('./routes/admin/tenants');
 // Ruta principal - redirige según autenticación y rol
 app.get('/', optionalAuth, (req, res) => {
     if (req.user) {
-        // Usuario autenticado, redirigir según rol
-        const rol = req.user.rol;
-        if (rol === 'admin') {
+        const rol = String((req.user.rol || '')).toLowerCase();
+        if (rol === 'superadmin') {
+            res.redirect('/admin/tenants');
+        } else if (rol === 'admin') {
             res.redirect('/dashboard');
         } else if (rol === 'mesero') {
             res.redirect('/mesas');
@@ -89,11 +90,9 @@ app.get('/', optionalAuth, (req, res) => {
         } else if (rol === 'cajero') {
             res.redirect('/ventas');
         } else {
-            // Rol desconocido, redirigir a mesas por defecto
             res.redirect('/mesas');
         }
     } else {
-        // No autenticado, redirigir a login
         res.redirect('/auth/login');
     }
 });
@@ -113,7 +112,8 @@ app.use('/configuracion', requireAuthWithTenant, configuracionRoutes);
 app.use('/ventas', requireAuthWithTenant, ventasRoutes);
 app.use('/dashboard', requireAuthWithTenant, dashboardRoutes);
 app.use('/api/dashboard', requireAuthWithTenant, dashboardRoutes);
-app.use('/admin/tenants', requireAuthWithTenant, adminTenantsRoutes);
+// Superadmin: solo requireAuth (no tenant); el panel solo permite rol superadmin
+app.use('/admin/tenants', requireAuth, adminTenantsRoutes);
 
 
 // Manejo de errores 404

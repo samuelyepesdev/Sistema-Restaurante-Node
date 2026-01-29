@@ -97,6 +97,24 @@ function requirePermission(...requiredPermissions) {
 }
 
 /**
+ * Restrict superadmin to only /admin/tenants (and auth). Use after requireAuth on app routes.
+ * Superadmin must not see dashboard, mesas, etc.
+ */
+function restrictSuperadminToAdmin(req, res, next) {
+    const rol = req.user && String(req.user.rol || '').toLowerCase();
+    if (rol === 'superadmin') {
+        const path = (req.baseUrl || '') + (req.path || '');
+        if (!path.startsWith('/admin/tenants') && path !== '/auth/logout') {
+            if (req.xhr || req.headers.accept?.indexOf('json') > -1) {
+                return res.status(403).json({ error: 'Acceso restringido. Solo gestión de restaurantes.' });
+            }
+            return res.redirect('/admin/tenants');
+        }
+    }
+    next();
+}
+
+/**
  * Optional auth middleware - attaches user if token exists, but doesn't require it
  */
 function optionalAuth(req, res, next) {
@@ -125,6 +143,7 @@ module.exports = {
     requireAuth,
     requireRole,
     requirePermission,
+    restrictSuperadminToAdmin,
     optionalAuth
 };
 

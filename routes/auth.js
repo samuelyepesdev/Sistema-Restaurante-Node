@@ -31,8 +31,9 @@ router.post('/login', [
             return res.status(401).json({ error: result.message });
         }
 
-        // Set token in cookie for web requests
-        if (!req.xhr && req.headers.accept?.indexOf('json') === -1) {
+        // Set token in cookie so server-side redirects and page loads see the user
+        const isJsonRequest = req.xhr || (req.headers.accept && req.headers.accept.indexOf('json') !== -1);
+        if (!isJsonRequest) {
             res.cookie('auth_token', result.token, {
                 httpOnly: true,
                 secure: process.env.NODE_ENV === 'production',
