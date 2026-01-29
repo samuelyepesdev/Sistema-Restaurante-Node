@@ -1,0 +1,233 @@
+<% const selectedTenant = tenants.find(t => t.id === Number(activeTenantId)); %>
+<%- include('../partials/navbar', { user, tenant: selectedTenant || null }) %>
+<div class="container-fluid py-4">
+  <div class="d-flex align-items-center justify-content-between mb-4">
+    <div>
+      <h1 class="h3 mb-0 text-gray-800">Superadmin · Tenants</h1>
+      <p class="text-muted mb-0">Gestiona locales, roles y usuarios de cada restaurante.</p>
+    </div>
+    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalCreateTenant">
+      <i class="bi bi-plus-circle"></i> Nuevo tenant
+    </button>
+  </div>
+
+  <div class="row g-4">
+    <div class="col-lg-4">
+      <div class="list-group">
+        <% tenants.forEach(t => { %>
+          <a href="?tenantId=<%= t.id %>" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center <%= Number(activeTenantId) === t.id ? 'active' : '' %>">
+            <div>
+              <strong><%= t.nombre %></strong><br/>
+              <small class="text-muted"><%= t.slug %></small>
+            </div>
+            <span class="badge bg-<%= t.activo ? 'success' : 'secondary' %>">
+              <%= t.activo ? 'Activo' : 'Inactivo' %>
+            </span>
+          </a>
+        <% }) %>
+      </div>
+    </div>
+
+    <div class="col-lg-8">
+      <% if (selectedTenant) { %>
+        <div class="card shadow-sm">
+          <div class="card-body">
+            <div class="d-flex justify-content-between mb-3">
+              <div>
+                <h4 class="card-title mb-1"><%= active.nombre %></h4>
+                <p class="text-muted mb-0">Slug: <%= active.slug %></p>
+              </div>
+              <button class="btn btn-outline-secondary btn-sm" onclick="toggleTenantStatus('<%= active.id %>', <%= active.activo ? 'false' : 'true' %>)">
+                <%= active.activo ? 'Desactivar' : 'Activar' %>
+              </button>
+            </div>
+            <div class="mb-4">
+              <h6>Configuración visual</h6>
+              <p class="text-muted"><%= active.config ? JSON.stringify(active.config) : 'Sin configuración' %></p>
+            </div>
+
+            <form id="form-edit-tenant" onsubmit="return updateTenant(event, <%= selectedTenant.id %>)">
+              <div class="row gy-3">
+                <div class="col-md-6">
+                  <label class="form-label">Nombre</label>
+                  <input type="text" name="nombre" class="form-control" value="<%= active.nombre %>" required>
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label">Slug</label>
+                  <input type="text" name="slug" class="form-control" value="<%= active.slug %>" disabled>
+                </div>
+                <div class="col-12">
+                  <label class="form-label">Config JSON</label>
+                  <textarea name="config" class="form-control" rows="3"><%= active.config ? JSON.stringify(active.config) : '{}' %></textarea>
+                </div>
+              </div>
+              <div class="mt-3">
+                <button class="btn btn-outline-primary btn-sm">Guardar cambios</button>
+              </div>
+            </form>
+
+            <hr class="my-4">
+            <h6>Usuarios del tenant</h6>
+            <div class="table-responsive mb-3">
+              <table class="table table-sm align-middle">
+                <thead>
+                  <tr>
+                    <th>Usuario</th>
+                    <th>Rol</th>
+                    <th>Estado</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <% tenantUsers.forEach(u => { %>
+                  <tr>
+                    <td><%= u.username %><br/><small class="text-muted"><%= u.email || 'sin email' %></small></td>
+                    <td>
+                      <form class="d-flex align-items-center" onsubmit="return changeRole(event, <%= u.id %>)">
+                        <select name="rol_nombre" class="form-select form-select-sm">
+                          <option value="admin" <%= u.rol === 'admin' ? 'selected' : '' %>>Administrador</option>
+                          <option value="mesero" <%= u.rol === 'mesero' ? 'selected' : '' %>>Mesero</option>
+                          <option value="cajero" <%= u.rol === 'cajero' ? 'selected' : '' %>>Cajero</option>
+                          <option value="cocinero" <%= u.rol === 'cocinero' ? 'selected' : '' %>>Cocinero</option>
+                        </select>
+                        <button class="btn btn-sm btn-link ms-2">Guardar</button>
+                      </form>
+                    </td>
+                    <td>
+                      <span class="badge bg-<%= u.activo ? 'success' : 'danger' %>"><%= u.activo ? 'Activo' : 'Bloqueado' %></span>
+                    </td>
+                    <td>
+                      <button class="btn btn-sm btn-outline-danger" onclick="toggleUser(<%= u.id %>, <%= selectedTenant.id %>, <%= u.activo ? 'false' : 'true' %>)">
+                        <%= u.activo ? 'Bloquear' : 'Activar' %>
+                      </button>
+                    </td>
+                  </tr>
+                  <% }) %>
+                </tbody>
+              </table>
+            </div>
+
+            <form class="border rounded p-3" action="/admin/tenants/<%= selectedTenant.id %>/users" method="POST">
+              <h6 class="mb-3">Crear usuario</h6>
+              <div class="row g-3">
+                <div class="col-md-4">
+                  <input name="username" class="form-control" placeholder="Usuario" required>
+                </div>
+                <div class="col-md-4">
+                  <input name="email" type="email" class="form-control" placeholder="Email">
+                </div>
+                <div class="col-md-4">
+                  <input name="nombre_completo" class="form-control" placeholder="Nombre completo">
+                </div>
+                <div class="col-md-3">
+                  <input name="password" type="password" class="form-control" placeholder="Contraseña" required>
+                </div>
+                <div class="col-md-3">
+                  <select name="rol_nombre" class="form-select">
+                    <option value="mesero">Mesero</option>
+                    <option value="admin">Administrador</option>
+                    <option value="cocina">Cocinero</option>
+                    <option value="cajero">Cajero</option>
+                  </select>
+                </div>
+                <div class="col-md-3">
+                  <button class="btn btn-success w-100">Crear</button>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+      <% } else { %>
+        <div class="alert alert-warning">Selecciona un tenant para ver sus detalles.</div>
+      <% } %>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Crear Tenant -->
+<div class="modal fade" id="modalCreateTenant" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form action="/admin/tenants" method="POST">
+        <div class="modal-header">
+          <h5 class="modal-title">Nuevo tenant</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label">Nombre</label>
+            <input name="nombre" class="form-control" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Slug</label>
+            <input name="slug" class="form-control" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Config JSON</label>
+            <textarea name="config" class="form-control" rows="3">{ "colors": { "primary": "#f48c25" } }</textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button class="btn btn-primary">Crear</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+const activeTenantId = <%= activeTenantId ? activeTenantId : 'null' %>;
+async function updateTenant(event, id) {
+  event.preventDefault();
+  const form = event.target;
+  const data = {
+    nombre: form.nombre.value,
+    config: form.config.value,
+    activo: '<%= selectedTenant ? selectedTenant.activo : true %>'
+  };
+  const resp = await fetch(`/admin/tenants/${id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data)
+  });
+  if (!resp.ok) {
+    const text = await resp.text();
+    alert(text);
+  } else {
+    window.location.reload();
+  }
+  return false;
+}
+
+async function changeRole(event, userId) {
+  event.preventDefault();
+  const form = event.target;
+  const rol = form.rol_nombre.value;
+  const tenantId = activeTenantId;
+  await fetch(`/admin/tenants/${tenantId}/users/${userId}/roles`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ rol_nombre: rol })
+  });
+  alert('Rol actualizado');
+}
+
+async function toggleTenantStatus(id, activo) {
+  await fetch(`/admin/tenants/${id}/status`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ activo })
+  });
+  window.location.reload();
+}
+
+async function toggleUser(userId, tenantId, activo) {
+  await fetch(`/admin/tenants/${tenantId}/users/${userId}/status`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ activo })
+  });
+  window.location.reload();
+}
+</script>

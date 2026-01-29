@@ -73,6 +73,7 @@ const cocinaRoutes = require('./routes/cocina');
 const configuracionRoutes = require('./routes/configuracion');
 const ventasRoutes = require('./routes/ventas');
 const dashboardRoutes = require('./routes/dashboard');
+const adminTenantsRoutes = require('./routes/admin/tenants');
 
 // Ruta principal - redirige según autenticación y rol
 app.get('/', optionalAuth, (req, res) => {
@@ -112,6 +113,7 @@ app.use('/configuracion', requireAuthWithTenant, configuracionRoutes);
 app.use('/ventas', requireAuthWithTenant, ventasRoutes);
 app.use('/dashboard', requireAuthWithTenant, dashboardRoutes);
 app.use('/api/dashboard', requireAuthWithTenant, dashboardRoutes);
+app.use('/admin/tenants', requireAuthWithTenant, adminTenantsRoutes);
 
 
 // Manejo de errores 404

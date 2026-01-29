@@ -88,7 +88,8 @@ async function runMigrations() {
                    path.join(__dirname, '..', 'database.sql'),
                    path.join(__dirname, '..', 'database', 'migrations', '001_create_users_and_roles.sql'),
                    path.join(__dirname, '..', 'database', 'migrations', '002_add_categorias_to_productos.sql'),
-                   path.join(__dirname, '..', 'database', 'migrations', '003_add_multi_tenancy.sql')
+                   path.join(__dirname, '..', 'database', 'migrations', '003_add_multi_tenancy.sql'),
+                   path.join(__dirname, '..', 'database', 'migrations', '004_create_tenant_audit.sql')
                ];
         
         // Check if files exist

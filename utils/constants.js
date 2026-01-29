@@ -3,6 +3,7 @@
 
 // User roles
 const ROLES = {
+    SUPERADMIN: 'superadmin',
     ADMIN: 'admin',
     MESERO: 'mesero',
     COCINERO: 'cocinero',

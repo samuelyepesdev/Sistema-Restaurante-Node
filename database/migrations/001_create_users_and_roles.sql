@@ -45,6 +45,7 @@ CREATE TABLE IF NOT EXISTS rol_permisos (
 
 -- Insert default roles
 INSERT INTO roles (nombre, descripcion) VALUES
+('superadmin', 'Superadministrador con control total del sistema'),
 ('admin', 'Administrador del sistema con acceso completo'),
 ('mesero', 'Mesero que puede gestionar mesas y pedidos'),
 ('cocinero', 'Cocinero que gestiona la cola de cocina'),
@@ -81,7 +82,7 @@ INSERT INTO rol_permisos (rol_id, permiso_id)
 SELECT r.id, p.id
 FROM roles r
 CROSS JOIN permisos p
-WHERE r.nombre = 'admin'
+WHERE r.nombre IN ('admin','superadmin')
 ON DUPLICATE KEY UPDATE rol_id = rol_id;
 
 -- Assign permissions to mesero role
