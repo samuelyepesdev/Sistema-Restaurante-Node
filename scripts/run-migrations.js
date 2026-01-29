@@ -47,11 +47,12 @@ async function executeSQLFile(filePath) {
                 await db.query(statement);
                 console.log(`   ✓ Sentencia ${i + 1}/${statements.length} ejecutada`);
             } catch (error) {
-                // Ignore "table already exists" and duplicate entry errors
+                // Ignore "table already exists", duplicate entry, and "can't drop key" (migration re-run)
                 if (error.code === 'ER_TABLE_EXISTS_ERROR' ||
                     error.code === 'ER_DUP_ENTRY' ||
                     error.code === 'ER_DUP_KEYNAME' ||
                     error.code === 'ER_DUP_FIELDNAME' ||
+                    error.code === 'ER_CANT_DROP_FIELD_OR_KEY' ||
                     error.message.includes('already exists') ||
                     error.message.includes('Duplicate entry') ||
                     error.message.includes('Duplicate column name') ||
@@ -89,7 +90,8 @@ async function runMigrations() {
                    path.join(__dirname, '..', 'database', 'migrations', '001_create_users_and_roles.sql'),
                    path.join(__dirname, '..', 'database', 'migrations', '002_add_categorias_to_productos.sql'),
                    path.join(__dirname, '..', 'database', 'migrations', '003_add_multi_tenancy.sql'),
-                   path.join(__dirname, '..', 'database', 'migrations', '004_create_tenant_audit.sql')
+                   path.join(__dirname, '..', 'database', 'migrations', '004_create_tenant_audit.sql'),
+                   path.join(__dirname, '..', 'database', 'migrations', '005_unique_por_tenant.sql')
                ];
         
         // Check if files exist

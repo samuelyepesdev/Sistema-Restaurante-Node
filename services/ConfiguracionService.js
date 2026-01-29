@@ -45,27 +45,43 @@ class ConfiguracionService {
     }
 
     /**
-     * Get configuration for preview
+     * Get configuration for preview / impresión (por tenant).
+     * Si no hay config, devuelve valores por defecto para que la factura se pueda imprimir.
+     * @param {number} tenantId - Tenant ID
      * @returns {Promise<Object>} Configuration object with image URLs
-     * @throws {Error} If configuration not found
      */
-    static async getForPreview() {
-        const config = await ConfiguracionRepository.findOne();
-        if (!config) {
-            throw new Error('No se ha configurado la información de impresión');
-        }
+    static async getForPreview(tenantId) {
+        const config = await ConfiguracionRepository.findOne(tenantId);
+        const base = config ? { ...config } : {
+            nombre_negocio: 'Mi Negocio',
+            direccion: '',
+            telefono: '',
+            nit: '',
+            pie_pagina: '¡Gracias por su compra!',
+            ancho_papel: 80,
+            font_size: 1,
+            logo_data: null,
+            logo_tipo: null,
+            qr_data: null,
+            qr_tipo: null
+        };
 
-        // Convert images to data URLs
-        if (config.logo_data) {
-            const logoBuffer = Buffer.from(config.logo_data);
-            config.logo_src = `data:image/${config.logo_tipo};base64,${logoBuffer.toString('base64')}`;
+        if (base.logo_data) {
+            const logoBuffer = Buffer.from(base.logo_data);
+            base.logo_src = `data:image/${base.logo_tipo};base64,${logoBuffer.toString('base64')}`;
+        } else {
+            base.logo_src = null;
         }
-        if (config.qr_data) {
-            const qrBuffer = Buffer.from(config.qr_data);
-            config.qr_src = `data:image/${config.qr_tipo};base64,${qrBuffer.toString('base64')}`;
+        if (base.qr_data) {
+            const qrBuffer = Buffer.from(base.qr_data);
+            base.qr_src = `data:image/${base.qr_tipo};base64,${qrBuffer.toString('base64')}`;
+        } else {
+            base.qr_src = null;
         }
+        delete base.logo_data;
+        delete base.qr_data;
 
-        return config;
+        return base;
     }
 
     /**

@@ -17,13 +17,14 @@ INSERT IGNORE INTO tenants (id, nombre, slug, activo) VALUES (1, 'Principal', 'p
 CREATE TABLE IF NOT EXISTS productos (
     id INT AUTO_INCREMENT PRIMARY KEY,
     tenant_id INT NULL,
-    codigo VARCHAR(50) NOT NULL UNIQUE,
+    codigo VARCHAR(50) NOT NULL,
     nombre VARCHAR(100) NOT NULL,
     precio_kg DECIMAL(10,2) NOT NULL DEFAULT 0,
     precio_unidad DECIMAL(10,2) NOT NULL DEFAULT 0,
     precio_libra DECIMAL(10,2) NOT NULL DEFAULT 0,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    UNIQUE KEY unique_producto_tenant_codigo (tenant_id, codigo)
 );
 
 CREATE TABLE IF NOT EXISTS clientes (
@@ -79,11 +80,12 @@ CREATE TABLE IF NOT EXISTS configuracion_impresion (
 CREATE TABLE IF NOT EXISTS mesas (
     id INT AUTO_INCREMENT PRIMARY KEY,
     tenant_id INT NULL,
-    numero VARCHAR(20) NOT NULL UNIQUE,
+    numero VARCHAR(20) NOT NULL,
     descripcion VARCHAR(100),
     estado ENUM('libre', 'ocupada', 'reservada', 'bloqueada') DEFAULT 'libre',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    UNIQUE KEY unique_mesa_tenant_numero (tenant_id, numero)
 );
 
 CREATE TABLE IF NOT EXISTS pedidos (

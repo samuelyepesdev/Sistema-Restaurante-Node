@@ -124,11 +124,12 @@ router.patch('/:tenantId/users/:userId/roles', async (req, res) => {
 router.post('/:tenantId/users/:userId/status', async (req, res) => {
     try {
         const { activo } = req.body;
-        await TenantUserService.changeTenantUserStatus(req.params.userId, req.params.tenantId, activo === 'true');
+        const activoBool = activo === true || activo === 'true';
+        await TenantUserService.changeTenantUserStatus(req.params.userId, req.params.tenantId, activoBool);
         await TenantAuditService.log({
             tenantId: req.params.tenantId,
             userId: req.params.userId,
-            accion: activo === 'true' ? 'activar_usuario' : 'bloquear_usuario',
+            accion: activoBool ? 'activar_usuario' : 'bloquear_usuario',
             detalles: null
         });
         res.sendStatus(204);
@@ -141,11 +142,12 @@ router.post('/:tenantId/users/:userId/status', async (req, res) => {
 router.post('/:id/status', async (req, res) => {
     try {
         const { activo } = req.body;
-        await TenantService.changeTenantStatus(req.params.id, activo === 'true');
+        const activoBool = activo === true || activo === 'true';
+        await TenantService.changeTenantStatus(req.params.id, activoBool);
         await TenantAuditService.log({
             tenantId: req.params.id,
             userId: req.user?.id || null,
-            accion: activo === 'true' ? 'activar_tenant' : 'desactivar_tenant',
+            accion: activoBool ? 'activar_tenant' : 'desactivar_tenant',
             detalles: null
         });
         res.sendStatus(204);

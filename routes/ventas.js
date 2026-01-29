@@ -65,10 +65,10 @@ router.get('/export', async (req, res) => {
         const wb = new ExcelJS.Workbook();
         const ws = wb.addWorksheet('Ventas');
 
-        // Get configuration for header
+        // Get configuration for header (del tenant)
         let config = null;
         try {
-            config = await ConfiguracionService.getForPreview();
+            config = await ConfiguracionService.getForPreview(tenantId);
         } catch (_) {
             // Config not found, continue with defaults
         }
