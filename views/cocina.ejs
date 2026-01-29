@@ -44,6 +44,32 @@
         .cantidad-badge {
             font-size: 0.9rem;
         }
+        @media (max-width: 768px) {
+            .nav-tabs .nav-link {
+                padding: 0.5rem 0.75rem;
+                font-size: 0.95rem;
+            }
+            .card {
+                margin-bottom: 1rem;
+            }
+            #listaCola::before,
+            #listaListos::before {
+                content: '';
+                display: block;
+                height: 1rem;
+            }
+            .item-card {
+                flex-direction: column;
+                padding: 0.75rem;
+            }
+            .item-card .row {
+                flex-direction: column;
+            }
+            .card:not(.no-card-dark) {
+                background-color: #e2e8f0;
+                border-color: #cbd5f5;
+            }
+        }
     </style>
 </head>
 <body data-user-role="<%= user && user.rol ? user.rol : '' %>">

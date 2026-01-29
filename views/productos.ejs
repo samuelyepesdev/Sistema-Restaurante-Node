@@ -37,6 +37,44 @@
         .action-buttons .btn {
             padding: 0.25rem 0.5rem;
         }
+        @media (max-width: 768px) {
+            .card-header .btn-group {
+                flex-wrap: wrap;
+                gap: 0.5rem;
+            }
+            .card-body .row .col-md-4,
+            .card-body .row .col-md-8 {
+                flex: 0 0 100%;
+                max-width: 100%;
+            }
+            .search-box {
+                max-width: 100%;
+            }
+            .table-responsive {
+                overflow-x: auto;
+            }
+            .table thead {
+                display: none;
+            }
+            .table tbody tr {
+                display: block;
+                border-bottom: 1px solid #e9ecef;
+                margin-bottom: 0.5rem;
+            }
+            .table tbody td {
+                display: flex;
+                justify-content: space-between;
+                padding: 0.5rem;
+                border-top: none;
+            }
+            .table tbody td:first-child {
+                font-weight: 600;
+            }
+            .card:not(.no-card-dark) {
+                background-color: #e2e8f0;
+                border-color: #cbd5f5;
+            }
+        }
     </style>
 </head>
 <body>

@@ -86,6 +86,53 @@
             box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.05);
             margin-bottom: 1.5rem;
         }
+        @media (max-width: 992px) {
+            .filter-section .row .col-md-3 {
+                flex: 0 0 100%;
+                max-width: 100%;
+            }
+            .filter-section .row .col-md-3:not(:first-child) {
+                margin-top: 0.75rem;
+            }
+            .stat-card {
+                margin-bottom: 1rem;
+            }
+            .chart-container,
+            .chart-container-small {
+                height: 230px;
+            }
+            .card-header {
+                font-size: 1rem;
+            }
+        }
+        @media (max-width: 576px) {
+            .stat-card .card-body {
+                padding: 1rem;
+            }
+            .filter-section .btn {
+                font-size: 0.9rem;
+            }
+            .chart-container,
+            .chart-container-small {
+                height: 220px;
+            }
+            .table tbody tr {
+                display: block;
+                border-bottom: 1px solid #e9ecef;
+            }
+            .table tbody td {
+                display: flex;
+                justify-content: space-between;
+                padding: 0.5rem;
+            }
+            .table thead {
+                display: none;
+            }
+            .card:not(.no-card-dark) {
+                background-color: #e2e8f0;
+                border-color: #cbd5f5;
+            }
+        }
     </style>
 </head>
 <body>

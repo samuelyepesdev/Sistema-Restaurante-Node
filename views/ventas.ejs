@@ -78,6 +78,44 @@
             from { transform: translateX(100%); }
             to { transform: translateX(0); }
         }
+        @media (max-width: 992px) {
+            .card-header .row .col-md-3 {
+                flex: 0 0 100%;
+                max-width: 100%;
+            }
+            .card-body .table-container {
+                max-height: none;
+            }
+            .table thead {
+                display: none;
+            }
+            .table tbody tr {
+                display: block;
+                margin-bottom: 0.75rem;
+                border-bottom: 1px solid #e9ecef;
+                padding-bottom: 0.5rem;
+            }
+            .table tbody td {
+                display: flex;
+                justify-content: space-between;
+                padding: 0.25rem 0;
+                border-top: none;
+            }
+            .table tfoot, .table tfoot td {
+                display: block;
+                text-align: right;
+                padding: 0.5rem 0;
+            }
+            .card .row.g-3 .col-md-4 {
+                flex: 0 0 100%;
+                max-width: 100%;
+            }
+            .card:not(.no-card-dark) {
+                background-color: #e2e8f0;
+                border-color: #000;
+                box-shadow: 0 0 10px rgba(0,0,0,0.15);
+            }
+        }
     </style>
 </head>
 <body>

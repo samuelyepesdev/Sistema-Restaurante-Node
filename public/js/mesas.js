@@ -472,7 +472,8 @@ $(function() {
   }
   
   // Función para mostrar factura en sidebar (optimizada para carga inmediata)
-  function mostrarFacturaEnSidebar(facturaId, infoPago = null){
+  // Hacerla global para poder llamarla desde onclick
+  window.mostrarFacturaEnSidebar = async function mostrarFacturaEnSidebar(facturaId, infoPago = null){
     const facturaCanvas = new bootstrap.Offcanvas(document.getElementById('canvasFactura'));
     const facturaFrame = document.getElementById('facturaFrame');
     const facturaLoading = document.getElementById('facturaLoading');
@@ -493,13 +494,76 @@ $(function() {
       // Puedes agregar un badge o texto adicional aquí si quieres
     }
     
-    // Cargar factura en iframe (se carga mientras el sidebar ya está visible)
-    facturaFrame.src = `/api/facturas/${facturaId}/imprimir`;
-    
-    // Ocultar loading cuando el iframe carga
-    facturaFrame.onload = function(){
-      facturaLoading.style.display = 'none';
-    };
+    try {
+      // Cargar factura usando fetch para manejar mejor los errores
+      const urlFactura = `/api/facturas/${facturaId}/imprimir`;
+      console.log('Cargando factura desde:', urlFactura);
+      
+      const response = await fetch(urlFactura, {
+        method: 'GET',
+        credentials: 'same-origin', // Incluir cookies de autenticación
+        headers: {
+          'Accept': 'text/html'
+        }
+      });
+      
+      console.log('Respuesta recibida:', response.status, response.statusText);
+      
+      if(!response.ok){
+        const errorText = await response.text();
+        console.error('Error en respuesta:', errorText);
+        throw new Error(`Error ${response.status}: ${response.statusText}`);
+      }
+      
+      const html = await response.text();
+      
+      if(!html || html.length === 0){
+        throw new Error('La factura está vacía');
+      }
+      
+      // Crear un blob URL para el iframe
+      const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+      const blobUrl = URL.createObjectURL(blob);
+      
+      console.log('Blob URL creado, cargando en iframe...');
+      
+      // Cargar en iframe
+      facturaFrame.src = blobUrl;
+      
+      // Ocultar loading cuando el iframe dispara onload (puede no disparar con blob en algunos navegadores)
+      facturaFrame.onload = function(){
+        facturaLoading.style.display = 'none';
+      };
+      
+      // Ocultar loading tras 500ms siempre (el HTML ya está en el blob, el iframe lo muestra al instante)
+      setTimeout(() => {
+        facturaLoading.style.display = 'none';
+      }, 500);
+      
+      // Manejar errores de carga del iframe
+      facturaFrame.onerror = function(e){
+        console.error('Error en iframe:', e);
+        facturaLoading.innerHTML = `
+          <div class="text-center text-danger">
+            <i class="bi bi-exclamation-triangle display-4 d-block mb-2"></i>
+            <div>Error al cargar la factura</div>
+            <button class="btn btn-primary mt-3" onclick="window.mostrarFacturaEnSidebar(${facturaId})">Reintentar</button>
+          </div>
+        `;
+        URL.revokeObjectURL(blobUrl);
+      };
+      
+    } catch(error) {
+      console.error('Error al cargar factura:', error);
+      facturaLoading.innerHTML = `
+        <div class="text-center text-danger">
+          <i class="bi bi-exclamation-triangle display-4 d-block mb-2"></i>
+          <div>Error al cargar la factura</div>
+          <p class="small text-muted">${error.message}</p>
+          <button class="btn btn-primary mt-3" onclick="window.mostrarFacturaEnSidebar(${facturaId})">Reintentar</button>
+        </div>
+      `;
+    }
     
     // Handler para imprimir
     $('#btnImprimirFactura').off('click').on('click', function(){
@@ -519,22 +583,22 @@ $(function() {
     
     // Cuando se cierra el sidebar, limpiar iframe para liberar memoria
     $('#canvasFactura').off('hidden.bs.offcanvas').on('hidden.bs.offcanvas', function(){
+      if(facturaFrame.src && facturaFrame.src.startsWith('blob:')){
+        URL.revokeObjectURL(facturaFrame.src);
+      }
       facturaFrame.src = 'about:blank';
       facturaNumero.textContent = '';
       facturaLoading.style.display = 'flex';
-      facturaFrame.onload = null; // Limpiar handler
-    });
-    
-    // Manejar errores de carga
-    facturaFrame.onerror = function(){
       facturaLoading.innerHTML = `
-        <div class="text-center text-danger">
-          <i class="bi bi-exclamation-triangle display-4 d-block mb-2"></i>
-          <div>Error al cargar la factura</div>
-          <button class="btn btn-primary mt-3" onclick="location.reload()">Recargar página</button>
+        <div class="text-center">
+          <div class="spinner-border text-primary mb-2" role="status">
+            <span class="visually-hidden">Cargando...</span>
+          </div>
+          <div>Cargando factura...</div>
         </div>
       `;
-    };
+      facturaFrame.onload = null; // Limpiar handler
+    });
   }
 
   // Ocultar temporalmente el panel lateral (offcanvas) durante modales para evitar bloquear copiar/pegar
