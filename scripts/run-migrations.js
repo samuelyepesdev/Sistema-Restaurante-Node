@@ -48,11 +48,14 @@ async function executeSQLFile(filePath) {
                 console.log(`   ✓ Sentencia ${i + 1}/${statements.length} ejecutada`);
             } catch (error) {
                 // Ignore "table already exists" and duplicate entry errors
-                if (error.code === 'ER_TABLE_EXISTS_ERROR' || 
+                if (error.code === 'ER_TABLE_EXISTS_ERROR' ||
                     error.code === 'ER_DUP_ENTRY' ||
                     error.code === 'ER_DUP_KEYNAME' ||
+                    error.code === 'ER_DUP_FIELDNAME' ||
                     error.message.includes('already exists') ||
-                    error.message.includes('Duplicate entry')) {
+                    error.message.includes('Duplicate entry') ||
+                    error.message.includes('Duplicate column name') ||
+                    error.message.includes('Duplicate key name')) {
                     console.log(`   ⚠️  Sentencia ${i + 1}: ${error.message.split('\n')[0].substring(0, 60)}...`);
                 } else {
                     console.error(`   ❌ Error en sentencia ${i + 1}:`, error.message);
@@ -84,7 +87,8 @@ async function runMigrations() {
                const migrations = [
                    path.join(__dirname, '..', 'database.sql'),
                    path.join(__dirname, '..', 'database', 'migrations', '001_create_users_and_roles.sql'),
-                   path.join(__dirname, '..', 'database', 'migrations', '002_add_categorias_to_productos.sql')
+                   path.join(__dirname, '..', 'database', 'migrations', '002_add_categorias_to_productos.sql'),
+                   path.join(__dirname, '..', 'database', 'migrations', '003_add_multi_tenancy.sql')
                ];
         
         // Check if files exist

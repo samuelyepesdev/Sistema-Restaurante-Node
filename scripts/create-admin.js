@@ -27,21 +27,33 @@ async function createAdmin() {
         }
         const rolId = roles[0].id;
 
+        // Get or create default tenant (multi-tenancy)
+        let [tenants] = await db.query('SELECT id FROM tenants WHERE slug = ?', ['principal']);
+        if (tenants.length === 0) {
+            const [insertTenant] = await db.query(
+                'INSERT INTO tenants (nombre, slug, activo) VALUES (?, ?, TRUE)',
+                ['Principal', 'principal']
+            );
+            tenants = [{ id: insertTenant.insertId }];
+            console.log('✓ Tenant por defecto "Principal" creado');
+        }
+        const tenantId = tenants[0].id;
+
         // Check if user exists
         const [existing] = await db.query('SELECT id FROM usuarios WHERE username = ?', [username]);
-        
+
         if (existing.length > 0) {
-            // Update existing user
+            // Update existing user (incluye tenant_id)
             await db.query(
-                'UPDATE usuarios SET password_hash = ?, email = ?, nombre_completo = ?, rol_id = ?, activo = TRUE WHERE username = ?',
-                [passwordHash, email, nombreCompleto, rolId, username]
+                'UPDATE usuarios SET password_hash = ?, email = ?, nombre_completo = ?, rol_id = ?, tenant_id = ?, activo = TRUE WHERE username = ?',
+                [passwordHash, email, nombreCompleto, rolId, tenantId, username]
             );
             console.log(`✓ Usuario ${username} actualizado correctamente`);
         } else {
-            // Create new user
+            // Create new user (con tenant_id)
             const [result] = await db.query(
-                'INSERT INTO usuarios (username, password_hash, email, nombre_completo, rol_id, activo) VALUES (?, ?, ?, ?, ?, TRUE)',
-                [username, passwordHash, email, nombreCompleto, rolId]
+                'INSERT INTO usuarios (username, password_hash, email, nombre_completo, rol_id, tenant_id, activo) VALUES (?, ?, ?, ?, ?, ?, TRUE)',
+                [username, passwordHash, email, nombreCompleto, rolId, tenantId]
             );
             console.log(`✓ Usuario ${username} creado correctamente (ID: ${result.insertId})`);
         }

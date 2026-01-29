@@ -8,29 +8,32 @@ const VentaRepository = require('../repositories/VentaRepository');
 
 class VentaService {
     /**
-     * Get sales with filters
+     * Get sales with filters (scoped by tenant)
+     * @param {number} tenantId - Tenant ID
      * @param {Object} filters - Filter options
      * @returns {Promise<Array>} Array of sales
      */
-    static async getWithFilters(filters) {
-        return await VentaRepository.getAllWithFilters(filters);
+    static async getWithFilters(tenantId, filters) {
+        return await VentaRepository.getAllWithFilters(tenantId, filters);
     }
 
     /**
-     * Get sales for Excel export
+     * Get sales for Excel export (scoped by tenant)
+     * @param {number} tenantId - Tenant ID
      * @param {Object} filters - Filter options
      * @returns {Promise<Array>} Array of sales data
      */
-    static async getForExport(filters) {
-        return await VentaRepository.getForExport(filters);
+    static async getForExport(tenantId, filters) {
+        return await VentaRepository.getForExport(tenantId, filters);
     }
 
     /**
-     * Get tables with orders ready to pay
+     * Get tables with orders ready to pay (scoped by tenant)
+     * @param {number} tenantId - Tenant ID
      * @returns {Promise<Array>} Array of tables with orders ready to pay
      */
-    static async getTablesReadyToPay() {
-        return await VentaRepository.getTablesWithOrdersReadyToPay();
+    static async getTablesReadyToPay(tenantId) {
+        return await VentaRepository.getTablesWithOrdersReadyToPay(tenantId);
     }
 }
 

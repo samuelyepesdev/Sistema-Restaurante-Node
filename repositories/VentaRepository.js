@@ -8,22 +8,20 @@ const db = require('../config/database');
 
 class VentaRepository {
     /**
-     * Get all sales with filters
+     * Get all sales with filters (scoped by tenant)
+     * @param {number} tenantId - Tenant ID
      * @param {Object} filters - Filter options
-     * @param {string} filters.desde - Start date
-     * @param {string} filters.hasta - End date
-     * @param {string} filters.q - Search query
      * @returns {Promise<Array>} Array of sales
      */
-    static async getAllWithFilters(filters) {
+    static async getAllWithFilters(tenantId, filters) {
         let query = `
             SELECT f.id, f.fecha, f.cliente_id, f.forma_pago, f.total,
                    c.nombre AS cliente_nombre
             FROM facturas f
             LEFT JOIN clientes c ON f.cliente_id = c.id
-            WHERE 1=1
+            WHERE f.tenant_id = ?
         `;
-        const params = [];
+        const params = [tenantId];
 
         if (filters.desde) {
             query += ` AND DATE(f.fecha) >= ?`;
@@ -48,11 +46,12 @@ class VentaRepository {
     }
 
     /**
-     * Get sales data for Excel export
+     * Get sales data for Excel export (scoped by tenant)
+     * @param {number} tenantId - Tenant ID
      * @param {Object} filters - Filter options
      * @returns {Promise<Array>} Array of sales with details
      */
-    static async getForExport(filters) {
+    static async getForExport(tenantId, filters) {
         let query = `
             SELECT 
                 f.id,
@@ -62,9 +61,9 @@ class VentaRepository {
                 f.total
             FROM facturas f
             LEFT JOIN clientes c ON f.cliente_id = c.id
-            WHERE 1=1
+            WHERE f.tenant_id = ?
         `;
-        const params = [];
+        const params = [tenantId];
 
         if (filters.desde) {
             query += ` AND DATE(f.fecha) >= ?`;
@@ -89,10 +88,11 @@ class VentaRepository {
     }
 
     /**
-     * Get tables with orders ready to pay (have items in 'listo' or 'servido' state and no pending items)
+     * Get tables with orders ready to pay (scoped by tenant)
+     * @param {number} tenantId - Tenant ID
      * @returns {Promise<Array>} Array of tables with orders ready to pay
      */
-    static async getTablesWithOrdersReadyToPay() {
+    static async getTablesWithOrdersReadyToPay(tenantId) {
         const [mesas] = await db.query(`
             SELECT 
                 m.id AS mesa_id,
@@ -106,13 +106,14 @@ class VentaRepository {
             FROM mesas m
             INNER JOIN pedidos p ON p.mesa_id = m.id
             INNER JOIN pedido_items pi ON pi.pedido_id = p.id
-            WHERE p.estado NOT IN ('cerrado', 'cancelado')
+            WHERE m.tenant_id = ?
+            AND p.estado NOT IN ('cerrado', 'cancelado')
             AND pi.estado NOT IN ('cancelado')
             GROUP BY m.id, m.numero, m.estado, p.id
             HAVING items_listos > 0 
             AND items_listos = total_items
             ORDER BY CAST(m.numero AS UNSIGNED), m.numero ASC
-        `);
+        `, [tenantId]);
         return mesas;
     }
 }

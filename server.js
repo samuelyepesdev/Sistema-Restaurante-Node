@@ -53,8 +53,12 @@ app.use((req, res, next) => {
     next();
 });
 
-// Middleware de autenticación
+// Middleware de autenticación y tenant
 const { requireAuth, optionalAuth } = require('./middleware/auth');
+const { attachTenantContext } = require('./middleware/tenant');
+
+// Chain: requireAuth -> attachTenantContext (for protected routes)
+const requireAuthWithTenant = [requireAuth, attachTenantContext];
 
 // Rutas de autenticación (públicas)
 const authRoutes = require('./routes/auth');
@@ -93,21 +97,21 @@ app.get('/', optionalAuth, (req, res) => {
     }
 });
 
-// Proteger todas las rutas con autenticación
-app.use('/productos', requireAuth, productosRoutes);
-app.use('/api/productos', requireAuth, productosRoutes);
-app.use('/clientes', requireAuth, clientesRoutes);
-app.use('/api/clientes', requireAuth, clientesRoutes);
-app.use('/facturas', requireAuth, facturasRoutes);
-app.use('/api/facturas', requireAuth, facturasRoutes);
-app.use('/mesas', requireAuth, mesasRoutes);
-app.use('/api/mesas', requireAuth, mesasRoutes);
-app.use('/cocina', requireAuth, cocinaRoutes);
-app.use('/api/cocina', requireAuth, cocinaRoutes);
-app.use('/configuracion', requireAuth, configuracionRoutes);
-app.use('/ventas', requireAuth, ventasRoutes);
-app.use('/dashboard', requireAuth, dashboardRoutes);
-app.use('/api/dashboard', requireAuth, dashboardRoutes);
+// Proteger todas las rutas con autenticación + contexto tenant
+app.use('/productos', requireAuthWithTenant, productosRoutes);
+app.use('/api/productos', requireAuthWithTenant, productosRoutes);
+app.use('/clientes', requireAuthWithTenant, clientesRoutes);
+app.use('/api/clientes', requireAuthWithTenant, clientesRoutes);
+app.use('/facturas', requireAuthWithTenant, facturasRoutes);
+app.use('/api/facturas', requireAuthWithTenant, facturasRoutes);
+app.use('/mesas', requireAuthWithTenant, mesasRoutes);
+app.use('/api/mesas', requireAuthWithTenant, mesasRoutes);
+app.use('/cocina', requireAuthWithTenant, cocinaRoutes);
+app.use('/api/cocina', requireAuthWithTenant, cocinaRoutes);
+app.use('/configuracion', requireAuthWithTenant, configuracionRoutes);
+app.use('/ventas', requireAuthWithTenant, ventasRoutes);
+app.use('/dashboard', requireAuthWithTenant, dashboardRoutes);
+app.use('/api/dashboard', requireAuthWithTenant, dashboardRoutes);
 
 
 // Manejo de errores 404

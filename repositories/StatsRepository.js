@@ -9,14 +9,13 @@ const db = require('../config/database');
 class StatsRepository {
     /**
      * Get total sales amount
+     * @param {number} tenantId - Tenant ID (multi-tenancy)
      * @param {Object} filters - Date filters (optional)
-     * @param {string} filters.desde - Start date
-     * @param {string} filters.hasta - End date
      * @returns {Promise<number>} Total sales amount
      */
-    static async getTotalSales(filters = {}) {
-        let query = 'SELECT COALESCE(SUM(total), 0) AS total FROM facturas WHERE 1=1';
-        const params = [];
+    static async getTotalSales(tenantId, filters = {}) {
+        let query = 'SELECT COALESCE(SUM(total), 0) AS total FROM facturas WHERE tenant_id = ?';
+        const params = [tenantId];
 
         if (filters.desde && filters.hasta) {
             query += ' AND DATE(fecha) BETWEEN ? AND ?';
@@ -29,12 +28,13 @@ class StatsRepository {
 
     /**
      * Get total number of invoices
+     * @param {number} tenantId - Tenant ID
      * @param {Object} filters - Date filters (optional)
      * @returns {Promise<number>} Total invoices count
      */
-    static async getTotalInvoices(filters = {}) {
-        let query = 'SELECT COUNT(*) AS total FROM facturas WHERE 1=1';
-        const params = [];
+    static async getTotalInvoices(tenantId, filters = {}) {
+        let query = 'SELECT COUNT(*) AS total FROM facturas WHERE tenant_id = ?';
+        const params = [tenantId];
 
         if (filters.desde && filters.hasta) {
             query += ' AND DATE(fecha) BETWEEN ? AND ?';
@@ -47,16 +47,17 @@ class StatsRepository {
 
     /**
      * Get sales by payment method
+     * @param {number} tenantId - Tenant ID
      * @param {Object} filters - Date filters (optional)
      * @returns {Promise<Array>} Array of sales grouped by payment method
      */
-    static async getSalesByPaymentMethod(filters = {}) {
+    static async getSalesByPaymentMethod(tenantId, filters = {}) {
         let query = `
             SELECT forma_pago, COUNT(*) AS cantidad, SUM(total) AS total
             FROM facturas
-            WHERE 1=1
+            WHERE tenant_id = ?
         `;
-        const params = [];
+        const params = [tenantId];
 
         if (filters.desde && filters.hasta) {
             query += ' AND DATE(fecha) BETWEEN ? AND ?';
@@ -75,11 +76,12 @@ class StatsRepository {
 
     /**
      * Get top selling products
+     * @param {number} tenantId - Tenant ID
      * @param {number} limit - Number of products to return (default: 10)
      * @param {Object} filters - Date filters (optional)
      * @returns {Promise<Array>} Array of top selling products
      */
-    static async getTopProducts(limit = 10, filters = {}) {
+    static async getTopProducts(tenantId, limit = 10, filters = {}) {
         let query = `
             SELECT 
                 p.id,
@@ -93,9 +95,9 @@ class StatsRepository {
             INNER JOIN productos p ON df.producto_id = p.id
             LEFT JOIN categorias c ON p.categoria_id = c.id
             INNER JOIN facturas f ON df.factura_id = f.id
-            WHERE 1=1
+            WHERE f.tenant_id = ?
         `;
-        const params = [];
+        const params = [tenantId];
 
         if (filters.desde && filters.hasta) {
             query += ' AND DATE(f.fecha) BETWEEN ? AND ?';
@@ -123,10 +125,11 @@ class StatsRepository {
 
     /**
      * Get sales by category
+     * @param {number} tenantId - Tenant ID
      * @param {Object} filters - Date filters (optional)
      * @returns {Promise<Array>} Array of sales grouped by category
      */
-    static async getSalesByCategory(filters = {}) {
+    static async getSalesByCategory(tenantId, filters = {}) {
         let query = `
             SELECT 
                 COALESCE(c.nombre, 'Sin categoría') AS categoria_nombre,
@@ -137,9 +140,9 @@ class StatsRepository {
             INNER JOIN productos p ON df.producto_id = p.id
             LEFT JOIN categorias c ON p.categoria_id = c.id
             INNER JOIN facturas f ON df.factura_id = f.id
-            WHERE 1=1
+            WHERE f.tenant_id = ?
         `;
-        const params = [];
+        const params = [tenantId];
 
         if (filters.desde && filters.hasta) {
             query += ' AND DATE(f.fecha) BETWEEN ? AND ?';
@@ -159,11 +162,12 @@ class StatsRepository {
 
     /**
      * Get top products by category
+     * @param {number} tenantId - Tenant ID
      * @param {number} limit - Number of products per category (default: 5)
      * @param {Object} filters - Date filters (optional)
      * @returns {Promise<Array>} Array of top products grouped by category
      */
-    static async getTopProductsByCategory(limit = 5, filters = {}) {
+    static async getTopProductsByCategory(tenantId, limit = 5, filters = {}) {
         let query = `
             SELECT 
                 c.id AS categoria_id,
@@ -177,9 +181,9 @@ class StatsRepository {
             INNER JOIN productos p ON df.producto_id = p.id
             LEFT JOIN categorias c ON p.categoria_id = c.id
             INNER JOIN facturas f ON df.factura_id = f.id
-            WHERE 1=1
+            WHERE f.tenant_id = ?
         `;
-        const params = [];
+        const params = [tenantId];
 
         if (filters.desde && filters.hasta) {
             query += ' AND DATE(f.fecha) BETWEEN ? AND ?';
@@ -219,21 +223,22 @@ class StatsRepository {
 
     /**
      * Get daily sales for the last N days
+     * @param {number} tenantId - Tenant ID
      * @param {number} days - Number of days (default: 30)
      * @returns {Promise<Array>} Array of daily sales
      */
-    static async getDailySales(days = 30) {
+    static async getDailySales(tenantId, days = 30) {
         const query = `
             SELECT 
                 DATE(fecha) AS fecha,
                 COUNT(*) AS cantidad_facturas,
                 SUM(total) AS total_ventas
             FROM facturas
-            WHERE fecha >= DATE_SUB(CURDATE(), INTERVAL ? DAY)
+            WHERE tenant_id = ? AND fecha >= DATE_SUB(CURDATE(), INTERVAL ? DAY)
             GROUP BY DATE(fecha)
             ORDER BY fecha ASC
         `;
-        const [result] = await db.query(query, [days]);
+        const [result] = await db.query(query, [tenantId, days]);
         return result.map(row => ({
             fecha: row.fecha.toISOString().split('T')[0],
             cantidad_facturas: parseInt(row.cantidad_facturas || 0),

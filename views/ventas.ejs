@@ -119,7 +119,7 @@
     </style>
 </head>
 <body>
-    <%- include('partials/navbar', { user: typeof user !== 'undefined' ? user : null }) %>
+    <%- include('partials/navbar', { user: typeof user !== 'undefined' ? user : null, tenant: typeof tenant !== 'undefined' ? tenant : null }) %>
 
     <div class="container">
         <!-- Mesas Listas para Pagar -->

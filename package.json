@@ -21,7 +21,8 @@
     "build": "pkg . --public --target node18-win-x64",
     "migrate": "node scripts/run-migrations.js",
     "create-admin": "node scripts/create-admin.js",
-    "create-test-users": "node scripts/create-test-users.js"
+    "create-test-users": "node scripts/create-test-users.js",
+    "seed-tenants": "node scripts/seed-tenants-test.js"
   },
   "dependencies": {
     "bcrypt": "^6.0.0",

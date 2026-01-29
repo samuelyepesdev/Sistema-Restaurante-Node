@@ -14,7 +14,7 @@ const { JWT_CONFIG, ROLES } = require('../utils/constants');
  */
 async function authenticateUser(username, password) {
     try {
-        // Get user with role and permissions
+        // Get user with role and permissions (incl. tenant_id for multi-tenancy)
         const [users] = await db.query(`
             SELECT u.*, r.nombre AS rol_nombre, r.descripcion AS rol_descripcion
             FROM usuarios u
@@ -44,12 +44,13 @@ async function authenticateUser(username, password) {
 
         const userPermissions = permissions.map(p => p.nombre);
 
-        // Generate JWT token
+        // Generate JWT token (include tenant_id for multi-tenancy)
         const token = generateToken({
             id: user.id,
             username: user.username,
             rol: user.rol_nombre,
-            permisos: userPermissions
+            permisos: userPermissions,
+            tenant_id: user.tenant_id
         });
 
         // Return user data without password
@@ -61,7 +62,8 @@ async function authenticateUser(username, password) {
                 email: user.email,
                 nombre_completo: user.nombre_completo,
                 rol: user.rol_nombre,
-                permisos: userPermissions
+                permisos: userPermissions,
+                tenant_id: user.tenant_id
             },
             token
         };
@@ -103,7 +105,8 @@ function verifyToken(token) {
 async function getUserById(userId) {
     try {
         const [users] = await db.query(`
-            SELECT u.*, r.nombre AS rol_nombre, r.descripcion AS rol_descripcion
+            SELECT u.id, u.username, u.email, u.nombre_completo, u.rol_id, u.tenant_id,
+                   r.nombre AS rol_nombre, r.descripcion AS rol_descripcion
             FROM usuarios u
             INNER JOIN roles r ON u.rol_id = r.id
             WHERE u.id = ? AND u.activo = TRUE
@@ -129,7 +132,8 @@ async function getUserById(userId) {
             email: user.email,
             nombre_completo: user.nombre_completo,
             rol: user.rol_nombre,
-            permisos: permissions.map(p => p.nombre)
+            permisos: permissions.map(p => p.nombre),
+            tenant_id: user.tenant_id
         };
     } catch (error) {
         console.error('Error in getUserById:', error);

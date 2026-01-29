@@ -13,7 +13,8 @@ const { requireRole } = require('../middleware/auth');
 router.get('/', requireRole('admin'), async (req, res) => {
     try {
         res.render('dashboard', { 
-            user: req.user 
+            user: req.user,
+            tenant: req.tenant
         });
     } catch (error) {
         console.error('Error al cargar dashboard:', error);
@@ -26,14 +27,18 @@ router.get('/', requireRole('admin'), async (req, res) => {
     }
 });
 
-// GET /api/dashboard/stats - Get dashboard statistics (only for admin)
+// GET /api/dashboard/stats - Get dashboard statistics (only for admin, scoped by tenant)
 router.get('/stats', requireRole('admin'), async (req, res) => {
     try {
+        const tenantId = req.tenant?.id;
+        if (!tenantId) {
+            return res.status(403).json({ error: 'Contexto de tenant no disponible' });
+        }
         const filters = {
             desde: req.query.desde,
             hasta: req.query.hasta
         };
-        const stats = await StatsService.getDashboardStats(filters);
+        const stats = await StatsService.getDashboardStats(tenantId, filters);
         res.json(stats);
     } catch (error) {
         console.error('Error al obtener estadísticas:', error);

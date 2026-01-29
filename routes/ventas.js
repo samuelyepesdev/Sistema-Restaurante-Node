@@ -10,22 +10,27 @@ const VentaService = require('../services/VentaService');
 const ConfiguracionService = require('../services/ConfiguracionService');
 let ExcelJS; // Lazy import for Excel export
 
-// GET /ventas - Sales page with filters and tables ready to pay
+// GET /ventas - Sales page with filters and tables ready to pay (scoped by tenant)
 router.get('/', async (req, res) => {
     try {
+        const tenantId = req.tenant?.id;
+        if (!tenantId) {
+            return res.status(403).render('error', { error: { message: 'Contexto de tenant no disponible' } });
+        }
         const filters = {
             desde: req.query.desde,
             hasta: req.query.hasta,
             q: req.query.q
         };
         const [ventas, mesasListas] = await Promise.all([
-            VentaService.getWithFilters(filters),
-            VentaService.getTablesReadyToPay()
+            VentaService.getWithFilters(tenantId, filters),
+            VentaService.getTablesReadyToPay(tenantId)
         ]);
         res.render('ventas', { 
             ventas,
             mesasListas: mesasListas || [],
-            user: req.user
+            user: req.user,
+            tenant: req.tenant
         });
     } catch (error) {
         console.error('Error al obtener ventas:', error);
@@ -45,12 +50,16 @@ router.get('/export', async (req, res) => {
             return res.status(500).send('Exportación a Excel no disponible. Instale la dependencia con: npm install exceljs');
         }
 
+        const tenantId = req.tenant?.id;
+        if (!tenantId) {
+            return res.status(403).send('Contexto de tenant no disponible');
+        }
         const filters = {
             desde: req.query.desde,
             hasta: req.query.hasta,
             q: req.query.q
         };
-        const rows = await VentaService.getForExport(filters);
+        const rows = await VentaService.getForExport(tenantId, filters);
 
         // Create Excel with ExcelJS
         const wb = new ExcelJS.Workbook();

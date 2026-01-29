@@ -73,7 +73,7 @@
     </style>
 </head>
 <body data-user-role="<%= user && user.rol ? user.rol : '' %>">
-    <%- include('partials/navbar', { user: typeof user !== 'undefined' ? user : null }) %>
+    <%- include('partials/navbar', { user: typeof user !== 'undefined' ? user : null, tenant: typeof tenant !== 'undefined' ? tenant : null }) %>
 
     <div class="container">
         <h4 class="mb-3"><i class="bi bi-egg-fried me-2"></i>Cola de Cocina</h4>

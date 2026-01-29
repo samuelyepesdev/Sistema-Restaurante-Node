@@ -1,8 +1,22 @@
 CREATE DATABASE IF NOT EXISTS restaurante;
 USE restaurante;
 
+-- Multi-tenancy: tabla de inquilinos
+CREATE TABLE IF NOT EXISTS tenants (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    nombre VARCHAR(100) NOT NULL,
+    slug VARCHAR(50) NOT NULL UNIQUE,
+    config JSON NULL,
+    activo BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+INSERT IGNORE INTO tenants (id, nombre, slug, activo) VALUES (1, 'Principal', 'principal', TRUE);
+
 CREATE TABLE IF NOT EXISTS productos (
     id INT AUTO_INCREMENT PRIMARY KEY,
+    tenant_id INT NULL,
     codigo VARCHAR(50) NOT NULL UNIQUE,
     nombre VARCHAR(100) NOT NULL,
     precio_kg DECIMAL(10,2) NOT NULL DEFAULT 0,
@@ -14,6 +28,7 @@ CREATE TABLE IF NOT EXISTS productos (
 
 CREATE TABLE IF NOT EXISTS clientes (
     id INT PRIMARY KEY AUTO_INCREMENT,
+    tenant_id INT NULL,
     nombre VARCHAR(100) NOT NULL,
     direccion TEXT,
     telefono VARCHAR(20),
@@ -22,6 +37,7 @@ CREATE TABLE IF NOT EXISTS clientes (
 
 CREATE TABLE IF NOT EXISTS facturas (
     id INT PRIMARY KEY AUTO_INCREMENT,
+    tenant_id INT NULL,
     cliente_id INT,
     fecha TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     total DECIMAL(10,2) NOT NULL,
@@ -43,6 +59,7 @@ CREATE TABLE IF NOT EXISTS detalle_factura (
 
 CREATE TABLE IF NOT EXISTS configuracion_impresion (
     id INT PRIMARY KEY AUTO_INCREMENT,
+    tenant_id INT NULL,
     nombre_negocio VARCHAR(100) NOT NULL,
     direccion TEXT,
     telefono VARCHAR(20),
@@ -61,6 +78,7 @@ CREATE TABLE IF NOT EXISTS configuracion_impresion (
 -- Tablas para restaurante: mesas, pedidos y items de pedido
 CREATE TABLE IF NOT EXISTS mesas (
     id INT AUTO_INCREMENT PRIMARY KEY,
+    tenant_id INT NULL,
     numero VARCHAR(20) NOT NULL UNIQUE,
     descripcion VARCHAR(100),
     estado ENUM('libre', 'ocupada', 'reservada', 'bloqueada') DEFAULT 'libre',
@@ -70,6 +88,7 @@ CREATE TABLE IF NOT EXISTS mesas (
 
 CREATE TABLE IF NOT EXISTS pedidos (
     id INT AUTO_INCREMENT PRIMARY KEY,
+    tenant_id INT NULL,
     mesa_id INT NOT NULL,
     cliente_id INT,
     estado ENUM('abierto', 'en_cocina', 'preparando', 'listo', 'servido', 'cerrado', 'cancelado') DEFAULT 'abierto',
@@ -83,6 +102,7 @@ CREATE TABLE IF NOT EXISTS pedidos (
 
 CREATE TABLE IF NOT EXISTS pedido_items (
     id INT AUTO_INCREMENT PRIMARY KEY,
+    tenant_id INT NULL,
     pedido_id INT NOT NULL,
     producto_id INT NOT NULL,
     cantidad DECIMAL(10,2) NOT NULL,
