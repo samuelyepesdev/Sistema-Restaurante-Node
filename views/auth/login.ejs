@@ -92,6 +92,11 @@
         </div>
 
         <div id="errorAlert" class="alert alert-danger d-none" role="alert"></div>
+        <% if (typeof mensaje !== 'undefined' && mensaje) { %>
+        <div id="mensajeTenant" class="alert alert-warning" role="alert">
+            <i class="bi bi-exclamation-triangle me-2"></i><%= mensaje %>
+        </div>
+        <% } %>
 
         <form id="loginForm">
             <div class="mb-3">
@@ -143,6 +148,10 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         $(document).ready(function() {
+            if (document.getElementById('mensajeTenant')) {
+                localStorage.removeItem('auth_token');
+                localStorage.removeItem('user');
+            }
             $('#loginForm').on('submit', async function(e) {
                 e.preventDefault();
                 

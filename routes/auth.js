@@ -2,7 +2,9 @@ const express = require('express');
 const { body, validationResult } = require('express-validator');
 const router = express.Router();
 const authService = require('../services/AuthService');
+const TenantRepository = require('../repositories/TenantRepository');
 const { requireAuth } = require('../middleware/auth');
+const { ROLES } = require('../utils/constants');
 
 /**
  * POST /auth/login
@@ -31,16 +33,24 @@ router.post('/login', [
             return res.status(401).json({ error: result.message });
         }
 
-        // Set token in cookie so server-side redirects and page loads see the user
-        const isJsonRequest = req.xhr || (req.headers.accept && req.headers.accept.indexOf('json') !== -1);
-        if (!isJsonRequest) {
-            res.cookie('auth_token', result.token, {
-                httpOnly: true,
-                secure: process.env.NODE_ENV === 'production',
-                sameSite: 'strict',
-                maxAge: 24 * 60 * 60 * 1000 // 24 hours
-            });
+        // Si tiene tenant_id (no es superadmin), comprobar que el restaurante esté activo antes de dar sesión
+        const tenantId = result.user.tenant_id;
+        const rol = String(result.user.rol || '').toLowerCase();
+        if (tenantId != null && rol !== ROLES.SUPERADMIN) {
+            const tenant = await TenantRepository.findById(tenantId);
+            if (tenant && !tenant.activo) {
+                const msg = 'Tu restaurante "' + (tenant.nombre || '') + '" está desactivado. Contacta al administrador.';
+                return res.status(403).json({ error: msg });
+            }
         }
+
+        // Siempre guardar token en cookie para que la siguiente navegación (GET /admin/tenants, etc.) tenga sesión
+        res.cookie('auth_token', result.token, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'strict',
+            maxAge: 24 * 60 * 60 * 1000 // 24 hours
+        });
 
         // Return user data and token
         res.json({
@@ -56,10 +66,11 @@ router.post('/login', [
 
 /**
  * GET /auth/login
- * Show login page
+ * Show login page (mensaje en query para mostrar tenant desactivado, etc.)
  */
 router.get('/login', (req, res) => {
-    res.render('auth/login', { title: 'Iniciar Sesión' });
+    const mensaje = req.query.mensaje || '';
+    res.render('auth/login', { title: 'Iniciar Sesión', mensaje });
 });
 
 /**

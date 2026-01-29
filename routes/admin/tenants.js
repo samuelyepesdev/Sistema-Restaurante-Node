@@ -3,11 +3,17 @@ const router = express.Router();
 const TenantService = require('../../services/TenantService');
 const TenantUserService = require('../../services/TenantUserService');
 const TenantAuditService = require('../../services/TenantAuditService');
-const { requireRole } = require('../../middleware/auth');
 const { ROLES } = require('../../utils/constants');
+const authService = require('../../services/AuthService');
 
-// Solo superadmins pueden acceder
-router.use(requireRole(ROLES.SUPERADMIN));
+// Solo superadmins: si no lo es, redirigir a / (no mostrar 403 para no dejar pegado)
+router.use((req, res, next) => {
+    if (!req.user) return res.redirect('/auth/login');
+    if (!authService.hasRole(req.user.rol, [ROLES.SUPERADMIN])) {
+        return res.redirect('/');
+    }
+    next();
+});
 
 router.get('/', async (req, res) => {
     try {

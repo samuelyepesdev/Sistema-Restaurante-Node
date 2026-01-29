@@ -33,12 +33,23 @@ async function attachTenantContext(req, res, next) {
             req.user.tenant_id = tenantId;
         }
 
-        const tenant = await TenantRepository.findByIdAndActive(tenantId);
+        const tenant = await TenantRepository.findById(tenantId);
         if (!tenant) {
             if (req.xhr || req.headers.accept?.indexOf('json') > -1) {
-                return res.status(403).json({ error: 'Tenant no encontrado o inactivo' });
+                return res.status(403).json({ error: 'Tenant no encontrado' });
             }
-            return res.status(403).render('error', { error: { message: 'Tenant no encontrado o inactivo' } });
+            res.clearCookie('auth_token');
+            return res.redirect('/auth/login?mensaje=' + encodeURIComponent('Restaurante no encontrado. Contacta al administrador.'));
+        }
+
+        if (!tenant.activo) {
+            const msg = 'Tu restaurante "' + (tenant.nombre || '') + '" está desactivado. Contacta al administrador.';
+            if (req.xhr || req.headers.accept?.indexOf('json') > -1) {
+                res.clearCookie('auth_token');
+                return res.status(403).json({ error: msg, redirect: '/auth/login' });
+            }
+            res.clearCookie('auth_token');
+            return res.redirect('/auth/login?mensaje=' + encodeURIComponent(msg));
         }
 
         req.tenant = tenant;

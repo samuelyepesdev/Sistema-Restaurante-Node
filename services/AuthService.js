@@ -174,7 +174,8 @@ function hasRole(userRole, requiredRoles) {
     if (!userRole || !requiredRoles || !Array.isArray(requiredRoles)) {
         return false;
     }
-    return requiredRoles.includes(userRole);
+    const roleLower = String(userRole).toLowerCase();
+    return requiredRoles.some(r => String(r).toLowerCase() === roleLower);
 }
 
 module.exports = {

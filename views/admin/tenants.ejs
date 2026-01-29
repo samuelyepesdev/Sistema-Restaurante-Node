@@ -281,6 +281,7 @@ async function updateTenant(event, id) {
     };
     const resp = await fetch('/admin/tenants/' + id, {
         method: 'PUT',
+        credentials: 'same-origin',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data)
     });
@@ -300,6 +301,7 @@ async function changeRole(event, userId) {
     const tenantId = activeTenantId;
     const resp = await fetch('/admin/tenants/' + tenantId + '/users/' + userId + '/roles', {
         method: 'PATCH',
+        credentials: 'same-origin',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ rol_nombre: rol })
     });
@@ -308,21 +310,39 @@ async function changeRole(event, userId) {
 }
 
 async function toggleTenantStatus(id, activo) {
-    await fetch('/admin/tenants/' + id + '/status', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ activo })
-    });
-    window.location.reload();
+    try {
+        const resp = await fetch('/admin/tenants/' + id + '/status', {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ activo })
+        });
+        if (!resp.ok) {
+            Swal.fire({ icon: 'error', title: 'Error', text: resp.status === 403 ? 'No tienes permiso para esta acción.' : 'No se pudo actualizar.' });
+            return;
+        }
+        window.location.reload();
+    } catch (e) {
+        Swal.fire({ icon: 'error', title: 'Error', text: 'Error de conexión.' });
+    }
 }
 
 async function toggleUser(userId, tenantId, activo) {
-    await fetch('/admin/tenants/' + tenantId + '/users/' + userId + '/status', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ activo })
-    });
-    window.location.reload();
+    try {
+        const resp = await fetch('/admin/tenants/' + tenantId + '/users/' + userId + '/status', {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ activo })
+        });
+        if (!resp.ok) {
+            Swal.fire({ icon: 'error', title: 'Error', text: resp.status === 403 ? 'No tienes permiso.' : 'No se pudo actualizar.' });
+            return;
+        }
+        window.location.reload();
+    } catch (e) {
+        Swal.fire({ icon: 'error', title: 'Error', text: 'Error de conexión.' });
+    }
 }
 
 // Presets en formulario de edición
