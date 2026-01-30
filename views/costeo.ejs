@@ -30,6 +30,9 @@
                         <button class="nav-link" id="recetas-tab" data-bs-toggle="tab" data-bs-target="#recetas" type="button">Recetas</button>
                     </li>
                     <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="alertas-tab" data-bs-toggle="tab" data-bs-target="#alertas" type="button">Alertas</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
                         <button class="nav-link" id="config-tab" data-bs-toggle="tab" data-bs-target="#config" type="button">Configuración</button>
                     </li>
                 </ul>
@@ -82,6 +85,59 @@
                         </div>
                     </div>
 
+                    <!-- Tab Alertas -->
+                    <div class="tab-pane fade" id="alertas" role="tabpanel">
+                        <p class="text-muted small mb-3">Productos con margen bajo, precio bajo costo o sin receta asociada.</p>
+                        <div id="alertasLoading" class="text-center py-4">
+                            <div class="spinner-border text-primary"></div>
+                            <p class="mt-2 mb-0 small text-muted">Cargando alertas...</p>
+                        </div>
+                        <div id="alertasContent" class="d-none">
+                            <div class="card mb-3 border-warning">
+                                <div class="card-header bg-warning bg-opacity-25">
+                                    <i class="bi bi-exclamation-triangle me-2"></i>Margen bajo (por debajo del mínimo configurado)
+                                </div>
+                                <div class="card-body p-0">
+                                    <div class="table-responsive">
+                                        <table class="table table-sm table-hover mb-0">
+                                            <thead><tr><th>Producto</th><th>Código</th><th class="text-end">Precio</th><th class="text-end">Costo/porción</th><th class="text-end">Margen %</th></tr></thead>
+                                            <tbody id="alertasMargenBajo"></tbody>
+                                        </table>
+                                    </div>
+                                    <div id="alertasMargenBajoVacio" class="p-3 text-muted small d-none">No hay productos con margen bajo.</div>
+                                </div>
+                            </div>
+                            <div class="card mb-3 border-danger">
+                                <div class="card-header bg-danger bg-opacity-25">
+                                    <i class="bi bi-currency-dollar me-2"></i>Precio bajo costo
+                                </div>
+                                <div class="card-body p-0">
+                                    <div class="table-responsive">
+                                        <table class="table table-sm table-hover mb-0">
+                                            <thead><tr><th>Producto</th><th>Código</th><th class="text-end">Precio</th><th class="text-end">Costo/porción</th></tr></thead>
+                                            <tbody id="alertasPrecioBajo"></tbody>
+                                        </table>
+                                    </div>
+                                    <div id="alertasPrecioBajoVacio" class="p-3 text-muted small d-none">No hay productos con precio bajo costo.</div>
+                                </div>
+                            </div>
+                            <div class="card border-secondary">
+                                <div class="card-header bg-secondary bg-opacity-25">
+                                    <i class="bi bi-link-45deg me-2"></i>Productos sin receta
+                                </div>
+                                <div class="card-body p-0">
+                                    <div class="table-responsive">
+                                        <table class="table table-sm table-hover mb-0">
+                                            <thead><tr><th>Producto</th><th>Código</th><th></th></tr></thead>
+                                            <tbody id="alertasSinReceta"></tbody>
+                                        </table>
+                                    </div>
+                                    <div id="alertasSinRecetaVacio" class="p-3 text-muted small d-none">Todos los productos tienen receta asociada.</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Tab Configuración -->
                     <div class="tab-pane fade" id="config" role="tabpanel">
                         <form id="formConfigCosteo">
@@ -121,6 +177,10 @@
                                 <div class="col-md-4">
                                     <label class="form-label">Margen objetivo por defecto (%)</label>
                                     <input type="number" class="form-control" name="margen_objetivo_default" id="configMargen" step="0.01" min="0" max="100">
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">Margen mínimo para alerta (%)</label>
+                                    <input type="number" class="form-control" name="margen_minimo_alerta" id="configMargenMinimoAlerta" step="0.01" min="0" max="100" title="Productos con margen por debajo de este valor aparecerán en Alertas">
                                 </div>
                             </div>
                             <% if (user && user.permisos && user.permisos.includes('costeo.editar')) { %>

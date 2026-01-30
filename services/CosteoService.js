@@ -5,6 +5,7 @@
 
 const RecetaRepository = require('../repositories/RecetaRepository');
 const ConfiguracionCosteoRepository = require('../repositories/ConfiguracionCosteoRepository');
+const ProductRepository = require('../repositories/ProductRepository');
 
 const UNIDADES_A_KG = { g: 0.001, kg: 1, lb: 0.453592, ml: 0.001, L: 1, l: 1, und: 1, UND: 1 };
 
@@ -127,6 +128,49 @@ class CosteoService {
     static async saveConfig(tenantId, data) {
         await ConfiguracionCosteoRepository.upsert(tenantId, data);
         return { message: 'Configuración guardada' };
+    }
+
+    /**
+     * Get costing alerts: low margin, price below cost, products without recipe.
+     * @param {number} tenantId - Tenant ID
+     * @returns {Promise<Object>} { margenBajo, precioBajoCosto, sinReceta, margen_minimo_alerta }
+     */
+    static async getAlertas(tenantId) {
+        const config = await this.getConfig(tenantId);
+        const margenMinimo = config.margen_minimo_alerta != null ? parseFloat(config.margen_minimo_alerta) : 30;
+        const recetas = await RecetaRepository.findAll(tenantId);
+        const productos = await ProductRepository.findAll(tenantId);
+        const productoIdsConReceta = new Set((recetas || []).map(r => r.producto_id));
+        const sinReceta = (productos || [])
+            .filter(p => !productoIdsConReceta.has(p.id))
+            .map(p => ({ id: p.id, codigo: p.codigo, nombre: p.nombre }));
+
+        const items = [];
+        for (const receta of recetas || []) {
+            const costeo = await this.getCosteoReceta(receta.id, tenantId);
+            if (!costeo) continue;
+            items.push({
+                producto_id: receta.producto_id,
+                producto_nombre: receta.producto_nombre || receta.nombre_receta,
+                producto_codigo: receta.producto_codigo,
+                precio_venta_actual: costeo.precio_venta_actual,
+                costo_total_porcion: costeo.costo_total_porcion,
+                margen_actual_pct: costeo.margen_actual_pct,
+                receta_id: receta.id
+            });
+        }
+
+        const margenBajo = items.filter(it => it.margen_actual_pct != null && it.margen_actual_pct < margenMinimo);
+        const precioBajoCosto = items.filter(it =>
+            (parseFloat(it.precio_venta_actual) || 0) < (parseFloat(it.costo_total_porcion) || 0)
+        );
+
+        return {
+            margenBajo,
+            precioBajoCosto,
+            sinReceta,
+            margen_minimo_alerta: margenMinimo
+        };
     }
 }
 

@@ -197,6 +197,18 @@ router.get('/api/costeo/receta/:id', async (req, res) => {
     }
 });
 
+// --- Alertas de costeo ---
+router.get('/api/costeo/alertas', async (req, res) => {
+    try {
+        const tenantId = getTenantId(req);
+        const alertas = await CosteoService.getAlertas(tenantId);
+        res.json(alertas);
+    } catch (error) {
+        console.error('Error al obtener alertas:', error);
+        res.status(500).json({ error: error.message || 'Error al obtener alertas' });
+    }
+});
+
 // --- Configuración costeo ---
 router.get('/api/costeo/config', async (req, res) => {
     try {

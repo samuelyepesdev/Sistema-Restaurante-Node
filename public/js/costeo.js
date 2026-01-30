@@ -252,6 +252,64 @@
         }).catch(err => showToast(err.message, 'danger'));
     });
 
+    // --- Alertas ---
+    function loadAlertas() {
+        const loadingEl = document.getElementById('alertasLoading');
+        const contentEl = document.getElementById('alertasContent');
+        if (!loadingEl || !contentEl) return;
+        loadingEl.classList.remove('d-none');
+        contentEl.classList.add('d-none');
+        api('/api/costeo/alertas').then(data => {
+            const fmt = (n) => n != null && !isNaN(n) ? new Intl.NumberFormat('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(n) : '-';
+            const margenBajo = data.margenBajo || [];
+            const precioBajo = data.precioBajoCosto || [];
+            const sinReceta = data.sinReceta || [];
+            const tbodyMB = document.getElementById('alertasMargenBajo');
+            const tbodyPB = document.getElementById('alertasPrecioBajo');
+            const tbodySR = document.getElementById('alertasSinReceta');
+            const vacioMB = document.getElementById('alertasMargenBajoVacio');
+            const vacioPB = document.getElementById('alertasPrecioBajoVacio');
+            const vacioSR = document.getElementById('alertasSinRecetaVacio');
+            if (tbodyMB) {
+                tbodyMB.innerHTML = margenBajo.map(it => `
+                    <tr>
+                        <td>${escapeHtml(it.producto_nombre)}</td>
+                        <td>${escapeHtml(it.producto_codigo)}</td>
+                        <td class="text-end">$${fmt(it.precio_venta_actual)}</td>
+                        <td class="text-end">$${fmt(it.costo_total_porcion)}</td>
+                        <td class="text-end text-warning">${it.margen_actual_pct != null ? it.margen_actual_pct + '%' : '-'}</td>
+                    </tr>`).join('');
+                if (vacioMB) vacioMB.classList.toggle('d-none', margenBajo.length > 0);
+            }
+            if (tbodyPB) {
+                tbodyPB.innerHTML = precioBajo.map(it => `
+                    <tr>
+                        <td>${escapeHtml(it.producto_nombre)}</td>
+                        <td>${escapeHtml(it.producto_codigo)}</td>
+                        <td class="text-end">$${fmt(it.precio_venta_actual)}</td>
+                        <td class="text-end text-danger">$${fmt(it.costo_total_porcion)}</td>
+                    </tr>`).join('');
+                if (vacioPB) vacioPB.classList.toggle('d-none', precioBajo.length > 0);
+            }
+            if (tbodySR) {
+                tbodySR.innerHTML = sinReceta.map(it => `
+                    <tr>
+                        <td>${escapeHtml(it.nombre)}</td>
+                        <td>${escapeHtml(it.codigo)}</td>
+                        <td><a href="/productos" class="btn btn-sm btn-outline-primary">Ir a Productos</a></td>
+                    </tr>`).join('');
+                if (vacioSR) vacioSR.classList.toggle('d-none', sinReceta.length > 0);
+            }
+            loadingEl.classList.add('d-none');
+            contentEl.classList.remove('d-none');
+        }).catch(() => {
+            loadingEl.classList.add('d-none');
+            contentEl.classList.remove('d-none');
+            showToast('Error al cargar alertas', 'danger');
+        });
+    }
+    document.getElementById('alertas-tab')?.addEventListener('shown.bs.tab', () => loadAlertas());
+
     // --- Configuración ---
     function loadConfig() {
         return api('/api/costeo/config').then(config => {
@@ -261,6 +319,8 @@
             document.getElementById('configPlatosMes').value = config.platos_estimados_mes ?? 500;
             document.getElementById('configFactor').value = config.factor_carga ?? 2.5;
             document.getElementById('configMargen').value = config.margen_objetivo_default ?? 60;
+            const margenMinimo = document.getElementById('configMargenMinimoAlerta');
+            if (margenMinimo) margenMinimo.value = config.margen_minimo_alerta ?? 30;
             toggleConfigRows(config.metodo_indirectos);
             return config;
         });
@@ -281,7 +341,8 @@
             costo_fijo_mensual: parseFloat(document.getElementById('configCostoFijo').value) || 0,
             platos_estimados_mes: parseInt(document.getElementById('configPlatosMes').value, 10) || 500,
             factor_carga: parseFloat(document.getElementById('configFactor').value) || 2.5,
-            margen_objetivo_default: parseFloat(document.getElementById('configMargen').value) || 60
+            margen_objetivo_default: parseFloat(document.getElementById('configMargen').value) || 60,
+            margen_minimo_alerta: parseFloat(document.getElementById('configMargenMinimoAlerta')?.value) || 30
         };
         api('/api/costeo/config', { method: 'PUT', body: JSON.stringify(payload) })
             .then(() => showToast('Configuración guardada', 'success'))

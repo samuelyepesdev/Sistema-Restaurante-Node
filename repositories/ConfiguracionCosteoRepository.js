@@ -21,13 +21,14 @@ class ConfiguracionCosteoRepository {
             costo_fijo_mensual = 0,
             platos_estimados_mes = 500,
             factor_carga = 2.5,
-            margen_objetivo_default = 60
+            margen_objetivo_default = 60,
+            margen_minimo_alerta = 30
         } = data || {};
         const [result] = await db.query(
             `INSERT INTO configuracion_costeo 
-             (tenant_id, metodo_indirectos, porcentaje_indirectos, costo_fijo_mensual, platos_estimados_mes, factor_carga, margen_objetivo_default) 
-             VALUES (?, ?, ?, ?, ?, ?, ?)`,
-            [tenantId, metodo_indirectos, porcentaje_indirectos, costo_fijo_mensual, platos_estimados_mes, factor_carga, margen_objetivo_default]
+             (tenant_id, metodo_indirectos, porcentaje_indirectos, costo_fijo_mensual, platos_estimados_mes, factor_carga, margen_objetivo_default, margen_minimo_alerta) 
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+            [tenantId, metodo_indirectos, porcentaje_indirectos, costo_fijo_mensual, platos_estimados_mes, factor_carga, margen_objetivo_default, margen_minimo_alerta]
         );
         return result.insertId;
     }
@@ -39,7 +40,8 @@ class ConfiguracionCosteoRepository {
             costo_fijo_mensual,
             platos_estimados_mes,
             factor_carga,
-            margen_objetivo_default
+            margen_objetivo_default,
+            margen_minimo_alerta
         } = data;
         const [result] = await db.query(
             `UPDATE configuracion_costeo SET 
@@ -48,9 +50,10 @@ class ConfiguracionCosteoRepository {
              costo_fijo_mensual = COALESCE(?, costo_fijo_mensual),
              platos_estimados_mes = COALESCE(?, platos_estimados_mes),
              factor_carga = COALESCE(?, factor_carga),
-             margen_objetivo_default = COALESCE(?, margen_objetivo_default)
+             margen_objetivo_default = COALESCE(?, margen_objetivo_default),
+             margen_minimo_alerta = COALESCE(?, margen_minimo_alerta)
              WHERE tenant_id = ?`,
-            [metodo_indirectos, porcentaje_indirectos, costo_fijo_mensual, platos_estimados_mes, factor_carga, margen_objetivo_default, tenantId]
+            [metodo_indirectos, porcentaje_indirectos, costo_fijo_mensual, platos_estimados_mes, factor_carga, margen_objetivo_default, margen_minimo_alerta, tenantId]
         );
         return result;
     }
