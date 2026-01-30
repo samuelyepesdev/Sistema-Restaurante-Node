@@ -8,6 +8,7 @@ const express = require('express');
 const router = express.Router();
 const ProductService = require('../services/ProductService');
 const CategoryService = require('../services/CategoryService');
+const RecetaService = require('../services/RecetaService');
 let ExcelJS; // Lazy import for Excel template/import
 
 // GET /productos - Show products page (solo del tenant)
@@ -16,9 +17,13 @@ router.get('/', async (req, res) => {
         const tenantId = req.tenant?.id;
         if (!tenantId) return res.status(403).render('error', { error: { message: 'Contexto de tenant no disponible' } });
         const { productos, categorias } = await ProductService.getAllForView(tenantId);
+        const recetas = await RecetaService.list(tenantId).catch(() => []);
+        const recetasPorProducto = {};
+        (recetas || []).forEach(r => { recetasPorProducto[r.producto_id] = r; });
         res.render('productos', { 
             productos: productos || [],
             categorias: categorias || [],
+            recetasPorProducto: recetasPorProducto || {},
             user: req.user,
             tenant: req.tenant
         });
@@ -89,6 +94,27 @@ router.post('/', async (req, res) => {
             return res.status(400).json({ error: error.message });
         }
         res.status(500).json({ error: 'Error al crear producto' });
+    }
+});
+
+// PUT /productos/:id/precio - Update only price (e.g. apply suggested price from costeo)
+router.put('/:id/precio', async (req, res) => {
+    try {
+        const tenantId = req.tenant?.id;
+        if (!tenantId) return res.status(403).json({ error: 'Contexto de tenant no disponible' });
+        const id = parseInt(req.params.id, 10);
+        const precio_unidad = req.body.precio_unidad;
+        if (precio_unidad === undefined || precio_unidad === null) {
+            return res.status(400).json({ error: 'precio_unidad es requerido' });
+        }
+        await ProductService.updatePrecio(id, tenantId, precio_unidad);
+        res.json({ message: 'Precio actualizado' });
+    } catch (error) {
+        console.error('Error al actualizar precio:', error);
+        if (error.message === 'Producto no encontrado') {
+            return res.status(404).json({ error: error.message });
+        }
+        res.status(500).json({ error: error.message });
     }
 });
 

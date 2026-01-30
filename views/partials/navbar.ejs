@@ -77,6 +77,13 @@ const brandHref = isSuperadmin ? '/admin/tenants' : '/';
                     </a>
                 </li>
                 <% } %>
+                <% if (user && user.permisos && user.permisos.includes('costeo.ver')) { %>
+                <li class="nav-item">
+                    <a class="nav-link" href="/costeo">
+                        <i class="bi bi-calculator"></i> Costeo
+                    </a>
+                </li>
+                <% } %>
                 <% } %>
             </ul>
             

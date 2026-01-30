@@ -134,6 +134,21 @@ class ProductService {
     }
 
     /**
+     * Update only product price (e.g. apply suggested price from costeo)
+     * @param {number} id - Product ID
+     * @param {number} tenantId - Tenant ID
+     * @param {number} precioUnidad - New unit price
+     * @returns {Promise<Object>}
+     */
+    static async updatePrecio(id, tenantId, precioUnidad) {
+        const existing = await ProductRepository.findById(id, tenantId);
+        if (!existing) throw new Error('Producto no encontrado');
+        const result = await ProductRepository.updatePrecio(id, tenantId, precioUnidad);
+        if (result.affectedRows === 0) throw new Error('No se pudo actualizar el precio');
+        return { message: 'Precio actualizado' };
+    }
+
+    /**
      * Delete product by ID
      * @param {number} id - Product ID
      * @returns {Promise<Object>} Delete result

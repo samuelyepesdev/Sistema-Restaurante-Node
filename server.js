@@ -73,6 +73,7 @@ const cocinaRoutes = require('./routes/cocina');
 const configuracionRoutes = require('./routes/configuracion');
 const ventasRoutes = require('./routes/ventas');
 const dashboardRoutes = require('./routes/dashboard');
+const costeoRoutes = require('./routes/costeo');
 const adminTenantsRoutes = require('./routes/admin/tenants');
 
 // Ruta principal - redirige según autenticación y rol
@@ -112,6 +113,7 @@ app.use('/configuracion', requireAuthWithTenant, configuracionRoutes);
 app.use('/ventas', requireAuthWithTenant, ventasRoutes);
 app.use('/dashboard', requireAuthWithTenant, dashboardRoutes);
 app.use('/api/dashboard', requireAuthWithTenant, dashboardRoutes);
+app.use('/costeo', requireAuthWithTenant, costeoRoutes);
 // Superadmin: solo requireAuth (no tenant); el panel solo permite rol superadmin
 app.use('/admin/tenants', requireAuth, adminTenantsRoutes);
 

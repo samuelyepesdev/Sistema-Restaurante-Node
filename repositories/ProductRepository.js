@@ -88,6 +88,21 @@ class ProductRepository {
     }
 
     /**
+     * Update only product price (for applying suggested price from costeo)
+     * @param {number} id - Product ID
+     * @param {number} tenantId - Tenant ID
+     * @param {number} precioUnidad - New unit price
+     * @returns {Promise<Object>} Update result
+     */
+    static async updatePrecio(id, tenantId, precioUnidad) {
+        const [result] = await db.query(
+            'UPDATE productos SET precio_unidad = ? WHERE id = ? AND tenant_id = ?',
+            [parseFloat(precioUnidad) || 0, id, tenantId]
+        );
+        return result;
+    }
+
+    /**
      * Delete product by ID
      * @param {number} id - Product ID
      * @returns {Promise<Object>} Delete result

@@ -14,6 +14,7 @@ class TableManager {
             tableBodyId: config.tableBodyId,
             onEdit: config.onEdit,
             onDelete: config.onDelete,
+            onCosteo: config.onCosteo,
             deleteConfirmMessage: config.deleteConfirmMessage || '¿Está seguro de que desea eliminar este elemento?',
             ...config
         };
@@ -48,6 +49,8 @@ class TableManager {
                 this.config.onEdit(id);
             } else if (action === 'eliminar' && this.config.onDelete) {
                 this.config.onDelete(id);
+            } else if (action === 'costeo' && this.config.onCosteo) {
+                this.config.onCosteo(id);
             }
         });
     }

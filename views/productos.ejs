@@ -138,14 +138,26 @@
                             </tr>
                         </thead>
                         <tbody id="productosTabla">
-                            <% productos.forEach(function(producto) { %>
-                                <tr data-categoria-id="<%= producto.categoria_id || '' %>">
+                            <% 
+                            const recetasMap = typeof recetasPorProducto !== 'undefined' ? recetasPorProducto : {};
+                            productos.forEach(function(producto) { 
+                                const tieneReceta = recetasMap[producto.id];
+                            %>
+                                <tr data-categoria-id="<%= producto.categoria_id || '' %>" data-producto-id="<%= producto.id %>">
                                     <td><%= producto.codigo %></td>
                                     <td><%= producto.nombre %></td>
                                     <td><span class="badge bg-secondary"><%= producto.categoria_nombre || 'Sin categoría' %></span></td>
                                     <td class="text-end">$<%= (Number(producto.precio_unidad) || 0).toFixed(2) %></td>
                                     <td class="text-center">
                                         <div class="action-buttons">
+                                            <% if (user && user.permisos && user.permisos.includes('costeo.ver') && tieneReceta) { %>
+                                            <button class="btn btn-sm btn-outline-info me-1" 
+                                                    data-id="<%= producto.id %>" 
+                                                    data-action="costeo"
+                                                    title="Ver costeo y precio sugerido">
+                                                <i class="bi bi-calculator"></i>
+                                            </button>
+                                            <% } %>
                                             <button class="btn btn-sm btn-outline-primary me-1" 
                                                     data-id="<%= producto.id %>" 
                                                     data-action="editar">
@@ -162,6 +174,63 @@
                             <% }); %>
                         </tbody>
                     </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Costeo (precio sugerido) -->
+    <div class="modal fade" id="costeoProductoModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="bi bi-calculator me-2"></i>
+                        Costeo y precio sugerido
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="costeoModalBody">
+                    <div class="text-center py-3" id="costeoLoading">
+                        <div class="spinner-border text-primary"></div>
+                        <p class="mt-2 mb-0 small text-muted">Cargando costeo...</p>
+                    </div>
+                    <div id="costeoContent" class="d-none">
+                        <div class="row small mb-2">
+                            <div class="col-6 text-muted">Costo directo/porción</div>
+                            <div class="col-6 text-end"><strong id="costeoDirecto">-</strong></div>
+                        </div>
+                        <div class="row small mb-2">
+                            <div class="col-6 text-muted">Costo indirecto</div>
+                            <div class="col-6 text-end"><strong id="costeoIndirecto">-</strong></div>
+                        </div>
+                        <div class="row small mb-2">
+                            <div class="col-6 text-muted">Costo total/porción</div>
+                            <div class="col-6 text-end"><strong id="costeoTotal">-</strong></div>
+                        </div>
+                        <hr>
+                        <div class="row mb-2">
+                            <div class="col-6">Precio sugerido</div>
+                            <div class="col-6 text-end"><strong class="text-success" id="costeoPrecioSug">-</strong></div>
+                        </div>
+                        <div class="row small mb-2">
+                            <div class="col-6 text-muted">Precio actual</div>
+                            <div class="col-6 text-end" id="costeoPrecioActual">-</div>
+                        </div>
+                        <div class="row small">
+                            <div class="col-6 text-muted">Margen actual</div>
+                            <div class="col-6 text-end" id="costeoMargen">-</div>
+                        </div>
+                    </div>
+                    <div id="costeoError" class="alert alert-warning d-none mb-0"></div>
+                </div>
+                <div class="modal-footer d-none" id="costeoFooter">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                    <% if (user && user.permisos && user.permisos.includes('productos.editar')) { %>
+                    <button type="button" class="btn btn-success" id="btnAplicarPrecioSugerido">
+                        <i class="bi bi-check-lg me-1"></i>Aplicar precio sugerido
+                    </button>
+                    <% } %>
                 </div>
             </div>
         </div>

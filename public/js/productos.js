@@ -35,6 +35,7 @@ class ProductManager {
             tableBodyId: 'productosTabla',
             onEdit: (id) => this.editProduct(id),
             onDelete: (id) => this.deleteProduct(id),
+            onCosteo: (id) => this.showCosteoModal(id),
             deleteConfirmMessage: '¿Está seguro de eliminar este producto?'
         });
 
@@ -75,6 +76,77 @@ class ProductManager {
                     }, 500);
                 }
             });
+        }
+
+        // Costeo modal: aplicar precio sugerido
+        const btnAplicar = document.getElementById('btnAplicarPrecioSugerido');
+        if (btnAplicar) {
+            btnAplicar.addEventListener('click', () => this.aplicarPrecioSugerido());
+        }
+    }
+
+    /**
+     * Show costeo modal for a product (must have linked recipe)
+     */
+    async showCosteoModal(productoId) {
+        const modalEl = document.getElementById('costeoProductoModal');
+        const loadingEl = document.getElementById('costeoLoading');
+        const contentEl = document.getElementById('costeoContent');
+        const errorEl = document.getElementById('costeoError');
+        const footerEl = document.getElementById('costeoFooter');
+        if (!modalEl || !loadingEl || !contentEl) return;
+
+        loadingEl.classList.remove('d-none');
+        contentEl.classList.add('d-none');
+        errorEl.classList.add('d-none');
+        footerEl.classList.add('d-none');
+        errorEl.textContent = '';
+        this._costeoProductoId = productoId;
+        this._costeoData = null;
+
+        const modal = new bootstrap.Modal(modalEl);
+        modal.show();
+
+        try {
+            const data = await fetch(`/costeo/api/costeo/producto/${productoId}`, {
+                headers: { 'Accept': 'application/json' },
+                credentials: 'same-origin'
+            }).then(res => {
+                if (!res.ok) return res.json().then(j => Promise.reject(new Error(j.error || res.statusText)));
+                return res.json();
+            });
+            this._costeoData = data;
+            const fmt = (n) => n != null && !isNaN(n) ? new Intl.NumberFormat('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(n) : '-';
+            document.getElementById('costeoDirecto').textContent = '$' + fmt(data.costo_directo_porcion);
+            document.getElementById('costeoIndirecto').textContent = '$' + fmt(data.costo_indirecto);
+            document.getElementById('costeoTotal').textContent = '$' + fmt(data.costo_total_porcion);
+            document.getElementById('costeoPrecioSug').textContent = '$' + fmt(data.precio_sugerido);
+            document.getElementById('costeoPrecioActual').textContent = '$' + fmt(data.precio_venta_actual);
+            document.getElementById('costeoMargen').textContent = data.margen_actual_pct != null ? data.margen_actual_pct + '%' : '-';
+            loadingEl.classList.add('d-none');
+            contentEl.classList.remove('d-none');
+            footerEl.classList.remove('d-none');
+        } catch (err) {
+            loadingEl.classList.add('d-none');
+            errorEl.textContent = err.message || 'No se pudo cargar el costeo.';
+            errorEl.classList.remove('d-none');
+            footerEl.classList.remove('d-none');
+        }
+    }
+
+    /**
+     * Apply suggested price from costeo to product
+     */
+    async aplicarPrecioSugerido() {
+        const id = this._costeoProductoId;
+        const data = this._costeoData;
+        if (!id || !data || data.precio_sugerido == null) return;
+        try {
+            await ApiClient.put(`/api/productos/${id}/precio`, { precio_unidad: data.precio_sugerido });
+            bootstrap.Modal.getInstance(document.getElementById('costeoProductoModal'))?.hide();
+            Utils.reload();
+        } catch (error) {
+            AlertManager.alert(error.message || 'Error al actualizar precio', 'error');
         }
     }
 

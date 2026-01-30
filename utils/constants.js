@@ -45,6 +45,10 @@ const PERMISSIONS = {
     CONFIGURACION_VER: 'configuracion.ver',
     CONFIGURACION_EDITAR: 'configuracion.editar',
     
+    // Costeo
+    COSTEO_VER: 'costeo.ver',
+    COSTEO_EDITAR: 'costeo.editar',
+    
     // Users
     USUARIOS_VER: 'usuarios.ver',
     USUARIOS_GESTIONAR: 'usuarios.gestionar'
