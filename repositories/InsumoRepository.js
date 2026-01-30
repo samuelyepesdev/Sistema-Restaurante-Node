@@ -6,11 +6,20 @@
 const db = require('../config/database');
 
 class InsumoRepository {
-    static async findAll(tenantId) {
-        const [rows] = await db.query(
-            'SELECT * FROM insumos WHERE tenant_id = ? ORDER BY nombre',
-            [tenantId]
-        );
+    static async findAll(tenantId, filters = {}) {
+        let sql = 'SELECT * FROM insumos WHERE tenant_id = ?';
+        const params = [tenantId];
+        if (filters.q && filters.q.trim()) {
+            sql += ' AND (codigo LIKE ? OR nombre LIKE ?)';
+            const term = '%' + filters.q.trim() + '%';
+            params.push(term, term);
+        }
+        if (filters.unidad && filters.unidad.trim()) {
+            sql += ' AND unidad_compra = ?';
+            params.push(filters.unidad.trim());
+        }
+        sql += ' ORDER BY nombre';
+        const [rows] = await db.query(sql, params);
         return rows;
     }
 

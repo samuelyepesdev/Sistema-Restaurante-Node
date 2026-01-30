@@ -21,6 +21,11 @@ const brandHref = isSuperadmin ? '/admin/tenants' : '/';
                         <i class="bi bi-building"></i> Restaurantes
                     </a>
                 </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/costeo">
+                        <i class="bi bi-calculator"></i> Costeo (Temas y parámetros)
+                    </a>
+                </li>
                 <% } else { %>
                 <% if (user && user.rol === 'admin') { %>
                 <li class="nav-item">

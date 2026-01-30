@@ -9,6 +9,10 @@ const InsumoService = require('../services/InsumoService');
 const RecetaService = require('../services/RecetaService');
 const CosteoService = require('../services/CosteoService');
 const ProductService = require('../services/ProductService');
+const TemaService = require('../services/TemaService');
+const ParametroService = require('../services/ParametroService');
+const ProductoParametroRepository = require('../repositories/ProductoParametroRepository');
+const TenantService = require('../services/TenantService');
 
 function getTenantId(req) {
     const id = req.tenant?.id;
@@ -16,15 +20,28 @@ function getTenantId(req) {
     return id;
 }
 
-// GET /costeo - Página principal del módulo
+// GET /costeo - Página principal del módulo (superadmin debe elegir tenant si no hay ?tenant_id)
 router.get('/', async (req, res) => {
     try {
+        const isSuperadmin = req.user && String(req.user.rol || '').toLowerCase() === 'superadmin';
+        if (isSuperadmin && !req.tenant) {
+            const tenants = await TenantService.getAllTenants();
+            return res.render('costeo', {
+                productos: [],
+                user: req.user,
+                tenant: null,
+                showTenantSelector: true,
+                tenants: tenants || []
+            });
+        }
         const tenantId = getTenantId(req);
         const { productos } = await ProductService.getAllForView(tenantId);
         res.render('costeo', {
             productos: productos || [],
             user: req.user,
-            tenant: req.tenant
+            tenant: req.tenant,
+            showTenantSelector: false,
+            tenants: []
         });
     } catch (error) {
         console.error('Error al cargar costeo:', error);
@@ -41,7 +58,8 @@ router.get('/', async (req, res) => {
 router.get('/api/insumos', async (req, res) => {
     try {
         const tenantId = getTenantId(req);
-        const list = await InsumoService.list(tenantId);
+        const filters = { q: req.query.q, unidad: req.query.unidad };
+        const list = await InsumoService.list(tenantId, filters);
         res.json(list);
     } catch (error) {
         console.error('Error al listar insumos:', error);
@@ -107,7 +125,8 @@ router.delete('/api/insumos/:id', async (req, res) => {
 router.get('/api/recetas', async (req, res) => {
     try {
         const tenantId = getTenantId(req);
-        const list = await RecetaService.list(tenantId);
+        const filters = { q: req.query.q, tema_id: req.query.tema_id, parametro_id: req.query.parametro_id };
+        const list = await RecetaService.list(tenantId, filters);
         res.json(list);
     } catch (error) {
         console.error('Error al listar recetas:', error);
@@ -229,6 +248,193 @@ router.put('/api/costeo/config', async (req, res) => {
     } catch (error) {
         console.error('Error al guardar configuración:', error);
         res.status(400).json({ error: error.message || 'Error al guardar configuración' });
+    }
+});
+
+function isSuperadmin(req) {
+    return req.user && String(req.user.rol || '').toLowerCase() === 'superadmin';
+}
+
+// --- Temas ---
+router.get('/api/temas', async (req, res) => {
+    try {
+        const tenantId = getTenantId(req);
+        const list = await TemaService.list(tenantId);
+        res.json(list);
+    } catch (error) {
+        console.error('Error al listar temas:', error);
+        res.status(500).json({ error: error.message || 'Error al listar temas' });
+    }
+});
+
+router.get('/api/temas/:id', async (req, res) => {
+    try {
+        const tenantId = getTenantId(req);
+        const id = parseInt(req.params.id, 10);
+        const tema = await TemaService.getById(id, tenantId);
+        if (!tema) return res.status(404).json({ error: 'Tema no encontrado' });
+        res.json(tema);
+    } catch (error) {
+        console.error('Error al obtener tema:', error);
+        res.status(500).json({ error: error.message || 'Error al obtener tema' });
+    }
+});
+
+router.post('/api/temas', async (req, res) => {
+    if (!isSuperadmin(req)) return res.status(403).json({ error: 'Solo el superadmin puede crear temas.' });
+    try {
+        const tenantId = getTenantId(req);
+        const id = await TemaService.create(tenantId, req.body);
+        res.status(201).json({ id, message: 'Tema creado' });
+    } catch (error) {
+        console.error('Error al crear tema:', error);
+        res.status(400).json({ error: error.message || 'Error al crear tema' });
+    }
+});
+
+router.put('/api/temas/:id', async (req, res) => {
+    if (!isSuperadmin(req)) return res.status(403).json({ error: 'Solo el superadmin puede editar temas.' });
+    try {
+        const tenantId = getTenantId(req);
+        const id = parseInt(req.params.id, 10);
+        await TemaService.update(id, tenantId, req.body);
+        res.json({ message: 'Tema actualizado' });
+    } catch (error) {
+        console.error('Error al actualizar tema:', error);
+        if (error.message === 'Tema no encontrado') return res.status(404).json({ error: error.message });
+        res.status(400).json({ error: error.message || 'Error al actualizar tema' });
+    }
+});
+
+router.delete('/api/temas/:id', async (req, res) => {
+    if (!isSuperadmin(req)) return res.status(403).json({ error: 'Solo el superadmin puede eliminar temas.' });
+    try {
+        const tenantId = getTenantId(req);
+        const id = parseInt(req.params.id, 10);
+        await TemaService.delete(id, tenantId);
+        res.json({ message: 'Tema eliminado' });
+    } catch (error) {
+        console.error('Error al eliminar tema:', error);
+        if (error.message === 'Tema no encontrado') return res.status(404).json({ error: error.message });
+        res.status(500).json({ error: error.message || 'Error al eliminar tema' });
+    }
+});
+
+router.get('/api/temas/:id/parametros', async (req, res) => {
+    try {
+        const tenantId = getTenantId(req);
+        const temaId = parseInt(req.params.id, 10);
+        const list = await ParametroService.getByTemaId(temaId, tenantId);
+        res.json(list);
+    } catch (error) {
+        console.error('Error al listar parámetros del tema:', error);
+        res.status(500).json({ error: error.message || 'Error al listar parámetros' });
+    }
+});
+
+router.put('/api/temas/:id/parametros', async (req, res) => {
+    if (!isSuperadmin(req)) return res.status(403).json({ error: 'Solo el superadmin puede asignar parámetros a temas.' });
+    try {
+        const tenantId = getTenantId(req);
+        const temaId = parseInt(req.params.id, 10);
+        await TemaService.setParametros(temaId, tenantId, req.body.parametro_ids || []);
+        res.json({ message: 'Parámetros del tema actualizados' });
+    } catch (error) {
+        console.error('Error al actualizar parámetros del tema:', error);
+        res.status(400).json({ error: error.message || 'Error al actualizar parámetros' });
+    }
+});
+
+// --- Parámetros ---
+router.get('/api/parametros', async (req, res) => {
+    try {
+        const tenantId = getTenantId(req);
+        const list = await ParametroService.list(tenantId);
+        res.json(list);
+    } catch (error) {
+        console.error('Error al listar parámetros:', error);
+        res.status(500).json({ error: error.message || 'Error al listar parámetros' });
+    }
+});
+
+router.get('/api/parametros/:id', async (req, res) => {
+    try {
+        const tenantId = getTenantId(req);
+        const id = parseInt(req.params.id, 10);
+        const param = await ParametroService.getById(id, tenantId);
+        if (!param) return res.status(404).json({ error: 'Parámetro no encontrado' });
+        res.json(param);
+    } catch (error) {
+        console.error('Error al obtener parámetro:', error);
+        res.status(500).json({ error: error.message || 'Error al obtener parámetro' });
+    }
+});
+
+router.post('/api/parametros', async (req, res) => {
+    if (!isSuperadmin(req)) return res.status(403).json({ error: 'Solo el superadmin puede crear parámetros.' });
+    try {
+        const tenantId = getTenantId(req);
+        const id = await ParametroService.create(tenantId, req.body);
+        res.status(201).json({ id, message: 'Parámetro creado' });
+    } catch (error) {
+        console.error('Error al crear parámetro:', error);
+        res.status(400).json({ error: error.message || 'Error al crear parámetro' });
+    }
+});
+
+router.put('/api/parametros/:id', async (req, res) => {
+    if (!isSuperadmin(req)) return res.status(403).json({ error: 'Solo el superadmin puede editar parámetros.' });
+    try {
+        const tenantId = getTenantId(req);
+        const id = parseInt(req.params.id, 10);
+        await ParametroService.update(id, tenantId, req.body);
+        res.json({ message: 'Parámetro actualizado' });
+    } catch (error) {
+        console.error('Error al actualizar parámetro:', error);
+        if (error.message === 'Parámetro no encontrado') return res.status(404).json({ error: error.message });
+        res.status(400).json({ error: error.message || 'Error al actualizar parámetro' });
+    }
+});
+
+router.delete('/api/parametros/:id', async (req, res) => {
+    if (!isSuperadmin(req)) return res.status(403).json({ error: 'Solo el superadmin puede eliminar parámetros.' });
+    try {
+        const tenantId = getTenantId(req);
+        const id = parseInt(req.params.id, 10);
+        await ParametroService.delete(id, tenantId);
+        res.json({ message: 'Parámetro eliminado' });
+    } catch (error) {
+        console.error('Error al eliminar parámetro:', error);
+        if (error.message === 'Parámetro no encontrado') return res.status(404).json({ error: error.message });
+        res.status(500).json({ error: error.message || 'Error al eliminar parámetro' });
+    }
+});
+
+// Asignar parámetros a producto (para filtrar recetas por tema/parámetro)
+router.get('/api/productos/:id/parametros', async (req, res) => {
+    try {
+        const tenantId = getTenantId(req);
+        const productoId = parseInt(req.params.id, 10);
+        const list = await ProductoParametroRepository.getParametrosByProductoId(productoId, tenantId);
+        res.json(list);
+    } catch (error) {
+        console.error('Error al listar parámetros del producto:', error);
+        res.status(500).json({ error: error.message || 'Error' });
+    }
+});
+
+router.put('/api/productos/:id/parametros', async (req, res) => {
+    try {
+        const tenantId = getTenantId(req);
+        const productoId = parseInt(req.params.id, 10);
+        const producto = await ProductService.getById(productoId, tenantId);
+        if (!producto) return res.status(404).json({ error: 'Producto no encontrado' });
+        const parametroIds = Array.isArray(req.body.parametro_ids) ? req.body.parametro_ids : [];
+        await ProductoParametroRepository.setParametrosForProducto(productoId, parametroIds);
+        res.json({ message: 'Parámetros del producto actualizados' });
+    } catch (error) {
+        console.error('Error al actualizar parámetros del producto:', error);
+        res.status(400).json({ error: error.message || 'Error' });
     }
 });
 

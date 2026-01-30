@@ -6,8 +6,8 @@
 const InsumoRepository = require('../repositories/InsumoRepository');
 
 class InsumoService {
-    static async list(tenantId) {
-        return InsumoRepository.findAll(tenantId);
+    static async list(tenantId, filters = {}) {
+        return InsumoRepository.findAll(tenantId, filters);
     }
 
     static async getById(id, tenantId) {

@@ -19,9 +19,25 @@
     <%- include('partials/navbar', { user: typeof user !== 'undefined' ? user : null, tenant: typeof tenant !== 'undefined' ? tenant : null }) %>
 
     <div class="container mt-4">
+        <% if (typeof showTenantSelector !== 'undefined' && showTenantSelector && tenants && tenants.length) { %>
+        <div class="card">
+            <div class="card-header"><i class="bi bi-calculator me-2"></i>Costeo de Platos</div>
+            <div class="card-body">
+                <p class="text-muted">Seleccioná el restaurante para gestionar costeo (insumos, recetas, temas y parámetros).</p>
+                <ul class="list-group list-group-flush">
+                    <% tenants.forEach(function(t) { %>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <span><%= t.nombre %></span>
+                        <a href="/costeo?tenant_id=<%= t.id %>" class="btn btn-sm btn-primary">Entrar</a>
+                    </li>
+                    <% }); %>
+                </ul>
+            </div>
+        </div>
+        <% } else { %>
         <div class="card">
             <div class="card-header d-flex justify-content-between align-items-center">
-                <div><i class="bi bi-calculator me-2"></i>Costeo de Platos</div>
+                <div><i class="bi bi-calculator me-2"></i>Costeo de Platos<% if (typeof tenant !== 'undefined' && tenant) { %> — <%= tenant.nombre %><% } %></div>
                 <ul class="nav nav-tabs card-header-tabs" id="costeoTab" role="tablist">
                     <li class="nav-item" role="presentation">
                         <button class="nav-link active" id="insumos-tab" data-bs-toggle="tab" data-bs-target="#insumos" type="button">Insumos</button>
@@ -32,6 +48,11 @@
                     <li class="nav-item" role="presentation">
                         <button class="nav-link" id="alertas-tab" data-bs-toggle="tab" data-bs-target="#alertas" type="button">Alertas</button>
                     </li>
+                    <% if (user && String(user.rol || '').toLowerCase() === 'superadmin') { %>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="temas-tab" data-bs-toggle="tab" data-bs-target="#temas" type="button">Temas y parámetros</button>
+                    </li>
+                    <% } %>
                     <li class="nav-item" role="presentation">
                         <button class="nav-link" id="config-tab" data-bs-toggle="tab" data-bs-target="#config" type="button">Configuración</button>
                     </li>
@@ -41,10 +62,14 @@
                 <div class="tab-content" id="costeoTabContent">
                     <!-- Tab Insumos -->
                     <div class="tab-pane fade show active" id="insumos" role="tabpanel">
-                        <div class="d-flex justify-content-between align-items-center mb-3">
-                            <span class="text-muted">Materia prima para recetas</span>
+                        <div class="d-flex flex-wrap gap-2 align-items-center mb-3">
+                            <input type="text" class="form-control form-control-sm" id="filtroInsumoQ" placeholder="Buscar por código o nombre..." style="max-width: 220px;">
+                            <select class="form-select form-select-sm" id="filtroInsumoUnidad" style="max-width: 120px;">
+                                <option value="">Todas las unidades</option>
+                            </select>
+                            <button type="button" class="btn btn-sm btn-outline-secondary" id="btnFiltrarInsumos">Filtrar</button>
                             <% if (user && user.permisos && user.permisos.includes('costeo.editar')) { %>
-                            <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#insumoModal" id="btnNuevoInsumo">
+                            <button type="button" class="btn btn-primary btn-sm ms-auto" data-bs-toggle="modal" data-bs-target="#insumoModal" id="btnNuevoInsumo">
                                 <i class="bi bi-plus-lg me-1"></i>Nuevo Insumo
                             </button>
                             <% } %>
@@ -59,10 +84,17 @@
 
                     <!-- Tab Recetas -->
                     <div class="tab-pane fade" id="recetas" role="tabpanel">
-                        <div class="d-flex justify-content-between align-items-center mb-3">
-                            <span class="text-muted">Recetas vinculadas a productos</span>
+                        <div class="d-flex flex-wrap gap-2 align-items-center mb-3">
+                            <input type="text" class="form-control form-control-sm" id="filtroRecetaQ" placeholder="Buscar por producto o receta..." style="max-width: 220px;">
+                            <select class="form-select form-select-sm" id="filtroRecetaTema" style="max-width: 160px;">
+                                <option value="">Tema</option>
+                            </select>
+                            <select class="form-select form-select-sm" id="filtroRecetaParametro" style="max-width: 160px;">
+                                <option value="">Parámetro</option>
+                            </select>
+                            <button type="button" class="btn btn-sm btn-outline-secondary" id="btnFiltrarRecetas">Filtrar</button>
                             <% if (user && user.permisos && user.permisos.includes('costeo.editar')) { %>
-                            <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#recetaNuevaModal" id="btnNuevaReceta">
+                            <button type="button" class="btn btn-primary btn-sm ms-auto" data-bs-toggle="modal" data-bs-target="#recetaNuevaModal" id="btnNuevaReceta">
                                 <i class="bi bi-plus-lg me-1"></i>Nueva Receta
                             </button>
                             <% } %>
@@ -138,6 +170,49 @@
                         </div>
                     </div>
 
+                    <!-- Tab Temas y parámetros -->
+                    <div class="tab-pane fade" id="temas" role="tabpanel">
+                        <p class="text-muted small mb-3">Temas agrupan parámetros (ej: tema "Unidades de masa" → kg, lb, g; tema "Alimentos" → bebidas, comidas). Asigná parámetros a cada tema.</p>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <div class="card h-100">
+                                    <div class="card-header d-flex justify-content-between align-items-center">
+                                        <span><i class="bi bi-collection me-2"></i>Temas</span>
+                                        <% if (user && String(user.rol || '').toLowerCase() === 'superadmin') { %>
+                                        <button type="button" class="btn btn-sm btn-primary" id="btnNuevoTema"><i class="bi bi-plus"></i></button>
+                                        <% } %>
+                                    </div>
+                                    <div class="card-body p-0">
+                                        <ul class="list-group list-group-flush" id="listaTemas"></ul>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <div class="card h-100">
+                                    <div class="card-header d-flex justify-content-between align-items-center">
+                                        <span><i class="bi bi-tags me-2"></i>Parámetros</span>
+                                        <% if (user && String(user.rol || '').toLowerCase() === 'superadmin') { %>
+                                        <button type="button" class="btn btn-sm btn-primary" id="btnNuevoParametro"><i class="bi bi-plus"></i></button>
+                                        <% } %>
+                                    </div>
+                                    <div class="card-body p-0">
+                                        <ul class="list-group list-group-flush" id="listaParametros"></ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card d-none" id="cardTemaParametros">
+                            <div class="card-header">
+                                <i class="bi bi-link-45deg me-2"></i>Parámetros del tema: <strong id="temaParametrosNombre"></strong>
+                            </div>
+                            <div class="card-body">
+                                <p class="small text-muted">Seleccioná los parámetros que pertenecen a este tema.</p>
+                                <div id="checkboxesParametrosTema"></div>
+                                <button type="button" class="btn btn-sm btn-primary mt-2" id="btnGuardarTemaParametros">Guardar</button>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Tab Configuración -->
                     <div class="tab-pane fade" id="config" role="tabpanel">
                         <form id="formConfigCosteo">
@@ -191,6 +266,7 @@
                 </div>
             </div>
         </div>
+        <% } %>
     </div>
 
     <!-- Modal Insumo -->
@@ -319,9 +395,58 @@
         </div>
     </div>
 
+    <!-- Modal Tema -->
+    <div class="modal fade" id="temaModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="temaModalTitle">Nuevo Tema</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="temaId">
+                    <div class="mb-2">
+                        <label class="form-label">Nombre</label>
+                        <input type="text" class="form-control" id="temaNombre" placeholder="ej: Unidades de masa, Alimentos">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" id="btnGuardarTema">Guardar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Parámetro -->
+    <div class="modal fade" id="parametroModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="parametroModalTitle">Nuevo Parámetro</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="parametroId">
+                    <div class="mb-2">
+                        <label class="form-label">Nombre</label>
+                        <input type="text" class="form-control" id="parametroNombre" placeholder="ej: kg, bebidas, comidas">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" id="btnGuardarParametro">Guardar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         window.USER_PERMISOS = <%= typeof user !== 'undefined' && user && user.permisos ? JSON.stringify(user.permisos) : '[]' %>;
+        window.USER_ROL = <%= typeof user !== 'undefined' && user && user.rol ? JSON.stringify(user.rol) : '""' %>;
+        window.COSTEO_TENANT_ID = <%= typeof tenant !== 'undefined' && tenant && tenant.id ? tenant.id : 'null' %>;
+        window.COSTEO_SHOW_TENANT_SELECTOR = <%= typeof showTenantSelector !== 'undefined' && showTenantSelector ? 'true' : 'false' %>;
     </script>
     <script src="/js/costeo.js"></script>
 </body>

@@ -71,6 +71,7 @@ class ProductManager {
             modal.addEventListener('show.bs.modal', (e) => {
                 if (!e.relatedTarget) {
                     this.formManager.resetForm();
+                    document.getElementById('productoParametrosContainer')?.classList.add('d-none');
                     setTimeout(() => {
                         document.getElementById('codigo')?.focus();
                     }, 500);
@@ -164,6 +165,14 @@ class ProductManager {
         try {
             if (isEdit) {
                 await ApiClient.put(`/api/productos/${id}`, productData);
+                const checkboxes = document.querySelectorAll('#productoParametrosCheckboxes .producto-parametro-cb:checked');
+                const parametroIds = Array.from(checkboxes).map(cb => parseInt(cb.value, 10));
+                await fetch('/costeo/api/productos/' + id + '/parametros', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'same-origin',
+                    body: JSON.stringify({ parametro_ids: parametroIds })
+                }).then(r => { if (!r.ok) throw new Error('Error al guardar parámetros'); });
             } else {
                 await ApiClient.post('/api/productos', productData);
             }
@@ -175,7 +184,7 @@ class ProductManager {
     }
 
     /**
-     * Handle edit - load product data
+     * Handle edit - load product data and parametros for costeo filter
      */
     async handleEdit(id) {
         try {
@@ -185,6 +194,23 @@ class ProductManager {
             document.getElementById('nombre').value = producto.nombre;
             document.getElementById('categoriaId').value = producto.categoria_id || '';
             document.getElementById('precioUnidad').value = producto.precio_unidad;
+            const paramContainer = document.getElementById('productoParametrosContainer');
+            if (paramContainer) {
+                paramContainer.classList.remove('d-none');
+                const [allParams, productParams] = await Promise.all([
+                    fetch('/costeo/api/parametros', { credentials: 'same-origin' }).then(r => r.ok ? r.json() : []),
+                    fetch('/costeo/api/productos/' + id + '/parametros', { credentials: 'same-origin' }).then(r => r.ok ? r.json() : [])
+                ]).catch(() => [[], []]);
+                const assignedIds = new Set((productParams || []).map(p => p.id));
+                const div = document.getElementById('productoParametrosCheckboxes');
+                div.innerHTML = '';
+                (allParams || []).forEach(p => {
+                    const label = document.createElement('label');
+                    label.className = 'd-block me-3';
+                    label.innerHTML = `<input type="checkbox" class="form-check-input me-2 producto-parametro-cb" value="${p.id}" ${assignedIds.has(p.id) ? 'checked' : ''}> ${p.name}`;
+                    div.appendChild(label);
+                });
+            }
         } catch (error) {
             AlertManager.alert('Error al cargar el producto', 'error');
         }

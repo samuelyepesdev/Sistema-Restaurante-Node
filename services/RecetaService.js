@@ -7,8 +7,8 @@ const RecetaRepository = require('../repositories/RecetaRepository');
 const ProductRepository = require('../repositories/ProductRepository');
 
 class RecetaService {
-    static async list(tenantId) {
-        return RecetaRepository.findAll(tenantId);
+    static async list(tenantId, filters = {}) {
+        return RecetaRepository.findAll(tenantId, filters);
     }
 
     static async getById(id, tenantId) {

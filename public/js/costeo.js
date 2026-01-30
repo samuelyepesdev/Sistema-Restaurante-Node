@@ -4,11 +4,21 @@
  */
 
 (function () {
+    if (window.COSTEO_SHOW_TENANT_SELECTOR) return;
     const base = '/costeo';
-    const canEdit = typeof window.USER_PERMISOS !== 'undefined' && window.USER_PERMISOS && window.USER_PERMISOS.includes('costeo.editar');
+    const permisos = typeof window.USER_PERMISOS !== 'undefined' && window.USER_PERMISOS ? window.USER_PERMISOS : [];
+    const userRol = (typeof window.USER_ROL === 'string' ? window.USER_ROL : '') || '';
+    const isSuperadmin = userRol.toLowerCase() === 'superadmin';
+    const canEdit = permisos.includes('costeo.editar') || isSuperadmin;
+    const canViewCosteo = permisos.includes('costeo.ver') || isSuperadmin;
+    const canEditReceta = canViewCosteo || canEdit;
+    const canManageTemas = isSuperadmin;
 
     function api(path, options = {}) {
-        const url = base + path;
+        let url = base + path;
+        if (isSuperadmin && window.COSTEO_TENANT_ID) {
+            url += (path.indexOf('?') >= 0 ? '&' : '?') + 'tenant_id=' + window.COSTEO_TENANT_ID;
+        }
         return fetch(url, {
             ...options,
             headers: {
@@ -24,8 +34,18 @@
     }
 
     // --- Insumos ---
-    function loadInsumos() {
-        return api('/api/insumos').then(list => {
+    function getInsumosFilters() {
+        const q = document.getElementById('filtroInsumoQ')?.value?.trim() || '';
+        const unidad = document.getElementById('filtroInsumoUnidad')?.value?.trim() || '';
+        return { q, unidad };
+    }
+    function loadInsumos(filters) {
+        const f = filters || getInsumosFilters();
+        const qs = new URLSearchParams();
+        if (f.q) qs.set('q', f.q);
+        if (f.unidad) qs.set('unidad', f.unidad);
+        const path = '/api/insumos' + (qs.toString() ? '?' + qs.toString() : '');
+        return api(path).then(list => {
             const tbody = document.querySelector('#tablaInsumos tbody');
             tbody.innerHTML = '';
             (list || []).forEach(ins => {
@@ -41,9 +61,25 @@
                     </td>`;
                 tbody.appendChild(tr);
             });
+            if (!filters) {
+                const unidades = [...new Set((list || []).map(i => i.unidad_compra).filter(Boolean))].sort();
+                const sel = document.getElementById('filtroInsumoUnidad');
+                if (sel) {
+                    const current = sel.value;
+                    sel.innerHTML = '<option value="">Todas las unidades</option>';
+                    unidades.forEach(u => {
+                        const opt = document.createElement('option');
+                        opt.value = u;
+                        opt.textContent = u;
+                        if (u === current) opt.selected = true;
+                        sel.appendChild(opt);
+                    });
+                }
+            }
             return list;
         });
     }
+    document.getElementById('btnFiltrarInsumos')?.addEventListener('click', () => loadInsumos());
 
     function openInsumoModal(insumo) {
         const modal = document.getElementById('insumoModal');
@@ -69,7 +105,7 @@
         const promise = id ? api('/api/insumos/' + id, { method: 'PUT', body: JSON.stringify(payload) }) : api('/api/insumos', { method: 'POST', body: JSON.stringify(payload) });
         promise.then(() => {
             bootstrap.Modal.getInstance(document.getElementById('insumoModal')).hide();
-            loadInsumos();
+            loadInsumos(getInsumosFilters());
             showToast('Insumo guardado', 'success');
         }).catch(err => showToast(err.message || 'Error', 'danger'));
     });
@@ -82,15 +118,28 @@
         } else if (e.target.classList.contains('btnElimInsumo')) {
             if (!confirm('¿Eliminar este insumo?')) return;
             api('/api/insumos/' + id, { method: 'DELETE' }).then(() => {
-                loadInsumos();
+                loadInsumos(getInsumosFilters());
                 showToast('Insumo eliminado', 'success');
             }).catch(err => showToast(err.message, 'danger'));
         }
     });
 
     // --- Recetas ---
-    function loadRecetas() {
-        return api('/api/recetas').then(list => {
+    function getRecetasFilters() {
+        return {
+            q: document.getElementById('filtroRecetaQ')?.value?.trim() || '',
+            tema_id: document.getElementById('filtroRecetaTema')?.value?.trim() || '',
+            parametro_id: document.getElementById('filtroRecetaParametro')?.value?.trim() || ''
+        };
+    }
+    function loadRecetas(filters) {
+        const f = filters || getRecetasFilters();
+        const qs = new URLSearchParams();
+        if (f.q) qs.set('q', f.q);
+        if (f.tema_id) qs.set('tema_id', f.tema_id);
+        if (f.parametro_id) qs.set('parametro_id', f.parametro_id);
+        const path = '/api/recetas' + (qs.toString() ? '?' + qs.toString() : '');
+        return api(path).then(list => {
             const tbody = document.querySelector('#tablaRecetas tbody');
             tbody.innerHTML = '';
             (list || []).forEach(rec => {
@@ -102,12 +151,67 @@
                     <td>${formatMoney(rec.precio_venta_actual)}</td>
                     <td class="text-end">
                         <button class="btn btn-sm btn-outline-info me-1 btnVerCosteo" data-id="${rec.id}">Ver costeo</button>
-                        ${canEdit ? `<button class="btn btn-sm btn-outline-primary me-1 btnEditReceta" data-id="${rec.id}">Editar</button>
-                        <button class="btn btn-sm btn-outline-danger btnElimReceta" data-id="${rec.id}">Eliminar</button>` : ''}
+                        ${canEditReceta ? `<button class="btn btn-sm btn-outline-primary me-1 btnEditReceta" data-id="${rec.id}">Editar</button>` : ''}
+                        ${canEdit ? `<button class="btn btn-sm btn-outline-danger btnElimReceta" data-id="${rec.id}">Eliminar</button>` : ''}
                     </td>`;
                 tbody.appendChild(tr);
             });
             return list;
+        });
+    }
+    document.getElementById('btnFiltrarRecetas')?.addEventListener('click', () => loadRecetas());
+
+    function loadTemasForRecetasFilter() {
+        api('/api/temas').then(temas => {
+            const sel = document.getElementById('filtroRecetaTema');
+            if (!sel) return;
+            const current = sel.value;
+            sel.innerHTML = '<option value="">Tema</option>';
+            (temas || []).forEach(t => {
+                const opt = document.createElement('option');
+                opt.value = t.id;
+                opt.textContent = t.name;
+                if (String(t.id) === current) opt.selected = true;
+                sel.appendChild(opt);
+            });
+            const temaId = sel.value;
+            if (temaId) loadParametrosByTemaForFilter(temaId);
+            else loadAllParametrosForFilter();
+        });
+    }
+    function loadParametrosByTemaForFilter(temaId) {
+        api('/api/temas/' + temaId + '/parametros').then(params => {
+            const sel = document.getElementById('filtroRecetaParametro');
+            if (!sel) return;
+            const current = sel.value;
+            sel.innerHTML = '<option value="">Parámetro</option>';
+            (params || []).forEach(p => {
+                const opt = document.createElement('option');
+                opt.value = p.id;
+                opt.textContent = p.name;
+                if (String(p.id) === current) opt.selected = true;
+                sel.appendChild(opt);
+            });
+        });
+    }
+    document.getElementById('filtroRecetaTema')?.addEventListener('change', (e) => {
+        const temaId = e.target.value;
+        if (temaId) loadParametrosByTemaForFilter(temaId);
+        else loadAllParametrosForFilter();
+    });
+    function loadAllParametrosForFilter() {
+        api('/api/parametros').then(params => {
+            const sel = document.getElementById('filtroRecetaParametro');
+            if (!sel) return;
+            const current = sel.value;
+            sel.innerHTML = '<option value="">Parámetro</option>';
+            (params || []).forEach(p => {
+                const opt = document.createElement('option');
+                opt.value = p.id;
+                opt.textContent = p.name;
+                if (String(p.id) === current) opt.selected = true;
+                sel.appendChild(opt);
+            });
         });
     }
 
@@ -134,12 +238,13 @@
         } else if (e.target.classList.contains('btnElimReceta')) {
             if (!confirm('¿Eliminar esta receta?')) return;
             api('/api/recetas/' + id, { method: 'DELETE' }).then(() => {
-                loadRecetas();
+                loadRecetas(getRecetasFilters());
                 document.getElementById('costeoRecetaPanel').classList.add('d-none');
                 showToast('Receta eliminada', 'success');
             }).catch(err => showToast(err.message, 'danger'));
         }
     });
+    document.getElementById('recetas-tab')?.addEventListener('shown.bs.tab', () => loadTemasForRecetasFilter());
 
     document.getElementById('btnNuevaReceta')?.addEventListener('click', () => {
         document.getElementById('recetaProductoId').value = '';
@@ -155,10 +260,13 @@
             return;
         }
         api('/api/recetas', { method: 'POST', body: JSON.stringify({ producto_id, nombre_receta, porciones }) })
-            .then(() => {
+            .then((result) => {
                 bootstrap.Modal.getInstance(document.getElementById('recetaNuevaModal')).hide();
-                loadRecetas();
-                showToast('Receta creada', 'success');
+                loadRecetas(getRecetasFilters());
+                showToast('Receta creada. Agregá los insumos a continuación.', 'success');
+                if (result && result.id) {
+                    setTimeout(() => openRecetaEditarModal(result.id), 300);
+                }
             }).catch(err => showToast(err.message, 'danger'));
     });
 
@@ -348,6 +456,137 @@
             .then(() => showToast('Configuración guardada', 'success'))
             .catch(err => showToast(err.message, 'danger'));
     });
+
+    // --- Temas y parámetros ---
+    function loadTemas() {
+        return api('/api/temas').then(list => {
+            const ul = document.getElementById('listaTemas');
+            if (!ul) return list;
+            ul.innerHTML = '';
+            (list || []).forEach(t => {
+                const li = document.createElement('li');
+                li.className = 'list-group-item d-flex justify-content-between align-items-center';
+                li.innerHTML = `
+                    <span>${escapeHtml(t.name)}</span>
+                    <span>
+                        ${canManageTemas ? `<button type="button" class="btn btn-sm btn-outline-primary me-1 btnAsignarParametrosTema" data-id="${t.id}" data-name="${escapeHtml(t.name)}">Parámetros</button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary me-1 btnEditTema" data-id="${t.id}">Editar</button>
+                        <button type="button" class="btn btn-sm btn-outline-danger btnElimTema" data-id="${t.id}">Eliminar</button>` : ''}
+                    </span>`;
+                ul.appendChild(li);
+            });
+            return list;
+        });
+    }
+    function loadParametros() {
+        return api('/api/parametros').then(list => {
+            const ul = document.getElementById('listaParametros');
+            if (!ul) return list;
+            ul.innerHTML = '';
+            (list || []).forEach(p => {
+                const li = document.createElement('li');
+                li.className = 'list-group-item d-flex justify-content-between align-items-center';
+                li.innerHTML = `
+                    <span>${escapeHtml(p.name)}</span>
+                    ${canManageTemas ? `<span><button type="button" class="btn btn-sm btn-outline-secondary btnEditParametro" data-id="${p.id}">Editar</button>
+                    <button type="button" class="btn btn-sm btn-outline-danger btnElimParametro" data-id="${p.id}">Eliminar</button></span>` : ''}`;
+                ul.appendChild(li);
+            });
+            return list;
+        });
+    }
+    document.getElementById('btnNuevoTema')?.addEventListener('click', () => {
+        document.getElementById('temaId').value = '';
+        document.getElementById('temaNombre').value = '';
+        document.getElementById('temaModalTitle').textContent = 'Nuevo Tema';
+        new bootstrap.Modal(document.getElementById('temaModal')).show();
+    });
+    document.getElementById('btnGuardarTema')?.addEventListener('click', () => {
+        const id = document.getElementById('temaId').value;
+        const name = document.getElementById('temaNombre').value.trim();
+        if (!name) { showToast('Nombre requerido', 'warning'); return; }
+        const promise = id ? api('/api/temas/' + id, { method: 'PUT', body: JSON.stringify({ name }) }) : api('/api/temas', { method: 'POST', body: JSON.stringify({ name }) });
+        promise.then(() => {
+            bootstrap.Modal.getInstance(document.getElementById('temaModal')).hide();
+            loadTemas();
+            showToast('Tema guardado', 'success');
+        }).catch(err => showToast(err.message, 'danger'));
+    });
+    document.getElementById('btnNuevoParametro')?.addEventListener('click', () => {
+        document.getElementById('parametroId').value = '';
+        document.getElementById('parametroNombre').value = '';
+        document.getElementById('parametroModalTitle').textContent = 'Nuevo Parámetro';
+        new bootstrap.Modal(document.getElementById('parametroModal')).show();
+    });
+    document.getElementById('btnGuardarParametro')?.addEventListener('click', () => {
+        const id = document.getElementById('parametroId').value;
+        const name = document.getElementById('parametroNombre').value.trim();
+        if (!name) { showToast('Nombre requerido', 'warning'); return; }
+        const promise = id ? api('/api/parametros/' + id, { method: 'PUT', body: JSON.stringify({ name }) }) : api('/api/parametros', { method: 'POST', body: JSON.stringify({ name }) });
+        promise.then(() => {
+            bootstrap.Modal.getInstance(document.getElementById('parametroModal')).hide();
+            loadParametros();
+            showToast('Parámetro guardado', 'success');
+        }).catch(err => showToast(err.message, 'danger'));
+    });
+    document.getElementById('listaTemas')?.addEventListener('click', (e) => {
+        const id = e.target.closest('[data-id]')?.getAttribute('data-id');
+        if (!id) return;
+        if (e.target.classList.contains('btnEditTema')) {
+            api('/api/temas/' + id).then(t => {
+                document.getElementById('temaId').value = t.id;
+                document.getElementById('temaNombre').value = t.name || '';
+                document.getElementById('temaModalTitle').textContent = 'Editar Tema';
+                new bootstrap.Modal(document.getElementById('temaModal')).show();
+            }).catch(err => showToast(err.message, 'danger'));
+        } else if (e.target.classList.contains('btnElimTema')) {
+            if (!confirm('¿Eliminar este tema?')) return;
+            api('/api/temas/' + id, { method: 'DELETE' }).then(() => { loadTemas(); showToast('Tema eliminado', 'success'); }).catch(err => showToast(err.message, 'danger'));
+        } else if (e.target.classList.contains('btnAsignarParametrosTema')) {
+            const name = e.target.getAttribute('data-name') || '';
+            document.getElementById('temaParametrosNombre').textContent = name;
+            document.getElementById('cardTemaParametros').classList.remove('d-none');
+            document.getElementById('cardTemaParametros').dataset.temaId = id;
+            api('/api/parametros').then(allParams => {
+                api('/api/temas/' + id + '/parametros').then(assigned => {
+                    const assignedIds = new Set((assigned || []).map(p => p.id));
+                    const div = document.getElementById('checkboxesParametrosTema');
+                    div.innerHTML = '';
+                    (allParams || []).forEach(p => {
+                        const label = document.createElement('label');
+                        label.className = 'd-block me-3';
+                        label.innerHTML = `<input type="checkbox" class="form-check-input me-2" value="${p.id}" ${assignedIds.has(p.id) ? 'checked' : ''}> ${escapeHtml(p.name)}`;
+                        div.appendChild(label);
+                    });
+                });
+            });
+        }
+    });
+    document.getElementById('btnGuardarTemaParametros')?.addEventListener('click', () => {
+        const temaId = document.getElementById('cardTemaParametros')?.dataset?.temaId;
+        if (!temaId) return;
+        const checkboxes = document.querySelectorAll('#checkboxesParametrosTema input[type="checkbox"]:checked');
+        const parametro_ids = Array.from(checkboxes).map(cb => parseInt(cb.value, 10));
+        api('/api/temas/' + temaId + '/parametros', { method: 'PUT', body: JSON.stringify({ parametro_ids }) })
+            .then(() => { showToast('Parámetros del tema actualizados', 'success'); loadTemas(); loadTemasForRecetasFilter(); })
+            .catch(err => showToast(err.message, 'danger'));
+    });
+    document.getElementById('listaParametros')?.addEventListener('click', (e) => {
+        const id = e.target.closest('[data-id]')?.getAttribute('data-id');
+        if (!id) return;
+        if (e.target.classList.contains('btnEditParametro')) {
+            api('/api/parametros/' + id).then(p => {
+                document.getElementById('parametroId').value = p.id;
+                document.getElementById('parametroNombre').value = p.name || '';
+                document.getElementById('parametroModalTitle').textContent = 'Editar Parámetro';
+                new bootstrap.Modal(document.getElementById('parametroModal')).show();
+            }).catch(err => showToast(err.message, 'danger'));
+        } else if (e.target.classList.contains('btnElimParametro')) {
+            if (!confirm('¿Eliminar este parámetro?')) return;
+            api('/api/parametros/' + id, { method: 'DELETE' }).then(() => { loadParametros(); showToast('Parámetro eliminado', 'success'); }).catch(err => showToast(err.message, 'danger'));
+        }
+    });
+    document.getElementById('temas-tab')?.addEventListener('shown.bs.tab', () => { loadTemas(); loadParametros(); });
 
     function escapeHtml(s) {
         if (s == null) return '';

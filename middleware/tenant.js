@@ -64,6 +64,35 @@ async function attachTenantContext(req, res, next) {
     }
 }
 
+/**
+ * For /costeo: if superadmin, set req.tenant from query.tenant_id; else use attachTenantContext.
+ * Superadmin must pass ?tenant_id=X when accessing costeo (page or API).
+ */
+async function costeoTenantContext(req, res, next) {
+    const rol = req.user && String(req.user.rol || '').toLowerCase();
+    if (rol === 'superadmin') {
+        const tenantId = req.query.tenant_id ? parseInt(req.query.tenant_id, 10) : null;
+        if (tenantId) {
+            try {
+                const tenant = await TenantRepository.findById(tenantId);
+                if (tenant) {
+                    req.tenant = tenant;
+                    res.locals.tenant = tenant;
+                } else {
+                    req.tenant = null;
+                }
+            } catch (e) {
+                req.tenant = null;
+            }
+        } else {
+            req.tenant = null;
+        }
+        return next();
+    }
+    return attachTenantContext(req, res, next);
+}
+
 module.exports = {
-    attachTenantContext
+    attachTenantContext,
+    costeoTenantContext
 };

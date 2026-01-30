@@ -55,9 +55,9 @@ app.use((req, res, next) => {
 
 // Middleware de autenticación y tenant
 const { requireAuth, optionalAuth, restrictSuperadminToAdmin } = require('./middleware/auth');
-const { attachTenantContext } = require('./middleware/tenant');
+const { attachTenantContext, costeoTenantContext } = require('./middleware/tenant');
 
-// Rutas de app: superadmin solo puede ver /admin/tenants; el resto requiere tenant
+// Rutas de app: superadmin solo puede ver /admin/tenants y /costeo; el resto requiere tenant
 const requireAuthWithTenant = [requireAuth, restrictSuperadminToAdmin, attachTenantContext];
 
 // Rutas de autenticación (públicas)
@@ -113,7 +113,7 @@ app.use('/configuracion', requireAuthWithTenant, configuracionRoutes);
 app.use('/ventas', requireAuthWithTenant, ventasRoutes);
 app.use('/dashboard', requireAuthWithTenant, dashboardRoutes);
 app.use('/api/dashboard', requireAuthWithTenant, dashboardRoutes);
-app.use('/costeo', requireAuthWithTenant, costeoRoutes);
+app.use('/costeo', requireAuth, restrictSuperadminToAdmin, costeoTenantContext, costeoRoutes);
 // Superadmin: solo requireAuth (no tenant); el panel solo permite rol superadmin
 app.use('/admin/tenants', requireAuth, adminTenantsRoutes);
 

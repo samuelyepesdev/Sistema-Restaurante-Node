@@ -104,9 +104,10 @@ function restrictSuperadminToAdmin(req, res, next) {
     const rol = req.user && String(req.user.rol || '').toLowerCase();
     if (rol === 'superadmin') {
         const path = (req.baseUrl || '') + (req.path || '');
-        if (!path.startsWith('/admin/tenants') && path !== '/auth/logout') {
+        const allowed = path.startsWith('/admin/tenants') || path.startsWith('/costeo') || path === '/auth/logout';
+        if (!allowed) {
             if (req.xhr || req.headers.accept?.indexOf('json') > -1) {
-                return res.status(403).json({ error: 'Acceso restringido. Solo gestión de restaurantes.' });
+                return res.status(403).json({ error: 'Acceso restringido. Solo gestión de restaurantes y costeo.' });
             }
             return res.redirect('/admin/tenants');
         }

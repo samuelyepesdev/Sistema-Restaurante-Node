@@ -6,14 +6,36 @@
 const db = require('../config/database');
 
 class RecetaRepository {
-    static async findAll(tenantId) {
-        const [rows] = await db.query(`
+    static async findAll(tenantId, filters = {}) {
+        let sql = `
             SELECT r.*, p.nombre AS producto_nombre, p.codigo AS producto_codigo, p.precio_unidad AS precio_venta_actual
             FROM recetas r
             INNER JOIN productos p ON p.id = r.producto_id AND p.tenant_id = r.tenant_id
             WHERE r.tenant_id = ?
-            ORDER BY r.nombre_receta
-        `, [tenantId]);
+        `;
+        const params = [tenantId];
+        if (filters.parametro_id) {
+            sql += ` AND EXISTS (
+                SELECT 1 FROM producto_parametro pp
+                WHERE pp.producto_id = r.producto_id AND pp.parametro_id = ?
+            )`;
+            params.push(parseInt(filters.parametro_id, 10));
+        }
+        if (filters.tema_id && !filters.parametro_id) {
+            sql += ` AND EXISTS (
+                SELECT 1 FROM tema_parametro tp
+                INNER JOIN producto_parametro pp ON pp.parametro_id = tp.parametro_id AND pp.producto_id = r.producto_id
+                WHERE tp.tema_id = ? AND tp.status = 1
+            )`;
+            params.push(parseInt(filters.tema_id, 10));
+        }
+        if (filters.q && filters.q.trim()) {
+            sql += ' AND (r.nombre_receta LIKE ? OR p.nombre LIKE ? OR p.codigo LIKE ?)';
+            const term = '%' + filters.q.trim() + '%';
+            params.push(term, term, term);
+        }
+        sql += ' ORDER BY r.nombre_receta';
+        const [rows] = await db.query(sql, params);
         return rows;
     }
 
