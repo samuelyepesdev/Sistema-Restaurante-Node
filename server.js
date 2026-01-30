@@ -75,6 +75,7 @@ const ventasRoutes = require('./routes/ventas');
 const dashboardRoutes = require('./routes/dashboard');
 const costeoRoutes = require('./routes/costeo');
 const adminTenantsRoutes = require('./routes/admin/tenants');
+const adminSistemaRoutes = require('./routes/admin/sistema');
 
 // Ruta principal - redirige según autenticación y rol
 app.get('/', optionalAuth, (req, res) => {
@@ -116,6 +117,7 @@ app.use('/api/dashboard', requireAuthWithTenant, dashboardRoutes);
 app.use('/costeo', requireAuth, restrictSuperadminToAdmin, costeoTenantContext, costeoRoutes);
 // Superadmin: solo requireAuth (no tenant); el panel solo permite rol superadmin
 app.use('/admin/tenants', requireAuth, adminTenantsRoutes);
+app.use('/admin/sistema', requireAuth, adminSistemaRoutes);
 
 
 // Manejo de errores 404

@@ -48,11 +48,6 @@
                     <li class="nav-item" role="presentation">
                         <button class="nav-link" id="alertas-tab" data-bs-toggle="tab" data-bs-target="#alertas" type="button">Alertas</button>
                     </li>
-                    <% if (user && String(user.rol || '').toLowerCase() === 'superadmin') { %>
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link" id="temas-tab" data-bs-toggle="tab" data-bs-target="#temas" type="button">Temas y parámetros</button>
-                    </li>
-                    <% } %>
                     <li class="nav-item" role="presentation">
                         <button class="nav-link" id="config-tab" data-bs-toggle="tab" data-bs-target="#config" type="button">Configuración</button>
                     </li>
@@ -166,49 +161,6 @@
                                     </div>
                                     <div id="alertasSinRecetaVacio" class="p-3 text-muted small d-none">Todos los productos tienen receta asociada.</div>
                                 </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Tab Temas y parámetros -->
-                    <div class="tab-pane fade" id="temas" role="tabpanel">
-                        <p class="text-muted small mb-3">Temas agrupan parámetros (ej: tema "Unidades de masa" → kg, lb, g; tema "Alimentos" → bebidas, comidas). Asigná parámetros a cada tema.</p>
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <div class="card h-100">
-                                    <div class="card-header d-flex justify-content-between align-items-center">
-                                        <span><i class="bi bi-collection me-2"></i>Temas</span>
-                                        <% if (user && String(user.rol || '').toLowerCase() === 'superadmin') { %>
-                                        <button type="button" class="btn btn-sm btn-primary" id="btnNuevoTema"><i class="bi bi-plus"></i></button>
-                                        <% } %>
-                                    </div>
-                                    <div class="card-body p-0">
-                                        <ul class="list-group list-group-flush" id="listaTemas"></ul>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <div class="card h-100">
-                                    <div class="card-header d-flex justify-content-between align-items-center">
-                                        <span><i class="bi bi-tags me-2"></i>Parámetros</span>
-                                        <% if (user && String(user.rol || '').toLowerCase() === 'superadmin') { %>
-                                        <button type="button" class="btn btn-sm btn-primary" id="btnNuevoParametro"><i class="bi bi-plus"></i></button>
-                                        <% } %>
-                                    </div>
-                                    <div class="card-body p-0">
-                                        <ul class="list-group list-group-flush" id="listaParametros"></ul>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="card d-none" id="cardTemaParametros">
-                            <div class="card-header">
-                                <i class="bi bi-link-45deg me-2"></i>Parámetros del tema: <strong id="temaParametrosNombre"></strong>
-                            </div>
-                            <div class="card-body">
-                                <p class="small text-muted">Seleccioná los parámetros que pertenecen a este tema.</p>
-                                <div id="checkboxesParametrosTema"></div>
-                                <button type="button" class="btn btn-sm btn-primary mt-2" id="btnGuardarTemaParametros">Guardar</button>
                             </div>
                         </div>
                     </div>

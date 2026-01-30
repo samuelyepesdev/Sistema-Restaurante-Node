@@ -97,14 +97,14 @@ function requirePermission(...requiredPermissions) {
 }
 
 /**
- * Restrict superadmin to only /admin/tenants (and auth). Use after requireAuth on app routes.
+ * Restrict superadmin to only /admin/tenants, /admin/sistema and /costeo (and auth). Use after requireAuth on app routes.
  * Superadmin must not see dashboard, mesas, etc.
  */
 function restrictSuperadminToAdmin(req, res, next) {
     const rol = req.user && String(req.user.rol || '').toLowerCase();
     if (rol === 'superadmin') {
         const path = (req.baseUrl || '') + (req.path || '');
-        const allowed = path.startsWith('/admin/tenants') || path.startsWith('/costeo') || path === '/auth/logout';
+        const allowed = path.startsWith('/admin/tenants') || path.startsWith('/admin/sistema') || path.startsWith('/costeo') || path === '/auth/logout';
         if (!allowed) {
             if (req.xhr || req.headers.accept?.indexOf('json') > -1) {
                 return res.status(403).json({ error: 'Acceso restringido. Solo gestión de restaurantes y costeo.' });
