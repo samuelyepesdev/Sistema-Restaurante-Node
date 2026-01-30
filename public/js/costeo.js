@@ -80,6 +80,40 @@
     }
     document.getElementById('btnFiltrarInsumos')?.addEventListener('click', () => loadInsumos());
 
+    document.getElementById('btnCargarExcelInsumos')?.addEventListener('click', () => {
+        document.getElementById('inputCargarExcelInsumos')?.click();
+    });
+    document.getElementById('inputCargarExcelInsumos')?.addEventListener('change', function () {
+        const file = this.files && this.files[0];
+        if (!file) return;
+        const formData = new FormData();
+        formData.append('archivo', file);
+        let url = base + '/api/insumos/cargar';
+        if (isSuperadmin && window.COSTEO_TENANT_ID) {
+            url += '?tenant_id=' + window.COSTEO_TENANT_ID;
+        }
+        fetch(url, {
+            method: 'POST',
+            body: formData,
+            credentials: 'same-origin'
+        })
+            .then(res => res.ok ? res.json() : res.json().then(j => Promise.reject(new Error(j.error || res.statusText))))
+            .then((result) => {
+                const { creados = 0, actualizados = 0, errores = [] } = result;
+                let msg = '';
+                if (creados > 0 || actualizados > 0) {
+                    msg = (creados ? creados + ' creados' : '') + (actualizados ? (msg ? ', ' : '') + actualizados + ' actualizados' : '') + '.';
+                }
+                if (errores.length > 0) {
+                    msg += (msg ? ' ' : '') + errores.length + ' fila(s) con error.';
+                }
+                showToast(msg || 'Carga completada', msg ? 'success' : 'info');
+                loadInsumos(getInsumosFilters());
+            })
+            .catch(err => showToast(err.message || 'Error al cargar archivo', 'danger'));
+        this.value = '';
+    });
+
     function openInsumoModal(insumo) {
         const modal = document.getElementById('insumoModal');
         const title = document.getElementById('insumoModalTitle');
@@ -126,17 +160,13 @@
     // --- Recetas ---
     function getRecetasFilters() {
         return {
-            q: document.getElementById('filtroRecetaQ')?.value?.trim() || '',
-            tema_id: document.getElementById('filtroRecetaTema')?.value?.trim() || '',
-            parametro_id: document.getElementById('filtroRecetaParametro')?.value?.trim() || ''
+            q: document.getElementById('filtroRecetaQ')?.value?.trim() || ''
         };
     }
     function loadRecetas(filters) {
         const f = filters || getRecetasFilters();
         const qs = new URLSearchParams();
         if (f.q) qs.set('q', f.q);
-        if (f.tema_id) qs.set('tema_id', f.tema_id);
-        if (f.parametro_id) qs.set('parametro_id', f.parametro_id);
         const path = '/api/recetas' + (qs.toString() ? '?' + qs.toString() : '');
         return api(path).then(list => {
             const tbody = document.querySelector('#tablaRecetas tbody');
@@ -160,66 +190,14 @@
     }
     document.getElementById('btnFiltrarRecetas')?.addEventListener('click', () => loadRecetas());
 
-    function loadTemasForRecetasFilter() {
-        api('/api/temas').then(temas => {
-            const sel = document.getElementById('filtroRecetaTema');
-            if (!sel) return;
-            const current = sel.value;
-            sel.innerHTML = '<option value="">Tema</option>';
-            (temas || []).forEach(t => {
-                const opt = document.createElement('option');
-                opt.value = t.id;
-                opt.textContent = t.name;
-                if (String(t.id) === current) opt.selected = true;
-                sel.appendChild(opt);
-            });
-            const temaId = sel.value;
-            if (temaId) loadParametrosByTemaForFilter(temaId);
-            else loadAllParametrosForFilter();
-        });
-    }
-    function loadParametrosByTemaForFilter(temaId) {
-        api('/api/temas/' + temaId + '/parametros').then(params => {
-            const sel = document.getElementById('filtroRecetaParametro');
-            if (!sel) return;
-            const current = sel.value;
-            sel.innerHTML = '<option value="">Parámetro</option>';
-            (params || []).forEach(p => {
-                const opt = document.createElement('option');
-                opt.value = p.id;
-                opt.textContent = p.name;
-                if (String(p.id) === current) opt.selected = true;
-                sel.appendChild(opt);
-            });
-        });
-    }
-    document.getElementById('filtroRecetaTema')?.addEventListener('change', (e) => {
-        const temaId = e.target.value;
-        if (temaId) loadParametrosByTemaForFilter(temaId);
-        else loadAllParametrosForFilter();
-    });
-    function loadAllParametrosForFilter() {
-        api('/api/parametros').then(params => {
-            const sel = document.getElementById('filtroRecetaParametro');
-            if (!sel) return;
-            const current = sel.value;
-            sel.innerHTML = '<option value="">Parámetro</option>';
-            (params || []).forEach(p => {
-                const opt = document.createElement('option');
-                opt.value = p.id;
-                opt.textContent = p.name;
-                if (String(p.id) === current) opt.selected = true;
-                sel.appendChild(opt);
-            });
-        });
-    }
-
     function showCosteo(recetaId) {
         const panel = document.getElementById('costeoRecetaPanel');
         api('/api/costeo/receta/' + recetaId).then(data => {
-            document.getElementById('costeoDirecto').textContent = formatMoney(data.costo_directo_porcion);
-            document.getElementById('costeoIndirecto').textContent = formatMoney(data.costo_indirecto);
+            document.getElementById('costeoDirecto').textContent = formatMoney(data.costo_materia_prima_porcion ?? data.costo_directo_porcion);
+            document.getElementById('costeoMermaPct').textContent = data.merma_pct != null ? data.merma_pct : '0';
+            document.getElementById('costeoIndirecto').textContent = formatMoney(data.merma_monto ?? data.costo_indirecto);
             document.getElementById('costeoTotal').textContent = formatMoney(data.costo_total_porcion);
+            document.getElementById('costeoMargenObjetivo').textContent = (data.margen_objetivo_pct != null ? data.margen_objetivo_pct : 65) + '%';
             document.getElementById('costeoPrecioSug').textContent = formatMoney(data.precio_sugerido);
             document.getElementById('costeoPrecioActual').textContent = formatMoney(data.precio_venta_actual);
             document.getElementById('costeoMargen').textContent = data.margen_actual_pct != null ? data.margen_actual_pct + '%' : '-';
@@ -243,7 +221,7 @@
             }).catch(err => showToast(err.message, 'danger'));
         }
     });
-    document.getElementById('recetas-tab')?.addEventListener('shown.bs.tab', () => loadTemasForRecetasFilter());
+    document.getElementById('recetas-tab')?.addEventListener('shown.bs.tab', () => loadRecetas());
 
     document.getElementById('btnNuevaReceta')?.addEventListener('click', () => {
         document.getElementById('recetaProductoId').value = '';
@@ -417,38 +395,30 @@
     }
     document.getElementById('alertas-tab')?.addEventListener('shown.bs.tab', () => loadAlertas());
 
-    // --- Configuración ---
+    // --- Configuración (merma % + margen ganancia %) ---
     function loadConfig() {
         return api('/api/costeo/config').then(config => {
-            document.getElementById('configMetodo').value = config.metodo_indirectos || 'porcentaje';
-            document.getElementById('configPorcentaje').value = config.porcentaje_indirectos ?? 35;
-            document.getElementById('configCostoFijo').value = config.costo_fijo_mensual ?? 0;
-            document.getElementById('configPlatosMes').value = config.platos_estimados_mes ?? 500;
-            document.getElementById('configFactor').value = config.factor_carga ?? 2.5;
-            document.getElementById('configMargen').value = config.margen_objetivo_default ?? 60;
+            const metodo = document.getElementById('configMetodo');
+            if (metodo) metodo.value = config.metodo_indirectos || 'porcentaje';
+            const pct = document.getElementById('configPorcentaje');
+            if (pct) pct.value = config.porcentaje_indirectos ?? 10;
+            const margen = document.getElementById('configMargen');
+            if (margen) margen.value = config.margen_objetivo_default ?? 65;
             const margenMinimo = document.getElementById('configMargenMinimoAlerta');
             if (margenMinimo) margenMinimo.value = config.margen_minimo_alerta ?? 30;
-            toggleConfigRows(config.metodo_indirectos);
             return config;
         });
     }
 
-    function toggleConfigRows(metodo) {
-        document.getElementById('rowPorcentaje').classList.toggle('d-none', metodo !== 'porcentaje');
-        document.getElementById('rowCostoFijo').classList.toggle('d-none', metodo !== 'costo_fijo');
-        document.getElementById('rowFactor').classList.toggle('d-none', metodo !== 'factor');
-    }
-    document.getElementById('configMetodo')?.addEventListener('change', (e) => toggleConfigRows(e.target.value));
-
     document.getElementById('formConfigCosteo')?.addEventListener('submit', (e) => {
         e.preventDefault();
         const payload = {
-            metodo_indirectos: document.getElementById('configMetodo').value,
-            porcentaje_indirectos: parseFloat(document.getElementById('configPorcentaje').value) || 0,
-            costo_fijo_mensual: parseFloat(document.getElementById('configCostoFijo').value) || 0,
-            platos_estimados_mes: parseInt(document.getElementById('configPlatosMes').value, 10) || 500,
-            factor_carga: parseFloat(document.getElementById('configFactor').value) || 2.5,
-            margen_objetivo_default: parseFloat(document.getElementById('configMargen').value) || 60,
+            metodo_indirectos: document.getElementById('configMetodo')?.value || 'porcentaje',
+            porcentaje_indirectos: parseFloat(document.getElementById('configPorcentaje')?.value) || 10,
+            costo_fijo_mensual: 0,
+            platos_estimados_mes: 500,
+            factor_carga: 2.5,
+            margen_objetivo_default: parseFloat(document.getElementById('configMargen')?.value) || 65,
             margen_minimo_alerta: parseFloat(document.getElementById('configMargenMinimoAlerta')?.value) || 30
         };
         api('/api/costeo/config', { method: 'PUT', body: JSON.stringify(payload) })

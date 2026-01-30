@@ -15,13 +15,13 @@ class ConfiguracionCosteoRepository {
     }
 
     static async create(tenantId, data) {
-        const {
+        const         {
             metodo_indirectos = 'porcentaje',
-            porcentaje_indirectos = 35,
+            porcentaje_indirectos = 10,
             costo_fijo_mensual = 0,
             platos_estimados_mes = 500,
             factor_carga = 2.5,
-            margen_objetivo_default = 60,
+            margen_objetivo_default = 65,
             margen_minimo_alerta = 30
         } = data || {};
         const [result] = await db.query(

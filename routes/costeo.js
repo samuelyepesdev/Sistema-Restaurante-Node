@@ -5,6 +5,9 @@
 
 const express = require('express');
 const router = express.Router();
+const ExcelJS = require('exceljs');
+const multer = require('multer');
+const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 5 * 1024 * 1024 } });
 const InsumoService = require('../services/InsumoService');
 const RecetaService = require('../services/RecetaService');
 const CosteoService = require('../services/CosteoService');
@@ -75,6 +78,88 @@ router.post('/api/insumos', async (req, res) => {
     } catch (error) {
         console.error('Error al crear insumo:', error);
         res.status(400).json({ error: error.message || 'Error al crear insumo' });
+    }
+});
+
+// GET /costeo/api/insumos/plantilla - Descargar plantilla Excel de insumos
+router.get('/api/insumos/plantilla', async (req, res) => {
+    try {
+        const wb = new ExcelJS.Workbook();
+        const inst = wb.addWorksheet('Instrucciones');
+        inst.addRow(['PLANTILLA DE INSUMOS']).font = { bold: true, size: 16 };
+        inst.addRow(['1) No cambie los encabezados de la hoja "Insumos".']).font = { color: { argb: 'FF495057' } };
+        inst.addRow(['2) Columnas obligatorias: codigo, nombre. Unidad compra y costo unitario tienen valor por defecto.']).font = { color: { argb: 'FF495057' } };
+        inst.addRow(['3) Unidad compra: UND, kg, g, L, ml, lb, etc.']).font = { color: { argb: 'FF495057' } };
+        inst.addRow(['4) Use punto como decimal en costo (ej: 1500.50).']).font = { color: { argb: 'FF495057' } };
+        inst.addRow(['5) Si el código ya existe, se actualizarán nombre, unidad y costo.']).font = { color: { argb: 'FF495057' } };
+        inst.getColumn(1).width = 70;
+        inst.addRow([]);
+
+        const sheet = wb.addWorksheet('Insumos');
+        sheet.columns = [
+            { header: 'codigo', key: 'codigo', width: 18 },
+            { header: 'nombre', key: 'nombre', width: 32 },
+            { header: 'unidad_compra', key: 'unidad_compra', width: 16 },
+            { header: 'costo_unitario', key: 'costo_unitario', width: 14 }
+        ];
+        const headerRow = sheet.getRow(1);
+        headerRow.font = { bold: true };
+        headerRow.alignment = { horizontal: 'center' };
+        headerRow.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE9ECEF' } };
+        sheet.views = [{ state: 'frozen', ySplit: 1 }];
+        sheet.addRow({ codigo: 'INS001', nombre: 'Harina 1kg', unidad_compra: 'kg', costo_unitario: 2500 });
+        sheet.addRow({ codigo: 'INS002', nombre: 'Azúcar 500g', unidad_compra: 'g', costo_unitario: 1200 });
+
+        res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        res.setHeader('Content-Disposition', 'attachment; filename="plantilla_insumos.xlsx"');
+        await wb.xlsx.write(res);
+        res.end();
+    } catch (error) {
+        console.error('Error al generar plantilla insumos:', error);
+        res.status(500).send('No se pudo generar la plantilla');
+    }
+});
+
+// POST /costeo/api/insumos/cargar - Cargar insumos desde Excel
+router.post('/api/insumos/cargar', upload.single('archivo'), async (req, res) => {
+    try {
+        if (!req.file) {
+            return res.status(400).json({ error: 'Seleccione un archivo Excel' });
+        }
+        const tenantId = getTenantId(req);
+        const wb = new ExcelJS.Workbook();
+        await wb.xlsx.load(req.file.buffer);
+        const ws = wb.getWorksheet('Insumos') || wb.worksheets[0];
+        if (!ws) {
+            return res.status(400).json({ error: 'Hoja "Insumos" no encontrada en el archivo' });
+        }
+        const header = ['codigo', 'nombre', 'unidad_compra', 'costo_unitario'];
+        const rows = [];
+        ws.eachRow((row, idx) => {
+            if (idx === 1) return;
+            const r = header.reduce((acc, key, i) => {
+                acc[key] = row.getCell(i + 1).value ?? '';
+                return acc;
+            }, {});
+            if (!r.codigo && !r.nombre) return;
+            rows.push({
+                codigo: String(r.codigo ?? '').trim(),
+                nombre: String(r.nombre ?? '').trim(),
+                unidad_compra: String(r.unidad_compra ?? 'UND').trim() || 'UND',
+                costo_unitario: Number(r.costo_unitario) || 0
+            });
+        });
+        if (rows.length === 0) {
+            return res.status(400).json({ error: 'No hay filas válidas para importar (código y nombre obligatorios)' });
+        }
+        const result = await InsumoService.importFromExcel(tenantId, rows);
+        res.json(result);
+    } catch (error) {
+        console.error('Error al cargar insumos:', error);
+        if (error.message === 'Contexto de tenant no disponible') {
+            return res.status(403).json({ error: error.message });
+        }
+        res.status(500).json({ error: error.message || 'Error al cargar archivo' });
     }
 });
 

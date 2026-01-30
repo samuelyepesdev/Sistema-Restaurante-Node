@@ -118,8 +118,10 @@ class ProductManager {
             });
             this._costeoData = data;
             const fmt = (n) => n != null && !isNaN(n) ? new Intl.NumberFormat('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(n) : '-';
-            document.getElementById('costeoDirecto').textContent = '$' + fmt(data.costo_directo_porcion);
-            document.getElementById('costeoIndirecto').textContent = '$' + fmt(data.costo_indirecto);
+            document.getElementById('costeoDirecto').textContent = '$' + fmt(data.costo_materia_prima_porcion ?? data.costo_directo_porcion);
+            const mermaPctEl = document.getElementById('costeoMermaPct');
+            if (mermaPctEl) mermaPctEl.textContent = data.merma_pct != null ? data.merma_pct : '0';
+            document.getElementById('costeoIndirecto').textContent = '$' + fmt(data.merma_monto ?? data.costo_indirecto);
             document.getElementById('costeoTotal').textContent = '$' + fmt(data.costo_total_porcion);
             document.getElementById('costeoPrecioSug').textContent = '$' + fmt(data.precio_sugerido);
             document.getElementById('costeoPrecioActual').textContent = '$' + fmt(data.precio_venta_actual);

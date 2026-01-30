@@ -42,7 +42,7 @@ function calcularCostoDirecto(ingredientes) {
 }
 
 /**
- * Costo indirecto según configuración: porcentaje, costo fijo por porción, o factor.
+ * Costo indirecto según configuración: porcentaje (merma/variación), costo fijo por porción, o factor.
  * Para "factor" no se suma indirecto; el factor se aplica al costo directo para obtener precio.
  */
 function calcularCostoIndirecto(costoDirecto, config) {
@@ -61,13 +61,13 @@ function calcularCostoIndirecto(costoDirecto, config) {
 }
 
 /**
- * Precio sugerido: con margen objetivo = costo_total / (1 - margen/100)
- * O con factor: costo_directo * factor (si método factor).
+ * Precio sugerido: Precio = Costo total ÷ (1 - Margen de ganancia esperado)
+ * Ej: costo $15, margen 65% → precio = 15 / (1 - 0.65) = $42.85
  */
 function calcularPrecioSugerido(costoTotal, config) {
     if (!config) return costoTotal * 2;
     const metodo = config.metodo_indirectos || 'porcentaje';
-    const margen = parseFloat(config.margen_objetivo_default) || 60;
+    const margen = parseFloat(config.margen_objetivo_default) || 65;
     if (metodo === 'factor') {
         const factor = parseFloat(config.factor_carga) || 2.5;
         return Math.round(costoTotal * factor * 100) / 100;
@@ -96,20 +96,27 @@ class CosteoService {
         const config = await ConfiguracionCosteoRepository.findOne(tenantId);
         const costoDirecto = calcularCostoDirecto(ingredientes);
         const porciones = parseFloat(receta.porciones) || 1;
-        const costoDirectoPorcion = porciones > 0 ? costoDirecto / porciones : costoDirecto;
-        const costoIndirecto = calcularCostoIndirecto(costoDirectoPorcion, config);
-        const costoTotal = costoDirectoPorcion + costoIndirecto;
+        const costoMateriaPrimaPorcion = porciones > 0 ? costoDirecto / porciones : costoDirecto;
+        const costoIndirecto = calcularCostoIndirecto(costoMateriaPrimaPorcion, config);
+        const costoTotal = costoMateriaPrimaPorcion + costoIndirecto;
         const precioSugerido = calcularPrecioSugerido(costoTotal, config);
         const precioActual = parseFloat(receta.precio_venta_actual) || 0;
         const margenActual = precioActual > 0 ? ((precioActual - costoTotal) / precioActual) * 100 : null;
+        const mermaPct = config && (config.metodo_indirectos || 'porcentaje') === 'porcentaje'
+            ? (parseFloat(config.porcentaje_indirectos) || 0) : 0;
+        const margenObjetivoPct = parseFloat(config?.margen_objetivo_default) || 65;
         return {
             receta,
             ingredientes,
             config,
             costo_directo_total: costoDirecto,
-            costo_directo_porcion: Math.round(costoDirectoPorcion * 100) / 100,
+            costo_materia_prima_porcion: Math.round(costoMateriaPrimaPorcion * 100) / 100,
+            costo_directo_porcion: Math.round(costoMateriaPrimaPorcion * 100) / 100,
+            merma_pct: mermaPct,
+            merma_monto: Math.round(costoIndirecto * 100) / 100,
             costo_indirecto: Math.round(costoIndirecto * 100) / 100,
             costo_total_porcion: Math.round(costoTotal * 100) / 100,
+            margen_objetivo_pct: margenObjetivoPct,
             precio_sugerido: precioSugerido,
             precio_venta_actual: precioActual,
             margen_actual_pct: margenActual != null ? Math.round(margenActual * 100) / 100 : null

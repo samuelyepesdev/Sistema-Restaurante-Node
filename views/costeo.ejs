@@ -64,6 +64,13 @@
                             </select>
                             <button type="button" class="btn btn-sm btn-outline-secondary" id="btnFiltrarInsumos">Filtrar</button>
                             <% if (user && user.permisos && user.permisos.includes('costeo.editar')) { %>
+                            <a href="/costeo/api/insumos/plantilla<%= (typeof tenant !== 'undefined' && tenant && tenant.id) ? '?tenant_id=' + tenant.id : '' %>" class="btn btn-sm btn-outline-success" download="plantilla_insumos.xlsx" id="linkPlantillaInsumos">
+                                <i class="bi bi-file-earmark-excel me-1"></i>Descargar plantilla
+                            </a>
+                            <button type="button" class="btn btn-sm btn-outline-primary" id="btnCargarExcelInsumos">
+                                <i class="bi bi-upload me-1"></i>Cargar Excel
+                            </button>
+                            <input type="file" accept=".xlsx,.xls" id="inputCargarExcelInsumos" class="d-none">
                             <button type="button" class="btn btn-primary btn-sm ms-auto" data-bs-toggle="modal" data-bs-target="#insumoModal" id="btnNuevoInsumo">
                                 <i class="bi bi-plus-lg me-1"></i>Nuevo Insumo
                             </button>
@@ -80,13 +87,7 @@
                     <!-- Tab Recetas -->
                     <div class="tab-pane fade" id="recetas" role="tabpanel">
                         <div class="d-flex flex-wrap gap-2 align-items-center mb-3">
-                            <input type="text" class="form-control form-control-sm" id="filtroRecetaQ" placeholder="Buscar por producto o receta..." style="max-width: 220px;">
-                            <select class="form-select form-select-sm" id="filtroRecetaTema" style="max-width: 160px;">
-                                <option value="">Tema</option>
-                            </select>
-                            <select class="form-select form-select-sm" id="filtroRecetaParametro" style="max-width: 160px;">
-                                <option value="">Parámetro</option>
-                            </select>
+                            <input type="text" class="form-control form-control-sm" id="filtroRecetaQ" placeholder="Buscar por nombre de producto o receta..." style="max-width: 280px;">
                             <button type="button" class="btn btn-sm btn-outline-secondary" id="btnFiltrarRecetas">Filtrar</button>
                             <% if (user && user.permisos && user.permisos.includes('costeo.editar')) { %>
                             <button type="button" class="btn btn-primary btn-sm ms-auto" data-bs-toggle="modal" data-bs-target="#recetaNuevaModal" id="btnNuevaReceta">
@@ -101,14 +102,19 @@
                             </table>
                         </div>
                         <div id="costeoRecetaPanel" class="costeo-resumen mt-3 d-none">
-                            <h6 class="mb-2"><i class="bi bi-graph-up me-1"></i>Resumen de costeo</h6>
-                            <div class="row small">
-                                <div class="col-md-3">Costo directo/porción: <strong id="costeoDirecto">-</strong></div>
-                                <div class="col-md-3">Costo indirecto: <strong id="costeoIndirecto">-</strong></div>
-                                <div class="col-md-3">Costo total/porción: <strong id="costeoTotal">-</strong></div>
-                                <div class="col-md-3">Precio sugerido: <strong id="costeoPrecioSug">-</strong></div>
+                            <h6 class="mb-2"><i class="bi bi-graph-up me-1"></i>Resumen de costeo (por porción)</h6>
+                            <div class="row small mb-2">
+                                <div class="col-md-4">Costo materia prima: <strong id="costeoDirecto">-</strong></div>
+                                <div class="col-md-4">Merma (<span id="costeoMermaPct">-</span>%): <strong id="costeoIndirecto">-</strong></div>
+                                <div class="col-md-4">Costo total porción: <strong id="costeoTotal">-</strong></div>
                             </div>
-                            <div class="mt-2 small">Precio actual: <strong id="costeoPrecioActual">-</strong> · Margen actual: <strong id="costeoMargen">-</strong></div>
+                            <div class="row small mb-2">
+                                <div class="col-md-4">Margen ganancia esperado: <strong id="costeoMargenObjetivo">-</strong></div>
+                                <div class="col-md-4">Precio sugerido: <strong id="costeoPrecioSug">-</strong></div>
+                                <div class="col-md-4">Precio actual: <strong id="costeoPrecioActual">-</strong></div>
+                            </div>
+                            <div class="mt-2 small text-success fw-bold">Margen de contribución actual: <strong id="costeoMargen">-</strong></div>
+                            <p class="mt-1 mb-0 small text-muted">Precio = Costo total ÷ (1 − Margen). Ej: costo $15, margen 65% → precio = $42.85</p>
                         </div>
                     </div>
 
@@ -167,45 +173,23 @@
 
                     <!-- Tab Configuración -->
                     <div class="tab-pane fade" id="config" role="tabpanel">
+                        <p class="text-muted small mb-3">Configuración según metodología de costeo: costo materia prima + merma → costo total → precio con margen de ganancia.</p>
                         <form id="formConfigCosteo">
+                            <input type="hidden" name="metodo_indirectos" id="configMetodo" value="porcentaje">
                             <div class="row mb-3">
-                                <div class="col-md-6">
-                                    <label class="form-label">Método de costos indirectos</label>
-                                    <select class="form-select" name="metodo_indirectos" id="configMetodo">
-                                        <option value="porcentaje">Porcentaje sobre costo directo</option>
-                                        <option value="costo_fijo">Costo fijo mensual repartido</option>
-                                        <option value="factor">Factor de carga (sin indirecto explícito)</option>
-                                    </select>
+                                <div class="col-md-5">
+                                    <label class="form-label">Merma / variación (%)</label>
+                                    <input type="number" class="form-control" name="porcentaje_indirectos" id="configPorcentaje" step="0.01" min="0" placeholder="10">
+                                    <small class="text-muted">Por mermas y desperdicios sobre costo materia prima. Ej: 10</small>
                                 </div>
-                            </div>
-                            <div class="row mb-3" id="rowPorcentaje">
-                                <div class="col-md-4">
-                                    <label class="form-label">Porcentaje indirectos (%)</label>
-                                    <input type="number" class="form-control" name="porcentaje_indirectos" id="configPorcentaje" step="0.01" min="0">
-                                </div>
-                            </div>
-                            <div class="row mb-3 d-none" id="rowCostoFijo">
-                                <div class="col-md-4">
-                                    <label class="form-label">Costo fijo mensual</label>
-                                    <input type="number" class="form-control" name="costo_fijo_mensual" id="configCostoFijo" step="0.01" min="0">
-                                </div>
-                                <div class="col-md-4">
-                                    <label class="form-label">Platos estimados/mes</label>
-                                    <input type="number" class="form-control" name="platos_estimados_mes" id="configPlatosMes" min="1">
-                                </div>
-                            </div>
-                            <div class="row mb-3 d-none" id="rowFactor">
-                                <div class="col-md-4">
-                                    <label class="form-label">Factor de carga</label>
-                                    <input type="number" class="form-control" name="factor_carga" id="configFactor" step="0.01" min="1">
+                                <div class="col-md-5">
+                                    <label class="form-label">Margen de ganancia esperado (%)</label>
+                                    <input type="number" class="form-control" name="margen_objetivo_default" id="configMargen" step="0.01" min="0" max="100" placeholder="65">
+                                    <small class="text-muted">Precio = Costo total ÷ (1 − Margen). Ej: 65</small>
                                 </div>
                             </div>
                             <div class="row mb-3">
-                                <div class="col-md-4">
-                                    <label class="form-label">Margen objetivo por defecto (%)</label>
-                                    <input type="number" class="form-control" name="margen_objetivo_default" id="configMargen" step="0.01" min="0" max="100">
-                                </div>
-                                <div class="col-md-4">
+                                <div class="col-md-5">
                                     <label class="form-label">Margen mínimo para alerta (%)</label>
                                     <input type="number" class="form-control" name="margen_minimo_alerta" id="configMargenMinimoAlerta" step="0.01" min="0" max="100" title="Productos con margen por debajo de este valor aparecerán en Alertas">
                                 </div>

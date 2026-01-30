@@ -52,6 +52,56 @@ class InsumoService {
         await InsumoRepository.delete(id, tenantId);
         return { message: 'Insumo eliminado' };
     }
+
+    /**
+     * Import insumos from Excel rows. If codigo exists, update; otherwise create.
+     * @param {number} tenantId
+     * @param {Array<{codigo, nombre, unidad_compra?, costo_unitario?}>} rows
+     * @returns {{ creados: number, actualizados: number, errores: Array<{fila: number, mensaje: string}> }}
+     */
+    static async importFromExcel(tenantId, rows) {
+        if (!rows || rows.length === 0) {
+            throw new Error('No hay registros válidos para importar');
+        }
+        let creados = 0;
+        let actualizados = 0;
+        const errores = [];
+        for (let i = 0; i < rows.length; i++) {
+            const fila = i + 2; // 1-based + header
+            const r = rows[i];
+            const codigo = r.codigo != null ? String(r.codigo).trim() : '';
+            const nombre = r.nombre != null ? String(r.nombre).trim() : '';
+            if (!codigo || !nombre) {
+                errores.push({ fila, mensaje: 'Código y nombre son obligatorios' });
+                continue;
+            }
+            const unidad_compra = (r.unidad_compra != null ? String(r.unidad_compra).trim() : '') || 'UND';
+            const costo_unitario = parseFloat(r.costo_unitario) || 0;
+            try {
+                const existente = await InsumoRepository.findByCodigo(codigo, tenantId);
+                if (existente) {
+                    await InsumoRepository.update(existente.id, tenantId, {
+                        codigo,
+                        nombre,
+                        unidad_compra,
+                        costo_unitario
+                    });
+                    actualizados++;
+                } else {
+                    await InsumoRepository.create(tenantId, {
+                        codigo,
+                        nombre,
+                        unidad_compra,
+                        costo_unitario
+                    });
+                    creados++;
+                }
+            } catch (err) {
+                errores.push({ fila, mensaje: err.message || 'Error al guardar' });
+            }
+        }
+        return { creados, actualizados, errores };
+    }
 }
 
 module.exports = InsumoService;
