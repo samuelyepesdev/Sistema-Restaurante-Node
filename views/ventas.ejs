@@ -78,7 +78,7 @@
             from { transform: translateX(100%); }
             to { transform: translateX(0); }
         }
-        @media (max-width: 992px) {
+        @media (max-width: 991px) {
             .card-header .row .col-md-3 {
                 flex: 0 0 100%;
                 max-width: 100%;
@@ -98,13 +98,16 @@
             .table tbody td {
                 display: flex;
                 justify-content: space-between;
-                padding: 0.25rem 0;
+                align-items: center;
+                padding: 0.35rem 0;
                 border-top: none;
             }
-            .table tfoot, .table tfoot td {
-                display: block;
-                text-align: right;
-                padding: 0.5rem 0;
+            .table tbody td .d-flex {
+                justify-content: flex-end;
+                margin-left: auto;
+            }
+            .table .tfoot-desktop {
+                display: none !important;
             }
             .card .row.g-3 .col-md-4 {
                 flex: 0 0 100%;
@@ -114,6 +117,11 @@
                 background-color: #e2e8f0;
                 border-color: #000;
                 box-shadow: 0 0 10px rgba(0,0,0,0.15);
+            }
+        }
+        @media (min-width: 992px) {
+            .resumen-totales {
+                display: none !important;
             }
         }
     </style>
@@ -201,23 +209,25 @@
                                     <td><%= venta.forma_pago.charAt(0).toUpperCase() + venta.forma_pago.slice(1) %></td>
                                     <td class="text-end" data-total="<%= venta.total %>">$<%= Number(venta.total).toFixed(2) %></td>
                                     <td class="text-center">
-                                        <button class="btn btn-sm btn-outline-info me-1 btn-detalles" 
-                                                data-factura-id="<%= venta.id %>"
-                                                data-bs-toggle="tooltip" 
-                                                data-bs-title="Ver detalles">
-                                            <i class="bi bi-eye"></i>
-                                        </button>
-                                        <button class="btn btn-sm btn-outline-primary btn-reimprimir" 
-                                                data-factura-id="<%= venta.id %>"
-                                                data-bs-toggle="tooltip" 
-                                                data-bs-title="Reimprimir factura">
-                                            <i class="bi bi-printer"></i>
-                                        </button>
+                                        <div class="d-flex gap-1 justify-content-center flex-wrap">
+                                            <button class="btn btn-sm btn-outline-info btn-detalles" 
+                                                    data-factura-id="<%= venta.id %>"
+                                                    data-bs-toggle="tooltip" 
+                                                    data-bs-title="Ver factura">
+                                                <i class="bi bi-eye"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-outline-primary btn-reimprimir" 
+                                                    data-factura-id="<%= venta.id %>"
+                                                    data-bs-toggle="tooltip" 
+                                                    data-bs-title="Reimprimir factura">
+                                                <i class="bi bi-printer"></i>
+                                            </button>
+                                        </div>
                                     </td>
                                 </tr>
                             <% }); %>
                         </tbody>
-                        <tfoot class="table-light fw-bold">
+                        <tfoot class="table-light fw-bold tfoot-desktop">
                             <tr>
                                 <td colspan="3" class="text-end">Total Efectivo:</td>
                                 <td colspan="2" class="text-end" id="totalEfectivo">$0.00</td>
@@ -235,6 +245,29 @@
                             </tr>
                         </tfoot>
                     </table>
+                </div>
+                <!-- Resumen totales: visible en móvil/tablet (misma línea label + valor) -->
+                <div class="resumen-totales mt-3 p-3 bg-light rounded d-md-none">
+                    <div class="row g-2">
+                        <div class="col-6 col-sm-4">
+                            <div class="d-flex justify-content-between align-items-center py-2 border-bottom border-secondary border-opacity-25">
+                                <span class="fw-bold text-secondary">Total Efectivo</span>
+                                <span class="fw-bold" id="totalEfectivoResumen">$0.00</span>
+                            </div>
+                        </div>
+                        <div class="col-6 col-sm-4">
+                            <div class="d-flex justify-content-between align-items-center py-2 border-bottom border-secondary border-opacity-25">
+                                <span class="fw-bold text-secondary">Total Transferencia</span>
+                                <span class="fw-bold" id="totalTransferenciaResumen">$0.00</span>
+                            </div>
+                        </div>
+                        <div class="col-12 col-sm-4">
+                            <div class="d-flex justify-content-between align-items-center py-2 border-bottom border-dark">
+                                <span class="fw-bold">Total General</span>
+                                <span class="fw-bold fs-5 text-primary" id="totalGeneralResumen">$0.00</span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -447,6 +480,12 @@
             document.getElementById('totalGeneral').textContent = `$${total.toFixed(2)}`;
             document.getElementById('totalEfectivo').textContent = `$${tef.toFixed(2)}`;
             document.getElementById('totalTransferencia').textContent = `$${ttr.toFixed(2)}`;
+            var rE = document.getElementById('totalEfectivoResumen');
+            var rT = document.getElementById('totalTransferenciaResumen');
+            var rG = document.getElementById('totalGeneralResumen');
+            if (rE) rE.textContent = `$${tef.toFixed(2)}`;
+            if (rT) rT.textContent = `$${ttr.toFixed(2)}`;
+            if (rG) rG.textContent = `$${total.toFixed(2)}`;
         }
 
         // Calcular total al cargar la página
