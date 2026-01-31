@@ -173,25 +173,72 @@
 
                     <!-- Tab Configuración -->
                     <div class="tab-pane fade" id="config" role="tabpanel">
-                        <p class="text-muted small mb-3">Configuración según metodología de costeo: costo materia prima + merma → costo total → precio con margen de ganancia.</p>
+                        <div class="card bg-light border-0 mb-4">
+                            <div class="card-header py-2">
+                                <button class="btn btn-link btn-sm text-decoration-none p-0 fw-bold" type="button" data-bs-toggle="collapse" data-bs-target="#comoFuncionaCosteo">
+                                    <i class="bi bi-question-circle me-1"></i> ¿Cómo funciona el costeo?
+                                </button>
+                            </div>
+                            <div class="collapse show" id="comoFuncionaCosteo">
+                                <div class="card-body small text-muted">
+                                    <p class="mb-2"><strong>1. Insumos</strong> — Se agregan con <strong>valor unitario</strong> (precio por kg, L, UND, etc.). Ej: Harina 1 kg = $2.500.</p>
+                                    <p class="mb-2"><strong>2. Recetas</strong> — Por cada producto se define la receta: porciones e ingredientes (insumo + cantidad + unidad). El costo de cada ingrediente = (cantidad usada × precio unitario del insumo), convirtiendo a la unidad de compra.</p>
+                                    <p class="mb-2"><strong>3. Costo materia prima por porción</strong> — Suma del costo de todos los ingredientes de la receta, dividido entre las porciones.</p>
+                                    <p class="mb-2"><strong>4. Costos indirectos</strong> — Según el método elegido abajo: <em>Porcentaje</em> (merma/variación sobre materia prima), <em>Costo fijo</em> (gastos mensuales del local repartidos en platos estimados) o <em>Factor</em> (multiplicador sobre costo directo para el precio).</p>
+                                    <p class="mb-2"><strong>5. Costo total por porción</strong> — Costo materia prima + costo indirecto.</p>
+                                    <p class="mb-2"><strong>6. Precio sugerido</strong> — Precio = Costo total ÷ (1 − Margen). Ej: costo $10, margen 65% → precio = 10 ÷ 0,35 = $28,57.</p>
+                                    <p class="mb-0"><strong>7. Margen mínimo para alerta</strong> — Productos con margen real por debajo de este % aparecen en la pestaña Alertas.</p>
+                                </div>
+                            </div>
+                        </div>
+
                         <form id="formConfigCosteo">
-                            <input type="hidden" name="metodo_indirectos" id="configMetodo" value="porcentaje">
                             <div class="row mb-3">
-                                <div class="col-md-5">
+                                <div class="col-md-6">
+                                    <label class="form-label">Método de costos indirectos</label>
+                                    <select class="form-select" name="metodo_indirectos" id="configMetodo">
+                                        <option value="porcentaje">Porcentaje sobre costo materia prima (merma/variación)</option>
+                                        <option value="costo_fijo">Costo fijo mensual repartido en platos</option>
+                                        <option value="factor">Factor de carga (multiplicador para precio)</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="row mb-3" id="rowPorcentaje">
+                                <div class="col-md-4">
                                     <label class="form-label">Merma / variación (%)</label>
                                     <input type="number" class="form-control" name="porcentaje_indirectos" id="configPorcentaje" step="0.01" min="0" placeholder="10">
-                                    <small class="text-muted">Por mermas y desperdicios sobre costo materia prima. Ej: 10</small>
+                                    <small class="text-muted">Sobre costo materia prima. Ej: 10</small>
                                 </div>
-                                <div class="col-md-5">
+                            </div>
+                            <div class="row mb-3 d-none" id="rowCostoFijo">
+                                <div class="col-md-4">
+                                    <label class="form-label">Costo fijo mensual ($)</label>
+                                    <input type="number" class="form-control" name="costo_fijo_mensual" id="configCostoFijo" step="0.01" min="0" placeholder="7670">
+                                    <small class="text-muted">Alquiler, personal, luz, etc.</small>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">Platos estimados por mes</label>
+                                    <input type="number" class="form-control" name="platos_estimados_mes" id="configPlatosMes" min="1" placeholder="150">
+                                    <small class="text-muted">Se reparte el costo fijo entre estos platos</small>
+                                </div>
+                            </div>
+                            <div class="row mb-3 d-none" id="rowFactor">
+                                <div class="col-md-4">
+                                    <label class="form-label">Factor de carga</label>
+                                    <input type="number" class="form-control" name="factor_carga" id="configFactor" step="0.01" min="1" placeholder="2.5">
+                                    <small class="text-muted">Precio sugerido = Costo directo × factor. Ej: 2.5</small>
+                                </div>
+                            </div>
+                            <div class="row mb-3">
+                                <div class="col-md-4">
                                     <label class="form-label">Margen de ganancia esperado (%)</label>
                                     <input type="number" class="form-control" name="margen_objetivo_default" id="configMargen" step="0.01" min="0" max="100" placeholder="65">
                                     <small class="text-muted">Precio = Costo total ÷ (1 − Margen). Ej: 65</small>
                                 </div>
-                            </div>
-                            <div class="row mb-3">
-                                <div class="col-md-5">
+                                <div class="col-md-4">
                                     <label class="form-label">Margen mínimo para alerta (%)</label>
-                                    <input type="number" class="form-control" name="margen_minimo_alerta" id="configMargenMinimoAlerta" step="0.01" min="0" max="100" title="Productos con margen por debajo de este valor aparecerán en Alertas">
+                                    <input type="number" class="form-control" name="margen_minimo_alerta" id="configMargenMinimoAlerta" step="0.01" min="0" max="100" placeholder="30">
+                                    <small class="text-muted">Productos por debajo aparecen en Alertas</small>
                                 </div>
                             </div>
                             <% if (user && user.permisos && user.permisos.includes('costeo.editar')) { %>
@@ -309,10 +356,10 @@
                             <tbody id="ingredientesBody"></tbody>
                         </table>
                     </div>
-                    <div class="d-flex align-items-center gap-2 mt-2">
-                        <select class="form-select form-select-sm" id="ingredienteInsumo" style="max-width: 220px;"></select>
+                    <div class="d-flex align-items-center gap-2 mt-2 flex-wrap">
+                        <select class="form-select form-select-sm" id="ingredienteInsumo" style="max-width: 220px;" title="Al elegir un insumo se usa su unidad de compra"></select>
                         <input type="number" class="form-control form-control-sm" id="ingredienteCantidad" placeholder="Cantidad" step="0.001" style="max-width: 100px;">
-                        <select class="form-select form-select-sm" id="ingredienteUnidad" style="max-width: 90px;">
+                        <select class="form-select form-select-sm" id="ingredienteUnidad" style="max-width: 90px;" title="Se rellena con la unidad del insumo (puede cambiarse si hace falta)">
                             <option value="g">g</option>
                             <option value="kg">kg</option>
                             <option value="ml">ml</option>

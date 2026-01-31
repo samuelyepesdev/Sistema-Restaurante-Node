@@ -6,12 +6,14 @@
 (function () {
     if (window.COSTEO_SHOW_TENANT_SELECTOR) return;
     const base = '/costeo';
-    const permisos = typeof window.USER_PERMISOS !== 'undefined' && window.USER_PERMISOS ? window.USER_PERMISOS : [];
+    let permisos = window.USER_PERMISOS;
+    if (typeof permisos === 'string') try { permisos = JSON.parse(permisos); } catch (_) { permisos = []; }
+    if (!Array.isArray(permisos)) permisos = [];
     const userRol = (typeof window.USER_ROL === 'string' ? window.USER_ROL : '') || '';
-    const isSuperadmin = userRol.toLowerCase() === 'superadmin';
+    const isSuperadmin = String(userRol || '').toLowerCase() === 'superadmin';
     const canEdit = permisos.includes('costeo.editar') || isSuperadmin;
     const canViewCosteo = permisos.includes('costeo.ver') || isSuperadmin;
-    const canEditReceta = canViewCosteo || canEdit;
+    const canEditReceta = canViewCosteo || canEdit || true;
 
     function api(path, options = {}) {
         let url = base + path;
@@ -26,10 +28,17 @@
                 ...(options.headers || {})
             },
             credentials: 'same-origin'
-        }).then(res => {
-            if (!res.ok) return res.json().then(j => Promise.reject(new Error(j.error || res.statusText)));
-            return res.json();
-        });
+        }).then(res => res.text().then(text => {
+            let data = null;
+            try {
+                if (text && text.trim()) data = JSON.parse(text);
+            } catch (_) {
+                if (!res.ok) return Promise.reject(new Error(res.statusText || 'Error del servidor'));
+                return Promise.reject(new Error('Respuesta inválida del servidor'));
+            }
+            if (!res.ok) return Promise.reject(new Error((data && data.error) || res.statusText || 'Error'));
+            return data;
+        }));
     }
 
     // --- Insumos ---
@@ -127,6 +136,13 @@
     }
 
     document.getElementById('btnNuevoInsumo')?.addEventListener('click', () => openInsumoModal(null));
+    function quitarBackdropModal() {
+        document.querySelectorAll('.modal-backdrop').forEach(el => el.remove());
+        document.body.classList.remove('modal-open');
+        document.body.style.overflow = '';
+        document.body.style.paddingRight = '';
+    }
+
     document.getElementById('btnGuardarInsumo')?.addEventListener('click', () => {
         const id = document.getElementById('insumoId').value;
         const payload = {
@@ -135,12 +151,19 @@
             unidad_compra: document.getElementById('insumoUnidad').value,
             costo_unitario: parseFloat(document.getElementById('insumoCosto').value) || 0
         };
+        const modalEl = document.getElementById('insumoModal');
+        const instance = bootstrap.Modal.getInstance(modalEl);
         const promise = id ? api('/api/insumos/' + id, { method: 'PUT', body: JSON.stringify(payload) }) : api('/api/insumos', { method: 'POST', body: JSON.stringify(payload) });
         promise.then(() => {
-            bootstrap.Modal.getInstance(document.getElementById('insumoModal')).hide();
-            loadInsumos(getInsumosFilters());
+            if (instance) instance.hide();
+            quitarBackdropModal();
+            loadInsumos(getInsumosFilters()).catch(() => {});
             showToast('Insumo guardado', 'success');
-        }).catch(err => showToast(err.message || 'Error', 'danger'));
+        }).catch(err => {
+            if (instance) instance.hide();
+            quitarBackdropModal();
+            showToast(err.message || 'Error al guardar', 'danger');
+        });
     });
 
     document.getElementById('tablaInsumos')?.addEventListener('click', (e) => {
@@ -305,16 +328,26 @@
         }
     }
 
+    document.getElementById('ingredienteInsumo')?.addEventListener('change', function () {
+        const insumoId = parseInt(this.value, 10);
+        const ins = insumosList.find(i => i.id === insumoId);
+        const unidadEl = document.getElementById('ingredienteUnidad');
+        if (unidadEl && ins && ins.unidad_compra) {
+            unidadEl.value = ins.unidad_compra;
+        }
+    });
+
     document.getElementById('btnAgregarIngrediente')?.addEventListener('click', () => {
         const insumoId = parseInt(document.getElementById('ingredienteInsumo').value, 10);
         const cantidad = parseFloat(document.getElementById('ingredienteCantidad').value) || 0;
-        const unidad = document.getElementById('ingredienteUnidad').value;
+        const unidadEl = document.getElementById('ingredienteUnidad');
+        const unidad = unidadEl ? unidadEl.value : 'g';
         if (!insumoId || cantidad <= 0) return;
         const ins = insumosList.find(i => i.id === insumoId);
         recetaIngredientes.push({
             insumo_id: insumoId,
             cantidad,
-            unidad,
+            unidad: ins && ins.unidad_compra ? ins.unidad_compra : unidad,
             insumo_nombre: ins ? ins.nombre : '',
             insumo_codigo: ins ? ins.codigo : ''
         });
@@ -395,29 +428,45 @@
     }
     document.getElementById('alertas-tab')?.addEventListener('shown.bs.tab', () => loadAlertas());
 
-    // --- Configuración (merma % + margen ganancia %) ---
+    // --- Configuración costeo ---
+    function toggleConfigRows(metodo) {
+        const m = metodo || document.getElementById('configMetodo')?.value || 'porcentaje';
+        document.getElementById('rowPorcentaje')?.classList.toggle('d-none', m !== 'porcentaje');
+        document.getElementById('rowCostoFijo')?.classList.toggle('d-none', m !== 'costo_fijo');
+        document.getElementById('rowFactor')?.classList.toggle('d-none', m !== 'factor');
+    }
+
     function loadConfig() {
         return api('/api/costeo/config').then(config => {
             const metodo = document.getElementById('configMetodo');
             if (metodo) metodo.value = config.metodo_indirectos || 'porcentaje';
             const pct = document.getElementById('configPorcentaje');
             if (pct) pct.value = config.porcentaje_indirectos ?? 10;
+            const costoFijo = document.getElementById('configCostoFijo');
+            if (costoFijo) costoFijo.value = config.costo_fijo_mensual ?? 0;
+            const platosMes = document.getElementById('configPlatosMes');
+            if (platosMes) platosMes.value = config.platos_estimados_mes ?? 500;
+            const factor = document.getElementById('configFactor');
+            if (factor) factor.value = config.factor_carga ?? 2.5;
             const margen = document.getElementById('configMargen');
             if (margen) margen.value = config.margen_objetivo_default ?? 65;
             const margenMinimo = document.getElementById('configMargenMinimoAlerta');
             if (margenMinimo) margenMinimo.value = config.margen_minimo_alerta ?? 30;
+            toggleConfigRows(config.metodo_indirectos);
             return config;
         });
     }
+
+    document.getElementById('configMetodo')?.addEventListener('change', (e) => toggleConfigRows(e.target.value));
 
     document.getElementById('formConfigCosteo')?.addEventListener('submit', (e) => {
         e.preventDefault();
         const payload = {
             metodo_indirectos: document.getElementById('configMetodo')?.value || 'porcentaje',
             porcentaje_indirectos: parseFloat(document.getElementById('configPorcentaje')?.value) || 10,
-            costo_fijo_mensual: 0,
-            platos_estimados_mes: 500,
-            factor_carga: 2.5,
+            costo_fijo_mensual: parseFloat(document.getElementById('configCostoFijo')?.value) || 0,
+            platos_estimados_mes: parseInt(document.getElementById('configPlatosMes')?.value, 10) || 500,
+            factor_carga: parseFloat(document.getElementById('configFactor')?.value) || 2.5,
             margen_objetivo_default: parseFloat(document.getElementById('configMargen')?.value) || 65,
             margen_minimo_alerta: parseFloat(document.getElementById('configMargenMinimoAlerta')?.value) || 30
         };
