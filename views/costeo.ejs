@@ -356,7 +356,7 @@
                             <tbody id="ingredientesBody"></tbody>
                         </table>
                     </div>
-                    <div class="d-flex align-items-center gap-2 mt-2 flex-wrap">
+                    <div id="ingredienteAgregarEstandar" class="d-flex align-items-center gap-2 mt-2 flex-wrap">
                         <select class="form-select form-select-sm" id="ingredienteInsumo" style="max-width: 220px;" title="Al elegir un insumo se usa su unidad de compra"></select>
                         <input type="number" class="form-control form-control-sm" id="ingredienteCantidad" placeholder="Cantidad" step="0.001" style="max-width: 100px;">
                         <select class="form-select form-select-sm" id="ingredienteUnidad" style="max-width: 90px;" title="Se rellena con la unidad del insumo (puede cambiarse si hace falta)">
@@ -369,6 +369,46 @@
                         </select>
                         <button type="button" class="btn btn-outline-primary btn-sm" id="btnAgregarIngrediente"><i class="bi bi-plus"></i> Agregar</button>
                     </div>
+                    <% if (typeof costeoPlantillaReposteria !== 'undefined' && costeoPlantillaReposteria) { %>
+                    <div id="ingredienteAgregarReposteria" class="mt-2 d-none">
+                        <div class="small text-muted mb-2">Ingresar en tazas/cucharadas (se convierte a gramos para el costeo)</div>
+                        <div class="d-flex align-items-center gap-2 flex-wrap">
+                            <select class="form-select form-select-sm" id="ingredienteInsumoRep" style="max-width: 220px;"></select>
+                            <input type="text" class="form-control form-control-sm" id="ingredienteCantidadRep" placeholder="Ej: 2, 1/2, 1 1/2" style="max-width: 110px;" title="Número o fracción (ej. 1 1/2)">
+                            <select class="form-select form-select-sm" id="ingredienteUnidadEntrada" style="max-width: 90px;">
+                                <option value="g">g</option>
+                                <option value="kg">kg</option>
+                                <option value="ml">ml</option>
+                                <option value="L">L</option>
+                                <option value="cup">taza</option>
+                                <option value="tbsp">cda</option>
+                                <option value="tsp">cdta</option>
+                                <option value="oz">oz</option>
+                                <option value="lb">lb</option>
+                                <option value="UND">UND</option>
+                            </select>
+                            <select class="form-select form-select-sm" id="ingredienteTipoRep" style="max-width: 140px;" title="Tipo para convertir taza/cda a gramos">
+                                <option value="flour">Harina</option>
+                                <option value="sugar">Azúcar</option>
+                                <option value="brown-sugar">Azúcar morena</option>
+                                <option value="powdered-sugar">Azúcar glass</option>
+                                <option value="butter">Mantequilla</option>
+                                <option value="milk">Leche</option>
+                                <option value="water">Agua</option>
+                                <option value="oil">Aceite</option>
+                                <option value="cocoa">Cacao</option>
+                                <option value="salt">Sal</option>
+                                <option value="eggs">Huevos</option>
+                                <option value="cream">Crema</option>
+                                <option value="honey">Miel</option>
+                                <option value="custom-solid">Otro sólido</option>
+                                <option value="custom-liquid">Otro líquido</option>
+                            </select>
+                            <span class="small" id="ingredienteConvertidoRep"></span>
+                            <button type="button" class="btn btn-outline-primary btn-sm" id="btnAgregarIngredienteRep"><i class="bi bi-plus"></i> Agregar</button>
+                        </div>
+                    </div>
+                    <% } %>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
@@ -430,7 +470,11 @@
         window.USER_ROL = <%= typeof user !== 'undefined' && user && user.rol ? JSON.stringify(user.rol) : '""' %>;
         window.COSTEO_TENANT_ID = <%= typeof tenant !== 'undefined' && tenant && tenant.id ? tenant.id : 'null' %>;
         window.COSTEO_SHOW_TENANT_SELECTOR = <%= typeof showTenantSelector !== 'undefined' && showTenantSelector ? 'true' : 'false' %>;
+        window.COSTEO_PLANTILLA_REPOSTERIA = <%= typeof costeoPlantillaReposteria !== 'undefined' && costeoPlantillaReposteria ? 'true' : 'false' %>;
     </script>
     <script src="/js/costeo.js"></script>
+    <% if (typeof costeoPlantillaReposteria !== 'undefined' && costeoPlantillaReposteria) { %>
+    <script src="/js/costeo-reposteria.js"></script>
+    <% } %>
 </body>
 </html>

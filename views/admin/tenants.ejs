@@ -98,6 +98,16 @@
                                 <label class="form-label">Slug</label>
                                 <input type="text" class="form-control" value="<%= selectedTenant.slug %>" disabled>
                             </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Tipo de negocio</label>
+                                <select name="tipo_negocio" id="editTipoNegocio" class="form-select">
+                                    <option value="restaurante" <%= (selectedTenant.config && selectedTenant.config.tipo_negocio === 'restaurante') ? 'selected' : '' %>>Restaurante</option>
+                                    <option value="comidas_rapidas" <%= (selectedTenant.config && selectedTenant.config.tipo_negocio === 'comidas_rapidas') ? 'selected' : '' %>>Comidas rápidas</option>
+                                    <option value="panaderia" <%= (selectedTenant.config && selectedTenant.config.tipo_negocio === 'panaderia') ? 'selected' : '' %>>Panadería</option>
+                                    <option value="pasteleria" <%= (selectedTenant.config && selectedTenant.config.tipo_negocio === 'pasteleria') ? 'selected' : '' %>>Pastelería</option>
+                                </select>
+                                <small class="form-text text-muted">Panadería y pastelería usan costeo con tazas/cucharadas.</small>
+                            </div>
                             <div class="col-12">
                                 <div class="section-title mt-3">Apariencia del restaurante</div>
                                 <label class="form-label">Color primario del sitio</label>
@@ -118,6 +128,14 @@
                             </div>
                         </div>
                     </form>
+
+                    <div class="mt-3 pt-2 border-top">
+                        <p class="text-muted small mb-2">Si este local no tiene categorías de productos (o quieres añadir las por defecto según el tipo de negocio):</p>
+                        <button type="button" class="btn btn-outline-secondary btn-sm" id="btnSeedCategorias" data-tenant-id="<%= selectedTenant.id %>">
+                            <i class="bi bi-folder-plus me-1"></i> Crear categorías por defecto
+                        </button>
+                        <small class="d-block text-muted mt-1">Pastelería/Panadería: Pasteles, Bollería, Repostería seca, Pastelería fría, Productos de temporada. Restaurante: Bebidas, Postres, Comidas, etc.</small>
+                    </div>
 
                     <hr class="my-4">
                     <div class="section-title">Usuarios del restaurante</div>
@@ -218,6 +236,16 @@
                         <small class="form-text text-muted">Identificador único, sin espacios.</small>
                     </div>
                     <div class="mb-3">
+                        <label class="form-label">Tipo de negocio</label>
+                        <select name="tipo_negocio" id="createTipoNegocio" class="form-select">
+                            <option value="restaurante">Restaurante</option>
+                            <option value="comidas_rapidas">Comidas rápidas</option>
+                            <option value="panaderia">Panadería</option>
+                            <option value="pasteleria">Pastelería</option>
+                        </select>
+                        <small class="form-text text-muted">Panadería y pastelería usan la plantilla de costeo con tazas/cucharadas.</small>
+                    </div>
+                    <div class="mb-3">
                         <label class="form-label">Color primario del sitio</label>
                         <p class="text-muted small mb-2">Color para botones y enlaces de este restaurante.</p>
                         <div class="d-flex flex-wrap align-items-center gap-3">
@@ -231,7 +259,7 @@
                             </div>
                         </div>
                     </div>
-                    <input type="hidden" name="config" id="createConfigJson" value='{"colors":{"primary":"#0d6efd"}}'>
+                    <input type="hidden" name="config" id="createConfigJson" value='{"colors":{"primary":"#0d6efd"},"tipo_negocio":"restaurante"}'>
                     <hr class="my-3">
                     <h6 class="mb-2">Usuario administrador del restaurante</h6>
                     <div class="mb-3">
@@ -270,13 +298,24 @@ function buildConfigFromColor(hex) {
     return JSON.stringify({ colors: { primary: hex || '#0d6efd' } });
 }
 
+function buildCreateConfig() {
+    var colorInput = document.getElementById('createConfigColor');
+    var tipoSelect = document.getElementById('createTipoNegocio');
+    var cfg = { colors: { primary: (colorInput && colorInput.value) || '#0d6efd' } };
+    if (tipoSelect) cfg.tipo_negocio = tipoSelect.value || 'restaurante';
+    return JSON.stringify(cfg);
+}
+
 async function updateTenant(event, id) {
     event.preventDefault();
     const form = event.target;
     const primaryColor = document.getElementById('editConfigColor');
+    const tipoNegocio = document.getElementById('editTipoNegocio');
+    var cfg = { colors: { primary: (primaryColor && primaryColor.value) || '#0d6efd' } };
+    if (tipoNegocio) cfg.tipo_negocio = tipoNegocio.value || 'restaurante';
     const data = {
         nombre: form.nombre.value,
-        config: primaryColor ? buildConfigFromColor(primaryColor.value) : '{}',
+        config: JSON.stringify(cfg),
         activo: '<%= selectedTenant ? selectedTenant.activo : true %>'
     };
     const resp = await fetch('/admin/tenants/' + id, {
@@ -359,22 +398,36 @@ document.querySelectorAll('.create-preset-color').forEach(function(btn) {
     btn.addEventListener('click', function() {
         var color = this.getAttribute('data-color');
         var input = document.getElementById('createConfigColor');
-        var hidden = document.getElementById('createConfigJson');
         if (input) input.value = color;
-        if (hidden) hidden.value = buildConfigFromColor(color);
+        syncCreateConfig();
     });
 });
 var createColorInput = document.getElementById('createConfigColor');
 var createConfigJson = document.getElementById('createConfigJson');
-if (createColorInput && createConfigJson) {
-    createColorInput.addEventListener('input', function() {
-        createConfigJson.value = buildConfigFromColor(this.value);
-    });
+var createTipoNegocio = document.getElementById('createTipoNegocio');
+function syncCreateConfig() {
+    if (createConfigJson) createConfigJson.value = buildCreateConfig();
 }
+if (createColorInput) createColorInput.addEventListener('input', syncCreateConfig);
+if (createTipoNegocio) createTipoNegocio.addEventListener('change', syncCreateConfig);
 document.getElementById('formCreateTenant') && document.getElementById('formCreateTenant').addEventListener('submit', function() {
-    var colorInput = document.getElementById('createConfigColor');
-    var hidden = document.getElementById('createConfigJson');
-    if (colorInput && hidden) hidden.value = buildConfigFromColor(colorInput.value);
+    syncCreateConfig();
+});
+
+document.getElementById('btnSeedCategorias') && document.getElementById('btnSeedCategorias').addEventListener('click', async function() {
+    var tenantId = this.getAttribute('data-tenant-id');
+    if (!tenantId) return;
+    try {
+        var resp = await fetch('/admin/tenants/' + tenantId + '/seed-categorias', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' } });
+        var data = await resp.json().catch(function() { return {}; });
+        if (resp.ok) {
+            Swal.fire({ icon: 'success', title: 'Categorías creadas', text: (data.inserted !== undefined) ? 'Se crearon ' + data.inserted + ' categorías.' : data.message || '' }).then(function() { window.location.reload(); });
+        } else {
+            Swal.fire({ icon: 'error', title: 'Error', text: data.error || 'No se pudieron crear las categorías.' });
+        }
+    } catch (e) {
+        Swal.fire({ icon: 'error', title: 'Error', text: 'Error de conexión.' });
+    }
 });
 </script>
 </body>

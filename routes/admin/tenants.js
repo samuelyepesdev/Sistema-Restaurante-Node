@@ -3,6 +3,7 @@ const router = express.Router();
 const TenantService = require('../../services/TenantService');
 const TenantUserService = require('../../services/TenantUserService');
 const TenantAuditService = require('../../services/TenantAuditService');
+const CategoryService = require('../../services/CategoryService');
 const { ROLES } = require('../../utils/constants');
 const authService = require('../../services/AuthService');
 
@@ -38,8 +39,11 @@ router.post('/', async (req, res) => {
         if (!nombre || !slug || !admin_username || !admin_password) {
             return res.status(400).send('Faltan nombre del restaurante, slug, usuario admin o contraseña.');
         }
-        const tenant = await TenantService.createTenant({ nombre, slug, config: JSON.parse(config || '{}') });
+        const configObj = typeof config === 'string' ? JSON.parse(config || '{}') : (config || {});
+        const tenant = await TenantService.createTenant({ nombre, slug, config: configObj });
         const tenantId = tenant.id;
+        const tipoNegocio = configObj.tipo_negocio || 'restaurante';
+        await CategoryService.seedDefaultCategories(tenantId, tipoNegocio);
         await TenantUserService.createTenantUser(tenantId, {
             username: admin_username,
             password: admin_password,
@@ -154,6 +158,23 @@ router.post('/:id/status', async (req, res) => {
     } catch (error) {
         console.error('Error al cambiar estado del tenant:', error);
         res.status(400).send(error.message);
+    }
+});
+
+// POST /admin/tenants/:id/seed-categorias - Crear categorías por defecto según tipo de negocio
+router.post('/:id/seed-categorias', async (req, res) => {
+    try {
+        const tenantId = req.params.id;
+        const tenant = await TenantService.getTenantById(tenantId);
+        if (!tenant) {
+            return res.status(404).json({ error: 'Tenant no encontrado' });
+        }
+        const tipoNegocio = (tenant.config && tenant.config.tipo_negocio) ? tenant.config.tipo_negocio : 'restaurante';
+        const result = await CategoryService.seedDefaultCategories(tenantId, tipoNegocio);
+        return res.json({ message: 'Categorías creadas', inserted: result.inserted });
+    } catch (error) {
+        console.error('Error al sembrar categorías:', error);
+        res.status(500).json({ error: error.message || 'Error al crear categorías' });
     }
 });
 

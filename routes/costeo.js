@@ -34,17 +34,23 @@ router.get('/', async (req, res) => {
                 user: req.user,
                 tenant: null,
                 showTenantSelector: true,
-                tenants: tenants || []
+                tenants: tenants || [],
+                costeoPlantillaReposteria: false,
+                tipoNegocio: ''
             });
         }
         const tenantId = getTenantId(req);
         const { productos } = await ProductService.getAllForView(tenantId);
+        const tipoNegocio = (req.tenant && req.tenant.config && req.tenant.config.tipo_negocio) ? req.tenant.config.tipo_negocio : 'restaurante';
+        const costeoPlantillaReposteria = tipoNegocio === 'panaderia' || tipoNegocio === 'pasteleria';
         res.render('costeo', {
             productos: productos || [],
             user: req.user,
             tenant: req.tenant,
             showTenantSelector: false,
-            tenants: []
+            tenants: [],
+            costeoPlantillaReposteria,
+            tipoNegocio
         });
     } catch (error) {
         console.error('Error al cargar costeo:', error);

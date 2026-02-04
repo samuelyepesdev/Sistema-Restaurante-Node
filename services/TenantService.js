@@ -2,12 +2,18 @@ const db = require('../config/database');
 
 class TenantService {
     static async getAllTenants() {
-        const [tenants] = await db.query(`
+        const [rows] = await db.query(`
             SELECT id, nombre, slug, activo, config, created_at
             FROM tenants
             ORDER BY created_at DESC
         `);
-        return tenants;
+        return (rows || []).map(row => {
+            let config = row.config;
+            if (config && typeof config === 'string') {
+                try { config = JSON.parse(config); } catch (_) { config = {}; }
+            }
+            return { ...row, config: config || {} };
+        });
     }
 
     static async createTenant({ nombre, slug, config = {}, activo = true }) {
@@ -29,9 +35,10 @@ class TenantService {
             parts.push('nombre = ?');
             payload.push(nombre);
         }
-        if (config) {
+        if (config !== undefined && config !== null) {
             parts.push('config = ?');
-            payload.push(JSON.stringify(config));
+            const configStr = typeof config === 'string' ? config : JSON.stringify(config);
+            payload.push(configStr);
         }
         if (activo !== undefined) {
             parts.push('activo = ?');
@@ -66,7 +73,13 @@ class TenantService {
 
     static async getTenantById(id) {
         const [rows] = await db.query('SELECT * FROM tenants WHERE id = ?', [id]);
-        return rows[0] || null;
+        const row = rows[0] || null;
+        if (!row) return null;
+        let config = row.config;
+        if (config && typeof config === 'string') {
+            try { config = JSON.parse(config); } catch (_) { config = {}; }
+        }
+        return { ...row, config: config || {} };
     }
 }
 

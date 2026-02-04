@@ -52,6 +52,31 @@ class CategoryRepository {
         });
         return map;
     }
+
+    /**
+     * Create a category for a tenant
+     * @param {number} tenantId - Tenant ID
+     * @param {Object} data - { nombre, descripcion }
+     * @returns {Promise<number>} Insert ID
+     */
+    static async create(tenantId, data) {
+        const { nombre, descripcion } = data;
+        const [result] = await db.query(
+            'INSERT INTO categorias (tenant_id, nombre, descripcion, activa) VALUES (?, ?, ?, 1)',
+            [tenantId, nombre || '', descripcion || null]
+        );
+        return result.insertId;
+    }
+
+    /**
+     * Count categories for a tenant
+     * @param {number} tenantId - Tenant ID
+     * @returns {Promise<number>}
+     */
+    static async countByTenant(tenantId) {
+        const [rows] = await db.query('SELECT COUNT(*) AS n FROM categorias WHERE tenant_id = ?', [tenantId]);
+        return rows[0]?.n ?? 0;
+    }
 }
 
 module.exports = CategoryRepository;

@@ -274,17 +274,26 @@
     function loadInsumosForSelect() {
         return api('/api/insumos').then(list => {
             insumosList = list || [];
+            window.COSTEO_insumosList = insumosList;
             const sel = document.getElementById('ingredienteInsumo');
-            sel.innerHTML = '<option value="">Agregar insumo</option>';
-            insumosList.forEach(i => {
-                const opt = document.createElement('option');
-                opt.value = i.id;
-                opt.textContent = `${i.codigo} - ${i.nombre} (${i.unidad_compra})`;
-                sel.appendChild(opt);
-            });
+            if (sel) {
+                sel.innerHTML = '<option value="">Agregar insumo</option>';
+                insumosList.forEach(i => {
+                    const opt = document.createElement('option');
+                    opt.value = i.id;
+                    opt.textContent = `${i.codigo} - ${i.nombre} (${i.unidad_compra})`;
+                    sel.appendChild(opt);
+                });
+            }
+            if (window.COSTEO_refreshReposteriaSelect) window.COSTEO_refreshReposteriaSelect();
             return insumosList;
         });
     }
+
+    window.COSTEO_agregarIngrediente = function (ing) {
+        recetaIngredientes.push(ing);
+        renderIngredientes();
+    };
 
     let recetaIngredientes = [];
     function openRecetaEditarModal(recetaId) {
