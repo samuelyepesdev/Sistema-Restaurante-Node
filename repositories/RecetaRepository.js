@@ -46,7 +46,16 @@ class RecetaRepository {
             INNER JOIN productos p ON p.id = r.producto_id
             WHERE r.id = ? AND r.tenant_id = ?
         `, [id, tenantId]);
-        return rows[0] || null;
+        const row = rows[0] || null;
+        if (row && row.costos_adicionales) {
+            try {
+                row.costos_adicionales = typeof row.costos_adicionales === 'string'
+                    ? JSON.parse(row.costos_adicionales) : row.costos_adicionales;
+            } catch (_) {
+                row.costos_adicionales = null;
+            }
+        }
+        return row;
     }
 
     static async findByProductoId(productoId, tenantId) {
@@ -58,19 +67,27 @@ class RecetaRepository {
     }
 
     static async create(tenantId, data) {
-        const { producto_id, nombre_receta, porciones } = data;
+        const { producto_id, nombre_receta, porciones, costos_adicionales } = data;
+        const costosJson = costos_adicionales != null ? JSON.stringify(costos_adicionales) : null;
         const [result] = await db.query(
-            'INSERT INTO recetas (tenant_id, producto_id, nombre_receta, porciones) VALUES (?, ?, ?, ?)',
-            [tenantId, producto_id, nombre_receta, parseFloat(porciones) || 1]
+            'INSERT INTO recetas (tenant_id, producto_id, nombre_receta, porciones, costos_adicionales) VALUES (?, ?, ?, ?, ?)',
+            [tenantId, producto_id, nombre_receta, parseFloat(porciones) || 1, costosJson]
         );
         return result.insertId;
     }
 
     static async update(id, tenantId, data) {
-        const { nombre_receta, porciones } = data;
+        const { nombre_receta, porciones, costos_adicionales } = data;
+        const updates = ['nombre_receta = ?', 'porciones = ?'];
+        const params = [nombre_receta ?? '', parseFloat(porciones) || 1];
+        if (costos_adicionales !== undefined) {
+            updates.push('costos_adicionales = ?');
+            params.push(costos_adicionales != null ? JSON.stringify(costos_adicionales) : null);
+        }
+        params.push(id, tenantId);
         const [result] = await db.query(
-            'UPDATE recetas SET nombre_receta = ?, porciones = ? WHERE id = ? AND tenant_id = ?',
-            [nombre_receta, parseFloat(porciones) || 1, id, tenantId]
+            `UPDATE recetas SET ${updates.join(', ')} WHERE id = ? AND tenant_id = ?`,
+            params
         );
         return result;
     }

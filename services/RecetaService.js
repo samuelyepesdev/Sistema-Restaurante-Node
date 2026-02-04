@@ -36,7 +36,8 @@ class RecetaService {
         const recetaId = await RecetaRepository.create(tenantId, {
             producto_id: data.producto_id,
             nombre_receta: data.nombre_receta.trim(),
-            porciones: data.porciones || 1
+            porciones: data.porciones || 1,
+            costos_adicionales: data.costos_adicionales
         });
         if (data.ingredientes && data.ingredientes.length > 0) {
             await RecetaRepository.setIngredientes(recetaId, data.ingredientes);
@@ -49,7 +50,8 @@ class RecetaService {
         if (!receta) throw new Error('Receta no encontrada');
         await RecetaRepository.update(id, tenantId, {
             nombre_receta: data.nombre_receta !== undefined ? data.nombre_receta.trim() : receta.nombre_receta,
-            porciones: data.porciones !== undefined ? parseFloat(data.porciones) : receta.porciones
+            porciones: data.porciones !== undefined ? parseFloat(data.porciones) : receta.porciones,
+            costos_adicionales: data.costos_adicionales
         });
         if (data.ingredientes !== undefined) {
             await RecetaRepository.setIngredientes(id, data.ingredientes);

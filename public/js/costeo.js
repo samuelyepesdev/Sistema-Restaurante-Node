@@ -234,7 +234,11 @@
         if (e.target.classList.contains('btnVerCosteo')) {
             showCosteo(id);
         } else if (e.target.classList.contains('btnEditReceta')) {
-            openRecetaEditarModal(parseInt(id, 10));
+            if (window.COSTEO_PLANTILLA_REPOSTERIA && document.getElementById('modalCalculadoraReposteria') && typeof window.COSTEO_openCalculadoraReposteria === 'function') {
+                window.COSTEO_openCalculadoraReposteria(parseInt(id, 10));
+            } else {
+                openRecetaEditarModal(parseInt(id, 10));
+            }
         } else if (e.target.classList.contains('btnElimReceta')) {
             if (!confirm('¿Eliminar esta receta?')) return;
             api('/api/recetas/' + id, { method: 'DELETE' }).then(() => {
@@ -246,7 +250,24 @@
     });
     document.getElementById('recetas-tab')?.addEventListener('shown.bs.tab', () => loadRecetas());
 
-    document.getElementById('btnNuevaReceta')?.addEventListener('click', () => {
+    // Repostería: asegurar que siempre haya una función que abra la calculadora (costeo-reposteria.js la reemplaza si carga)
+    if (window.COSTEO_PLANTILLA_REPOSTERIA && document.getElementById('modalCalculadoraReposteria')) {
+        window.COSTEO_openCalculadoraReposteria = window.COSTEO_openCalculadoraReposteria || function () {
+            var modal = document.getElementById('modalCalculadoraReposteria');
+            if (modal && typeof bootstrap !== 'undefined' && bootstrap.Modal) {
+                bootstrap.Modal.getOrCreateInstance(modal).show();
+            }
+        };
+    }
+
+    document.getElementById('btnNuevaReceta')?.addEventListener('click', function (e) {
+        var modalCalc = document.getElementById('modalCalculadoraReposteria');
+        if (window.COSTEO_PLANTILLA_REPOSTERIA && modalCalc && typeof window.COSTEO_openCalculadoraReposteria === 'function') {
+            e.preventDefault();
+            e.stopPropagation();
+            window.COSTEO_openCalculadoraReposteria(null);
+            return;
+        }
         document.getElementById('recetaProductoId').value = '';
         document.getElementById('recetaNombreNueva').value = '';
         document.getElementById('recetaPorcionesNueva').value = '1';
@@ -502,6 +523,12 @@
         document.body.appendChild(el);
         setTimeout(() => el.remove(), 4000);
     }
+
+    window.COSTEO_api = api;
+    window.COSTEO_showToast = showToast;
+    window.COSTEO_formatMoney = formatMoney;
+    window.COSTEO_loadRecetas = function () { return loadRecetas(getRecetasFilters()); };
+    window.COSTEO_quitarBackdropModal = quitarBackdropModal;
 
     // Init
     loadInsumos();

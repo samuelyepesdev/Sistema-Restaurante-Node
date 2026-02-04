@@ -13,6 +13,42 @@
         .nav-tabs .nav-link { font-weight: 500; }
         .costeo-resumen { background: #f0f7ff; border-radius: 0.5rem; padding: 1rem; }
         .ingredientes-table tbody tr:hover { background: #f8f9fa; }
+        /* Modal Calculadora Repostería - diseño limpio y amigable */
+        #modalCalculadoraReposteria .modal-header { border-bottom: 1px solid #e9ecef; padding: 1rem 1.25rem; }
+        #modalCalculadoraReposteria .modal-body { padding: 1.25rem 1.5rem; background: #fafbfc; }
+        #modalCalculadoraReposteria .calc-seccion { background: #fff; border-radius: 12px; padding: 1.25rem; margin-bottom: 1.25rem; box-shadow: 0 1px 3px rgba(0,0,0,0.06); border: 1px solid #e9ecef; }
+        #modalCalculadoraReposteria .calc-seccion-titulo { font-size: 0.95rem; font-weight: 600; color: #495057; margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 2px solid #0d6efd; display: flex; align-items: center; gap: 0.5rem; }
+        #modalCalculadoraReposteria .calc-seccion-titulo i { color: #0d6efd; }
+        #modalCalculadoraReposteria .calc-ayuda-btn { font-size: 0.85rem; color: #0d6efd; background: rgba(13,110,253,0.08); border: 1px solid rgba(13,110,253,0.2); border-radius: 8px; padding: 0.5rem 0.75rem; width: 100%; text-align: left; display: flex; align-items: center; justify-content: space-between; }
+        #modalCalculadoraReposteria .calc-ayuda-btn:hover { background: rgba(13,110,253,0.12); color: #0a58ca; }
+        #modalCalculadoraReposteria .calc-ayuda-body { font-size: 0.85rem; color: #6c757d; line-height: 1.5; padding-top: 0.75rem; }
+        #modalCalculadoraReposteria .calc-costos-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 1rem; }
+        #modalCalculadoraReposteria .calc-costo-item { background: #f8f9fa; border-radius: 10px; padding: 0.75rem 1rem; border: 1px solid #e9ecef; transition: background 0.15s; }
+        #modalCalculadoraReposteria .calc-costo-item:focus-within { background: #fff; border-color: #0d6efd; box-shadow: 0 0 0 2px rgba(13,110,253,0.2); }
+        #modalCalculadoraReposteria .calc-costo-item label { font-size: 0.8rem; font-weight: 600; color: #495057; margin-bottom: 0.35rem; display: flex; align-items: center; gap: 0.4rem; }
+        #modalCalculadoraReposteria .calc-costo-item label i { font-size: 1rem; color: #6c757d; }
+        #modalCalculadoraReposteria .calc-costo-item .form-control { font-size: 0.9rem; border-radius: 6px; border: 1px solid #dee2e6; padding: 0.4rem 0.5rem; }
+        #modalCalculadoraReposteria .calc-costo-item .form-control:focus { border-color: #0d6efd; box-shadow: 0 0 0 2px rgba(13,110,253,0.15); }
+        #modalCalculadoraReposteria .calc-costo-item .texto-ayuda { font-size: 0.7rem; color: #6c757d; margin-top: 0.25rem; line-height: 1.3; }
+        #modalCalculadoraReposteria .calc-costo-item.readonly { background: #e9ecef; }
+        #modalCalculadoraReposteria .calc-resumen-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 0.75rem; }
+        #modalCalculadoraReposteria .calc-resumen-item { text-align: center; padding: 0.75rem; border-radius: 10px; background: #f8f9fa; border: 1px solid #e9ecef; }
+        #modalCalculadoraReposteria .calc-resumen-item .titulo { font-size: 0.75rem; color: #6c757d; text-transform: uppercase; letter-spacing: 0.02em; margin-bottom: 0.25rem; }
+        #modalCalculadoraReposteria .calc-resumen-item .valor { font-size: 1rem; font-weight: 700; color: #212529; }
+        #modalCalculadoraReposteria .calc-resumen-item.total { background: #0d6efd; border-color: #0d6efd; color: #fff; }
+        #modalCalculadoraReposteria .calc-resumen-item.total .titulo { color: rgba(255,255,255,0.9); }
+        #modalCalculadoraReposteria .calc-resumen-item.total .valor { color: #fff; }
+        #modalCalculadoraReposteria .calc-margen-guia { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.75rem; }
+        #modalCalculadoraReposteria .calc-margen-guia span { font-size: 0.75rem; padding: 0.25rem 0.5rem; border-radius: 6px; background: #e7f1ff; color: #0d6efd; }
+        #modalCalculadoraReposteria .calc-resultados { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+        #modalCalculadoraReposteria .calc-resultado-precio { background: #fff; border: 2px solid #e9ecef; border-radius: 12px; padding: 1.25rem; text-align: center; }
+        #modalCalculadoraReposteria .calc-resultado-ganancia { background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%); border: 2px solid #28a745; border-radius: 12px; padding: 1.25rem; text-align: center; }
+        #modalCalculadoraReposteria .calc-resultado-ganancia .valor { font-size: 1.5rem; font-weight: 800; color: #155724; }
+        #modalCalculadoraReposteria .calc-resultado-precio .valor { font-size: 1.5rem; font-weight: 800; color: #212529; }
+        @media (max-width: 768px) {
+            #modalCalculadoraReposteria .calc-resumen-grid { grid-template-columns: repeat(2, 1fr); }
+            #modalCalculadoraReposteria .calc-costos-grid { grid-template-columns: 1fr 1fr; }
+        }
     </style>
 </head>
 <body>
@@ -48,9 +84,11 @@
                     <li class="nav-item" role="presentation">
                         <button class="nav-link" id="alertas-tab" data-bs-toggle="tab" data-bs-target="#alertas" type="button">Alertas</button>
                     </li>
+                    <% if (typeof costeoPlantillaReposteria === 'undefined' || !costeoPlantillaReposteria) { %>
                     <li class="nav-item" role="presentation">
                         <button class="nav-link" id="config-tab" data-bs-toggle="tab" data-bs-target="#config" type="button">Configuración</button>
                     </li>
+                    <% } %>
                 </ul>
             </div>
             <div class="card-body">
@@ -90,9 +128,11 @@
                             <input type="text" class="form-control form-control-sm" id="filtroRecetaQ" placeholder="Buscar por nombre de producto o receta..." style="max-width: 280px;">
                             <button type="button" class="btn btn-sm btn-outline-secondary" id="btnFiltrarRecetas">Filtrar</button>
                             <% if (user && user.permisos && user.permisos.includes('costeo.editar')) { %>
-                            <button type="button" class="btn btn-primary btn-sm ms-auto" data-bs-toggle="modal" data-bs-target="#recetaNuevaModal" id="btnNuevaReceta">
-                                <i class="bi bi-plus-lg me-1"></i>Nueva Receta
-                            </button>
+                            <% if (typeof costeoPlantillaReposteria !== 'undefined' && costeoPlantillaReposteria) { %>
+                            <button type="button" class="btn btn-primary btn-sm ms-auto" id="btnNuevaReceta"><i class="bi bi-plus-lg me-1"></i>Nueva Receta (Calculadora)</button>
+                            <% } else { %>
+                            <button type="button" class="btn btn-primary btn-sm ms-auto" data-bs-toggle="modal" data-bs-target="#recetaNuevaModal" id="btnNuevaReceta"><i class="bi bi-plus-lg me-1"></i>Nueva Receta</button>
+                            <% } %>
                             <% } %>
                         </div>
                         <div class="table-responsive">
@@ -171,7 +211,8 @@
                         </div>
                     </div>
 
-                    <!-- Tab Configuración -->
+                    <% if (typeof costeoPlantillaReposteria === 'undefined' || !costeoPlantillaReposteria) { %>
+                    <!-- Tab Configuración (solo restaurante/comidas rápidas; pastelería/panadería usa la calculadora por receta) -->
                     <div class="tab-pane fade" id="config" role="tabpanel">
                         <div class="card bg-light border-0 mb-4">
                             <div class="card-header py-2">
@@ -246,6 +287,7 @@
                             <% } %>
                         </form>
                     </div>
+                    <% } %>
                 </div>
             </div>
         </div>
@@ -418,6 +460,218 @@
         </div>
     </div>
 
+    <% if (typeof costeoPlantillaReposteria !== 'undefined' && costeoPlantillaReposteria) { %>
+    <!-- Modal Calculadora de precios - Repostería (pastelería/panadería) -->
+    <div class="modal fade" id="modalCalculadoraReposteria" tabindex="-1" aria-labelledby="modalCalculadoraReposteriaLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalCalculadoraReposteriaLabel"><i class="bi bi-calculator me-2"></i>Calculadora de precios</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="calcRecetaId" value="">
+
+                    <!-- Datos básicos -->
+                    <div class="calc-seccion">
+                        <div class="calc-seccion-titulo"><i class="bi bi-pencil-square"></i> Datos de la receta</div>
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <label class="form-label">Producto</label>
+                                <select class="form-select" id="calcProductoId">
+                                    <option value="">Seleccione producto</option>
+                                    <% (productos || []).forEach(function(p) { %>
+                                    <option value="<%= p.id %>"><%= p.codigo %> - <%= p.nombre %></option>
+                                    <% }); %>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Nombre de la receta</label>
+                                <input type="text" class="form-control" id="calcNombreReceta" placeholder="Ej: Torta de chocolate">
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label">Porciones</label>
+                                <input type="number" class="form-control" id="calcPorciones" step="0.01" min="0.01" value="1">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 1. Ingredientes -->
+                    <div class="calc-seccion">
+                        <div class="calc-seccion-titulo"><i class="bi bi-list-ul"></i> 1. Ingredientes</div>
+                        <div class="table-responsive mb-2">
+                            <table class="table table-sm table-hover align-middle" id="calcTablaIngredientes">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Ingrediente</th>
+                                        <th>Cantidad</th>
+                                        <th>Unidad</th>
+                                        <th class="text-end">Costo</th>
+                                        <th width="40"></th>
+                                    </tr>
+                                </thead>
+                                <tbody id="calcIngredientesBody"></tbody>
+                            </table>
+                        </div>
+                        <div class="d-flex flex-wrap align-items-end gap-2">
+                            <select class="form-select form-select-sm" id="calcInsumo" style="max-width: 220px;"></select>
+                            <input type="text" class="form-control form-control-sm" id="calcCantidad" placeholder="Ej: 2, 1/2" style="max-width: 100px;">
+                            <select class="form-select form-select-sm" id="calcUnidad" style="max-width: 90px;">
+                                <option value="g">g</option>
+                                <option value="kg">kg</option>
+                                <option value="ml">ml</option>
+                                <option value="L">L</option>
+                                <option value="cup">taza</option>
+                                <option value="tbsp">cda</option>
+                                <option value="tsp">cdta</option>
+                                <option value="oz">oz</option>
+                                <option value="lb">lb</option>
+                                <option value="UND">UND</option>
+                            </select>
+                            <select class="form-select form-select-sm" id="calcTipoIngrediente" style="max-width: 130px;">
+                                <option value="flour">Harina</option>
+                                <option value="sugar">Azúcar</option>
+                                <option value="butter">Mantequilla</option>
+                                <option value="milk">Leche</option>
+                                <option value="water">Agua</option>
+                                <option value="oil">Aceite</option>
+                                <option value="eggs">Huevos</option>
+                                <option value="custom-solid">Otro sólido</option>
+                                <option value="custom-liquid">Otro líquido</option>
+                            </select>
+                            <button type="button" class="btn btn-primary btn-sm" id="calcBtnAgregarIng"><i class="bi bi-plus-lg me-1"></i>Agregar</button>
+                        </div>
+                    </div>
+
+                    <!-- 2. Costos adicionales -->
+                    <div class="calc-seccion">
+                        <div class="calc-seccion-titulo"><i class="bi bi-wallet2"></i> 2. Costos adicionales</div>
+                        <button class="calc-ayuda-btn mb-3" type="button" data-bs-toggle="collapse" data-bs-target="#collapseAyudaCostos" aria-expanded="false">
+                            <span><i class="bi bi-info-circle me-1"></i> Cómo calcular cada costo</span>
+                            <i class="bi bi-chevron-down"></i>
+                        </button>
+                        <div class="collapse" id="collapseAyudaCostos">
+                            <div class="calc-ayuda-body">
+                                <p class="mb-2">Incluye los gastos que a veces se olvidan: tu tiempo, servicios, empaque y envío.</p>
+                                <p class="mb-1"><strong>Horas de trabajo:</strong> Preparación + horneado + decoración + limpieza.</p>
+                                <p class="mb-1"><strong>Valor por hora:</strong> En Colombia suele ser $8.000–$15.000/h. Sugerencia: $10.000/h.</p>
+                                <p class="mb-1"><strong>Desgaste:</strong> Se calcula solo (2% de ingredientes).</p>
+                                <p class="mb-1"><strong>Servicios:</strong> Luz/gas del horno. Ej: horno 1 h ≈ $2.000–3.000.</p>
+                                <p class="mb-1"><strong>Empaque:</strong> Caja, moño, etiqueta, bolsa.</p>
+                                <p class="mb-0"><strong>Envío:</strong> Gasolina si entregas tú, o costo de mensajería.</p>
+                            </div>
+                        </div>
+                        <div class="calc-costos-grid">
+                            <div class="calc-costo-item">
+                                <label><i class="bi bi-clock"></i> Horas de trabajo</label>
+                                <input type="number" class="form-control form-control-sm" id="calcHorasTrabajo" step="0.25" min="0" value="0" placeholder="0">
+                                <div class="texto-ayuda">Preparación + horneado + decoración</div>
+                            </div>
+                            <div class="calc-costo-item">
+                                <label><i class="bi bi-currency-dollar"></i> Valor por hora ($)</label>
+                                <input type="number" class="form-control form-control-sm" id="calcValorHora" step="500" min="0" value="10000" placeholder="10000">
+                                <div class="texto-ayuda">Sugerencia: $10.000 en Colombia</div>
+                            </div>
+                            <div class="calc-costo-item readonly">
+                                <label><i class="bi bi-tools"></i> Desgaste (2%)</label>
+                                <input type="number" class="form-control form-control-sm" id="calcDesgaste" step="0.01" min="0" value="0" readonly>
+                                <div class="texto-ayuda">Automático sobre ingredientes</div>
+                            </div>
+                            <div class="calc-costo-item">
+                                <label><i class="bi bi-lightning"></i> Servicios (luz/gas)</label>
+                                <input type="number" class="form-control form-control-sm" id="calcServicios" step="100" min="0" value="0" placeholder="0">
+                                <div class="texto-ayuda">Ver guía arriba</div>
+                            </div>
+                            <div class="calc-costo-item">
+                                <label><i class="bi bi-box-seam"></i> Empaque ($)</label>
+                                <input type="number" class="form-control form-control-sm" id="calcEmpaque" step="100" min="0" value="0" placeholder="0">
+                                <div class="texto-ayuda">Caja, moño, etiqueta</div>
+                            </div>
+                            <div class="calc-costo-item">
+                                <label><i class="bi bi-truck"></i> Envío ($)</label>
+                                <input type="number" class="form-control form-control-sm" id="calcEnvio" step="100" min="0" value="0" placeholder="0">
+                                <div class="texto-ayuda">Si aplica para el cliente</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 3. Resumen -->
+                    <div class="calc-seccion">
+                        <div class="calc-seccion-titulo"><i class="bi bi-pie-chart"></i> 3. Resumen de costos</div>
+                        <div class="calc-resumen-grid">
+                            <div class="calc-resumen-item"><div class="titulo">Ingredientes</div><div class="valor" id="calcResumenIngredientes">$0</div></div>
+                            <div class="calc-resumen-item"><div class="titulo">Mano de obra</div><div class="valor" id="calcResumenManoObra">$0</div></div>
+                            <div class="calc-resumen-item"><div class="titulo">Desgaste</div><div class="valor" id="calcResumenDesgaste">$0</div></div>
+                            <div class="calc-resumen-item"><div class="titulo">Otros</div><div class="valor" id="calcResumenOtros">$0</div></div>
+                            <div class="calc-resumen-item total"><div class="titulo">Costo total</div><div class="valor" id="calcResumenTotal">$0</div></div>
+                        </div>
+                    </div>
+
+                    <!-- 4. Margen -->
+                    <div class="calc-seccion">
+                        <div class="calc-seccion-titulo"><i class="bi bi-graph-up"></i> 4. Margen de ganancia</div>
+                        <div class="calc-margen-guia">
+                            <span>30–50% Básico</span>
+                            <span>50–80% Estándar</span>
+                            <span>80–100% Premium</span>
+                            <span>100%+ Lujo</span>
+                        </div>
+                        <div class="d-flex align-items-center gap-3 mb-3">
+                            <label class="form-label mb-0 fw-semibold">Porcentaje:</label>
+                            <input type="range" class="form-range flex-grow-1" id="calcMargenPct" min="0" max="150" value="50" step="5" style="max-width: 300px;">
+                            <span class="fw-bold" id="calcMargenPctVal">50</span>%
+                        </div>
+                        <div class="row g-2 small">
+                            <div class="col-md-3"><span class="text-muted">Costo/porción</span> <strong id="calcCostoPorcion">$0</strong></div>
+                            <div class="col-md-3"><span class="text-muted">Precio/porción</span> <strong id="calcPrecioPorcion">$0</strong></div>
+                            <div class="col-md-3"><span class="text-muted">Ganancia/porción</span> <strong id="calcGananciaPorcion">$0</strong></div>
+                            <div class="col-md-3"><span class="text-muted">Margen</span> <strong id="calcMargenVentas">0%</strong></div>
+                        </div>
+                    </div>
+
+                    <!-- 5. Resultados -->
+                    <div class="calc-seccion">
+                        <div class="calc-seccion-titulo"><i class="bi bi-currency-dollar"></i> 5. Resultados finales</div>
+                        <div class="calc-resultados">
+                            <div class="calc-resultado-precio">
+                                <div class="text-muted small mb-1">Precio de venta total</div>
+                                <div class="valor" id="calcPrecioVentaTotal">$0</div>
+                            </div>
+                            <div class="calc-resultado-ganancia">
+                                <div class="text-muted small mb-1">Ganancia neta</div>
+                                <div class="valor" id="calcGananciaNeta">$0</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Convertidor -->
+                    <div class="calc-seccion">
+                        <button class="calc-ayuda-btn w-100" type="button" data-bs-toggle="collapse" data-bs-target="#collapseConvertidor">
+                            <span><i class="bi bi-arrow-left-right me-1"></i> Convertidor de medidas (tazas → gramos)</span>
+                            <i class="bi bi-chevron-down"></i>
+                        </button>
+                        <div class="collapse" id="collapseConvertidor">
+                            <div class="pt-3">
+                                <div class="row g-2 align-items-end">
+                                    <div class="col-md-2"><label class="form-label small">Cantidad</label><input type="text" class="form-control form-control-sm" id="convCantidad" placeholder="2 1/2 o 2.5"></div>
+                                    <div class="col-md-2"><label class="form-label small">Medida</label><select class="form-select form-select-sm" id="convMedida"><option value="cup">Taza</option><option value="tbsp">Cda</option><option value="tsp">Cdta</option><option value="g">g</option><option value="ml">ml</option></select></div>
+                                    <div class="col-md-2"><label class="form-label small">Ingrediente</label><select class="form-select form-select-sm" id="convTipo"><option value="flour">Harina</option><option value="sugar">Azúcar</option><option value="butter">Mantequilla</option><option value="milk">Leche</option><option value="custom-solid">Otro</option></select></div>
+                                    <div class="col-auto"><button type="button" class="btn btn-sm btn-outline-primary" id="convCalcular">Calcular</button></div>
+                                    <div class="col"><span class="small text-muted">Resultado:</span> <strong id="convResultado">0 g / 0 ml</strong></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer border-top">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                    <button type="button" class="btn btn-primary" id="calcBtnGuardar"><i class="bi bi-save me-1"></i> Guardar receta</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <% } %>
+
     <!-- Modal Tema -->
     <div class="modal fade" id="temaModal" tabindex="-1">
         <div class="modal-dialog">
@@ -466,8 +720,8 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        window.USER_PERMISOS = <%= typeof user !== 'undefined' && user && user.permisos ? JSON.stringify(user.permisos) : '[]' %>;
-        window.USER_ROL = <%= typeof user !== 'undefined' && user && user.rol ? JSON.stringify(user.rol) : '""' %>;
+        window.USER_PERMISOS = <%- typeof user !== 'undefined' && user && user.permisos ? JSON.stringify(user.permisos) : '[]' %>;
+        window.USER_ROL = <%- typeof user !== 'undefined' && user && user.rol ? JSON.stringify(user.rol) : '""' %>;
         window.COSTEO_TENANT_ID = <%= typeof tenant !== 'undefined' && tenant && tenant.id ? tenant.id : 'null' %>;
         window.COSTEO_SHOW_TENANT_SELECTOR = <%= typeof showTenantSelector !== 'undefined' && showTenantSelector ? 'true' : 'false' %>;
         window.COSTEO_PLANTILLA_REPOSTERIA = <%= typeof costeoPlantillaReposteria !== 'undefined' && costeoPlantillaReposteria ? 'true' : 'false' %>;
