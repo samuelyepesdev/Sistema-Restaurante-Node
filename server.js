@@ -38,6 +38,11 @@ app.use(cookieParser());
 app.use(express.json({limit: '50mb'}));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
+// Middleware de autenticación y tenant (requeridos antes de optionalAuth y planes)
+const { requireAuth, optionalAuth, restrictSuperadminToAdmin } = require('./middleware/auth');
+const { attachTenantContext, costeoTenantContext } = require('./middleware/tenant');
+const PlanService = require('./services/PlanService');
+
 // Opcional: adjuntar user si hay token (para res.locals.plans en navbar)
 app.use(optionalAuth);
 // Planes para navbar (dropdown de plan del tenant)
@@ -65,10 +70,6 @@ app.use((req, res, next) => {
     next();
 });
 
-// Middleware de autenticación y tenant
-const { requireAuth, optionalAuth, restrictSuperadminToAdmin } = require('./middleware/auth');
-const { attachTenantContext, costeoTenantContext } = require('./middleware/tenant');
-
 // Rutas de app: superadmin solo puede ver /admin/tenants y /costeo; el resto requiere tenant
 const requireAuthWithTenant = [requireAuth, restrictSuperadminToAdmin, attachTenantContext];
 
@@ -89,7 +90,6 @@ const costeoRoutes = require('./routes/costeo');
 const adminTenantsRoutes = require('./routes/admin/tenants');
 const adminSistemaRoutes = require('./routes/admin/sistema');
 const adminPlanesRoutes = require('./routes/admin/planes');
-const PlanService = require('./services/PlanService');
 
 // Ruta principal - redirige según autenticación y rol
 app.get('/', optionalAuth, (req, res) => {
