@@ -1,0 +1,75 @@
+<%
+const planLabels = {
+  productos: 'Gestión de productos',
+  clientes: 'Gestión de clientes',
+  mesas: 'Gestión de mesas',
+  ventas: 'Registro de ventas',
+  dashboard: 'Dashboard general',
+  configuracion: 'Configuración del negocio',
+  plantillas: 'Plantillas (reportes, diseños, layouts)',
+  importar_exportar: 'Importación y exportación de datos',
+  costeo: 'Módulo de costeo / análisis de costos',
+  analitica: 'Módulos avanzados de analítica',
+  prediccion_ml: 'Predicción (ML): ventas y ganancias esperadas'
+};
+%>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Planes - Superadmin</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <style>
+        body { background: linear-gradient(180deg, #f0f4f8 0%, #e2e8f0 100%); min-height: 100vh; }
+        .navbar { background: linear-gradient(135deg, #1e3a5f 0%, #0f172a 100%) !important; box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+        .admin-page-header { background: #fff; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.06); padding: 1.5rem 2rem; margin-bottom: 1.5rem; border-left: 4px solid #6366f1; }
+        .plan-card { border: none; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.06); transition: transform 0.2s, box-shadow 0.2s; overflow: hidden; }
+        .plan-card:hover { transform: translateY(-4px); box-shadow: 0 12px 32px rgba(0,0,0,0.1); }
+        .plan-card.basico .plan-header { background: linear-gradient(135deg, #64748b 0%, #475569 100%); }
+        .plan-card.pro .plan-header { background: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%); }
+        .plan-card.premium .plan-header { background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%); }
+        .plan-header { color: #fff; padding: 1.5rem; text-align: center; }
+        .plan-header h5 { font-weight: 700; margin: 0; font-size: 1.35rem; }
+        .plan-header p { margin: 0.35rem 0 0 0; opacity: 0.9; font-size: 0.9rem; }
+        .plan-body { padding: 1.5rem; background: #fff; }
+        .plan-body ul { list-style: none; padding: 0; margin: 0; }
+        .plan-body li { padding: 0.5rem 0; border-bottom: 1px solid #f1f5f9; display: flex; align-items: center; gap: 0.5rem; }
+        .plan-body li:last-child { border-bottom: none; }
+        .plan-body li i { color: #22c55e; }
+    </style>
+</head>
+<body>
+<%- include('../partials/navbar', { user, tenant: null }) %>
+
+<div class="container-fluid py-4">
+    <div class="admin-page-header">
+        <h1><i class="bi bi-layers me-2"></i> Planes</h1>
+        <p class="mb-0">Planes de suscripción disponibles. Asigna un plan al crear o editar un restaurante.</p>
+    </div>
+
+    <div class="row g-4">
+        <% plans.forEach(p => { %>
+        <div class="col-md-4">
+            <div class="plan-card <%= p.slug %>">
+                <div class="plan-header">
+                    <h5><%= p.nombre %></h5>
+                    <p><%= p.descripcion %></p>
+                </div>
+                <div class="plan-body">
+                    <ul>
+                        <% (p.caracteristicas || []).forEach(c => { %>
+                        <li><i class="bi bi-check-circle-fill"></i> <%= planLabels[c] || c %></li>
+                        <% }); %>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <% }); %>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

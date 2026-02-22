@@ -4,6 +4,7 @@ const TenantService = require('../../services/TenantService');
 const TenantUserService = require('../../services/TenantUserService');
 const TenantAuditService = require('../../services/TenantAuditService');
 const CategoryService = require('../../services/CategoryService');
+const PlanService = require('../../services/PlanService');
 const { ROLES } = require('../../utils/constants');
 const authService = require('../../services/AuthService');
 
@@ -19,11 +20,13 @@ router.use((req, res, next) => {
 router.get('/', async (req, res) => {
     try {
         const tenants = await TenantService.getAllTenants();
+        const plans = await PlanService.getAll();
         const tenantId = Number(req.query.tenantId) || (tenants[0] && tenants[0].id);
         const tenantUsers = tenantId ? await TenantUserService.getUsersByTenant(tenantId) : [];
         res.render('admin/tenants', {
             user: req.user,
             tenants,
+            plans,
             tenantUsers,
             activeTenantId: tenantId
         });
@@ -35,12 +38,12 @@ router.get('/', async (req, res) => {
 
 router.post('/', async (req, res) => {
     try {
-        const { nombre, slug, config, admin_username, admin_password, admin_email, admin_nombre_completo } = req.body;
+        const { nombre, slug, config, plan_id, admin_username, admin_password, admin_email, admin_nombre_completo } = req.body;
         if (!nombre || !slug || !admin_username || !admin_password) {
             return res.status(400).send('Faltan nombre del restaurante, slug, usuario admin o contraseña.');
         }
         const configObj = typeof config === 'string' ? JSON.parse(config || '{}') : (config || {});
-        const tenant = await TenantService.createTenant({ nombre, slug, config: configObj });
+        const tenant = await TenantService.createTenant({ nombre, slug, config: configObj, plan_id: plan_id || 1 });
         const tenantId = tenant.id;
         const tipoNegocio = configObj.tipo_negocio || 'restaurante';
         await CategoryService.seedDefaultCategories(tenantId, tipoNegocio);
@@ -66,12 +69,14 @@ router.post('/', async (req, res) => {
 
 router.put('/:id', async (req, res) => {
     try {
-        const { nombre, activo, config } = req.body;
-        await TenantService.updateTenant(req.params.id, {
+        const { nombre, activo, config, plan_id } = req.body;
+        const update = {
             nombre,
             activo: activo === 'true',
             config: JSON.parse(config || '{}')
-        });
+        };
+        if (plan_id !== undefined && plan_id !== null && plan_id !== '') update.plan_id = plan_id;
+        await TenantService.updateTenant(req.params.id, update);
         await TenantAuditService.log({
             tenantId: req.params.id,
             userId: req.user?.id || null,

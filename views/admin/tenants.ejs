@@ -38,6 +38,8 @@
         .form-control, .form-select { border-radius: 10px; border: 1px solid #e2e8f0; }
         .form-control:focus, .form-select:focus { border-color: #0d6efd; box-shadow: 0 0 0 3px rgba(13,110,253,0.15); }
         .badge-status { padding: 0.35em 0.65em; border-radius: 8px; font-weight: 500; }
+        .plan-select-card.selected { border: 2px solid #0d6efd !important; background: rgba(13,110,253,0.08); }
+        .plan-select-card:hover { background: #f8fafc; }
     </style>
 </head>
 <body>
@@ -65,6 +67,7 @@
                             <div>
                                 <strong><%= t.nombre %></strong>
                                 <br><small class="text-muted"><%= t.slug %></small>
+                                <% if (t.plan_nombre) { %><br><span class="badge bg-light text-dark border"><%= t.plan_nombre %></span><% } %>
                             </div>
                             <span class="badge badge-status bg-<%= t.activo ? 'success' : 'secondary' %>">
                                 <%= t.activo ? 'Activo' : 'Inactivo' %>
@@ -80,7 +83,7 @@
             <% if (selectedTenant) { %>
             <div class="card detail-card">
                 <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
-                    <span><i class="bi bi-shop me-2"></i><%= selectedTenant.nombre %></span>
+                    <span><i class="bi bi-shop me-2"></i><%= selectedTenant.nombre %> <% if (selectedTenant.plan_nombre) { %><span class="badge bg-primary ms-2"><%= selectedTenant.plan_nombre %></span><% } %></span>
                     <button type="button" class="btn btn-sm btn-outline-<%= selectedTenant.activo ? 'warning' : 'success' %>" onclick="toggleTenantStatus('<%= selectedTenant.id %>', <%= selectedTenant.activo ? 'false' : 'true' %>)">
                         <%= selectedTenant.activo ? 'Desactivar' : 'Activar' %>
                     </button>
@@ -108,6 +111,16 @@
                                 </select>
                                 <small class="form-text text-muted">Panadería y pastelería usan costeo con tazas/cucharadas.</small>
                             </div>
+                            <% if (typeof plans !== 'undefined' && plans && plans.length) { %>
+                            <div class="col-md-6">
+                                <label class="form-label">Plan</label>
+                                <select name="plan_id" id="editPlanId" class="form-select">
+                                    <% plans.forEach(p => { %>
+                                    <option value="<%= p.id %>" <%= selectedTenant.plan_id == p.id ? 'selected' : '' %>><%= p.nombre %></option>
+                                    <% }); %>
+                                </select>
+                            </div>
+                            <% } %>
                             <div class="col-12">
                                 <div class="section-title mt-3">Apariencia del restaurante</div>
                                 <label class="form-label">Color primario del sitio</label>
@@ -246,6 +259,27 @@
                         <small class="form-text text-muted">Panadería y pastelería usan la plantilla de costeo con tazas/cucharadas.</small>
                     </div>
                     <div class="mb-3">
+                        <label class="form-label">Plan</label>
+                        <input type="hidden" name="plan_id" id="createPlanId" value="1">
+                        <div class="row g-2" id="createPlanCards">
+                            <% if (typeof plans !== 'undefined' && plans && plans.length) { %>
+                            <% plans.forEach(p => { %>
+                            <div class="col-4">
+                                <div class="plan-select-card border rounded-3 p-2 text-center cursor-pointer" data-plan-id="<%= p.id %>" style="cursor:pointer; transition: all 0.2s;">
+                                    <strong class="d-block"><%= p.nombre %></strong>
+                                    <small class="text-muted"><%= p.descripcion %></small>
+                                </div>
+                            </div>
+                            <% }); %>
+                            <% } else { %>
+                            <div class="col-4"><div class="border rounded-3 p-2 text-center"><strong>Básico</strong></div></div>
+                            <div class="col-4"><div class="border rounded-3 p-2 text-center"><strong>Pro</strong></div></div>
+                            <div class="col-4"><div class="border rounded-3 p-2 text-center"><strong>Premium</strong></div></div>
+                            <% } %>
+                        </div>
+                        <small class="form-text text-muted">Selecciona el plan para este restaurante.</small>
+                    </div>
+                    <div class="mb-3">
                         <label class="form-label">Color primario del sitio</label>
                         <p class="text-muted small mb-2">Color para botones y enlaces de este restaurante.</p>
                         <div class="d-flex flex-wrap align-items-center gap-3">
@@ -311,6 +345,7 @@ async function updateTenant(event, id) {
     const form = event.target;
     const primaryColor = document.getElementById('editConfigColor');
     const tipoNegocio = document.getElementById('editTipoNegocio');
+    const planSelect = document.getElementById('editPlanId');
     var cfg = { colors: { primary: (primaryColor && primaryColor.value) || '#0d6efd' } };
     if (tipoNegocio) cfg.tipo_negocio = tipoNegocio.value || 'restaurante';
     const data = {
@@ -318,6 +353,7 @@ async function updateTenant(event, id) {
         config: JSON.stringify(cfg),
         activo: '<%= selectedTenant ? selectedTenant.activo : true %>'
     };
+    if (planSelect && planSelect.value) data.plan_id = planSelect.value;
     const resp = await fetch('/admin/tenants/' + id, {
         method: 'PUT',
         credentials: 'same-origin',
@@ -413,6 +449,20 @@ if (createTipoNegocio) createTipoNegocio.addEventListener('change', syncCreateCo
 document.getElementById('formCreateTenant') && document.getElementById('formCreateTenant').addEventListener('submit', function() {
     syncCreateConfig();
 });
+
+// Selección de plan en modal crear
+document.querySelectorAll('.plan-select-card').forEach(function(el) {
+    el.addEventListener('click', function() {
+        var planId = this.getAttribute('data-plan-id');
+        var input = document.getElementById('createPlanId');
+        if (input) input.value = planId;
+        document.querySelectorAll('.plan-select-card').forEach(function(c) { c.classList.remove('selected'); });
+        this.classList.add('selected');
+    });
+});
+// Marcar plan por defecto (Básico)
+var defaultPlanCard = document.querySelector('.plan-select-card[data-plan-id="1"]');
+if (defaultPlanCard) defaultPlanCard.classList.add('selected');
 
 document.getElementById('btnSeedCategorias') && document.getElementById('btnSeedCategorias').addEventListener('click', async function() {
     var tenantId = this.getAttribute('data-tenant-id');

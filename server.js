@@ -38,6 +38,18 @@ app.use(cookieParser());
 app.use(express.json({limit: '50mb'}));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
+// Opcional: adjuntar user si hay token (para res.locals.plans en navbar)
+app.use(optionalAuth);
+// Planes para navbar (dropdown de plan del tenant)
+app.use(async (req, res, next) => {
+    try {
+        res.locals.plans = req.user ? await PlanService.getAll() : [];
+    } catch (_) {
+        res.locals.plans = [];
+    }
+    next();
+});
+
 // Configuración de archivos estáticos
 app.use('/static', express.static(path.join(__dirname, 'public')));
 app.use(express.static(path.join(__dirname, 'public')));
@@ -76,6 +88,8 @@ const dashboardRoutes = require('./routes/dashboard');
 const costeoRoutes = require('./routes/costeo');
 const adminTenantsRoutes = require('./routes/admin/tenants');
 const adminSistemaRoutes = require('./routes/admin/sistema');
+const adminPlanesRoutes = require('./routes/admin/planes');
+const PlanService = require('./services/PlanService');
 
 // Ruta principal - redirige según autenticación y rol
 app.get('/', optionalAuth, (req, res) => {
@@ -118,6 +132,7 @@ app.use('/costeo', requireAuth, restrictSuperadminToAdmin, costeoTenantContext, 
 // Superadmin: solo requireAuth (no tenant); el panel solo permite rol superadmin
 app.use('/admin/tenants', requireAuth, adminTenantsRoutes);
 app.use('/admin/sistema', requireAuth, adminSistemaRoutes);
+app.use('/admin/planes', requireAuth, adminPlanesRoutes);
 
 
 // Manejo de errores 404

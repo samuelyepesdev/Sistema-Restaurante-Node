@@ -2,6 +2,7 @@
 // Navbar partial with user info and logout
 const isSuperadmin = user && String(user.rol || '').toLowerCase() === 'superadmin';
 const brandHref = isSuperadmin ? '/admin/tenants' : '/';
+const planLabels = { productos: 'Productos', clientes: 'Clientes', mesas: 'Mesas', ventas: 'Ventas', dashboard: 'Dashboard', configuracion: 'Configuración', plantillas: 'Plantillas', importar_exportar: 'Import/Export', costeo: 'Costeo', analitica: 'Analítica', prediccion_ml: 'Predicción ML' };
 %>
 <nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4">
     <div class="container-fluid">
@@ -24,6 +25,11 @@ const brandHref = isSuperadmin ? '/admin/tenants' : '/';
                 <li class="nav-item">
                     <a class="nav-link" href="/admin/sistema">
                         <i class="bi bi-gear-wide-connected"></i> Sistema
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/admin/planes">
+                        <i class="bi bi-layers"></i> Planes
                     </a>
                 </li>
                 <% } else { %>
@@ -94,6 +100,33 @@ const brandHref = isSuperadmin ? '/admin/tenants' : '/';
             
             <ul class="navbar-nav">
                 <% if (user) { %>
+                <% if (!isSuperadmin && typeof tenant !== 'undefined' && tenant && (tenant.plan || tenant.plan_nombre) && typeof plans !== 'undefined' && plans && plans.length) { %>
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" id="planDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="bi bi-layers me-1"></i>
+                        <span class="badge bg-primary"><%= tenant.plan ? tenant.plan.nombre : (tenant.plan_nombre || 'Plan') %></span>
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end p-3" style="min-width: 320px;">
+                        <li class="dropdown-header mb-2">Tu plan actual: <strong><%= tenant.plan ? tenant.plan.nombre : (tenant.plan_nombre || '') %></strong></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <% plans.forEach(p => { %>
+                        <li class="mb-2">
+                            <div class="card border-0 shadow-sm <%= (tenant.plan && tenant.plan.id === p.id) || (tenant.plan_id == p.id) ? 'border-primary border-2' : '' %>">
+                                <div class="card-body py-2 px-3">
+                                    <strong><%= p.nombre %></strong>
+                                    <% if ((tenant.plan && tenant.plan.id === p.id) || (tenant.plan_id == p.id)) { %><span class="badge bg-success ms-1">Actual</span><% } %>
+                                    <ul class="list-unstyled small mb-0 mt-1 text-muted">
+                                        <% (p.caracteristicas || []).slice(0, 5).forEach(c => { %>
+                                        <li><i class="bi bi-check text-success"></i> <%= typeof planLabels !== 'undefined' && planLabels[c] ? planLabels[c] : c %></li>
+                                        <% }); %>
+                                    </ul>
+                                </div>
+                            </div>
+                        </li>
+                        <% }); %>
+                    </ul>
+                </li>
+                <% } %>
                 <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown">
                         <i class="bi bi-person-circle"></i> 
