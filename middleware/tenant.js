@@ -5,6 +5,7 @@
  */
 
 const TenantRepository = require('../repositories/TenantRepository');
+const { getAllowedByPlan } = require('../utils/planPermissions');
 
 /**
  * Resolve tenant for the current user and attach to request.
@@ -54,6 +55,7 @@ async function attachTenantContext(req, res, next) {
 
         req.tenant = tenant;
         res.locals.tenant = tenant;
+        res.locals.allowedByPlan = getAllowedByPlan(tenant.plan || null);
         next();
     } catch (error) {
         console.error('Error en attachTenantContext:', error);
@@ -78,14 +80,18 @@ async function costeoTenantContext(req, res, next) {
                 if (tenant) {
                     req.tenant = tenant;
                     res.locals.tenant = tenant;
+                    res.locals.allowedByPlan = getAllowedByPlan(tenant.plan || null);
                 } else {
                     req.tenant = null;
+                    res.locals.allowedByPlan = getAllowedByPlan(null);
                 }
             } catch (e) {
                 req.tenant = null;
+                res.locals.allowedByPlan = getAllowedByPlan(null);
             }
         } else {
             req.tenant = null;
+            res.locals.allowedByPlan = getAllowedByPlan(null);
         }
         return next();
     }

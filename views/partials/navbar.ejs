@@ -1,8 +1,10 @@
 <% 
-// Navbar partial with user info and logout
+// Navbar partial: permisos + plan. Solo se muestra enlace si el usuario tiene permiso Y el plan del tenant incluye el módulo.
 const isSuperadmin = user && String(user.rol || '').toLowerCase() === 'superadmin';
 const brandHref = isSuperadmin ? '/admin/tenants' : '/';
 const planLabels = { productos: 'Productos', clientes: 'Clientes', mesas: 'Mesas', ventas: 'Ventas', dashboard: 'Dashboard', configuracion: 'Configuración', plantillas: 'Plantillas', importar_exportar: 'Import/Export', costeo: 'Costeo', analitica: 'Analítica', prediccion_ml: 'Predicción ML' };
+const ap = typeof allowedByPlan !== 'undefined' && allowedByPlan ? allowedByPlan : {};
+function canShow(mod) { if (!mod) return true; if (typeof allowedByPlan === 'undefined') return true; return ap[mod] === true; }
 %>
 <nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4">
     <div class="container-fluid">
@@ -33,7 +35,7 @@ const planLabels = { productos: 'Productos', clientes: 'Clientes', mesas: 'Mesas
                     </a>
                 </li>
                 <% } else { %>
-                <% if (user && user.rol === 'admin') { %>
+                <% if (user && user.rol === 'admin' && canShow('dashboard')) { %>
                 <li class="nav-item">
                     <a class="nav-link" href="/dashboard">
                         <i class="bi bi-speedometer2"></i> Dashboard
@@ -46,49 +48,49 @@ const planLabels = { productos: 'Productos', clientes: 'Clientes', mesas: 'Mesas
                     </a>
                 </li>
                 <% } %>
-                <% if (user && user.permisos && user.permisos.includes('productos.ver')) { %>
+                <% if (user && user.permisos && user.permisos.includes('productos.ver') && canShow('productos')) { %>
                 <li class="nav-item">
                     <a class="nav-link" href="/productos">
                         <i class="bi bi-box-seam"></i> Productos
                     </a>
                 </li>
                 <% } %>
-                <% if (user && user.permisos && user.permisos.includes('clientes.ver')) { %>
+                <% if (user && user.permisos && user.permisos.includes('clientes.ver') && canShow('clientes')) { %>
                 <li class="nav-item">
                     <a class="nav-link" href="/clientes">
                         <i class="bi bi-people"></i> Clientes
                     </a>
                 </li>
                 <% } %>
-                <% if (user && user.permisos && user.permisos.includes('mesas.ver')) { %>
+                <% if (user && user.permisos && user.permisos.includes('mesas.ver') && canShow('mesas')) { %>
                 <li class="nav-item">
                     <a class="nav-link" href="/mesas">
                         <i class="bi bi-table"></i> Mesas
                     </a>
                 </li>
                 <% } %>
-                <% if (user && user.permisos && user.permisos.includes('cocina.ver')) { %>
+                <% if (user && user.permisos && user.permisos.includes('cocina.ver') && canShow('mesas')) { %>
                 <li class="nav-item">
                     <a class="nav-link" href="/cocina">
                         <i class="bi bi-fire"></i> Cocina
                     </a>
                 </li>
                 <% } %>
-                <% if (user && user.permisos && user.permisos.includes('ventas.ver')) { %>
+                <% if (user && user.permisos && user.permisos.includes('ventas.ver') && canShow('ventas')) { %>
                 <li class="nav-item">
                     <a class="nav-link" href="/ventas">
                         <i class="bi bi-graph-up"></i> Ventas
                     </a>
                 </li>
                 <% } %>
-                <% if (user && user.permisos && user.permisos.includes('configuracion.ver')) { %>
+                <% if (user && user.permisos && user.permisos.includes('configuracion.ver') && canShow('configuracion')) { %>
                 <li class="nav-item">
                     <a class="nav-link" href="/configuracion">
                         <i class="bi bi-gear"></i> Configuración
                     </a>
                 </li>
                 <% } %>
-                <% if (user && user.permisos && user.permisos.includes('costeo.ver')) { %>
+                <% if (user && user.permisos && user.permisos.includes('costeo.ver') && canShow('costeo')) { %>
                 <li class="nav-item">
                     <a class="nav-link" href="/costeo">
                         <i class="bi bi-calculator"></i> Costeo

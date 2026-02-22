@@ -41,6 +41,7 @@ app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 // Middleware de autenticación y tenant (requeridos antes de optionalAuth y planes)
 const { requireAuth, optionalAuth, restrictSuperadminToAdmin } = require('./middleware/auth');
 const { attachTenantContext, costeoTenantContext } = require('./middleware/tenant');
+const { requirePlanFeature } = require('./middleware/planFeature');
 const PlanService = require('./services/PlanService');
 
 // Opcional: adjuntar user si hay token (para res.locals.plans en navbar)
@@ -113,22 +114,22 @@ app.get('/', optionalAuth, (req, res) => {
     }
 });
 
-// Proteger todas las rutas con autenticación + contexto tenant
-app.use('/productos', requireAuthWithTenant, productosRoutes);
-app.use('/api/productos', requireAuthWithTenant, productosRoutes);
-app.use('/clientes', requireAuthWithTenant, clientesRoutes);
-app.use('/api/clientes', requireAuthWithTenant, clientesRoutes);
-app.use('/facturas', requireAuthWithTenant, facturasRoutes);
-app.use('/api/facturas', requireAuthWithTenant, facturasRoutes);
-app.use('/mesas', requireAuthWithTenant, mesasRoutes);
-app.use('/api/mesas', requireAuthWithTenant, mesasRoutes);
-app.use('/cocina', requireAuthWithTenant, cocinaRoutes);
-app.use('/api/cocina', requireAuthWithTenant, cocinaRoutes);
-app.use('/configuracion', requireAuthWithTenant, configuracionRoutes);
-app.use('/ventas', requireAuthWithTenant, ventasRoutes);
-app.use('/dashboard', requireAuthWithTenant, dashboardRoutes);
-app.use('/api/dashboard', requireAuthWithTenant, dashboardRoutes);
-app.use('/costeo', requireAuth, restrictSuperadminToAdmin, costeoTenantContext, costeoRoutes);
+// Proteger rutas: auth + tenant + plan que incluya el módulo
+app.use('/productos', requireAuthWithTenant, requirePlanFeature('productos'), productosRoutes);
+app.use('/api/productos', requireAuthWithTenant, requirePlanFeature('productos'), productosRoutes);
+app.use('/clientes', requireAuthWithTenant, requirePlanFeature('clientes'), clientesRoutes);
+app.use('/api/clientes', requireAuthWithTenant, requirePlanFeature('clientes'), clientesRoutes);
+app.use('/facturas', requireAuthWithTenant, requirePlanFeature('ventas'), facturasRoutes);
+app.use('/api/facturas', requireAuthWithTenant, requirePlanFeature('ventas'), facturasRoutes);
+app.use('/mesas', requireAuthWithTenant, requirePlanFeature('mesas'), mesasRoutes);
+app.use('/api/mesas', requireAuthWithTenant, requirePlanFeature('mesas'), mesasRoutes);
+app.use('/cocina', requireAuthWithTenant, requirePlanFeature('mesas'), cocinaRoutes);
+app.use('/api/cocina', requireAuthWithTenant, requirePlanFeature('mesas'), cocinaRoutes);
+app.use('/configuracion', requireAuthWithTenant, requirePlanFeature('configuracion'), configuracionRoutes);
+app.use('/ventas', requireAuthWithTenant, requirePlanFeature('ventas'), ventasRoutes);
+app.use('/dashboard', requireAuthWithTenant, requirePlanFeature('dashboard'), dashboardRoutes);
+app.use('/api/dashboard', requireAuthWithTenant, requirePlanFeature('dashboard'), dashboardRoutes);
+app.use('/costeo', requireAuth, restrictSuperadminToAdmin, costeoTenantContext, requirePlanFeature('costeo'), costeoRoutes);
 // Superadmin: solo requireAuth (no tenant); el panel solo permite rol superadmin
 app.use('/admin/tenants', requireAuth, adminTenantsRoutes);
 app.use('/admin/sistema', requireAuth, adminSistemaRoutes);
