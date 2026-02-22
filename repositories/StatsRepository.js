@@ -245,6 +245,34 @@ class StatsRepository {
             total_ventas: parseFloat(row.total_ventas || 0)
         }));
     }
+
+    /**
+     * Get sales aggregated by month for the last N months (for analytics and prediction)
+     * @param {number} tenantId - Tenant ID
+     * @param {number} months - Number of months (default: 3)
+     * @returns {Promise<Array>} Array of { year, month, total_ventas, cantidad_facturas }
+     */
+    static async getMonthlySales(tenantId, months = 3) {
+        const query = `
+            SELECT 
+                YEAR(fecha) AS year,
+                MONTH(fecha) AS month,
+                COUNT(*) AS cantidad_facturas,
+                COALESCE(SUM(total), 0) AS total_ventas
+            FROM facturas
+            WHERE tenant_id = ?
+              AND fecha >= DATE_FORMAT(DATE_SUB(CURDATE(), INTERVAL ? MONTH), '%Y-%m-01')
+            GROUP BY YEAR(fecha), MONTH(fecha)
+            ORDER BY year ASC, month ASC
+        `;
+        const [result] = await db.query(query, [tenantId, months]);
+        return result.map(row => ({
+            year: row.year,
+            month: row.month,
+            cantidad_facturas: parseInt(row.cantidad_facturas || 0),
+            total_ventas: parseFloat(row.total_ventas || 0)
+        }));
+    }
 }
 
 module.exports = StatsRepository;

@@ -97,6 +97,13 @@ function canShow(mod) { if (!mod) return true; if (typeof allowedByPlan === 'und
                     </a>
                 </li>
                 <% } %>
+                <% if (user && user.rol === 'admin' && canShow('analitica')) { %>
+                <li class="nav-item">
+                    <a class="nav-link" href="/analitica">
+                        <i class="bi bi-graph-up-arrow"></i> Analítica
+                    </a>
+                </li>
+                <% } %>
                 <% } %>
             </ul>
             

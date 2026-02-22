@@ -88,6 +88,7 @@ const configuracionRoutes = require('./routes/configuracion');
 const ventasRoutes = require('./routes/ventas');
 const dashboardRoutes = require('./routes/dashboard');
 const costeoRoutes = require('./routes/costeo');
+const analiticaRoutes = require('./routes/analitica');
 const adminTenantsRoutes = require('./routes/admin/tenants');
 const adminSistemaRoutes = require('./routes/admin/sistema');
 const adminPlanesRoutes = require('./routes/admin/planes');
@@ -130,6 +131,7 @@ app.use('/ventas', requireAuthWithTenant, requirePlanFeature('ventas'), ventasRo
 app.use('/dashboard', requireAuthWithTenant, requirePlanFeature('dashboard'), dashboardRoutes);
 app.use('/api/dashboard', requireAuthWithTenant, requirePlanFeature('dashboard'), dashboardRoutes);
 app.use('/costeo', requireAuth, restrictSuperadminToAdmin, costeoTenantContext, requirePlanFeature('costeo'), costeoRoutes);
+app.use('/analitica', requireAuthWithTenant, requirePlanFeature('analitica'), analiticaRoutes);
 // Superadmin: solo requireAuth (no tenant); el panel solo permite rol superadmin
 app.use('/admin/tenants', requireAuth, adminTenantsRoutes);
 app.use('/admin/sistema', requireAuth, adminSistemaRoutes);

@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analítica y Predicción - Sistema Restaurante</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <style>
+        body { background: linear-gradient(180deg, #f0f4f8 0%, #e2e8f0 100%); min-height: 100vh; }
+        .analitica-header { background: linear-gradient(135deg, #4f46e5 0%, #6366f1 100%); color: #fff; border-radius: 16px; padding: 1.5rem 2rem; margin-bottom: 1.5rem; box-shadow: 0 4px 20px rgba(79,70,229,0.3); }
+        .card-analitica { border: none; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.06); margin-bottom: 1.5rem; }
+        .card-analitica .card-header { background: #fff; border-bottom: 2px solid #e2e8f0; font-weight: 600; padding: 1rem 1.25rem; border-radius: 16px 16px 0 0; }
+        .nav-tabs .nav-link { border: none; color: #64748b; font-weight: 500; padding: 0.75rem 1.25rem; }
+        .nav-tabs .nav-link.active { color: #4f46e5; border-bottom: 3px solid #4f46e5; background: transparent; }
+        .kpi-box { background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%); border-radius: 12px; padding: 1.25rem; text-align: center; }
+        .kpi-box .valor { font-size: 1.75rem; font-weight: 700; color: #1e293b; }
+        .kpi-box .label { font-size: 0.85rem; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 0.25rem; }
+        .prediccion-destacado { background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%); border: 1px solid #a7f3d0; border-radius: 12px; padding: 1.5rem; }
+        .prediccion-destacado .valor { color: #047857; font-size: 2rem; font-weight: 700; }
+        .rango-variacion { background: #fef3c7; border-radius: 8px; padding: 0.75rem 1rem; font-size: 0.9rem; }
+        .table-meses thead th { background: #f8fafc; font-weight: 600; color: #475569; }
+    </style>
+</head>
+<body>
+<%- include('partials/navbar', { user: typeof user !== 'undefined' ? user : null, tenant: typeof tenant !== 'undefined' ? tenant : null, allowedByPlan: typeof allowedByPlan !== 'undefined' ? allowedByPlan : {} }) %>
+
+<div class="container-fluid py-4">
+    <div class="analitica-header">
+        <h1 class="mb-1"><i class="bi bi-graph-up-arrow me-2"></i>Analítica y Predicción</h1>
+        <p class="mb-0 opacity-90">Resumen de ventas y estimaciones basadas en los últimos 3 meses (plan Premium).</p>
+    </div>
+
+    <ul class="nav nav-tabs mb-3" id="analiticaTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="tab-analisis" data-bs-toggle="tab" data-bs-target="#panel-analisis" type="button">Análisis</button>
+        </li>
+        <% if (typeof allowedByPlan !== 'undefined' && allowedByPlan.prediccion_ml) { %>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="tab-prediccion" data-bs-toggle="tab" data-bs-target="#panel-prediccion" type="button">Predicción</button>
+        </li>
+        <% } %>
+    </ul>
+
+    <div class="tab-content" id="analiticaTabContent">
+        <!-- Pestaña Análisis -->
+        <div class="tab-pane fade show active" id="panel-analisis" role="tabpanel">
+            <div class="card card-analitica">
+                <div class="card-header"><i class="bi bi-bar-chart me-2"></i>Últimos 3 meses</div>
+                <div class="card-body">
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-4">
+                            <div class="kpi-box">
+                                <div class="valor" id="kpi-total"><%= (typeof resumen !== 'undefined' && resumen && typeof resumen.totalGeneral === 'number') ? resumen.totalGeneral.toLocaleString('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }) : '$0' %></div>
+                                <div class="label">Total ventas (3 meses)</div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="kpi-box">
+                                <div class="valor" id="kpi-facturas"><%= (typeof resumen !== 'undefined' && resumen && typeof resumen.cantidadFacturas === 'number') ? resumen.cantidadFacturas : 0 %></div>
+                                <div class="label">Facturas emitidas</div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="kpi-box">
+                                <div class="valor" id="kpi-promedio"><%= (typeof resumen !== 'undefined' && resumen && resumen.meses && resumen.meses.length) ? (resumen.totalGeneral / resumen.meses.length).toLocaleString('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }) : '$0' %></div>
+                                <div class="label">Promedio por mes</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-meses table-hover">
+                            <thead><tr><th>Mes</th><th>Total ventas</th><th>Facturas</th></tr></thead>
+                            <tbody>
+                                <% if (typeof resumen !== 'undefined' && resumen && resumen.meses && resumen.meses.length) { %>
+                                <% resumen.meses.forEach(m => { %>
+                                <tr>
+                                    <td><%= m.nombreMes %> <%= m.year %></td>
+                                    <td><%= (m.total_ventas || 0).toLocaleString('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }) %></td>
+                                    <td><%= m.cantidad_facturas || 0 %></td>
+                                </tr>
+                                <% }); %>
+                                <% } else { %>
+                                <tr><td colspan="3" class="text-muted">No hay datos de ventas en los últimos 3 meses.</td></tr>
+                                <% } %>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pestaña Predicción (solo Premium) -->
+        <% if (typeof allowedByPlan !== 'undefined' && allowedByPlan.prediccion_ml) { %>
+        <div class="tab-pane fade" id="panel-prediccion" role="tabpanel">
+            <div class="card card-analitica">
+                <div class="card-header"><i class="bi bi-cpu me-2"></i>Predicción próximo mes</div>
+                <div class="card-body">
+                    <% if (typeof prediccion !== 'undefined' && prediccion && prediccion.mensaje && prediccion.mesesUsados && prediccion.mesesUsados.length === 0) { %>
+                    <p class="text-muted"><%= prediccion.mensaje %></p>
+                    <% } else { %>
+                    <p class="small text-muted mb-4"><%= typeof prediccion !== 'undefined' && prediccion && prediccion.mensaje ? prediccion.mensaje : '' %></p>
+                    <div class="row g-4">
+                        <div class="col-md-4">
+                            <div class="prediccion-destacado">
+                                <div class="label">Ventas estimadas (próximo mes)</div>
+                                <div class="valor" id="pred-ventas"><%= (typeof prediccion !== 'undefined' && prediccion && typeof prediccion.ventasProximoMes === 'number') ? prediccion.ventasProximoMes.toLocaleString('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }) : '$0' %></div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="kpi-box">
+                                <div class="valor text-success" id="pred-ganancias"><%= (typeof prediccion !== 'undefined' && prediccion && prediccion.gananciasEsperadas != null) ? prediccion.gananciasEsperadas.toLocaleString('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }) : 'N/A' %></div>
+                                <div class="label">Ganancias esperadas (aprox.)</div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="rango-variacion">
+                                <strong>Rango de variación</strong><br>
+                                <span id="pred-rango"><%= (typeof prediccion !== 'undefined' && prediccion) ? (prediccion.rangoMin || 0).toLocaleString('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }) : '$0' %> – <%= (typeof prediccion !== 'undefined' && prediccion) ? (prediccion.rangoMax || 0).toLocaleString('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }) : '$0' %></span><br>
+                                <small class="text-muted">Posible variación: ±<%= (typeof prediccion !== 'undefined' && prediccion && prediccion.posiblesPerdidasVariacion != null) ? prediccion.posiblesPerdidasVariacion.toLocaleString('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }) : '0' %></small>
+                            </div>
+                        </div>
+                    </div>
+                    <% } %>
+                </div>
+            </div>
+        </div>
+        <% } %>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
