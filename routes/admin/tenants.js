@@ -70,9 +70,10 @@ router.post('/', async (req, res) => {
 router.put('/:id', async (req, res) => {
     try {
         const { nombre, activo, config, plan_id } = req.body;
+        const activoBool = activo === 'true' || activo === true || activo === 1 || activo === '1';
         const update = {
             nombre,
-            activo: activo === 'true',
+            activo: activoBool,
             config: JSON.parse(config || '{}')
         };
         if (plan_id !== undefined && plan_id !== null && plan_id !== '') update.plan_id = plan_id;

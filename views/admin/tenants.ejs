@@ -351,7 +351,7 @@ async function updateTenant(event, id) {
     const data = {
         nombre: form.nombre.value,
         config: JSON.stringify(cfg),
-        activo: '<%= selectedTenant ? selectedTenant.activo : true %>'
+        activo: <%= selectedTenant && selectedTenant.activo ? 'true' : 'false' %>
     };
     if (planSelect && planSelect.value) data.plan_id = planSelect.value;
     const resp = await fetch('/admin/tenants/' + id, {
