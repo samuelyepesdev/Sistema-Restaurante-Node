@@ -108,5 +108,67 @@ router.get('/me', requireAuth, async (req, res) => {
     }
 });
 
+/**
+ * GET /auth/cambiar-password
+ * Form to change current user password (superadmin or any logged-in user)
+ */
+router.get('/cambiar-password', requireAuth, (req, res) => {
+    res.render('auth/cambiar-password', {
+        title: 'Cambiar contraseña',
+        user: req.user,
+        success: req.query.ok === '1'
+    });
+});
+
+/**
+ * POST /auth/cambiar-password
+ * Change password (current user only)
+ */
+router.post('/cambiar-password', requireAuth, [
+    body('currentPassword').notEmpty().withMessage('La contraseña actual es requerida'),
+    body('newPassword').isLength({ min: 6 }).withMessage('La nueva contraseña debe tener al menos 6 caracteres'),
+    body('newPasswordConfirm').custom((value, { req }) => {
+        if (value !== req.body.newPassword) {
+            throw new Error('La confirmación no coincide con la nueva contraseña');
+        }
+        return true;
+    })
+], async (req, res) => {
+    try {
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            const msg = errors.array().map(e => e.msg).join('. ');
+            if (req.xhr || req.headers.accept?.indexOf('json') > -1) {
+                return res.status(400).json({ error: msg });
+            }
+            return res.render('auth/cambiar-password', {
+                title: 'Cambiar contraseña',
+                user: req.user,
+                error: msg
+            });
+        }
+        const userId = req.user.id;
+        const { currentPassword, newPassword } = req.body;
+        const result = await authService.changePassword(userId, currentPassword, newPassword);
+        if (!result.success) {
+            if (req.xhr || req.headers.accept?.indexOf('json') > -1) {
+                return res.status(400).json({ error: result.message });
+            }
+            return res.render('auth/cambiar-password', {
+                title: 'Cambiar contraseña',
+                user: req.user,
+                error: result.message
+            });
+        }
+        if (req.xhr || req.headers.accept?.indexOf('json') > -1) {
+            return res.json({ success: true, message: 'Contraseña actualizada.' });
+        }
+        return res.redirect('/auth/cambiar-password?ok=1');
+    } catch (error) {
+        console.error('Error en cambiar-password:', error);
+        res.status(500).json({ error: 'Error al procesar la solicitud' });
+    }
+});
+
 module.exports = router;
 

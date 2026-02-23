@@ -70,9 +70,6 @@ async function createAdminUsers() {
             tenantId: null
         });
         console.log('Usuarios administrativos listos:');
-        console.log(`  Superadmin: ${SUPERADMIN_USERNAME} / ${SUPERADMIN_PASSWORD}`);
-        console.log(`  Admin local: ${ADMIN_USERNAME} / ${ADMIN_PASSWORD}`);
-        console.log('⚠️ Cambia ambas claves al primer login.');
         process.exit(0);
     } catch (error) {
         console.error('Error creando usuarios:', error.message);

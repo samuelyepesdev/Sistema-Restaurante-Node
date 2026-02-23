@@ -178,6 +178,42 @@ function hasRole(userRole, requiredRoles) {
     return requiredRoles.some(r => String(r).toLowerCase() === roleLower);
 }
 
+/**
+ * Change password for the current user (verify current, set new).
+ * @param {number} userId - User ID (must be the logged-in user)
+ * @param {string} currentPassword - Current plain password
+ * @param {string} newPassword - New plain password
+ * @returns {Promise<{ success: boolean, message?: string }>}
+ */
+async function changePassword(userId, currentPassword, newPassword) {
+    if (!userId || !currentPassword || !newPassword) {
+        return { success: false, message: 'Contraseña actual y nueva son requeridas.' };
+    }
+    if (newPassword.length < 6) {
+        return { success: false, message: 'La nueva contraseña debe tener al menos 6 caracteres.' };
+    }
+    try {
+        const [users] = await db.query(
+            'SELECT id, password_hash FROM usuarios WHERE id = ? AND activo = TRUE',
+            [userId]
+        );
+        if (users.length === 0) {
+            return { success: false, message: 'Usuario no encontrado.' };
+        }
+        const user = users[0];
+        const valid = await bcrypt.compare(currentPassword, user.password_hash);
+        if (!valid) {
+            return { success: false, message: 'Contraseña actual incorrecta.' };
+        }
+        const newHash = await hashPassword(newPassword);
+        await db.query('UPDATE usuarios SET password_hash = ? WHERE id = ?', [newHash, userId]);
+        return { success: true };
+    } catch (error) {
+        console.error('Error in changePassword:', error);
+        return { success: false, message: 'Error al cambiar la contraseña.' };
+    }
+}
+
 module.exports = {
     authenticateUser,
     generateToken,
@@ -185,6 +221,7 @@ module.exports = {
     getUserById,
     hashPassword,
     hasPermission,
-    hasRole
+    hasRole,
+    changePassword
 };
 
