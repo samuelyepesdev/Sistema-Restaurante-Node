@@ -126,25 +126,35 @@ $(function() {
     }, 250);
   });
 
-  // Selección rápida: cantidad 1 por defecto + nota para cocina (oculta offcanvas durante todo el flujo)
+  // Selección rápida: cantidad 1 por defecto. Nota para cocina solo si el producto es de categoría "Comidas"
+  const CATEGORIA_COMIDAS = 'comidas';
+  function esCategoriaComidas(p) {
+    const nombre = (p.categoria_nombre || '').trim().toLowerCase();
+    return nombre === CATEGORIA_COMIDAS;
+  }
+
   async function seleccionarProducto(p){
     await runWithOffcanvasHidden(async () => {
-      const notaRes = await Swal.fire({
-        title: 'Nota para cocina (opcional)',
-        input: 'text', inputPlaceholder: 'Ej: sin cebolla, sin queso...', showCancelButton: true,
-        didOpen: () => {
-          const inp = document.querySelector('.swal2-input');
-          if (inp) {
-            ['keydown','keyup','keypress','paste','copy','cut','contextmenu'].forEach(evt => {
-              inp.addEventListener(evt, e => e.stopPropagation());
-            });
+      let nota = '';
+      if (esCategoriaComidas(p)) {
+        const notaRes = await Swal.fire({
+          title: 'Nota para cocina (opcional)',
+          input: 'text', inputPlaceholder: 'Ej: sin cebolla, sin queso...', showCancelButton: true,
+          didOpen: () => {
+            const inp = document.querySelector('.swal2-input');
+            if (inp) {
+              ['keydown','keyup','keypress','paste','copy','cut','contextmenu'].forEach(evt => {
+                inp.addEventListener(evt, e => e.stopPropagation());
+              });
+            }
           }
-        }
-      });
-      if (!notaRes.isConfirmed) return;
+        });
+        if (!notaRes.isConfirmed) return;
+        nota = (notaRes.value || '').trim();
+      }
       const unidad = 'UND';
       const precio = p.precio_unidad;
-      const body = { producto_id: p.id, cantidad: 1, unidad, precio: Number(precio), nota: (notaRes.value || '').trim() };
+      const body = { producto_id: p.id, cantidad: 1, unidad, precio: Number(precio), nota };
       const resp = await fetch(`/api/mesas/pedidos/${pedidoActual.id}/items`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) });
       const data = await resp.json();
       if(!resp.ok) return Swal.fire({icon:'error', title: data.error||'Error al agregar'});

@@ -46,9 +46,11 @@ class ProductRepository {
     static async search(query, tenantId, limit = 10) {
         const searchTerm = `%${query}%`;
         const [productos] = await db.query(`
-            SELECT * FROM productos 
-            WHERE tenant_id = ? AND (nombre LIKE ? OR codigo LIKE ?)
-            ORDER BY nombre
+            SELECT p.*, c.nombre AS categoria_nombre
+            FROM productos p
+            LEFT JOIN categorias c ON p.categoria_id = c.id
+            WHERE p.tenant_id = ? AND (p.nombre LIKE ? OR p.codigo LIKE ?)
+            ORDER BY p.nombre
             LIMIT ?
         `, [tenantId, searchTerm, searchTerm, limit]);
         return productos;
