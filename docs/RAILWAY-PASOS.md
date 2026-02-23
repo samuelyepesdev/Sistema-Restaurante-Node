@@ -114,49 +114,48 @@ Ya puedes abrir esa URL en el navegador (después de ejecutar migraciones y tene
 
 ---
 
-## 7. Ejecutar migraciones (solo la primera vez)
+## 7. Migraciones (automáticas en cada deploy)
 
-La base en Railway está vacía; hay que crear tablas con tus migraciones.
+El comando **`npm start`** del proyecto hace, en este orden:
 
-### Desde tu PC (recomendado)
-
-1. En el servicio **MySQL** de Railway, entra en **"Connect"** o **"Variables"**.
-2. Si usas **MYSQL_URL**: Railway suele mostrar una URL pública (TCP Proxy). Cópiala.
-3. En tu máquina, en la carpeta del proyecto, crea un `.env.railway` (o usa el terminal sin guardar el secreto):
-
-```bash
-# Pega la MYSQL_URL que Railway te da (con usuario y contraseña)
-MYSQL_URL="mysql://usuario:contraseña@containers-us-west-xxx.railway.app:puerto/railway"
+```text
+node scripts/run-migrations.js && node scripts/create-admin.js && node server.js
 ```
 
-4. Ejecuta las migraciones:
+Así, **en cada deploy** (y en cada reinicio) Railway:
+
+1. Ejecuta las migraciones pendientes (las ya aplicadas se omiten).
+2. Asegura que existan los usuarios admin y superadmin (los crea o actualiza con las variables de entorno).
+3. Arranca el servidor.
+
+No tienes que ejecutar migraciones ni create-admin a mano. La primera vez se crearán tablas y usuarios; en los siguientes deploys solo se aplicarán migraciones nuevas y se actualizarán los usuarios admin si cambias las variables.
+
+### Si quisieras ejecutar migraciones solo desde tu PC
+
+(Por ejemplo para usar la misma base de Railway desde local.)
+
+1. En el servicio **MySQL** de Railway → **Connect** / **Variables** → copia la **MYSQL_URL** (o usa TCP Proxy).
+2. En tu PC, con esa URL en el entorno:
 
 ```bash
 # Windows (PowerShell)
 $env:MYSQL_URL="mysql://..."; node scripts/run-migrations.js
-
-# O con dotenv (si tienes el .env.railway)
-# Renombra temporalmente a .env o copia MYSQL_URL a tu .env
-node scripts/run-migrations.js
 ```
 
-Si en Railway solo tienes referencias (`${{MySQL.MYSQL_URL}}`) y no ves la URL real, usa **Railway CLI**:
+O con **Railway CLI**: `railway link` (al proyecto y servicio Node) y luego `railway run node scripts/run-migrations.js`.
 
-1. Instala: `npm i -g @railway/cli`.
-2. `railway login` y luego `railway link` (elige el proyecto y el servicio MySQL).
-3. `railway run node scripts/run-migrations.js` (ejecuta en el entorno de Railway, con las variables inyectadas).
+### Personalizar usuario admin en Railway
 
-### Crear usuario admin
+Los usuarios se crean o actualizan en cada deploy con estas variables (opcionales). Si no las defines, se usan los valores por defecto:
 
-Después de las migraciones, crea un superadmin o admin:
+| Variable | Por defecto |
+|----------|-------------|
+| `ADMIN_USERNAME` | admin |
+| `ADMIN_PASSWORD` | admin123 |
+| `SUPERADMIN_USERNAME` | superadmin |
+| `SUPERADMIN_PASSWORD` | superadmin123 |
 
-```bash
-# Con las mismas variables de DB (MYSQL_URL o DB_*)
-node scripts/create-admin.js
-```
-
-O usa las variables que prefieras (ver `scripts/create-admin.js`):  
-`ADMIN_USERNAME`, `ADMIN_PASSWORD`, `SUPERADMIN_USERNAME`, etc.
+**Recomendación:** En producción, define en Railway variables como `ADMIN_PASSWORD` y `SUPERADMIN_PASSWORD` con claves seguras. En cada deploy se actualizarán los usuarios con esos valores.
 
 ---
 
@@ -168,7 +167,7 @@ O usa las variables que prefieras (ver `scripts/create-admin.js`):
 | `NODE_ENV`  | `production`                             |
 | `JWT_SECRET`| Texto largo aleatorio (ej. 32+ caracteres) |
 
-Opcional: `JWT_EXPIRES_IN` (por defecto la app usa `24h`).
+Opcional: `JWT_EXPIRES_IN` (por defecto `24h`). Para los usuarios admin que se crean en cada deploy: `ADMIN_USERNAME`, `ADMIN_PASSWORD`, `SUPERADMIN_USERNAME`, `SUPERADMIN_PASSWORD` (si no los pones, se usan admin/admin123 y superadmin/superadmin123).
 
 ---
 
@@ -192,8 +191,7 @@ En Railway el disco del servicio es **efímero**: si el servicio se reinicia, se
 - [ ] En el servicio Node: `MYSQL_URL` (referencia), `NODE_ENV=production`, `JWT_SECRET` definido.
 - [ ] Start command: `npm start`.
 - [ ] Dominio público generado.
-- [ ] Migraciones ejecutadas una vez (desde PC con `MYSQL_URL` o con `railway run`).
-- [ ] Admin creado con `create-admin.js`.
-- [ ] Abrir la URL de Railway y probar login.
+- [ ] (Opcional) En Variables: `ADMIN_PASSWORD` y `SUPERADMIN_PASSWORD` con claves seguras.
+- [ ] Abrir la URL de Railway y probar login (admin / admin123 o superadmin / superadmin123 si no cambiaste las variables).
 
 Si algo falla, revisa los **logs** del servicio Node en Railway (pestaña "Deployments" → último deploy → "View Logs").
