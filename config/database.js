@@ -1,16 +1,20 @@
 const mysql = require('mysql2');
 
 // Unified database configuration
-// Uses environment variables with fallback to defaults
-const pool = mysql.createPool({
-    host: process.env.DB_HOST || 'localhost',
-    user: process.env.DB_USER || 'root',
-    password: process.env.DB_PASSWORD || '',
-    database: process.env.DB_NAME || 'restaurante',
-    waitForConnections: true,
-    connectionLimit: 10,
-    queueLimit: 0
-}).promise();
+// Supports: MYSQL_URL (Railway, etc.), or DB_HOST + DB_USER + DB_PASSWORD + DB_NAME
+const connectionConfig = process.env.MYSQL_URL || process.env.DATABASE_URL
+    ? (process.env.MYSQL_URL || process.env.DATABASE_URL)
+    : {
+        host: process.env.DB_HOST || 'localhost',
+        user: process.env.DB_USER || 'root',
+        password: process.env.DB_PASSWORD || '',
+        database: process.env.DB_NAME || 'restaurante',
+        waitForConnections: true,
+        connectionLimit: 10,
+        queueLimit: 0
+    };
+
+const pool = mysql.createPool(connectionConfig).promise();
 
 // Verify connection on startup
 pool.getConnection()
