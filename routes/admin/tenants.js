@@ -149,6 +149,30 @@ router.post('/:tenantId/users/:userId/status', async (req, res) => {
     }
 });
 
+// PUT /admin/tenants/:tenantId/users/:userId/password - Establecer nueva contraseña (solo superadmin; sin contraseña actual)
+router.put('/:tenantId/users/:userId/password', async (req, res) => {
+    try {
+        const { newPassword, newPasswordConfirm } = req.body;
+        if (!newPassword || newPassword.length < 6) {
+            return res.status(400).json({ error: 'La nueva contraseña debe tener al menos 6 caracteres.' });
+        }
+        if (newPassword !== newPasswordConfirm) {
+            return res.status(400).json({ error: 'La confirmación no coincide con la nueva contraseña.' });
+        }
+        await TenantUserService.setPassword(req.params.userId, req.params.tenantId, newPassword);
+        await TenantAuditService.log({
+            tenantId: req.params.tenantId,
+            userId: req.user?.id || null,
+            accion: 'cambiar_password_usuario',
+            detalles: `usuario_id=${req.params.userId}`
+        });
+        res.status(200).json({ success: true, message: 'Contraseña actualizada.' });
+    } catch (error) {
+        console.error('Error al cambiar contraseña del usuario:', error);
+        res.status(400).json({ error: error.message || 'Error al actualizar la contraseña.' });
+    }
+});
+
 router.post('/:id/status', async (req, res) => {
     try {
         const { activo } = req.body;

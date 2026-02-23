@@ -159,6 +159,7 @@
                                     <th>Usuario</th>
                                     <th>Rol</th>
                                     <th>Estado</th>
+                                    <th width="100">Contraseña</th>
                                     <th width="120"></th>
                                 </tr>
                             </thead>
@@ -182,6 +183,11 @@
                                     </td>
                                     <td>
                                         <span class="badge badge-status bg-<%= u.activo ? 'success' : 'danger' %>"><%= u.activo ? 'Activo' : 'Bloqueado' %></span>
+                                    </td>
+                                    <td>
+                                        <button type="button" class="btn btn-sm btn-outline-primary" onclick="openModalPassword(<%= u.id %>, '<%= (u.username || '').replace(/'/g, "\\'") %>', <%= selectedTenant.id %>)" title="Cambiar contraseña">
+                                            <i class="bi bi-key"></i>
+                                        </button>
                                     </td>
                                     <td>
                                         <button type="button" class="btn btn-sm btn-outline-danger" onclick="toggleUser(<%= u.id %>, <%= selectedTenant.id %>, <%= u.activo ? 'false' : 'true' %>)">
@@ -224,6 +230,36 @@
                 </div>
             </div>
             <% } %>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Cambiar contraseña de usuario -->
+<div class="modal fade" id="modalCambiarPassword" tabindex="-1" aria-labelledby="modalCambiarPasswordLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalCambiarPasswordLabel"><i class="bi bi-key me-2"></i>Nueva contraseña</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body">
+                <p class="text-muted small mb-3">Usuario: <strong id="modalPasswordUsername"></strong></p>
+                <input type="hidden" id="modalPasswordUserId" value="">
+                <input type="hidden" id="modalPasswordTenantId" value="">
+                <div class="mb-3">
+                    <label class="form-label">Nueva contraseña</label>
+                    <input type="password" id="modalPasswordNew" class="form-control" placeholder="Mínimo 6 caracteres" minlength="6" autocomplete="new-password">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Confirmar nueva contraseña</label>
+                    <input type="password" id="modalPasswordConfirm" class="form-control" placeholder="Repetir contraseña" minlength="6" autocomplete="new-password">
+                    <div class="form-text text-danger d-none" id="modalPasswordNoMatch">Las contraseñas no coinciden.</div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" id="btnGuardarPassword"><i class="bi bi-check-lg me-1"></i>Guardar</button>
+            </div>
         </div>
     </div>
 </div>
@@ -419,6 +455,51 @@ async function toggleUser(userId, tenantId, activo) {
         Swal.fire({ icon: 'error', title: 'Error', text: 'Error de conexión.' });
     }
 }
+
+function openModalPassword(userId, username, tenantId) {
+    document.getElementById('modalPasswordUserId').value = userId;
+    document.getElementById('modalPasswordTenantId').value = tenantId;
+    document.getElementById('modalPasswordUsername').textContent = username;
+    document.getElementById('modalPasswordNew').value = '';
+    document.getElementById('modalPasswordConfirm').value = '';
+    document.getElementById('modalPasswordNoMatch').classList.add('d-none');
+    new bootstrap.Modal(document.getElementById('modalCambiarPassword')).show();
+}
+
+document.getElementById('btnGuardarPassword') && document.getElementById('btnGuardarPassword').addEventListener('click', async function() {
+    var userId = document.getElementById('modalPasswordUserId').value;
+    var tenantId = document.getElementById('modalPasswordTenantId').value;
+    var newP = document.getElementById('modalPasswordNew').value;
+    var confirmP = document.getElementById('modalPasswordConfirm').value;
+    var msgNoMatch = document.getElementById('modalPasswordNoMatch');
+    msgNoMatch.classList.add('d-none');
+    if (newP.length < 6) {
+        Swal.fire({ icon: 'warning', title: 'La contraseña debe tener al menos 6 caracteres.' });
+        return;
+    }
+    if (newP !== confirmP) {
+        msgNoMatch.classList.remove('d-none');
+        Swal.fire({ icon: 'warning', title: 'Las contraseñas no coinciden.' });
+        return;
+    }
+    try {
+        var resp = await fetch('/admin/tenants/' + tenantId + '/users/' + userId + '/password', {
+            method: 'PUT',
+            credentials: 'same-origin',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ newPassword: newP, newPasswordConfirm: confirmP })
+        });
+        var data = await resp.json().catch(function() { return {}; });
+        if (resp.ok) {
+            bootstrap.Modal.getInstance(document.getElementById('modalCambiarPassword')).hide();
+            Swal.fire({ icon: 'success', title: data.message || 'Contraseña actualizada.' });
+        } else {
+            Swal.fire({ icon: 'error', title: data.error || 'Error al actualizar la contraseña.' });
+        }
+    } catch (e) {
+        Swal.fire({ icon: 'error', title: 'Error de conexión.' });
+    }
+});
 
 // Presets en formulario de edición
 document.querySelectorAll('.preset-color').forEach(function(btn) {

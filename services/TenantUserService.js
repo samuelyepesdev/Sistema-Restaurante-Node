@@ -61,6 +61,24 @@ class TenantUserService {
         );
         return result;
     }
+
+    /**
+     * Set new password for a tenant user (superadmin only; no current password check).
+     * @param {number} userId - User ID
+     * @param {number} tenantId - Tenant ID (user must belong to this tenant)
+     * @param {string} newPassword - New plain password
+     */
+    static async setPassword(userId, tenantId, newPassword) {
+        if (!newPassword || newPassword.length < 6) {
+            throw new Error('La contraseña debe tener al menos 6 caracteres.');
+        }
+        const [users] = await db.query('SELECT id FROM usuarios WHERE id = ? AND tenant_id = ?', [userId, tenantId]);
+        if (users.length === 0) {
+            throw new Error('Usuario no encontrado en ese restaurante.');
+        }
+        const password_hash = await bcrypt.hash(newPassword, 10);
+        await db.query('UPDATE usuarios SET password_hash = ? WHERE id = ? AND tenant_id = ?', [password_hash, userId, tenantId]);
+    }
 }
 
 module.exports = TenantUserService;
