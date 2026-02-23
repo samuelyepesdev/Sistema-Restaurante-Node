@@ -49,6 +49,9 @@ const PERMISSIONS = {
     COSTEO_VER: 'costeo.ver',
     COSTEO_EDITAR: 'costeo.editar',
     
+    // Plantillas Excel (descargas, exportaciones)
+    PLANTILLAS_VER: 'plantillas.ver',
+    
     // Users
     USUARIOS_VER: 'usuarios.ver',
     USUARIOS_GESTIONAR: 'usuarios.gestionar'

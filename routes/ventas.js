@@ -8,6 +8,8 @@ const express = require('express');
 const router = express.Router();
 const VentaService = require('../services/VentaService');
 const ConfiguracionService = require('../services/ConfiguracionService');
+const { requirePermission } = require('../middleware/auth');
+const { requirePlanFeature } = require('../middleware/planFeature');
 let ExcelJS; // Lazy import for Excel export
 
 // GET /ventas - Sales page with filters and tables ready to pay (scoped by tenant)
@@ -30,7 +32,8 @@ router.get('/', async (req, res) => {
             ventas,
             mesasListas: mesasListas || [],
             user: req.user,
-            tenant: req.tenant
+            tenant: req.tenant,
+            allowedByPlan: res.locals.allowedByPlan || {}
         });
     } catch (error) {
         console.error('Error al obtener ventas:', error);
@@ -41,8 +44,8 @@ router.get('/', async (req, res) => {
     }
 });
 
-// GET /ventas/export - Export sales to Excel
-router.get('/export', async (req, res) => {
+// GET /ventas/export - Export sales to Excel (plan Pro: plantillas + permiso plantillas.ver)
+router.get('/export', requirePermission('plantillas.ver'), requirePlanFeature('plantillas'), async (req, res) => {
     try {
         try {
             ExcelJS = ExcelJS || require('exceljs');

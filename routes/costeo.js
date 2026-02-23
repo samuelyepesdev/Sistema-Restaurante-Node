@@ -16,6 +16,8 @@ const TemaService = require('../services/TemaService');
 const ParametroService = require('../services/ParametroService');
 const ProductoParametroRepository = require('../repositories/ProductoParametroRepository');
 const TenantService = require('../services/TenantService');
+const { requirePermission } = require('../middleware/auth');
+const { requirePlanFeature } = require('../middleware/planFeature');
 
 function getTenantId(req) {
     const id = req.tenant?.id;
@@ -50,7 +52,8 @@ router.get('/', async (req, res) => {
             showTenantSelector: false,
             tenants: [],
             costeoPlantillaReposteria,
-            tipoNegocio
+            tipoNegocio,
+            allowedByPlan: res.locals.allowedByPlan || {}
         });
     } catch (error) {
         console.error('Error al cargar costeo:', error);
@@ -87,8 +90,8 @@ router.post('/api/insumos', async (req, res) => {
     }
 });
 
-// GET /costeo/api/insumos/plantilla - Descargar plantilla Excel de insumos
-router.get('/api/insumos/plantilla', async (req, res) => {
+// GET /costeo/api/insumos/plantilla - Descargar plantilla Excel (plan Pro: plantillas + permiso)
+router.get('/api/insumos/plantilla', requirePermission('plantillas.ver'), requirePlanFeature('plantillas'), async (req, res) => {
     try {
         const wb = new ExcelJS.Workbook();
         const inst = wb.addWorksheet('Instrucciones');
@@ -126,8 +129,8 @@ router.get('/api/insumos/plantilla', async (req, res) => {
     }
 });
 
-// POST /costeo/api/insumos/cargar - Cargar insumos desde Excel
-router.post('/api/insumos/cargar', upload.single('archivo'), async (req, res) => {
+// POST /costeo/api/insumos/cargar - Cargar insumos desde Excel (plan Pro: plantillas)
+router.post('/api/insumos/cargar', requirePermission('plantillas.ver'), requirePlanFeature('plantillas'), upload.single('archivo'), async (req, res) => {
     try {
         if (!req.file) {
             return res.status(400).json({ error: 'Seleccione un archivo Excel' });

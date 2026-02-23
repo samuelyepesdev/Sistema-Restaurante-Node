@@ -9,6 +9,8 @@ const router = express.Router();
 const ProductService = require('../services/ProductService');
 const CategoryService = require('../services/CategoryService');
 const RecetaService = require('../services/RecetaService');
+const { requirePermission } = require('../middleware/auth');
+const { requirePlanFeature } = require('../middleware/planFeature');
 let ExcelJS; // Lazy import for Excel template/import
 
 // GET /productos - Show products page (solo del tenant)
@@ -25,7 +27,8 @@ router.get('/', async (req, res) => {
             categorias: categorias || [],
             recetasPorProducto: recetasPorProducto || {},
             user: req.user,
-            tenant: req.tenant
+            tenant: req.tenant,
+            allowedByPlan: res.locals.allowedByPlan || {}
         });
     } catch (error) {
         console.error('Error al obtener productos:', error);
@@ -151,8 +154,8 @@ router.delete('/:id', async (req, res) => {
     }
 });
 
-// GET /productos/plantilla - Download Excel template
-router.get('/plantilla', async (req, res) => {
+// GET /productos/plantilla - Download Excel template (plan Pro: plantillas + permiso plantillas.ver)
+router.get('/plantilla', requirePermission('plantillas.ver'), requirePlanFeature('plantillas'), async (req, res) => {
     try {
         try { 
             ExcelJS = ExcelJS || require('exceljs'); 
@@ -241,7 +244,7 @@ router.get('/plantilla', async (req, res) => {
 const multer = require('multer');
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 5*1024*1024 } });
 
-router.post('/importar', upload.single('archivo'), async (req, res) => {
+router.post('/importar', requirePermission('plantillas.ver'), requirePlanFeature('plantillas'), upload.single('archivo'), async (req, res) => {
     try {
         if (!req.file) {
             return res.status(400).json({ error: 'Archivo requerido' });
