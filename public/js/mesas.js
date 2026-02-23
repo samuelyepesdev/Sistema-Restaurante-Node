@@ -495,19 +495,19 @@ $(function() {
     }
     
     try {
-      // Cargar factura usando fetch para manejar mejor los errores
       const urlFactura = `/api/facturas/${facturaId}/imprimir`;
-      console.log('Cargando factura desde:', urlFactura);
-      
+      const TIMEOUT_MS = 15000; // 15 segundos máximo
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), TIMEOUT_MS);
+
       const response = await fetch(urlFactura, {
         method: 'GET',
-        credentials: 'same-origin', // Incluir cookies de autenticación
-        headers: {
-          'Accept': 'text/html'
-        }
+        credentials: 'same-origin',
+        headers: { 'Accept': 'text/html' },
+        signal: controller.signal
       });
-      
-      console.log('Respuesta recibida:', response.status, response.statusText);
+
+      clearTimeout(timeoutId);
       
       if(!response.ok){
         const errorText = await response.text();
@@ -555,11 +555,16 @@ $(function() {
       
     } catch(error) {
       console.error('Error al cargar factura:', error);
+      const esTimeout = (error && error.name === 'AbortError') || (error.message && error.message.includes('abort'));
+      const mensaje = esTimeout
+        ? 'Tiempo agotado. El servidor no respondió a tiempo. Compruebe la conexión e intente de nuevo.'
+        : (error.message || 'Error al cargar la factura');
+      facturaLoading.style.display = 'flex';
       facturaLoading.innerHTML = `
         <div class="text-center text-danger">
           <i class="bi bi-exclamation-triangle display-4 d-block mb-2"></i>
           <div>Error al cargar la factura</div>
-          <p class="small text-muted">${error.message}</p>
+          <p class="small text-muted">${mensaje}</p>
           <button class="btn btn-primary mt-3" onclick="window.mostrarFacturaEnSidebar(${facturaId})">Reintentar</button>
         </div>
       `;

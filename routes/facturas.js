@@ -45,7 +45,7 @@ router.get('/:id/imprimir', async (req, res) => {
         if (error.message === 'Factura no encontrada' || error.message.includes('detalles') || error.message.includes('configurado')) {
             return res.status(404).json({ error: error.message });
         }
-        res.status(500).json({ error: 'Error al obtener datos de factura' });
+        return res.status(500).json({ error: 'Error al obtener datos de factura' });
     }
 });
 
