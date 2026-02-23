@@ -95,11 +95,11 @@ Si prefieres no usar la URL:
 ## 5. Comando de inicio
 
 1. En tu **servicio Node**, ve a **"Settings"**.
-2. En **"Build Command"** puedes dejar vacío o poner: `npm install`.
-3. En **"Start Command"** (o "Start") pon: **`npm start`**.
-4. En **"Root Directory"** déjalo vacío si el `package.json` está en la raíz del repo.
+2. **Build Command**: déjalo **vacío**. (El proyecto no usa `npm run build` para desplegar; así se evita el error "pkg: not found".)
+3. **Start Command**: **`npm start`**.
+4. **Root Directory**: vacío si el `package.json` está en la raíz.
 
-Railway suele detectar Node y usar `npm start` por defecto; compruébalo.
+Railway instalará dependencias con `npm install` automáticamente. Si Railway insiste en ejecutar un build, pon explícitamente Build Command = `npm install`.
 
 ---
 
