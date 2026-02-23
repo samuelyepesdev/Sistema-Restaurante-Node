@@ -162,30 +162,35 @@
         <!-- Historial de Ventas -->
         <div class="card">
             <div class="card-header">
-                <div class="row g-2 align-items-center">
-                    <div class="col-md-3">
-                        <div class="input-group">
-                            <span class="input-group-text"><i class="bi bi-calendar3"></i></span>
-                            <input type="date" id="fechaDesde" class="form-control" placeholder="Desde">
+                <div class="d-flex flex-column gap-3 w-100">
+                    <div class="d-flex flex-column flex-md-row justify-content-between align-items-stretch align-items-md-center gap-3">
+                        <div class="fw-semibold"><i class="bi bi-graph-up me-2"></i>Historial de Ventas</div>
+                        <div class="d-flex flex-wrap gap-2">
+                            <button class="btn btn-primary" id="filtrarVentas"><i class="bi bi-funnel"></i> Filtrar</button>
+                            <% if (typeof allowedByPlan !== 'undefined' && allowedByPlan && allowedByPlan.plantillas && user && user.permisos && user.permisos.includes('plantillas.ver')) { %>
+                            <button class="btn btn-success" id="exportarVentas"><i class="bi bi-file-earmark-excel"></i> Exportar</button>
+                            <% } %>
                         </div>
                     </div>
-                    <div class="col-md-3">
-                        <div class="input-group">
-                            <span class="input-group-text"><i class="bi bi-calendar3"></i></span>
-                            <input type="date" id="fechaHasta" class="form-control" placeholder="Hasta">
+                    <div class="row g-2 align-items-center">
+                        <div class="col-12 col-md-3">
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-calendar3"></i></span>
+                                <input type="date" id="fechaDesde" class="form-control" placeholder="Desde">
+                            </div>
                         </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="input-group">
-                            <span class="input-group-text"><i class="bi bi-search"></i></span>
-                            <input type="text" id="buscarVentas" class="form-control" placeholder="Buscar por cliente o # factura">
+                        <div class="col-12 col-md-3">
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-calendar3"></i></span>
+                                <input type="date" id="fechaHasta" class="form-control" placeholder="Hasta">
+                            </div>
                         </div>
-                    </div>
-                    <div class="col-md-3 d-flex justify-content-end gap-2">
-                        <button class="btn btn-primary" id="filtrarVentas"><i class="bi bi-funnel"></i> Filtrar</button>
-                        <% if (typeof allowedByPlan !== 'undefined' && allowedByPlan && allowedByPlan.plantillas && user && user.permisos && user.permisos.includes('plantillas.ver')) { %>
-                        <button class="btn btn-success" id="exportarVentas"><i class="bi bi-file-earmark-excel"></i> Exportar</button>
-                        <% } %>
+                        <div class="col-12 col-md-3">
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-search"></i></span>
+                                <input type="text" id="buscarVentas" class="form-control" placeholder="Buscar por cliente o # factura">
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>

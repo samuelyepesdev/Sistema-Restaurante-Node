@@ -72,9 +72,10 @@
         </div>
         <% } else { %>
         <div class="card">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <div><i class="bi bi-calculator me-2"></i>Costeo de Platos<% if (typeof tenant !== 'undefined' && tenant) { %> — <%= tenant.nombre %><% } %></div>
-                <ul class="nav nav-tabs card-header-tabs" id="costeoTab" role="tablist">
+            <div class="card-header">
+                <div class="d-flex flex-column flex-md-row justify-content-between align-items-stretch align-items-md-center gap-2 gap-md-3 w-100">
+                    <div class="fw-semibold"><i class="bi bi-calculator me-2"></i>Costeo de Platos<% if (typeof tenant !== 'undefined' && tenant) { %> — <%= tenant.nombre %><% } %></div>
+                    <ul class="nav nav-tabs card-header-tabs flex-nowrap overflow-auto" id="costeoTab" role="tablist">
                     <li class="nav-item" role="presentation">
                         <button class="nav-link active" id="insumos-tab" data-bs-toggle="tab" data-bs-target="#insumos" type="button">Insumos</button>
                     </li>
@@ -90,6 +91,7 @@
                     </li>
                     <% } %>
                 </ul>
+                </div>
             </div>
             <div class="card-body">
                 <div class="tab-content" id="costeoTabContent">

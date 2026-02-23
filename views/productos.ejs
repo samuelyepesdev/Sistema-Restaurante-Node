@@ -38,10 +38,8 @@
             padding: 0.25rem 0.5rem;
         }
         @media (max-width: 768px) {
-            .card-header .btn-group {
-                flex-wrap: wrap;
-                gap: 0.5rem;
-            }
+            .card-header .page-title { width: 100%; }
+            .card-header .d-flex.gap-2 { flex-wrap: wrap; }
             .card-body .row .col-md-4,
             .card-body .row .col-md-8 {
                 flex: 0 0 100%;
@@ -82,25 +80,25 @@
 
     <div class="container">
         <div class="card">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <div>
-                    <i class="bi bi-box-fill me-2"></i>
-                    Gestión de Productos
-                </div>
-                <div class="btn-group">
-                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#nuevoProductoModal">
-                        <i class="bi bi-plus-lg me-1"></i>
-                        Nuevo Producto
-                    </button>
-                    <% if (typeof allowedByPlan !== 'undefined' && allowedByPlan && allowedByPlan.plantillas && user && user.permisos && user.permisos.includes('plantillas.ver')) { %>
-                    <button id="btnDescargarPlantilla" class="btn btn-outline-success">
-                        <i class="bi bi-file-earmark-excel"></i> Plantilla Excel
-                    </button>
-                    <button id="btnImportarProductos" class="btn btn-outline-primary">
-                        <i class="bi bi-upload"></i> Importar Excel
-                    </button>
-                    <input type="file" id="archivoImport" accept=".xlsx" class="d-none">
-                    <% } %>
+            <div class="card-header">
+                <div class="d-flex flex-column flex-md-row justify-content-between align-items-stretch align-items-md-center gap-2 gap-md-3 w-100">
+                    <div class="page-title fw-semibold">
+                        <i class="bi bi-box-fill me-2"></i>Gestión de Productos
+                    </div>
+                    <div class="d-flex flex-wrap gap-2">
+                        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#nuevoProductoModal">
+                            <i class="bi bi-plus-lg me-1"></i>Nuevo Producto
+                        </button>
+                        <% if (typeof allowedByPlan !== 'undefined' && allowedByPlan && allowedByPlan.plantillas && user && user.permisos && user.permisos.includes('plantillas.ver')) { %>
+                        <button id="btnDescargarPlantilla" class="btn btn-outline-success">
+                            <i class="bi bi-file-earmark-excel"></i> Plantilla Excel
+                        </button>
+                        <button id="btnImportarProductos" class="btn btn-outline-primary">
+                            <i class="bi bi-upload"></i> Importar Excel
+                        </button>
+                        <input type="file" id="archivoImport" accept=".xlsx" class="d-none">
+                        <% } %>
+                    </div>
                 </div>
             </div>
             <div class="card-body">
