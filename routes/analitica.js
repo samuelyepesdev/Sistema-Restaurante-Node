@@ -8,7 +8,8 @@ const router = express.Router();
 const AnaliticaService = require('../services/AnaliticaService');
 const { requireRole } = require('../middleware/auth');
 
-router.get('/', requireRole('admin'), async (req, res) => {
+// Path puede ser '' o '/' según cómo Express pasa la ruta montada
+router.get(['/', ''], requireRole('admin'), async (req, res) => {
     try {
         const tenantId = req.tenant?.id;
         if (!tenantId) {
