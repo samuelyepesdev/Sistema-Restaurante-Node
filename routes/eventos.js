@@ -43,16 +43,13 @@ router.get('/activos', requirePermission('eventos.ver', 'ventas_evento.realizar'
     }
 });
 
-// POST /eventos - Crear (requiere eventos.crear)
+// POST /eventos - Crear (requiere eventos.crear). Responde JSON para peticiones fetch (evita redirect que rompe res.json()).
 router.post('/', requirePermission('eventos.crear'), async (req, res) => {
     try {
         const tenantId = req.tenant?.id;
         if (!tenantId) return res.status(403).json({ error: 'Contexto de tenant no disponible' });
         const id = await EventoService.create(tenantId, req.body);
-        if (req.xhr || req.headers.accept?.indexOf('json') > -1) {
-            return res.status(201).json({ id, message: 'Evento creado' });
-        }
-        res.redirect('/eventos');
+        return res.status(201).json({ id, message: 'Evento creado' });
     } catch (error) {
         console.error('Error creando evento:', error);
         res.status(400).json({ error: error.message || 'Error al crear evento' });

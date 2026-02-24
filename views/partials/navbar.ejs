@@ -95,7 +95,7 @@ function canShow(mod) { if (!mod) return true; if (typeof allowedByPlan === 'und
                     </a>
                 </li>
                 <% } %>
-                <% if (user && user.permisos && user.permisos.includes('eventos.ver')) { %>
+                <% if (user && (user.rol === 'admin' || (user.permisos && user.permisos.includes('eventos.ver')))) { %>
                 <li class="nav-item">
                     <a class="nav-link" href="/eventos">
                         <i class="bi bi-calendar-event"></i> Eventos

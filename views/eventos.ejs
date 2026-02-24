@@ -189,13 +189,28 @@
         }
         var url = id ? '/eventos/' + id : '/eventos';
         var method = id ? 'PUT' : 'POST';
-        fetch(url, { method: method, credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
-            .then(function(res) { return res.json().then(function(data) { return { ok: res.ok, data }; }); })
-            .then(function(o) {
-                if (o.ok) { bootstrap.Modal.getInstance(modal).hide(); Swal.fire({ icon: 'success', title: id ? 'Evento actualizado' : 'Evento creado' }); window.location.reload(); }
-                else Swal.fire({ icon: 'error', title: o.data.error || 'Error' });
+        fetch(url, { method: method, credentials: 'same-origin', headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' }, body: JSON.stringify(payload) })
+            .then(function(res) {
+                var ct = res.headers.get('content-type');
+                if (ct && ct.indexOf('json') !== -1) return res.json().then(function(data) { return { ok: res.ok, data }; });
+                return { ok: false, data: { error: 'Respuesta no válida del servidor' } };
             })
-            .catch(function() { Swal.fire({ icon: 'error', title: 'Error de conexión' }); });
+            .then(function(o) {
+                var modalInstance = bootstrap.Modal.getInstance(modal);
+                if (modalInstance) modalInstance.hide();
+                if (o.ok) {
+                    setTimeout(function() {
+                        Swal.fire({ icon: 'success', title: id ? 'Evento actualizado' : 'Evento creado' }).then(function() { window.location.reload(); });
+                    }, 150);
+                } else {
+                    setTimeout(function() { Swal.fire({ icon: 'error', title: o.data.error || 'Error' }); }, 150);
+                }
+            })
+            .catch(function() {
+                var modalInstance = bootstrap.Modal.getInstance(modal);
+                if (modalInstance) modalInstance.hide();
+                setTimeout(function() { Swal.fire({ icon: 'error', title: 'Error de conexión' }); }, 150);
+            });
     });
 })();
 </script>

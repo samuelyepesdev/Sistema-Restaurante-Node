@@ -49,8 +49,7 @@
                                    value="<%= p.id %>" 
                                    <%= (permisosPorRol[rol.id] || []).indexOf(p.id) >= 0 ? 'checked' : '' %>>
                             <div class="flex-grow-1">
-                                <strong><%= p.nombre %></strong>
-                                <% if (p.descripcion) { %><br><small><%= p.descripcion %></small><% } %>
+                                <strong><%= (p.descripcion && p.descripcion.trim()) ? p.descripcion : p.nombre %></strong>
                             </div>
                         </label>
                         <% }); %>
