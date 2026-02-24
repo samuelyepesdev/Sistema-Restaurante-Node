@@ -85,6 +85,41 @@
             box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.05);
             margin-bottom: 1.5rem;
         }
+        .mini-calendario-container {
+            min-height: 220px;
+        }
+        .mini-calendario {
+            font-size: 0.8rem;
+            width: 100%;
+        }
+        .mini-calendario th {
+            padding: 0.25rem;
+            text-align: center;
+            color: #6c757d;
+            font-weight: 600;
+        }
+        .mini-calendario td {
+            padding: 0.2rem;
+            text-align: center;
+            border-radius: 4px;
+        }
+        .mini-calendario .dia-evento {
+            background: rgba(220, 53, 69, 0.35);
+            color: #b02a37;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .mini-calendario .dia-evento:hover {
+            background: rgba(220, 53, 69, 0.5);
+        }
+        .mini-calendario .dia-hoy {
+            border: 1px solid #0d6efd;
+        }
+        .mini-calendario .mes-titulo {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            text-align: center;
+        }
         @media (max-width: 992px) {
             .filter-section .row .col-md-3 {
                 flex: 0 0 100%;
@@ -259,19 +294,33 @@
             <div class="col-md-4">
                 <div class="card">
                     <div class="card-header">
-                        <i class="bi bi-pie-chart me-2"></i>
-                        Ventas por Forma de Pago
+                        <i class="bi bi-calendar3 me-2"></i>
+                        Días con evento
                     </div>
                     <div class="card-body">
-                        <div class="chart-container-small">
-                            <canvas id="paymentMethodChart"></canvas>
+                        <div id="miniCalendarioEventos" class="mini-calendario-container">
+                            <div class="text-muted small text-center py-3">Cargando...</div>
                         </div>
+                        <p class="small text-muted mb-0 mt-2">Mes actual. Días en rojo = con evento. Pase el mouse o toque para ver el nombre.</p>
                     </div>
                 </div>
             </div>
         </div>
 
         <div class="row">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <i class="bi bi-calendar-event me-2"></i>
+                        Ventas en eventos
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-container-small">
+                            <canvas id="ventasEnEventosChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
             <div class="col-md-6">
                 <div class="card">
                     <div class="card-header">

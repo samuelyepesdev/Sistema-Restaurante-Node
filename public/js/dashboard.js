@@ -5,7 +5,7 @@
 
 // Chart instances
 let dailySalesChart = null;
-let paymentMethodChart = null;
+let ventasEnEventosChart = null;
 let salesByCategoryChart = null;
 let topProductsChart = null;
 
@@ -36,6 +36,7 @@ async function loadStats(filters = {}) {
         const stats = await response.json();
         updateStatsCards(stats);
         updateCharts(stats);
+        updateMiniCalendarioEventos(stats.eventosCalendario || []);
         updateTopProductsByCategoryTable(stats.topProductsByCategory);
     } catch (error) {
         console.error('Error:', error);
@@ -65,7 +66,7 @@ function updateStatsCards(stats) {
  */
 function updateCharts(stats) {
     updateDailySalesChart(stats.dailySales);
-    updatePaymentMethodChart(stats.salesByPaymentMethod);
+    updateVentasEnEventosChart(stats.ventasPorEvento || []);
     updateSalesByCategoryChart(stats.salesByCategory);
     updateTopProductsChart(stats.topProducts);
 }
@@ -126,48 +127,118 @@ function updateDailySalesChart(data) {
 }
 
 /**
- * Update payment method chart
+ * Update ventas en eventos chart (bar by event)
  */
-function updatePaymentMethodChart(data) {
-    const ctx = document.getElementById('paymentMethodChart').getContext('2d');
-    
-    if (paymentMethodChart) {
-        paymentMethodChart.destroy();
+function updateVentasEnEventosChart(data) {
+    const ctx = document.getElementById('ventasEnEventosChart');
+    if (!ctx) return;
+
+    if (ventasEnEventosChart) {
+        ventasEnEventosChart.destroy();
     }
 
-    paymentMethodChart = new Chart(ctx, {
-        type: 'doughnut',
+    const labels = (data && data.length > 0)
+        ? data.map(d => (d.evento_nombre || '').length > 18 ? (d.evento_nombre || '').substring(0, 18) + '…' : (d.evento_nombre || ''))
+        : ['Sin ventas en eventos'];
+    const values = (data && data.length > 0) ? data.map(d => d.total_ventas) : [0];
+
+    ventasEnEventosChart = new Chart(ctx.getContext('2d'), {
+        type: 'bar',
         data: {
-            labels: data.map(d => d.forma_pago.charAt(0).toUpperCase() + d.forma_pago.slice(1)),
+            labels: labels,
             datasets: [{
-                data: data.map(d => d.total),
-                backgroundColor: [
-                    'rgba(54, 162, 235, 0.8)',
-                    'rgba(255, 99, 132, 0.8)'
-                ],
-                borderWidth: 2
+                label: 'Ventas ($)',
+                data: values,
+                backgroundColor: 'rgba(253, 126, 20, 0.8)',
+                borderColor: 'rgba(229, 89, 12, 1)',
+                borderWidth: 1
             }]
         },
         options: {
+            indexAxis: 'y',
             responsive: true,
             maintainAspectRatio: false,
             plugins: {
-                legend: {
-                    position: 'bottom'
-                },
+                legend: { display: false },
                 tooltip: {
                     callbacks: {
                         label: function(context) {
-                            const label = context.label || '';
-                            const value = context.parsed || 0;
-                            const total = context.dataset.data.reduce((a, b) => a + b, 0);
-                            const percentage = ((value / total) * 100).toFixed(1);
-                            return label + ': ' + formatCurrency(value) + ' (' + percentage + '%)';
+                            return 'Ventas: ' + formatCurrency(context.parsed.x);
                         }
                     }
                 }
+            },
+            scales: {
+                x: {
+                    beginAtZero: true,
+                    ticks: { callback: value => formatCurrency(value) }
+                }
             }
         }
+    });
+}
+
+/**
+ * Build map: dateStr (YYYY-MM-DD) -> array of event names for that day
+ */
+function fechasConEventoMap(eventos) {
+    const map = new Map();
+    (eventos || []).forEach(ev => {
+        const ini = new Date(ev.fecha_inicio);
+        const fin = new Date(ev.fecha_fin);
+        const nombre = (ev.nombre || 'Evento').trim();
+        for (let d = new Date(ini); d <= fin; d.setDate(d.getDate() + 1)) {
+            const key = d.toISOString().slice(0, 10);
+            if (!map.has(key)) map.set(key, []);
+            if (map.get(key).indexOf(nombre) === -1) map.get(key).push(nombre);
+        }
+    });
+    return map;
+}
+
+/**
+ * Render mini calendar: siempre mes actual, días con evento en rojo y tooltip con nombre(s)
+ */
+function updateMiniCalendarioEventos(eventosCalendario) {
+    const container = document.getElementById('miniCalendarioEventos');
+    if (!container) return;
+
+    const eventosMap = fechasConEventoMap(eventosCalendario);
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = now.getMonth();
+    const hoy = now.toISOString().slice(0, 10);
+
+    const first = new Date(year, month, 1);
+    const last = new Date(year, month + 1, 0);
+    const daysInMonth = last.getDate();
+    const startDay = first.getDay();
+    const monthNames = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+
+    let html = '<div class="mes-titulo">' + monthNames[month] + ' ' + year + '</div>';
+    html += '<table class="mini-calendario table table-bordered mb-0"><thead><tr>';
+    html += '<th>Do</th><th>Lu</th><th>Ma</th><th>Mi</th><th>Ju</th><th>Vi</th><th>Sá</th></tr></thead><tbody><tr>';
+
+    for (let i = 0; i < startDay; i++) html += '<td></td>';
+    for (let day = 1; day <= daysInMonth; day++) {
+        const dateStr = year + '-' + String(month + 1).padStart(2, '0') + '-' + String(day).padStart(2, '0');
+        const nombres = eventosMap.get(dateStr) || [];
+        const hasEvent = nombres.length > 0;
+        const isToday = dateStr === hoy;
+        let cls = '';
+        if (hasEvent) cls += ' dia-evento';
+        if (isToday) cls += ' dia-hoy';
+        const titulo = hasEvent ? ('Evento' + (nombres.length > 1 ? 's' : '') + ': ' + nombres.join(', ')) : '';
+        const attrTooltip = titulo ? ' data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="' + titulo.replace(/"/g, '&quot;') + '" title="' + titulo.replace(/"/g, '&quot;') + '"' : '';
+        html += '<td class="' + cls.trim() + '"' + attrTooltip + '>' + day + '</td>';
+        if ((startDay + day) % 7 === 0 && day < daysInMonth) html += '</tr><tr>';
+    }
+    html += '</tr></tbody></table>';
+    container.innerHTML = html;
+
+    var tooltipTriggerList = container.querySelectorAll('[data-bs-toggle="tooltip"]');
+    tooltipTriggerList.forEach(function (el) {
+        new bootstrap.Tooltip(el, { trigger: 'hover click' });
     });
 }
 

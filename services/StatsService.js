@@ -17,36 +17,46 @@ class StatsService {
         const desde = filters.desde || new Date().toISOString().slice(0, 8) + '01';
         const hasta = filters.hasta || new Date().toISOString().slice(0, 10);
 
+        const now = new Date();
+        const mesInicio = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`;
+        const mesFin = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate()).padStart(2, '0')}`;
+
         const [
             totalSales,
             totalInvoices,
-            salesByPaymentMethod,
             topProducts,
             salesByCategory,
             topProductsByCategory,
             dailySales,
-            eventStats
+            eventStats,
+            ventasPorEvento,
+            eventosEnRango,
+            eventosCalendario
         ] = await Promise.all([
             StatsRepository.getTotalSales(tenantId, filters),
             StatsRepository.getTotalInvoices(tenantId, filters),
-            StatsRepository.getSalesByPaymentMethod(tenantId, filters),
             StatsRepository.getTopProducts(tenantId, 10, filters),
             StatsRepository.getSalesByCategory(tenantId, filters),
             StatsRepository.getTopProductsByCategory(tenantId, 5, filters),
             StatsRepository.getDailySales(tenantId, 30),
-            StatsRepository.getEventStatsForDashboard(tenantId, desde, hasta)
+            StatsRepository.getEventStatsForDashboard(tenantId, desde, hasta),
+            StatsRepository.getVentasPorEventoEnRango(tenantId, desde, hasta),
+            StatsRepository.getEventosEnRango(tenantId, desde, hasta),
+            StatsRepository.getEventosEnRango(tenantId, mesInicio, mesFin)
         ]);
 
         return {
             totalSales,
             totalInvoices,
-            salesByPaymentMethod,
             topProducts,
             salesByCategory,
             topProductsByCategory,
             dailySales,
             eventos_count: eventStats.eventos_count,
-            ventas_eventos_total: eventStats.ventas_eventos_total
+            ventas_eventos_total: eventStats.ventas_eventos_total,
+            ventasPorEvento,
+            eventosEnRango,
+            eventosCalendario
         };
     }
 

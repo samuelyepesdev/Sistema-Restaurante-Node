@@ -305,6 +305,38 @@ class StatsRepository {
             ventas_eventos_total: parseFloat(ventasEventos[0]?.total || 0)
         };
     }
+
+    /** Ventas por evento en rango (para gráfica). */
+    static async getVentasPorEventoEnRango(tenantId, desde, hasta) {
+        const [rows] = await db.query(
+            `SELECT e.id, e.nombre AS evento_nombre,
+                    COUNT(f.id) AS cantidad_ventas,
+                    COALESCE(SUM(f.total), 0) AS total_ventas
+             FROM eventos e
+             INNER JOIN facturas f ON f.evento_id = e.id AND f.tenant_id = e.tenant_id
+             WHERE e.tenant_id = ? AND DATE(f.fecha) BETWEEN ? AND ?
+             GROUP BY e.id, e.nombre
+             ORDER BY total_ventas DESC`,
+            [tenantId, desde, hasta]
+        );
+        return (rows || []).map(r => ({
+            evento_nombre: r.evento_nombre,
+            total_ventas: parseFloat(r.total_ventas || 0),
+            cantidad_ventas: parseInt(r.cantidad_ventas || 0)
+        }));
+    }
+
+    /** Eventos que se solapan con [desde, hasta] (para mini calendario). */
+    static async getEventosEnRango(tenantId, desde, hasta) {
+        const [rows] = await db.query(
+            `SELECT id, nombre, fecha_inicio, fecha_fin
+             FROM eventos
+             WHERE tenant_id = ? AND fecha_inicio <= ? AND fecha_fin >= ?
+             ORDER BY fecha_inicio`,
+            [tenantId, hasta, desde]
+        );
+        return rows || [];
+    }
 }
 
 module.exports = StatsRepository;
