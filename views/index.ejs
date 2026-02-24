@@ -290,6 +290,15 @@
 <body>
     <%- include('partials/navbar', { user: typeof user !== 'undefined' ? user : null, tenant: typeof tenant !== 'undefined' ? tenant : null }) %>
 
+    <input type="hidden" id="eventoId" value="<%= typeof eventoFiltro !== 'undefined' && eventoFiltro && eventoFiltro.id ? eventoFiltro.id : '' %>">
+    <% if (typeof eventoFiltro !== 'undefined' && eventoFiltro) { %>
+    <div class="container mt-3">
+        <div class="alert alert-info d-flex align-items-center justify-content-between flex-wrap gap-2 mb-0">
+            <span><i class="bi bi-calendar-event me-2"></i><strong>Venta para evento:</strong> <%= eventoFiltro.nombre %></span>
+            <a href="/facturas/facturar" class="btn btn-sm btn-outline-primary">Quitar evento</a>
+        </div>
+    </div>
+    <% } %>
     <div class="container mt-4">
         <!-- Indicador de Pasos -->
         <div class="step-indicator">
