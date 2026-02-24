@@ -34,15 +34,21 @@ async function authenticateUser(username, password) {
             return { success: false, message: 'Usuario o contraseña incorrectos' };
         }
 
-        // Get user permissions
-        const [permissions] = await db.query(`
-            SELECT p.nombre
-            FROM permisos p
+        // Permisos del rol + permisos directos del usuario (user_permisos)
+        const [rolePerms] = await db.query(`
+            SELECT p.nombre FROM permisos p
             INNER JOIN rol_permisos rp ON p.id = rp.permiso_id
             WHERE rp.rol_id = ?
         `, [user.rol_id]);
-
-        const userPermissions = permissions.map(p => p.nombre);
+        const [userPerms] = await db.query(`
+            SELECT p.nombre FROM permisos p
+            INNER JOIN user_permisos up ON p.id = up.permiso_id
+            WHERE up.user_id = ?
+        `, [user.id]).catch(() => [[]]);
+        const userPermissions = [...new Set([
+            ...rolePerms.map(p => p.nombre),
+            ...(userPerms || []).map(p => p.nombre)
+        ])];
 
         // Generate JWT token (include tenant_id for multi-tenancy)
         const token = generateToken({
@@ -118,13 +124,17 @@ async function getUserById(userId) {
 
         const user = users[0];
 
-        // Get permissions
-        const [permissions] = await db.query(`
-            SELECT p.nombre
-            FROM permisos p
+        const [rolePerms] = await db.query(`
+            SELECT p.nombre FROM permisos p
             INNER JOIN rol_permisos rp ON p.id = rp.permiso_id
             WHERE rp.rol_id = ?
         `, [user.rol_id]);
+        const [userPerms] = await db.query(`
+            SELECT p.nombre FROM permisos p
+            INNER JOIN user_permisos up ON p.id = up.permiso_id
+            WHERE up.user_id = ?
+        `, [user.id]).catch(() => [[]]);
+        const permisos = [...new Set([...rolePerms.map(p => p.nombre), ...userPerms.map(p => p.nombre)])];
 
         return {
             id: user.id,
@@ -132,7 +142,7 @@ async function getUserById(userId) {
             email: user.email,
             nombre_completo: user.nombre_completo,
             rol: user.rol_nombre,
-            permisos: permissions.map(p => p.nombre),
+            permisos,
             tenant_id: user.tenant_id
         };
     } catch (error) {

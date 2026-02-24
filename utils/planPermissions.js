@@ -30,13 +30,18 @@ const PERMISSION_TO_MODULE = {
     'usuarios.gestionar': 'configuracion',
     'plantillas.ver': 'plantillas',
     'analitica.ver': 'analitica',
-    'prediccion.ver': 'prediccion_ml'
+    'prediccion.ver': 'prediccion_ml',
+    'eventos.ver': 'eventos',
+    'eventos.crear': 'eventos',
+    'eventos.editar': 'eventos',
+    'eventos.eliminar': 'eventos',
+    'ventas_evento.realizar': 'eventos'
 };
 
 // Módulos que se usan en navbar / rutas (para allowedByPlan)
 const PLAN_MODULES = [
     'productos', 'clientes', 'mesas', 'ventas', 'dashboard', 'configuracion',
-    'plantillas', 'importar_exportar', 'costeo', 'analitica', 'prediccion_ml'
+    'plantillas', 'importar_exportar', 'costeo', 'analitica', 'prediccion_ml', 'eventos'
 ];
 
 /**
@@ -50,6 +55,16 @@ function planAllowsPermission(plan, permission) {
     const moduleSlug = PERMISSION_TO_MODULE[permission];
     if (!moduleSlug) return true;
     return Array.isArray(plan.caracteristicas) && plan.caracteristicas.includes(moduleSlug);
+}
+
+/**
+ * Permisos que otorgan acceso a un módulo (para comprobar "permiso desbloquea plan").
+ * @param {string} moduleSlug - Ej: 'analitica', 'eventos'
+ * @returns {string[]} Nombres de permisos
+ */
+function getPermissionNamesForModule(moduleSlug) {
+    if (!moduleSlug) return [];
+    return Object.keys(PERMISSION_TO_MODULE).filter(p => PERMISSION_TO_MODULE[p] === moduleSlug);
 }
 
 /**
@@ -82,5 +97,6 @@ module.exports = {
     PLAN_MODULES,
     planAllowsPermission,
     planHasModule,
-    getAllowedByPlan
+    getAllowedByPlan,
+    getPermissionNamesForModule
 };

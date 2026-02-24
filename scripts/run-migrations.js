@@ -105,25 +105,27 @@ async function executeSQLFile(filePath) {
 }
 
 /**
- * Lista de archivos de migración en orden
+ * Lista de archivos de migración en orden.
+ * Incluye database.sql si existe y luego todos los *.sql de database/migrations ordenados por nombre (001_, 002_, ...).
  */
 function getMigrationsList() {
-    return [
-        path.join(__dirname, '..', 'database.sql'),
-        path.join(__dirname, '..', 'database', 'migrations', '001_create_users_and_roles.sql'),
-        path.join(__dirname, '..', 'database', 'migrations', '002_add_categorias_to_productos.sql'),
-        path.join(__dirname, '..', 'database', 'migrations', '003_add_multi_tenancy.sql'),
-        path.join(__dirname, '..', 'database', 'migrations', '004_create_tenant_audit.sql'),
-        path.join(__dirname, '..', 'database', 'migrations', '005_unique_por_tenant.sql'),
-        path.join(__dirname, '..', 'database', 'migrations', '006_costeo.sql'),
-        path.join(__dirname, '..', 'database', 'migrations', '007_add_margen_minimo_alerta.sql'),
-        path.join(__dirname, '..', 'database', 'migrations', '008_temas_parametros.sql'),
-        path.join(__dirname, '..', 'database', 'migrations', '009_categorias_unique_por_tenant.sql'),
-        path.join(__dirname, '..', 'database', 'migrations', '010_recetas_costos_adicionales_reposteria.sql'),
-        path.join(__dirname, '..', 'database', 'migrations', '011_planes_y_tenant_plan.sql'),
-        path.join(__dirname, '..', 'database', 'migrations', '012_permiso_plantillas_ver.sql'),
-        path.join(__dirname, '..', 'database', 'migrations', '013_eventos_y_permisos.sql')
-    ];
+    const root = path.join(__dirname, '..');
+    const migrationsDir = path.join(root, 'database', 'migrations');
+    const list = [];
+
+    const dbSql = path.join(root, 'database.sql');
+    if (fs.existsSync(dbSql)) {
+        list.push(dbSql);
+    }
+
+    if (fs.existsSync(migrationsDir)) {
+        const files = fs.readdirSync(migrationsDir)
+            .filter(f => f.endsWith('.sql'))
+            .sort();
+        files.forEach(f => list.push(path.join(migrationsDir, f)));
+    }
+
+    return list;
 }
 
 async function runMigrations() {

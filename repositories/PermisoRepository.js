@@ -1,8 +1,10 @@
 /**
  * PermisoRepository - Roles y permisos (panel superadmin)
+ * Incluye usuarios por tenant, permisos agrupados por sección y permisos por usuario.
  */
 
 const db = require('../config/database');
+const { PERMISSION_SECTIONS } = require('../utils/constants');
 
 class PermisoRepository {
     static async getAllRoles() {
@@ -13,6 +15,22 @@ class PermisoRepository {
     static async getAllPermisos() {
         const [rows] = await db.query('SELECT id, nombre, descripcion FROM permisos ORDER BY nombre');
         return rows;
+    }
+
+    /**
+     * Permisos agrupados por sección para el panel (Clientes, Productos, Eventos, etc.)
+     * @returns {Promise<Array<{ seccion: string, permisos: Array<{id, nombre, descripcion}> }>>}
+     */
+    static async getPermisosAgrupadosPorSeccion() {
+        const permisos = await PermisoRepository.getAllPermisos();
+        const byName = {};
+        permisos.forEach(p => { byName[p.nombre] = p; });
+        const result = [];
+        for (const [seccion, nombres] of Object.entries(PERMISSION_SECTIONS)) {
+            const list = nombres.map(n => byName[n]).filter(Boolean);
+            if (list.length) result.push({ seccion, permisos: list });
+        }
+        return result;
     }
 
     static async getPermisoIdsByRol(rolId) {
@@ -27,6 +45,40 @@ class PermisoRepository {
             if (permisoIds && permisoIds.length > 0) {
                 const values = permisoIds.map(pid => [rolId, pid]);
                 await connection.query('INSERT INTO rol_permisos (rol_id, permiso_id) VALUES ?', [values]);
+            }
+        } finally {
+            connection.release();
+        }
+    }
+
+    /** Usuarios de un tenant (para asignar permisos por restaurante) */
+    static async getUsuariosByTenantId(tenantId) {
+        if (tenantId == null) return [];
+        const [rows] = await db.query(
+            `SELECT u.id, u.username, u.nombre_completo, u.email, u.activo, u.rol_id, r.nombre AS rol_nombre
+             FROM usuarios u
+             INNER JOIN roles r ON u.rol_id = r.id
+             WHERE u.tenant_id = ?
+             ORDER BY u.nombre_completo, u.username`,
+            [tenantId]
+        );
+        return rows;
+    }
+
+    /** IDs de permisos asignados directamente al usuario (user_permisos) */
+    static async getPermisoIdsByUser(userId) {
+        const [rows] = await db.query('SELECT permiso_id FROM user_permisos WHERE user_id = ?', [userId]);
+        return rows.map(r => r.permiso_id);
+    }
+
+    /** Asignar permisos directos al usuario (además de los del rol) */
+    static async setPermisosForUser(userId, permisoIds) {
+        const connection = await db.getConnection();
+        try {
+            await connection.query('DELETE FROM user_permisos WHERE user_id = ?', [userId]);
+            if (permisoIds && permisoIds.length > 0) {
+                const values = permisoIds.map(pid => [userId, pid]);
+                await connection.query('INSERT INTO user_permisos (user_id, permiso_id) VALUES ?', [values]);
             }
         } finally {
             connection.release();

@@ -57,6 +57,23 @@ const PERMISSIONS = {
     USUARIOS_GESTIONAR: 'usuarios.gestionar'
 };
 
+// Secciones para agrupar permisos en el panel (clave = título, valor = prefijo o permisos)
+const PERMISSION_SECTIONS = {
+    Productos: ['productos.ver', 'productos.crear', 'productos.editar', 'productos.eliminar', 'productos.importar'],
+    Clientes: ['clientes.ver', 'clientes.crear', 'clientes.editar', 'clientes.eliminar'],
+    Mesas: ['mesas.ver', 'mesas.gestionar'],
+    Cocina: ['cocina.ver', 'cocina.gestionar'],
+    Facturas: ['facturas.crear', 'facturas.ver'],
+    Ventas: ['ventas.ver', 'ventas.exportar'],
+    Configuración: ['configuracion.ver', 'configuracion.editar'],
+    Costeo: ['costeo.ver', 'costeo.editar'],
+    Usuarios: ['usuarios.ver', 'usuarios.gestionar'],
+    Plantillas: ['plantillas.ver'],
+    Eventos: ['eventos.ver', 'eventos.crear', 'eventos.editar', 'eventos.eliminar', 'ventas_evento.realizar'],
+    Analítica: ['analitica.ver'],
+    Predicción: ['prediccion.ver']
+};
+
 // Table states
 const ESTADO_MESA = {
     LIBRE: 'libre',
@@ -107,6 +124,7 @@ const JWT_CONFIG = {
 module.exports = {
     ROLES,
     PERMISSIONS,
+    PERMISSION_SECTIONS,
     ESTADO_MESA,
     ESTADO_PEDIDO,
     ESTADO_ITEM,

@@ -1,13 +1,14 @@
 /**
- * Middleware que exige que el plan del tenant incluya un módulo/característica.
+ * Middleware que exige que el plan del tenant incluya un módulo O que el usuario tenga un permiso que desbloquee ese módulo.
  * Debe usarse después de requireAuth y del middleware que asigna req.tenant (attachTenantContext o costeoTenantContext).
- * Superadmin siempre pasa. Si el tenant no tiene plan, se permite (compatibilidad).
+ * Superadmin siempre pasa. Si el usuario tiene un permiso asociado al módulo (ej. analitica.ver, eventos.ver), puede acceder aunque el plan no lo incluya.
  */
 
-const { planHasModule } = require('../utils/planPermissions');
+const { planHasModule, getPermissionNamesForModule } = require('../utils/planPermissions');
+const authService = require('../services/AuthService');
 
 /**
- * @param {string} featureSlug - Slug del módulo en el plan (ej: 'costeo', 'productos', 'analitica')
+ * @param {string} featureSlug - Slug del módulo en el plan (ej: 'costeo', 'productos', 'analitica', 'eventos')
  * @returns {function} middleware
  */
 function requirePlanFeature(featureSlug) {
@@ -24,13 +25,20 @@ function requirePlanFeature(featureSlug) {
             return res.status(403).render('error', { error: { message: 'Tu plan no incluye esta función. Contacta al administrador para actualizar.' } });
         }
         const plan = tenant.plan || null;
-        if (!planHasModule(plan, featureSlug)) {
-            if (req.xhr || (req.headers.accept && req.headers.accept.indexOf('json') > -1)) {
-                return res.status(403).json({ error: 'Tu plan no incluye esta función. Contacta al administrador para actualizar.' });
-            }
-            return res.status(403).render('error', { error: { message: 'Tu plan no incluye esta función. Contacta al administrador para actualizar.' } });
+        const planIncludes = planHasModule(plan, featureSlug);
+        if (planIncludes) {
+            return next();
         }
-        next();
+        const permisosQueDesbloquean = getPermissionNamesForModule(featureSlug);
+        const userPermissions = req.user.permisos || [];
+        const tienePermiso = permisosQueDesbloquean.some(p => authService.hasPermission(userPermissions, p));
+        if (tienePermiso) {
+            return next();
+        }
+        if (req.xhr || (req.headers.accept && req.headers.accept.indexOf('json') > -1)) {
+            return res.status(403).json({ error: 'Tu plan no incluye esta función. Contacta al administrador para actualizar.' });
+        }
+        return res.status(403).render('error', { error: { message: 'Tu plan no incluye esta función. Contacta al administrador para actualizar.' } });
     };
 }
 

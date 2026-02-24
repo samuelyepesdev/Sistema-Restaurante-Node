@@ -148,7 +148,7 @@ app.use('/cocina', requireAuthWithTenant, requirePlanFeature('mesas'), cocinaRou
 app.use('/api/cocina', requireAuthWithTenant, requirePlanFeature('mesas'), cocinaRoutes);
 app.use('/configuracion', requireAuthWithTenant, requirePlanFeature('configuracion'), configuracionRoutes);
 app.use('/ventas', requireAuthWithTenant, requirePlanFeature('ventas'), ventasRoutes);
-app.use('/eventos', requireAuthWithTenant, eventosRoutes);
+app.use('/eventos', requireAuthWithTenant, requirePlanFeature('eventos'), eventosRoutes);
 app.use('/dashboard', requireAuthWithTenant, requirePlanFeature('dashboard'), dashboardRoutes);
 app.use('/api/dashboard', requireAuthWithTenant, requirePlanFeature('dashboard'), dashboardRoutes);
 app.use('/costeo', requireAuth, restrictSuperadminToAdmin, costeoTenantContext, requirePlanFeature('costeo'), costeoRoutes);

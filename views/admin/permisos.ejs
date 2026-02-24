@@ -10,12 +10,16 @@
         body { background: linear-gradient(180deg, #f0f4f8 0%, #e2e8f0 100%); min-height: 100vh; }
         .navbar { background: linear-gradient(135deg, #1e3a5f 0%, #0f172a 100%) !important; }
         .admin-page-header { background: #fff; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.06); padding: 1.5rem 2rem; margin-bottom: 1.5rem; border-left: 4px solid #0d6efd; }
-        .permiso-card { border: none; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.06); margin-bottom: 1.5rem; overflow: hidden; }
-        .permiso-card .card-header { background: #f8fafc; border-bottom: 1px solid #e2e8f0; font-weight: 600; padding: 1rem 1.25rem; }
-        .permiso-list { max-height: 320px; overflow-y: auto; }
-        .permiso-item { padding: 0.5rem 1rem; border-bottom: 1px solid #f1f5f9; display: flex; align-items: center; gap: 0.75rem; }
-        .permiso-item:last-child { border-bottom: none; }
+        .selector-card { border: none; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.06); margin-bottom: 1.5rem; }
+        .selector-card .card-header { background: #f8fafc; border-bottom: 1px solid #e2e8f0; font-weight: 600; padding: 1rem 1.25rem; }
+        .section-card { border: none; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.06); margin-bottom: 1rem; overflow: hidden; }
+        .section-card .card-header { background: #f1f5f9; border-bottom: 1px solid #e2e8f0; font-weight: 600; padding: 0.75rem 1rem; font-size: 1rem; }
+        .permiso-list { padding: 0.5rem 0; }
+        .permiso-item { padding: 0.4rem 1rem; display: flex; align-items: center; gap: 0.75rem; }
+        .permiso-item:hover { background: #f8fafc; }
         .permiso-item small { color: #64748b; }
+        .permisos-container { max-height: 420px; overflow-y: auto; }
+        .btn-save-user { border-radius: 10px; font-weight: 600; }
     </style>
 </head>
 <body>
@@ -23,42 +27,77 @@
 
 <div class="container-fluid py-4">
     <div class="admin-page-header">
-        <h1><i class="bi bi-shield-lock me-2"></i>Permisos por rol</h1>
-        <p class="mb-0">Asigna permisos a cada rol. Los usuarios con ese rol tendrán los permisos marcados. Los cambios aplican al volver a iniciar sesión.</p>
+        <h1><i class="bi bi-shield-lock me-2"></i>Permisos por restaurante y usuario</h1>
+        <p class="mb-0">Elige el restaurante, luego el usuario, y asígnale permisos adicionales (por sección). Si le das un permiso de Analítica o Eventos, podrá usarlos aunque el plan del restaurante no los incluya. Los cambios aplican al volver a iniciar sesión.</p>
     </div>
 
     <div class="row">
-        <% roles.forEach(function(rol) { %>
-        <div class="col-lg-6 col-xl-4 mb-4">
-            <div class="card permiso-card">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <span><i class="bi bi-person-badge me-2"></i><%= rol.nombre %></span>
-                    <button type="button" class="btn btn-sm btn-primary btn-guardar-rol" data-rol-id="<%= rol.id %>">Guardar</button>
-                </div>
-                <div class="card-body p-0">
-                    <% if (rol.nombre === 'superadmin') { %>
-                    <div class="p-3 text-muted small">
-                        <i class="bi bi-info-circle me-1"></i>El superadmin tiene acceso total; no es necesario asignar permisos concretos.
+        <div class="col-12">
+            <div class="card selector-card">
+                <div class="card-header"><i class="bi bi-building me-2"></i>Restaurante y usuario</div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">Restaurante</label>
+                            <select id="selectTenant" class="form-select">
+                                <% (tenants || []).forEach(function(t) { %>
+                                <option value="<%= t.id %>" <%= Number(activeTenantId) === Number(t.id) ? 'selected' : '' %>><%= t.nombre %></option>
+                                <% }); %>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">Usuario</label>
+                            <select id="selectUsuario" class="form-select">
+                                <option value="">-- Seleccione un usuario --</option>
+                                <% (usuarios || []).forEach(function(u) { %>
+                                <option value="<%= u.id %>"><%= (u.nombre_completo || u.username) %> (<%= u.rol_nombre %>)</option>
+                                <% }); %>
+                            </select>
+                        </div>
                     </div>
-                    <% } else { %>
-                    <div class="permiso-list">
-                        <% permisos.forEach(function(p) { %>
-                        <label class="permiso-item mb-0 cursor-pointer">
-                            <input type="checkbox" class="form-check-input permiso-check" 
-                                   data-rol-id="<%= rol.id %>" 
-                                   value="<%= p.id %>" 
-                                   <%= (permisosPorRol[rol.id] || []).indexOf(p.id) >= 0 ? 'checked' : '' %>>
-                            <div class="flex-grow-1">
-                                <strong><%= (p.descripcion && p.descripcion.trim()) ? p.descripcion : p.nombre %></strong>
-                            </div>
-                        </label>
-                        <% }); %>
-                    </div>
-                    <% } %>
                 </div>
             </div>
         </div>
-        <% }); %>
+    </div>
+
+    <div id="panelPermisos" class="row" style="display: none;">
+        <div class="col-12">
+            <div class="card selector-card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <span><i class="bi bi-person-badge me-2"></i>Permisos del usuario (adicionales al rol)</span>
+                    <button type="button" class="btn btn-primary btn-save-user" id="btnGuardarUsuario">Guardar permisos</button>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted small mb-3">Marcar los permisos que quieres dar a este usuario además de los de su rol. Por ejemplo: dar <strong>Analítica</strong> o <strong>Eventos</strong> aunque el plan sea Básico.</p>
+                    <div class="permisos-container">
+                        <% (secciones || []).forEach(function(sec) { %>
+                        <div class="card section-card">
+                            <div class="card-header d-flex align-items-center gap-2">
+                                <label class="mb-0 d-flex align-items-center gap-2 cursor-pointer flex-grow-1">
+                                    <input type="checkbox" class="form-check-input section-check" title="Marcar todos los permisos de esta sección">
+                                    <span><%= sec.seccion %></span>
+                                </label>
+                            </div>
+                            <div class="card-body py-2">
+                                <div class="permiso-list">
+                                    <% (sec.permisos || []).forEach(function(p) { %>
+                                    <label class="permiso-item mb-0 cursor-pointer d-block">
+                                        <input type="checkbox" class="form-check-input permiso-check" value="<%= p.id %>" data-permiso-id="<%= p.id %>">
+                                        <span><%= (p.descripcion && p.descripcion.trim()) ? p.descripcion : p.nombre %></span>
+                                    </label>
+                                    <% }); %>
+                                </div>
+                            </div>
+                        </div>
+                        <% }); %>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="sinUsuario" class="alert alert-info mt-2" style="display: none;">
+        <i class="bi bi-info-circle me-2"></i>Selecciona un usuario para asignar permisos.
     </div>
 </div>
 
@@ -66,25 +105,110 @@
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
 (function() {
-    document.querySelectorAll('.btn-guardar-rol').forEach(function(btn) {
-        btn.addEventListener('click', function() {
-            var rolId = this.getAttribute('data-rol-id');
-            var checks = document.querySelectorAll('.permiso-check[data-rol-id="' + rolId + '"]:checked');
-            var permisoIds = Array.from(checks).map(function(c) { return c.value; });
-            fetch('/admin/permisos/roles/' + rolId, {
-                method: 'PUT',
-                credentials: 'same-origin',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ permiso_ids: permisoIds })
-            })
-            .then(function(r) { return r.json().then(function(d) { return { ok: r.ok, data: d }; }); })
-            .then(function(o) {
-                if (o.ok) Swal.fire({ icon: 'success', title: o.data.message || 'Permisos guardados' });
-                else Swal.fire({ icon: 'error', title: o.data.error || 'Error' });
-            })
-            .catch(function() { Swal.fire({ icon: 'error', title: 'Error de conexión' }); });
+    var selectTenant = document.getElementById('selectTenant');
+    var selectUsuario = document.getElementById('selectUsuario');
+    var panelPermisos = document.getElementById('panelPermisos');
+    var sinUsuario = document.getElementById('sinUsuario');
+    var btnGuardar = document.getElementById('btnGuardarUsuario');
+
+    function showPanel(show) {
+        panelPermisos.style.display = show ? 'flex' : 'none';
+        sinUsuario.style.display = show ? 'none' : 'block';
+    }
+
+    function getSelectedUserId() {
+        var v = selectUsuario.value;
+        return v ? parseInt(v, 10) : null;
+    }
+
+    function updateSectionCheckState(card) {
+        var sectionCb = card.querySelector('.section-check');
+        if (!sectionCb) return;
+        var checks = card.querySelectorAll('.permiso-check');
+        var list = Array.from(checks);
+        if (list.length === 0) return;
+        var all = list.every(function(c) { return c.checked; });
+        var none = list.every(function(c) { return !c.checked; });
+        sectionCb.checked = all;
+        sectionCb.indeterminate = !all && !none;
+    }
+
+    function initSectionCheckboxes() {
+        document.querySelectorAll('.section-card').forEach(function(card) {
+            var sectionCb = card.querySelector('.section-check');
+            if (!sectionCb) return;
+            sectionCb.addEventListener('change', function() {
+                var check = this.checked;
+                card.querySelectorAll('.permiso-check').forEach(function(c) { c.checked = check; });
+                sectionCb.indeterminate = false;
+            });
+            card.querySelectorAll('.permiso-check').forEach(function(c) {
+                c.addEventListener('change', function() { updateSectionCheckState(card); });
+            });
+            updateSectionCheckState(card);
         });
+    }
+
+    selectTenant.addEventListener('change', function() {
+        var tenantId = this.value;
+        window.location.href = '/admin/permisos?tenantId=' + encodeURIComponent(tenantId);
     });
+
+    var sectionCheckboxesInited = false;
+
+    selectUsuario.addEventListener('change', function() {
+        var userId = getSelectedUserId();
+        if (!userId) {
+            showPanel(false);
+            return;
+        }
+        showPanel(true);
+        if (!sectionCheckboxesInited) {
+            initSectionCheckboxes();
+            sectionCheckboxesInited = true;
+        }
+        fetch('/admin/permisos/usuario/' + userId, { credentials: 'same-origin' })
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                var ids = (data.permiso_ids || []).map(function(id) { return parseInt(id, 10); });
+                document.querySelectorAll('.permiso-check').forEach(function(cb) {
+                    cb.checked = ids.indexOf(parseInt(cb.value, 10)) >= 0;
+                });
+                document.querySelectorAll('.section-card').forEach(function(card) { updateSectionCheckState(card); });
+            })
+            .catch(function() {
+                document.querySelectorAll('.permiso-check').forEach(function(cb) { cb.checked = false; });
+                document.querySelectorAll('.section-card').forEach(function(card) { updateSectionCheckState(card); });
+            });
+    });
+
+    btnGuardar.addEventListener('click', function() {
+        var userId = getSelectedUserId();
+        if (!userId) {
+            Swal.fire({ icon: 'warning', title: 'Selecciona un usuario' });
+            return;
+        }
+        var permisoIds = Array.from(document.querySelectorAll('.permiso-check:checked')).map(function(c) { return parseInt(c.value, 10); });
+        fetch('/admin/permisos/usuario/' + userId, {
+            method: 'PUT',
+            credentials: 'same-origin',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ permiso_ids: permisoIds })
+        })
+        .then(function(r) { return r.json().then(function(d) { return { ok: r.ok, data: d }; }); })
+        .then(function(o) {
+            if (o.ok) Swal.fire({ icon: 'success', title: o.data.message || 'Permisos guardados' });
+            else Swal.fire({ icon: 'error', title: o.data.error || 'Error' });
+        })
+        .catch(function() { Swal.fire({ icon: 'error', title: 'Error de conexión' }); });
+    });
+
+    if (getSelectedUserId()) {
+        showPanel(true);
+        selectUsuario.dispatchEvent(new Event('change'));
+    } else {
+        showPanel(false);
+    }
 })();
 </script>
 </body>
