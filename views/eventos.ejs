@@ -34,7 +34,25 @@
         </div>
         <div class="card-body">
             <p class="text-muted small">Las ventas asociadas a un evento no afectan el análisis predictivo de ventas. Aquí puedes crear eventos y, al facturar, asociar la venta a un evento si corresponde.</p>
-            <div class="table-responsive">
+
+            <!-- Vista móvil: solo nombre + botones -->
+            <div class="d-block d-md-none eventos-mobile">
+                <% (eventos || []).forEach(function(e) { %>
+                <div class="evento-mobile-item border rounded p-3 mb-3 bg-white">
+                    <div class="fw-semibold mb-2"><%= e.nombre %></div>
+                    <div class="d-flex flex-wrap gap-2">
+                        <a href="/facturas/facturar?evento_id=<%= e.id %>" class="btn btn-sm btn-success"><i class="bi bi-cart-plus me-1"></i>Realizar ventas</a>
+                        <a href="/ventas?evento_id=<%= e.id %>" class="btn btn-sm btn-outline-secondary"><i class="bi bi-list-ul me-1"></i>Ver ventas</a>
+                    </div>
+                </div>
+                <% }); %>
+                <% if (!eventos || eventos.length === 0) { %>
+                <p class="text-muted text-center py-4 mb-0">No hay eventos. Crea uno para asociar ventas.</p>
+                <% } %>
+            </div>
+
+            <!-- Vista escritorio: tabla completa -->
+            <div class="table-responsive d-none d-md-block">
                 <table class="table table-hover align-middle">
                     <thead class="table-light">
                         <tr>

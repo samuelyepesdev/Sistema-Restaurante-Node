@@ -227,6 +227,9 @@ $(document).ready(function() {
                     </td>
                 </tr>
             `);
+            $('#productosListaMobile').html(
+                '<div class="empty-state py-4"><i class="bi bi-cart-x"></i><div>No hay productos agregados</div><small class="text-muted">Busque un producto arriba y selecciónelo</small></div>'
+            );
             $('#totalFactura').text('0.00');
             return;
         }
@@ -252,6 +255,25 @@ $(document).ready(function() {
                 </tr>
             `);
         });
+
+        // Vista móvil: tarjetas con nombre, cantidad (+/- pequeños), unitario/subtotal, eliminar abajo
+        var mobileHtml = '';
+        productosFactura.forEach(function(item, index) {
+            var precioStr = Number(item.precio).toLocaleString('es-CO');
+            var subtotalStr = Number(item.subtotal).toLocaleString('es-CO');
+            mobileHtml +=
+                '<div class="producto-mobile-card border rounded p-2 mb-2 bg-white">' +
+                '<div class="fw-semibold small">' + item.nombre + '</div>' +
+                '<div class="d-flex align-items-center gap-2 mt-1">' +
+                '<button type="button" class="btn btn-sm p-1 btn-outline-secondary" onclick="quitarCantidadFactura(' + index + ')" title="Quitar"><i class="bi bi-dash" style="font-size:0.9rem"></i></button>' +
+                '<span style="min-width:1.5rem;text-align:center;font-size:0.9rem">' + item.cantidad + '</span>' +
+                '<button type="button" class="btn btn-sm p-1 btn-outline-secondary" onclick="agregarCantidadFactura(' + index + ')" title="Agregar"><i class="bi bi-plus" style="font-size:0.9rem"></i></button>' +
+                '</div>' +
+                '<div class="small text-muted mt-1">Unit. $' + precioStr + ' · Subtotal $' + subtotalStr + '</div>' +
+                '<button type="button" class="btn btn-sm btn-outline-danger mt-1 w-100" onclick="eliminarProducto(' + index + ')"><i class="bi bi-trash"></i> Eliminar</button>' +
+                '</div>';
+        });
+        $('#productosListaMobile').html(mobileHtml);
 
         $('#totalFactura').text(totalFactura.toLocaleString('es-CO'));
     }
@@ -305,6 +327,16 @@ $(document).ready(function() {
             localStorage.removeItem('pedidoActualId');
         }
     }
+
+    // Nueva venta: limpiar todo y dejar Consumidor final para empezar de nuevo
+    $('#nuevaVenta').on('click', function() {
+        limpiarFormulario();
+        getOrCreateConsumidorFinal().then(function(cf) {
+            if (cf && cf.id) {
+                seleccionarCliente({ id: cf.id, nombre: cf.nombre || 'Consumidor final', direccion: cf.direccion || '', telefono: cf.telefono || '' });
+            }
+        });
+    });
 
     // Guardar pedido
     $('#guardarPedido').click(function() {
@@ -468,13 +500,8 @@ $(document).ready(function() {
                 console.log('Factura generada exitosamente:', response);
                 
                 if (response && response.id) {
-                    // Eliminar el pedido de localStorage si existe
-                    const pedidoId = localStorage.getItem('pedidoActualId');
-                    if (pedidoId) {
-                        pedidosGuardados = pedidosGuardados.filter(p => p.id != pedidoId);
-                        actualizarLocalStorage();
-                        localStorage.removeItem('pedidoActualId');
-                    }
+                    // No borrar el pedido guardado: se mantiene en la lista por si lo quieren reutilizar o consultar
+                    localStorage.removeItem('pedidoActualId');
 
                     // Mostrar la factura
                     const facturaModal = new bootstrap.Modal(document.getElementById('facturaModal'));
