@@ -35,7 +35,7 @@
         <li class="nav-item" role="presentation">
             <button class="nav-link active" id="tab-analisis" data-bs-toggle="tab" data-bs-target="#panel-analisis" type="button">Análisis</button>
         </li>
-        <% if (typeof allowedByPlan !== 'undefined' && allowedByPlan.prediccion_ml) { %>
+        <% if (typeof canShowPrediccion !== 'undefined' && canShowPrediccion) { %>
         <li class="nav-item" role="presentation">
             <button class="nav-link" id="tab-prediccion" data-bs-toggle="tab" data-bs-target="#panel-prediccion" type="button">Predicción</button>
         </li>
@@ -90,8 +90,8 @@
             </div>
         </div>
 
-        <!-- Pestaña Predicción (solo Premium) -->
-        <% if (typeof allowedByPlan !== 'undefined' && allowedByPlan.prediccion_ml) { %>
+        <!-- Pestaña Predicción (plan Premium o permiso prediccion.ver) -->
+        <% if (typeof canShowPrediccion !== 'undefined' && canShowPrediccion) { %>
         <div class="tab-pane fade" id="panel-prediccion" role="tabpanel">
             <div class="card card-analitica">
                 <div class="card-header"><i class="bi bi-cpu me-2"></i>Predicción próximo mes</div>

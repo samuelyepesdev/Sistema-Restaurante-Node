@@ -32,28 +32,42 @@ async function ensureTenant(slug, nombre) {
     return result.insertId;
 }
 
-async function upsertUser({ username, password, email, nombreCompleto, rolNombre, tenantId }) {
-    const rolId = await getRoleId(rolNombre);
-    const passwordHash = await bcrypt.hash(password, 10);
+/**
+ * Crea el usuario solo si no existe. Si ya existe, no se modifica (evita resetear
+ * contraseñas en cada deploy en producción).
+ * Para forzar actualización: CREATE_ADMIN_OVERWRITE=true
+ */
+async function createUserIfNotExists({ username, password, email, nombreCompleto, rolNombre, tenantId }) {
     const [existing] = await db.query('SELECT id FROM usuarios WHERE username = ?', [username]);
     if (existing.length > 0) {
-        await db.query(
-            'UPDATE usuarios SET password_hash = ?, email = ?, nombre_completo = ?, rol_id = ?, tenant_id = ?, activo = TRUE WHERE username = ?',
-            [passwordHash, email || null, nombreCompleto || null, rolId, tenantId || null, username]
-        );
+        if (process.env.CREATE_ADMIN_OVERWRITE === 'true') {
+            const rolId = await getRoleId(rolNombre);
+            const passwordHash = await bcrypt.hash(password, 10);
+            await db.query(
+                'UPDATE usuarios SET password_hash = ?, email = ?, nombre_completo = ?, rol_id = ?, tenant_id = ?, activo = TRUE WHERE username = ?',
+                [passwordHash, email || null, nombreCompleto || null, rolId, tenantId || null, username]
+            );
+            console.log(`  Actualizado (OVERWRITE): ${username}`);
+        } else {
+            console.log(`  Ya existe, omitido: ${username}`);
+        }
         return existing[0].id;
     }
+    const rolId = await getRoleId(rolNombre);
+    const passwordHash = await bcrypt.hash(password, 10);
     const [result] = await db.query(
         'INSERT INTO usuarios (username, password_hash, email, nombre_completo, rol_id, tenant_id, activo) VALUES (?, ?, ?, ?, ?, ?, TRUE)',
         [username, passwordHash, email || null, nombreCompleto || null, rolId, tenantId || null]
     );
+    console.log(`  Creado: ${username}`);
     return result.insertId;
 }
 
 async function createAdminUsers() {
     try {
         const tenantId = await ensureTenant('principal', 'Principal');
-        await upsertUser({
+        console.log('Usuarios administrativos:');
+        await createUserIfNotExists({
             username: ADMIN_USERNAME,
             password: ADMIN_PASSWORD,
             email: ADMIN_EMAIL,
@@ -61,7 +75,7 @@ async function createAdminUsers() {
             rolNombre: ROLES.ADMIN,
             tenantId
         });
-        await upsertUser({
+        await createUserIfNotExists({
             username: SUPERADMIN_USERNAME,
             password: SUPERADMIN_PASSWORD,
             email: SUPERADMIN_EMAIL,
@@ -69,7 +83,7 @@ async function createAdminUsers() {
             rolNombre: ROLES.SUPERADMIN,
             tenantId: null
         });
-        console.log('Usuarios administrativos listos:');
+        console.log('Listo.');
         process.exit(0);
     } catch (error) {
         console.error('Error creando usuarios:', error.message);

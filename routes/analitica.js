@@ -16,10 +16,14 @@ router.get(['/', ''], requireRole('admin'), async (req, res) => {
             return res.status(403).render('error', { error: { message: 'Contexto de tenant no disponible' } });
         }
         const data = await AnaliticaService.getAnaliticaCompleta(tenantId);
+        const allowedByPlan = res.locals.allowedByPlan || {};
+        const tienePermisoPrediccion = req.user.permisos && req.user.permisos.includes('prediccion.ver');
+        const canShowPrediccion = allowedByPlan.prediccion_ml === true || tienePermisoPrediccion;
         res.render('analitica', {
             user: req.user,
             tenant: req.tenant,
-            allowedByPlan: res.locals.allowedByPlan || {},
+            allowedByPlan,
+            canShowPrediccion: !!canShowPrediccion,
             resumen: data.resumen,
             prediccion: data.prediccion
         });
