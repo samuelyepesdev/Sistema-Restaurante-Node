@@ -34,6 +34,11 @@ function canShow(mod) { if (!mod) return true; if (typeof allowedByPlan === 'und
                         <i class="bi bi-layers"></i> Planes
                     </a>
                 </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/admin/permisos">
+                        <i class="bi bi-shield-lock"></i> Permisos
+                    </a>
+                </li>
                 <% } else { %>
                 <% if (user && user.rol === 'admin' && canShow('dashboard')) { %>
                 <li class="nav-item">
@@ -87,6 +92,13 @@ function canShow(mod) { if (!mod) return true; if (typeof allowedByPlan === 'und
                 <li class="nav-item">
                     <a class="nav-link" href="/configuracion">
                         <i class="bi bi-gear"></i> Configuración
+                    </a>
+                </li>
+                <% } %>
+                <% if (user && user.permisos && user.permisos.includes('eventos.ver')) { %>
+                <li class="nav-item">
+                    <a class="nav-link" href="/eventos">
+                        <i class="bi bi-calendar-event"></i> Eventos
                     </a>
                 </li>
                 <% } %>

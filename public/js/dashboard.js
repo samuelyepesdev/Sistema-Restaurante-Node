@@ -55,7 +55,9 @@ function updateStatsCards(stats) {
         : 0;
     $('#avgInvoice').text(formatCurrency(avgInvoice));
     
-    $('#uniqueProducts').text(stats.topProducts.length);
+    $('#uniqueProducts').text(stats.topProducts ? stats.topProducts.length : 0);
+    $('#eventosCount').text(stats.eventos_count != null ? stats.eventos_count : 0);
+    $('#ventasEventosTotal').text(formatCurrency(stats.ventas_eventos_total != null ? stats.ventas_eventos_total : 0));
 }
 
 /**

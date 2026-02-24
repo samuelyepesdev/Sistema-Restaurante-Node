@@ -15,10 +15,13 @@ class VentaRepository {
      */
     static async getAllWithFilters(tenantId, filters) {
         let query = `
-            SELECT f.id, f.fecha, f.cliente_id, f.forma_pago, f.total,
-                   c.nombre AS cliente_nombre
+            SELECT f.id, f.fecha, f.cliente_id, f.forma_pago, f.total, f.evento_id,
+                   c.nombre AS cliente_nombre,
+                   e.nombre AS evento_nombre,
+                   CASE WHEN f.evento_id IS NOT NULL THEN CONCAT('Evento: ', e.nombre) ELSE 'Venta diaria' END AS tipo_venta
             FROM facturas f
             LEFT JOIN clientes c ON f.cliente_id = c.id
+            LEFT JOIN eventos e ON f.evento_id = e.id
             WHERE f.tenant_id = ?
         `;
         const params = [tenantId];
@@ -58,9 +61,13 @@ class VentaRepository {
                 f.fecha,
                 c.nombre AS cliente,
                 f.forma_pago,
-                f.total
+                f.total,
+                f.evento_id,
+                e.nombre AS evento_nombre,
+                CASE WHEN f.evento_id IS NOT NULL THEN CONCAT('Evento: ', e.nombre) ELSE 'Venta diaria' END AS tipo_venta
             FROM facturas f
             LEFT JOIN clientes c ON f.cliente_id = c.id
+            LEFT JOIN eventos e ON f.evento_id = e.id
             WHERE f.tenant_id = ?
         `;
         const params = [tenantId];

@@ -37,7 +37,8 @@ function nombreMes(month) {
  * @returns {Promise<Object>} { ventasProximoMes, rangoMin, rangoMax, gananciasEsperadas, posiblesPerdidasVariacion, mesesUsados, mensaje }
  */
 async function getPrediccionProximoMes(tenantId) {
-    const meses = await StatsRepository.getMonthlySales(tenantId, 3);
+    // Excluir ventas de eventos para que no afecten la predicción
+    const meses = await StatsRepository.getMonthlySales(tenantId, 3, { excludeEventos: true });
     if (!meses.length) {
         return {
             ventasProximoMes: 0,

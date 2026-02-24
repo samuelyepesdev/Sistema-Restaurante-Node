@@ -247,13 +247,14 @@ class StatsRepository {
     }
 
     /**
-     * Get sales aggregated by month for the last N months (for analytics and prediction)
+     * Get sales aggregated by month for the last N months (for analytics and prediction).
      * @param {number} tenantId - Tenant ID
      * @param {number} months - Number of months (default: 3)
+     * @param {Object} options - { excludeEventos: true } to exclude event sales (for prediction)
      * @returns {Promise<Array>} Array of { year, month, total_ventas, cantidad_facturas }
      */
-    static async getMonthlySales(tenantId, months = 3) {
-        const query = `
+    static async getMonthlySales(tenantId, months = 3, options = {}) {
+        let query = `
             SELECT 
                 YEAR(fecha) AS year,
                 MONTH(fecha) AS month,
@@ -262,6 +263,11 @@ class StatsRepository {
             FROM facturas
             WHERE tenant_id = ?
               AND fecha >= DATE_FORMAT(DATE_SUB(CURDATE(), INTERVAL ? MONTH), '%Y-%m-01')
+        `;
+        if (options.excludeEventos) {
+            query += ' AND evento_id IS NULL';
+        }
+        query += `
             GROUP BY YEAR(fecha), MONTH(fecha)
             ORDER BY year ASC, month ASC
         `;
@@ -272,6 +278,32 @@ class StatsRepository {
             cantidad_facturas: parseInt(row.cantidad_facturas || 0),
             total_ventas: parseFloat(row.total_ventas || 0)
         }));
+    }
+
+    /**
+     * Event stats for dashboard: count of events and total sales from events in date range.
+     * @param {number} tenantId - Tenant ID
+     * @param {string} desde - Start date (YYYY-MM-DD)
+     * @param {string} hasta - End date (YYYY-MM-DD)
+     */
+    static async getEventStatsForDashboard(tenantId, desde, hasta) {
+        const [eventosCount] = await db.query(
+            `SELECT COUNT(*) AS total FROM eventos 
+             WHERE tenant_id = ? AND activo = TRUE 
+             AND (fecha_inicio <= ? AND fecha_fin >= ?)`,
+            [tenantId, hasta, desde]
+        );
+        const [ventasEventos] = await db.query(
+            `SELECT COALESCE(SUM(total), 0) AS total 
+             FROM facturas 
+             WHERE tenant_id = ? AND evento_id IS NOT NULL 
+             AND DATE(fecha) BETWEEN ? AND ?`,
+            [tenantId, desde, hasta]
+        );
+        return {
+            eventos_count: parseInt(eventosCount[0]?.total || 0),
+            ventas_eventos_total: parseFloat(ventasEventos[0]?.total || 0)
+        };
     }
 }
 

@@ -1,0 +1,83 @@
+/**
+ * EventoRepository - Data access for events (eventos)
+ * Events allow tagging sales so they don't affect predictive analytics.
+ */
+
+const db = require('../config/database');
+
+class EventoRepository {
+    static async findAllByTenant(tenantId, filters = {}) {
+        let query = `
+            SELECT id, tenant_id, nombre, fecha_inicio, fecha_fin, descripcion, activo, created_at
+            FROM eventos
+            WHERE tenant_id = ?
+        `;
+        const params = [tenantId];
+        if (filters.activo !== undefined) {
+            query += ' AND activo = ?';
+            params.push(filters.activo ? 1 : 0);
+        }
+        if (filters.mes && filters.anio) {
+            query += ' AND MONTH(fecha_inicio) = ? AND YEAR(fecha_inicio) = ?';
+            params.push(filters.mes, filters.anio);
+        }
+        query += ' ORDER BY fecha_inicio DESC, id DESC';
+        const [rows] = await db.query(query, params);
+        return rows;
+    }
+
+    static async findById(id, tenantId) {
+        const [rows] = await db.query(
+            'SELECT * FROM eventos WHERE id = ? AND tenant_id = ?',
+            [id, tenantId]
+        );
+        return rows[0] || null;
+    }
+
+    static async findActiveByDate(tenantId, date) {
+        const [rows] = await db.query(
+            `SELECT id, nombre FROM eventos 
+             WHERE tenant_id = ? AND activo = TRUE 
+             AND ? BETWEEN fecha_inicio AND fecha_fin
+             ORDER BY fecha_inicio DESC LIMIT 1`,
+            [tenantId, date]
+        );
+        return rows[0] || null;
+    }
+
+    static async create(tenantId, data) {
+        const { nombre, fecha_inicio, fecha_fin, descripcion } = data;
+        const [result] = await db.query(
+            `INSERT INTO eventos (tenant_id, nombre, fecha_inicio, fecha_fin, descripcion, activo)
+             VALUES (?, ?, ?, ?, ?, TRUE)`,
+            [tenantId, nombre, fecha_inicio, fecha_fin, descripcion || null]
+        );
+        return result.insertId;
+    }
+
+    static async update(id, tenantId, data) {
+        const { nombre, fecha_inicio, fecha_fin, descripcion, activo } = data;
+        await db.query(
+            `UPDATE eventos SET nombre = ?, fecha_inicio = ?, fecha_fin = ?, descripcion = ?, activo = COALESCE(?, activo)
+             WHERE id = ? AND tenant_id = ?`,
+            [nombre, fecha_inicio, fecha_fin, descripcion || null, activo, id, tenantId]
+        );
+    }
+
+    static async delete(id, tenantId) {
+        const [result] = await db.query('DELETE FROM eventos WHERE id = ? AND tenant_id = ?', [id, tenantId]);
+        return result.affectedRows > 0;
+    }
+
+    /** Count events in date range for tenant */
+    static async countInRange(tenantId, desde, hasta) {
+        const [rows] = await db.query(
+            `SELECT COUNT(*) AS total FROM eventos 
+             WHERE tenant_id = ? AND fecha_inicio >= ? AND fecha_fin <= ?`,
+            [tenantId, desde, hasta]
+        );
+        return parseInt(rows[0]?.total || 0);
+    }
+}
+
+module.exports = EventoRepository;

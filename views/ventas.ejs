@@ -203,6 +203,7 @@
                                 <th>Fecha</th>
                                 <th>Cliente</th>
                                 <th>Forma de Pago</th>
+                                <th>Tipo</th>
                                 <th class="text-end">Total</th>
                                 <th class="text-center">Acciones</th>
                             </tr>
@@ -214,6 +215,7 @@
                                     <td><%= new Date(venta.fecha).toLocaleString() %></td>
                                     <td><%= venta.cliente_nombre %></td>
                                     <td><%= venta.forma_pago.charAt(0).toUpperCase() + venta.forma_pago.slice(1) %></td>
+                                    <td><span class="badge bg-<%= venta.evento_id ? 'info' : 'secondary' %>"><%= venta.tipo_venta || (venta.evento_id ? 'Evento' : 'Venta diaria') %></span></td>
                                     <td class="text-end" data-total="<%= venta.total %>">$<%= Number(venta.total).toFixed(2) %></td>
                                     <td class="text-center">
                                         <div class="d-flex gap-1 justify-content-center flex-wrap">
@@ -236,18 +238,18 @@
                         </tbody>
                         <tfoot class="table-light fw-bold tfoot-desktop">
                             <tr>
-                                <td colspan="3" class="text-end">Total Efectivo:</td>
-                                <td colspan="2" class="text-end" id="totalEfectivo">$0.00</td>
+                                <td colspan="5" class="text-end">Total Efectivo:</td>
+                                <td class="text-end" id="totalEfectivo">$0.00</td>
                                 <td></td>
                             </tr>
                             <tr>
-                                <td colspan="3" class="text-end">Total Transferencia:</td>
-                                <td colspan="2" class="text-end" id="totalTransferencia">$0.00</td>
+                                <td colspan="5" class="text-end">Total Transferencia:</td>
+                                <td class="text-end" id="totalTransferencia">$0.00</td>
                                 <td></td>
                             </tr>
                             <tr>
-                                <td colspan="3" class="text-end">Total General:</td>
-                                <td colspan="2" class="text-end" id="totalGeneral">$0.00</td>
+                                <td colspan="5" class="text-end">Total General:</td>
+                                <td class="text-end" id="totalGeneral">$0.00</td>
                                 <td></td>
                             </tr>
                         </tfoot>

@@ -92,6 +92,8 @@ const analiticaRoutes = require('./routes/analitica');
 const adminTenantsRoutes = require('./routes/admin/tenants');
 const adminSistemaRoutes = require('./routes/admin/sistema');
 const adminPlanesRoutes = require('./routes/admin/planes');
+const adminPermisosRoutes = require('./routes/admin/permisos');
+const eventosRoutes = require('./routes/eventos');
 
 // Ruta principal - redirige según autenticación y rol
 app.get('/', optionalAuth, (req, res) => {
@@ -128,6 +130,7 @@ app.use('/cocina', requireAuthWithTenant, requirePlanFeature('mesas'), cocinaRou
 app.use('/api/cocina', requireAuthWithTenant, requirePlanFeature('mesas'), cocinaRoutes);
 app.use('/configuracion', requireAuthWithTenant, requirePlanFeature('configuracion'), configuracionRoutes);
 app.use('/ventas', requireAuthWithTenant, requirePlanFeature('ventas'), ventasRoutes);
+app.use('/eventos', requireAuthWithTenant, eventosRoutes);
 app.use('/dashboard', requireAuthWithTenant, requirePlanFeature('dashboard'), dashboardRoutes);
 app.use('/api/dashboard', requireAuthWithTenant, requirePlanFeature('dashboard'), dashboardRoutes);
 app.use('/costeo', requireAuth, restrictSuperadminToAdmin, costeoTenantContext, requirePlanFeature('costeo'), costeoRoutes);
@@ -136,6 +139,7 @@ app.use('/analitica', requireAuthWithTenant, requirePlanFeature('analitica'), an
 app.use('/admin/tenants', requireAuth, adminTenantsRoutes);
 app.use('/admin/sistema', requireAuth, adminSistemaRoutes);
 app.use('/admin/planes', requireAuth, adminPlanesRoutes);
+app.use('/admin/permisos', requireAuth, adminPermisosRoutes);
 
 
 // Manejo de errores 404

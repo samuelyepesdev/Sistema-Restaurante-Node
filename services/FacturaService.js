@@ -13,7 +13,7 @@ class FacturaService {
      * @returns {Promise<Object>} Created invoice result
      */
     static async create(tenantId, facturaData) {
-        const { cliente_id, total, forma_pago, productos } = facturaData;
+        const { cliente_id, total, forma_pago, productos, evento_id } = facturaData;
 
         if (!cliente_id || !productos || productos.length === 0) {
             throw new Error('Datos incompletos');
@@ -23,7 +23,8 @@ class FacturaService {
             cliente_id,
             total,
             forma_pago,
-            productos
+            productos,
+            evento_id: evento_id || null
         });
 
         return { id: result.insertId };

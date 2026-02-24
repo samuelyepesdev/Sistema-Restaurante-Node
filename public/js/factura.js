@@ -406,10 +406,12 @@ $(document).ready(function() {
         // Marcar paso 4 como activo
         updateStepIndicator(4, false);
 
+        const evento_id = document.getElementById('eventoId') && document.getElementById('eventoId').value ? parseInt(document.getElementById('eventoId').value, 10) : null;
         const factura = {
             cliente_id: cliente_id,
             total: totalFactura,
             forma_pago: forma_pago,
+            evento_id: evento_id || undefined,
             productos: productosFactura.map(p => ({
                 producto_id: p.producto_id,
                 cantidad: p.cantidad,

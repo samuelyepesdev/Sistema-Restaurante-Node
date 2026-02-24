@@ -21,9 +21,10 @@ class FacturaRepository {
         try {
             await connection.beginTransaction();
 
+            const evento_id = facturaData.evento_id || null;
             const [result] = await connection.query(
-                'INSERT INTO facturas (tenant_id, cliente_id, total, forma_pago) VALUES (?, ?, ?, ?)',
-                [tenantId, facturaData.cliente_id, facturaData.total, facturaData.forma_pago]
+                'INSERT INTO facturas (tenant_id, cliente_id, total, forma_pago, evento_id) VALUES (?, ?, ?, ?, ?)',
+                [tenantId, facturaData.cliente_id, facturaData.total, facturaData.forma_pago, evento_id]
             );
 
             const factura_id = result.insertId;

@@ -14,6 +14,9 @@ class StatsService {
      * @returns {Promise<Object>} Dashboard statistics object
      */
     static async getDashboardStats(tenantId, filters = {}) {
+        const desde = filters.desde || new Date().toISOString().slice(0, 8) + '01';
+        const hasta = filters.hasta || new Date().toISOString().slice(0, 10);
+
         const [
             totalSales,
             totalInvoices,
@@ -21,7 +24,8 @@ class StatsService {
             topProducts,
             salesByCategory,
             topProductsByCategory,
-            dailySales
+            dailySales,
+            eventStats
         ] = await Promise.all([
             StatsRepository.getTotalSales(tenantId, filters),
             StatsRepository.getTotalInvoices(tenantId, filters),
@@ -29,7 +33,8 @@ class StatsService {
             StatsRepository.getTopProducts(tenantId, 10, filters),
             StatsRepository.getSalesByCategory(tenantId, filters),
             StatsRepository.getTopProductsByCategory(tenantId, 5, filters),
-            StatsRepository.getDailySales(tenantId, 30)
+            StatsRepository.getDailySales(tenantId, 30),
+            StatsRepository.getEventStatsForDashboard(tenantId, desde, hasta)
         ]);
 
         return {
@@ -39,7 +44,9 @@ class StatsService {
             topProducts,
             salesByCategory,
             topProductsByCategory,
-            dailySales
+            dailySales,
+            eventos_count: eventStats.eventos_count,
+            ventas_eventos_total: eventStats.ventas_eventos_total
         };
     }
 
