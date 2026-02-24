@@ -56,10 +56,8 @@
                             <td><%= e.descripcion ? e.descripcion.substring(0, 50) + (e.descripcion.length > 50 ? '…' : '') : '—' %></td>
                             <td><span class="badge bg-<%= e.activo ? 'success' : 'secondary' %>"><%= e.activo ? 'Activo' : 'Inactivo' %></span></td>
                             <td>
-                                <% const n = typeof e.cantidad_ventas !== 'undefined' ? e.cantidad_ventas : 0; const tot = typeof e.total_ventas !== 'undefined' ? e.total_ventas : 0; %>
                                 <a href="/facturas/facturar?evento_id=<%= e.id %>" class="btn btn-sm btn-success me-1"><i class="bi bi-cart-plus me-1"></i>Realizar ventas</a>
-                                <% if (n > 0) { %><span class="text-muted small d-block mt-1"><%= n %> venta<%= n !== 1 ? 's' : '' %> · $<%= Number(tot).toLocaleString('es-CO', { minimumFractionDigits: 2 }) %></span><% } %>
-                                <a href="/ventas?evento_id=<%= e.id %>" class="btn btn-sm btn-outline-secondary mt-1"><i class="bi bi-list-ul me-1"></i>Ver ventas</a>
+                                <a href="/ventas?evento_id=<%= e.id %>" class="btn btn-sm btn-outline-secondary"><i class="bi bi-list-ul me-1"></i>Ver ventas</a>
                             </td>
                             <% if (user && user.permisos && (user.permisos.includes('eventos.editar') || user.permisos.includes('eventos.eliminar'))) { %>
                             <td class="text-end">

@@ -117,6 +117,24 @@ app.get('/', optionalAuth, (req, res) => {
     }
 });
 
+// GET /facturas/facturar - Pantalla realizar venta (POS), opcional evento_id (registrada antes del use de facturas)
+app.get('/facturas/facturar', requireAuthWithTenant, requirePlanFeature('ventas'), async (req, res) => {
+    try {
+        const tenantId = req.tenant?.id;
+        if (!tenantId) return res.status(403).render('error', { error: { message: 'Contexto de tenant no disponible' } });
+        const EventoService = require('./services/EventoService');
+        let eventoFiltro = null;
+        if (req.query.evento_id) {
+            const ev = await EventoService.getById(req.query.evento_id, tenantId);
+            if (ev) eventoFiltro = { id: ev.id, nombre: ev.nombre };
+        }
+        res.render('index', { user: req.user, tenant: req.tenant, eventoFiltro: eventoFiltro || null });
+    } catch (error) {
+        console.error('Error al cargar pantalla de facturación:', error);
+        res.status(500).render('error', { error, user: req.user });
+    }
+});
+
 // Proteger rutas: auth + tenant + plan que incluya el módulo
 app.use('/productos', requireAuthWithTenant, requirePlanFeature('productos'), productosRoutes);
 app.use('/api/productos', requireAuthWithTenant, requirePlanFeature('productos'), productosRoutes);

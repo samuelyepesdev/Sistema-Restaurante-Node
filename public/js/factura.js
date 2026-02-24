@@ -1,9 +1,27 @@
 $(document).ready(function() {
     let timeoutCliente;
     let timeoutProducto;
-    let productoSeleccionado = null;
     let pedidosGuardados = JSON.parse(localStorage.getItem('pedidos') || '[]');
     let pedidoActualId = null; // Para rastrear el ID del pedido cargado
+
+    // Obtener o crear cliente "Consumidor final" (siempre es el cliente por defecto)
+    function getOrCreateConsumidorFinal() {
+        return fetch('/api/clientes/buscar?q=consumidor%20final')
+            .then(function(r) { return r.json(); })
+            .then(function(list) {
+                var cf = (list || []).find(function(c) { return (c.nombre || '').toLowerCase() === 'consumidor final'; });
+                if (cf) return cf;
+                return fetch('/api/clientes', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ nombre: 'Consumidor final' })
+                }).then(function(r) {
+                    if (r.ok) return r.json().then(function(data) { return { id: data.id, nombre: 'Consumidor final' }; });
+                    return null;
+                });
+            })
+            .catch(function() { return null; });
+    }
 
     // Función para actualizar localStorage
     function actualizarLocalStorage() {
@@ -59,23 +77,30 @@ $(document).ready(function() {
         }, 300);
     });
 
-    // Búsqueda de productos
+    // Búsqueda de productos: al seleccionar uno se agrega directo a la venta (como en Mesas)
     $('#producto').on('keyup', function() {
         clearTimeout(timeoutProducto);
-        const valor = $(this).val();
-        
-        if (valor.length < 2) return;
-
+        const valor = $(this).val().trim();
+        const $resultados = $('#resultadosProductos');
+        if (valor.length < 2) {
+            $resultados.empty().hide();
+            return;
+        }
         timeoutProducto = setTimeout(() => {
             $.ajax({
                 url: '/api/productos/buscar',
                 data: { q: valor },
                 success: function(productos) {
-                    if (productos.length === 1) {
-                        seleccionarProducto(productos[0]);
-                    } else if (productos.length > 1) {
-                        mostrarListaProductos(productos);
+                    if (!productos || productos.length === 0) {
+                        $resultados.empty().hide();
+                        return;
                     }
+                    if (productos.length === 1) {
+                        agregarProductoALista(productos[0]);
+                        $resultados.empty().hide();
+                        return;
+                    }
+                    mostrarListaProductos(productos);
                 }
             });
         }, 300);
@@ -106,13 +131,24 @@ $(document).ready(function() {
         }
     }
 
-    // Función para seleccionar producto
-    function seleccionarProducto(producto) {
-        productoSeleccionado = producto;
-        $('#producto').val(producto.nombre);
-        $('#producto_id').val(producto.id);
-        actualizarPrecioSegunUnidad(producto, $('#unidadMedida').val());
-        $('#cantidad').focus();
+    // Agregar producto a la venta (como en Mesas: buscar → clic → se agrega)
+    function agregarProductoALista(producto) {
+        if (!producto || !producto.id) return;
+        const precio = Number(producto.precio_unidad) || 0;
+        const item = {
+            producto_id: producto.id,
+            nombre: producto.nombre,
+            cantidad: 1,
+            unidad: 'UND',
+            precio: precio,
+            subtotal: precio
+        };
+        productosFactura.push(item);
+        actualizarTablaProductos();
+        $('#producto').val('');
+        $('#producto_id').val('');
+        $('#resultadosProductos').empty().hide();
+        $('#producto').focus();
     }
 
     // Función para mostrar lista de clientes
@@ -132,113 +168,86 @@ $(document).ready(function() {
         $('#cliente').closest('.search-container').append(lista);
     }
 
-    // Función para mostrar lista de productos
+    // Mostrar lista de productos bajo el buscador; al clic se agrega a la venta
     function mostrarListaProductos(productos) {
-        const lista = $('<div class="list-group search-results">');
-        productos.forEach(producto => {
-            lista.append(
-                $('<a href="#" class="list-group-item list-group-item-action">')
-                    .html(`
-                        <div><strong>${producto.codigo}</strong> - ${producto.nombre}</div>
-                        <div class="small text-muted">
-                            KG: $${producto.precio_kg} | UND: $${producto.precio_unidad} | LB: $${producto.precio_libra}
-                        </div>
-                    `)
-                    .click(function(e) {
-                        e.preventDefault();
-                        seleccionarProducto(producto);
-                        lista.remove();
-                    })
-            );
+        const $resultados = $('#resultadosProductos');
+        $resultados.empty();
+        productos.forEach(function(producto) {
+            const precioUnd = Number(producto.precio_unidad) || 0;
+            const $item = $('<a href="#" class="list-group-item list-group-item-action">')
+                .html(
+                    '<div><strong>' + (producto.codigo || '') + '</strong> - ' + (producto.nombre || '') + '</div>' +
+                    '<div class="small text-muted">$' + precioUnd.toLocaleString('es-CO') + ' UND</div>'
+                )
+                .on('click', function(e) {
+                    e.preventDefault();
+                    agregarProductoALista(producto);
+                });
+            $resultados.append($item);
         });
-        $('#producto').closest('.search-container').append(lista);
+        $resultados.show();
     }
 
-    // Cerrar listas al hacer clic fuera
+    // Cerrar resultados de búsqueda al hacer clic fuera
     $(document).on('click', function(e) {
-        if (!$(e.target).closest('.input-group').length) {
-            $('.list-group').remove();
+        if (!$(e.target).closest('.search-container').length) {
+            $('#resultadosProductos').empty().hide();
         }
     });
 
-    // Manejar cambio de unidad de medida
-    $('#unidadMedida').on('change', function() {
-        if (productoSeleccionado) {
-            actualizarPrecioSegunUnidad(productoSeleccionado, $(this).val());
+    // Cliente por defecto: siempre Consumidor final al cargar la página
+    getOrCreateConsumidorFinal().then(function(cf) {
+        if (cf && cf.id) {
+            seleccionarCliente({
+                id: cf.id,
+                nombre: cf.nombre || 'Consumidor final',
+                direccion: cf.direccion || '',
+                telefono: cf.telefono || ''
+            });
         }
     });
-
-    // Función para actualizar precio según unidad de medida
-    function actualizarPrecioSegunUnidad(producto, unidad) {
-        let precio = 0;
-        switch(unidad) {
-            case 'KG':
-                precio = producto.precio_kg;
-                break;
-            case 'UND':
-                precio = producto.precio_unidad;
-                break;
-            case 'LB':
-                precio = producto.precio_libra;
-                break;
-        }
-        $('#precio').val(precio);
-    }
 
     // Variables para la factura
     let productosFactura = [];
     let totalFactura = 0;
 
-    // Agregar producto a la factura
-    $('#agregarProducto').click(function() {
-        if (!productoSeleccionado) {
-            mostrarAlerta('warning', 'Por favor seleccione un producto');
-            return;
-        }
-
-        const cantidad = parseFloat($('#cantidad').val());
-        const unidad = $('#unidadMedida').val();
-        const precio = parseFloat($('#precio').val());
-
-        if (!cantidad || !precio) {
-            mostrarAlerta('warning', 'Por favor complete todos los campos');
-            return;
-        }
-
-        const subtotal = cantidad * precio;
-        const item = {
-            producto_id: productoSeleccionado.id,
-            nombre: productoSeleccionado.nombre,
-            cantidad,
-            unidad,
-            precio,
-            subtotal
-        };
-
-        productosFactura.push(item);
-        actualizarTablaProductos();
-        limpiarFormularioProducto();
-    });
-
-    // Función para actualizar la tabla de productos
+    // Actualizar tabla de productos con cantidad +/- (como en Mesas)
     function actualizarTablaProductos() {
         const tbody = $('#productosTabla');
         tbody.empty();
         totalFactura = 0;
+
+        if (productosFactura.length === 0) {
+            tbody.append(`
+                <tr>
+                    <td colspan="6" class="empty-state">
+                        <i class="bi bi-cart-x"></i>
+                        <div>No hay productos agregados</div>
+                        <small class="text-muted">Busque un producto arriba y selecciónelo para agregarlo</small>
+                    </td>
+                </tr>
+            `);
+            $('#totalFactura').text('0.00');
+            return;
+        }
 
         productosFactura.forEach((item, index) => {
             totalFactura += item.subtotal;
             tbody.append(`
                 <tr>
                     <td>${item.nombre}</td>
-                    <td>${item.cantidad}</td>
-                    <td>${item.unidad}</td>
-                    <td class="text-end">$${item.precio.toLocaleString('es-CO')}</td>
-                    <td class="text-end">$${item.subtotal.toLocaleString('es-CO')}</td>
                     <td class="text-center">
-                        <button class="btn btn-danger btn-sm" onclick="eliminarProducto(${index})">
-                            <i class="bi bi-trash"></i>
-                        </button>
+                        <div class="d-flex align-items-center justify-content-center gap-1">
+                            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="quitarCantidadFactura(${index})" title="Quitar"><i class="bi bi-dash"></i></button>
+                            <span style="min-width:2rem;display:inline-block">${item.cantidad}</span>
+                            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="agregarCantidadFactura(${index})" title="Agregar"><i class="bi bi-plus"></i></button>
+                        </div>
+                    </td>
+                    <td>${item.unidad}</td>
+                    <td class="text-end">$${Number(item.precio).toLocaleString('es-CO')}</td>
+                    <td class="text-end">$${Number(item.subtotal).toLocaleString('es-CO')}</td>
+                    <td class="text-center">
+                        <button type="button" class="btn btn-sm btn-outline-danger" onclick="eliminarProducto(${index})" title="Eliminar"><i class="bi bi-trash"></i></button>
                     </td>
                 </tr>
             `);
@@ -246,6 +255,26 @@ $(document).ready(function() {
 
         $('#totalFactura').text(totalFactura.toLocaleString('es-CO'));
     }
+
+    window.quitarCantidadFactura = function(index) {
+        if (index < 0 || index >= productosFactura.length) return;
+        const item = productosFactura[index];
+        if (item.cantidad <= 1) {
+            productosFactura.splice(index, 1);
+        } else {
+            item.cantidad--;
+            item.subtotal = item.cantidad * item.precio;
+        }
+        actualizarTablaProductos();
+    };
+
+    window.agregarCantidadFactura = function(index) {
+        if (index < 0 || index >= productosFactura.length) return;
+        const item = productosFactura[index];
+        item.cantidad++;
+        item.subtotal = item.cantidad * item.precio;
+        actualizarTablaProductos();
+    };
 
     // Función para eliminar producto
     window.eliminarProducto = function(index) {
@@ -257,10 +286,7 @@ $(document).ready(function() {
     function limpiarFormularioProducto() {
         $('#producto').val('');
         $('#producto_id').val('');
-        $('#cantidad').val('');
-        $('#precio').val('');
-        $('#unidadMedida').val('UND');
-        productoSeleccionado = null;
+        $('#resultadosProductos').empty().hide();
     }
 
     // Función para limpiar el formulario completo
@@ -319,8 +345,8 @@ $(document).ready(function() {
         console.log('Pedidos guardados después:', pedidosGuardados);
         console.log('LocalStorage actualizado');
 
-        limpiarFormulario();
-        mostrarAlerta('success', 'Pedido guardado exitosamente');
+        // No limpiar el formulario: el pedido se queda en pantalla para poder generar la factura
+        mostrarAlerta('success', 'Pedido guardado. Puede generar la factura o guardar otro.');
         console.log('=== FIN GUARDADO DE PEDIDO ===');
     });
 
@@ -462,8 +488,13 @@ $(document).ready(function() {
                         updateStepIndicator(4, true);
                     }
                     
-                    // Limpiar el formulario
+                    // Limpiar el formulario y volver a dejar Consumidor final como cliente
                     limpiarFormulario();
+                    getOrCreateConsumidorFinal().then(function(cf) {
+                        if (cf && cf.id) {
+                            seleccionarCliente({ id: cf.id, nombre: cf.nombre || 'Consumidor final', direccion: cf.direccion || '', telefono: cf.telefono || '' });
+                        }
+                    });
                     mostrarAlerta('success', 'Factura generada exitosamente');
                 } else {
                     mostrarAlerta('error', 'Error: No se recibió el ID de la factura');
