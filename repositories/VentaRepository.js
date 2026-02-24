@@ -42,6 +42,11 @@ class VentaRepository {
             params.push(searchTerm, searchTerm, searchTerm);
         }
 
+        if (filters.evento_id) {
+            query += ` AND f.evento_id = ?`;
+            params.push(filters.evento_id);
+        }
+
         query += ` ORDER BY f.fecha DESC, f.id DESC`;
 
         const [ventas] = await db.query(query, params);
@@ -86,6 +91,11 @@ class VentaRepository {
             query += ` AND (CAST(f.id AS CHAR) LIKE ? OR c.nombre LIKE ? OR c.telefono LIKE ?)`;
             const searchTerm = `%${filters.q}%`;
             params.push(searchTerm, searchTerm, searchTerm);
+        }
+
+        if (filters.evento_id) {
+            query += ` AND f.evento_id = ?`;
+            params.push(filters.evento_id);
         }
 
         query += ` ORDER BY f.fecha DESC, f.id DESC`;

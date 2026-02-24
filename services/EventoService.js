@@ -9,6 +9,23 @@ class EventoService {
         return await EventoRepository.findAllByTenant(tenantId, filters);
     }
 
+    /** Lista eventos con resumen de ventas (cantidad_ventas, total_ventas) por evento */
+    static async listWithVentasResumen(tenantId, filters = {}) {
+        const [eventos, resumen] = await Promise.all([
+            EventoRepository.findAllByTenant(tenantId, filters),
+            EventoRepository.getVentasResumenPorEvento(tenantId)
+        ]);
+        const mapResumen = {};
+        (resumen || []).forEach(r => {
+            mapResumen[r.evento_id] = { cantidad_ventas: parseInt(r.cantidad_ventas || 0), total_ventas: parseFloat(r.total_ventas || 0) };
+        });
+        return eventos.map(e => ({
+            ...e,
+            cantidad_ventas: (mapResumen[e.id] && mapResumen[e.id].cantidad_ventas) || 0,
+            total_ventas: (mapResumen[e.id] && mapResumen[e.id].total_ventas) || 0
+        }));
+    }
+
     static async getById(id, tenantId) {
         return await EventoRepository.findById(id, tenantId);
     }

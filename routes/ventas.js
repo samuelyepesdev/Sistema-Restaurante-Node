@@ -8,6 +8,7 @@ const express = require('express');
 const router = express.Router();
 const VentaService = require('../services/VentaService');
 const ConfiguracionService = require('../services/ConfiguracionService');
+const EventoService = require('../services/EventoService');
 const { requirePermission } = require('../middleware/auth');
 const { requirePlanFeature } = require('../middleware/planFeature');
 let ExcelJS; // Lazy import for Excel export
@@ -22,15 +23,22 @@ router.get('/', async (req, res) => {
         const filters = {
             desde: req.query.desde,
             hasta: req.query.hasta,
-            q: req.query.q
+            q: req.query.q,
+            evento_id: req.query.evento_id || null
         };
+        let eventoFiltro = null;
+        if (filters.evento_id) {
+            const ev = await EventoService.getById(filters.evento_id, tenantId);
+            if (ev) eventoFiltro = { id: ev.id, nombre: ev.nombre };
+        }
         const [ventas, mesasListas] = await Promise.all([
             VentaService.getWithFilters(tenantId, filters),
             VentaService.getTablesReadyToPay(tenantId)
         ]);
-        res.render('ventas', { 
+        res.render('ventas', {
             ventas,
             mesasListas: mesasListas || [],
+            eventoFiltro,
             user: req.user,
             tenant: req.tenant,
             allowedByPlan: res.locals.allowedByPlan || {}
@@ -60,7 +68,8 @@ router.get('/export', requirePermission('plantillas.ver'), requirePlanFeature('p
         const filters = {
             desde: req.query.desde,
             hasta: req.query.hasta,
-            q: req.query.q
+            q: req.query.q,
+            evento_id: req.query.evento_id || null
         };
         const rows = await VentaService.getForExport(tenantId, filters);
 

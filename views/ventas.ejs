@@ -163,6 +163,12 @@
         <div class="card">
             <div class="card-header">
                 <div class="d-flex flex-column gap-3 w-100">
+                    <% if (typeof eventoFiltro !== 'undefined' && eventoFiltro) { %>
+                    <div class="alert alert-info py-2 mb-0 d-flex align-items-center justify-content-between flex-wrap gap-2">
+                        <span><i class="bi bi-calendar-event me-2"></i>Ventas del evento: <strong><%= eventoFiltro.nombre %></strong></span>
+                        <a href="/ventas" class="btn btn-sm btn-outline-primary">Ver todas las ventas</a>
+                    </div>
+                    <% } %>
                     <div class="d-flex flex-column flex-md-row justify-content-between align-items-stretch align-items-md-center gap-3">
                         <div class="fw-semibold"><i class="bi bi-graph-up me-2"></i>Historial de Ventas</div>
                         <div class="d-flex flex-wrap gap-2">
@@ -450,6 +456,8 @@
             const params = new URLSearchParams();
             if (desde && hasta) { params.set('desde', desde); params.set('hasta', hasta); }
             if (q) params.set('q', q);
+            const eventoId = new URLSearchParams(window.location.search).get('evento_id');
+            if (eventoId) params.set('evento_id', eventoId);
             window.open(`/ventas/export?${params.toString()}`, '_blank');
         });
 

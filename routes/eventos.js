@@ -13,7 +13,7 @@ router.get('/', requirePermission('eventos.ver'), async (req, res) => {
     try {
         const tenantId = req.tenant?.id;
         if (!tenantId) return res.status(403).render('error', { error: { message: 'Contexto de tenant no disponible' } });
-        const eventos = await EventoService.list(tenantId);
+        const eventos = await EventoService.listWithVentasResumen(tenantId);
         res.render('eventos', {
             eventos,
             user: req.user,

@@ -43,6 +43,7 @@
                             <th>Fecha fin</th>
                             <th>Descripción</th>
                             <th>Estado</th>
+                            <th>Ventas</th>
                             <% if (user && user.permisos && (user.permisos.includes('eventos.editar') || user.permisos.includes('eventos.eliminar'))) { %><th class="text-end">Acciones</th><% } %>
                         </tr>
                     </thead>
@@ -54,6 +55,11 @@
                             <td><%= e.fecha_fin %></td>
                             <td><%= e.descripcion ? e.descripcion.substring(0, 50) + (e.descripcion.length > 50 ? '…' : '') : '—' %></td>
                             <td><span class="badge bg-<%= e.activo ? 'success' : 'secondary' %>"><%= e.activo ? 'Activo' : 'Inactivo' %></span></td>
+                            <td>
+                                <% const n = typeof e.cantidad_ventas !== 'undefined' ? e.cantidad_ventas : 0; const tot = typeof e.total_ventas !== 'undefined' ? e.total_ventas : 0; %>
+                                <% if (n > 0) { %><span class="text-muted small"><%= n %> venta<%= n !== 1 ? 's' : '' %> · $<%= Number(tot).toLocaleString('es-CO', { minimumFractionDigits: 2 }) %></span><br><% } %>
+                                <a href="/ventas?evento_id=<%= e.id %>" class="btn btn-sm btn-outline-success mt-1"><i class="bi bi-cash-stack me-1"></i>Ver ventas</a>
+                            </td>
                             <% if (user && user.permisos && (user.permisos.includes('eventos.editar') || user.permisos.includes('eventos.eliminar'))) { %>
                             <td class="text-end">
                                 <% if (user.permisos.includes('eventos.editar')) { %>
@@ -67,7 +73,7 @@
                         </tr>
                         <% }); %>
                         <% if (!eventos || eventos.length === 0) { %>
-                        <tr><td colspan="6" class="text-muted text-center py-4">No hay eventos. Crea uno para asociar ventas y excluirlas del análisis predictivo.</td></tr>
+                        <tr><td colspan="<%= (user && user.permisos && (user.permisos.includes('eventos.editar') || user.permisos.includes('eventos.eliminar'))) ? 7 : 6 %>" class="text-muted text-center py-4">No hay eventos. Crea uno para asociar ventas y excluirlas del análisis predictivo.</td></tr>
                         <% } %>
                     </tbody>
                 </table>

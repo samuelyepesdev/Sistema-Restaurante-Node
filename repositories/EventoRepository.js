@@ -78,6 +78,18 @@ class EventoRepository {
         );
         return parseInt(rows[0]?.total || 0);
     }
+
+    /** Ventas resumen por evento: cantidad y total por evento_id (solo facturas con evento_id) */
+    static async getVentasResumenPorEvento(tenantId) {
+        const [rows] = await db.query(
+            `SELECT evento_id, COUNT(*) AS cantidad_ventas, COALESCE(SUM(total), 0) AS total_ventas
+             FROM facturas
+             WHERE tenant_id = ? AND evento_id IS NOT NULL
+             GROUP BY evento_id`,
+            [tenantId]
+        );
+        return rows;
+    }
 }
 
 module.exports = EventoRepository;
