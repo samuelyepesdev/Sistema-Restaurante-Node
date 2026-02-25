@@ -403,14 +403,16 @@ router.put('/items/:itemId/estado', async (req, res) => {
 });
 
 // POST /mesas/pedidos/:pedidoId/facturar - API: genera factura desde pedido (pedido del tenant)
+// Acepta opcional descuentos: { itemId: percent } — solo para esta factura; no modifica precio del producto en catálogo
 router.post('/pedidos/:pedidoId/facturar', async (req, res) => {
     const tenantId = req.tenant?.id;
     if (!tenantId) return res.status(403).json({ error: 'Contexto de tenant no disponible' });
 
     const pedidoId = req.params.pedidoId;
-    const { cliente_id, forma_pago } = req.body || {};
+    const { cliente_id, forma_pago, descuentos } = req.body || {};
     if (!cliente_id) return res.status(400).json({ error: 'cliente_id requerido para facturar' });
     if (!forma_pago) return res.status(400).json({ error: 'forma_pago requerido' });
+    const descuentosMap = descuentos && typeof descuentos === 'object' ? descuentos : {};
     try {
         const connection = await db.getConnection();
         try {
@@ -426,7 +428,18 @@ router.post('/pedidos/:pedidoId/facturar', async (req, res) => {
             );
             if (items.length === 0) throw new Error('Pedido sin items');
 
-            const total = items.reduce((acc, it) => acc + Number(it.subtotal || 0), 0);
+            let total = 0;
+            const lineasFactura = items.map(i => {
+                const cant = Number(i.cantidad || 0);
+                const precioUnit = Number(i.precio_unitario || 0);
+                const pct = descuentosMap[String(i.id)] != null ? Number(descuentosMap[String(i.id)]) : 0;
+                const desc = Math.min(100, Math.max(0, pct)) / 100;
+                const subtotal = Math.round(cant * precioUnit * (1 - desc) * 100) / 100;
+                const precioUnitFactura = desc > 0 ? Math.round(precioUnit * (1 - desc) * 100) / 100 : precioUnit;
+                total += subtotal;
+                return { producto_id: i.producto_id, cantidad: cant, precio_unitario: precioUnitFactura, unidad_medida: i.unidad_medida || 'UND', subtotal };
+            });
+            total = Math.round(total * 100) / 100;
 
             const [facturaInsert] = await connection.query(
                 `INSERT INTO facturas (tenant_id, cliente_id, total, forma_pago) VALUES (?, ?, ?, ?)`,
@@ -434,17 +447,10 @@ router.post('/pedidos/:pedidoId/facturar', async (req, res) => {
             );
             const facturaId = facturaInsert.insertId;
 
-            const detallesValues = items.map(i => [
-                facturaId,
-                i.producto_id,
-                i.cantidad,
-                i.precio_unitario,
-                i.unidad_medida,
-                i.subtotal
-            ]);
+            const detallesValuesFinal = lineasFactura.map(l => [facturaId, l.producto_id, l.cantidad, l.precio_unitario, l.unidad_medida, l.subtotal]);
             await connection.query(
                 `INSERT INTO detalle_factura (factura_id, producto_id, cantidad, precio_unitario, unidad_medida, subtotal) VALUES ?`,
-                [detallesValues]
+                [detallesValuesFinal]
             );
 
             await connection.query(`UPDATE pedidos SET estado = 'cerrado', total = ? WHERE id = ?`, [total, pedidoId]);

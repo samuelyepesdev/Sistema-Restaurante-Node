@@ -131,6 +131,12 @@ $(document).ready(function() {
         }
     }
 
+    // Calcular subtotal de una línea (con descuento si existe)
+    function subtotalLinea(item) {
+        const pct = (item.descuento_porcentaje || 0) / 100;
+        return item.cantidad * item.precio * (1 - pct);
+    }
+
     // Agregar producto a la venta (como en Mesas: buscar → clic → se agrega)
     function agregarProductoALista(producto) {
         if (!producto || !producto.id) return;
@@ -141,8 +147,10 @@ $(document).ready(function() {
             cantidad: 1,
             unidad: 'UND',
             precio: precio,
+            descuento_porcentaje: 0,
             subtotal: precio
         };
+        item.subtotal = subtotalLinea(item);
         productosFactura.push(item);
         actualizarTablaProductos();
         $('#producto').val('');
@@ -235,10 +243,12 @@ $(document).ready(function() {
         }
 
         productosFactura.forEach((item, index) => {
+            item.subtotal = subtotalLinea(item);
             totalFactura += item.subtotal;
+            var descBadge = (item.descuento_porcentaje && item.descuento_porcentaje > 0) ? '<span class="badge bg-success ms-1">-' + item.descuento_porcentaje + '%</span>' : '';
             tbody.append(`
                 <tr>
-                    <td>${item.nombre}</td>
+                    <td>${item.nombre}${descBadge}</td>
                     <td class="text-center">
                         <div class="d-flex align-items-center justify-content-center gap-1">
                             <button type="button" class="btn btn-sm btn-outline-secondary" onclick="quitarCantidadFactura(${index})" title="Quitar"><i class="bi bi-dash"></i></button>
@@ -250,27 +260,32 @@ $(document).ready(function() {
                     <td class="text-end">$${Number(item.precio).toLocaleString('es-CO')}</td>
                     <td class="text-end">$${Number(item.subtotal).toLocaleString('es-CO')}</td>
                     <td class="text-center">
+                        <button type="button" class="btn btn-sm btn-outline-primary me-1" onclick="abrirModalDescuento(${index})" title="Aplicar descuento"><i class="bi bi-percent"></i></button>
                         <button type="button" class="btn btn-sm btn-outline-danger" onclick="eliminarProducto(${index})" title="Eliminar"><i class="bi bi-trash"></i></button>
                     </td>
                 </tr>
             `);
         });
 
-        // Vista móvil: tarjetas con nombre, cantidad (+/- pequeños), unitario/subtotal, eliminar abajo
+        // Vista móvil: tarjetas con nombre, cantidad (+/- pequeños), unitario/subtotal, descuento, eliminar
         var mobileHtml = '';
         productosFactura.forEach(function(item, index) {
             var precioStr = Number(item.precio).toLocaleString('es-CO');
             var subtotalStr = Number(item.subtotal).toLocaleString('es-CO');
+            var descBadge = (item.descuento_porcentaje && item.descuento_porcentaje > 0) ? ' <span class="badge bg-success">-' + item.descuento_porcentaje + '%</span>' : '';
             mobileHtml +=
                 '<div class="producto-mobile-card border rounded p-2 mb-2 bg-white">' +
-                '<div class="fw-semibold small">' + item.nombre + '</div>' +
+                '<div class="fw-semibold small">' + item.nombre + descBadge + '</div>' +
                 '<div class="d-flex align-items-center gap-2 mt-1">' +
                 '<button type="button" class="btn btn-sm p-1 btn-outline-secondary" onclick="quitarCantidadFactura(' + index + ')" title="Quitar"><i class="bi bi-dash" style="font-size:0.9rem"></i></button>' +
                 '<span style="min-width:1.5rem;text-align:center;font-size:0.9rem">' + item.cantidad + '</span>' +
                 '<button type="button" class="btn btn-sm p-1 btn-outline-secondary" onclick="agregarCantidadFactura(' + index + ')" title="Agregar"><i class="bi bi-plus" style="font-size:0.9rem"></i></button>' +
                 '</div>' +
                 '<div class="small text-muted mt-1">Unit. $' + precioStr + ' · Subtotal $' + subtotalStr + '</div>' +
-                '<button type="button" class="btn btn-sm btn-outline-danger mt-1 w-100" onclick="eliminarProducto(' + index + ')"><i class="bi bi-trash"></i> Eliminar</button>' +
+                '<div class="d-flex gap-1 mt-1">' +
+                '<button type="button" class="btn btn-sm btn-outline-primary flex-grow-1" onclick="abrirModalDescuento(' + index + ')"><i class="bi bi-percent"></i> Descuento</button>' +
+                '<button type="button" class="btn btn-sm btn-outline-danger" onclick="eliminarProducto(' + index + ')"><i class="bi bi-trash"></i></button>' +
+                '</div>' +
                 '</div>';
         });
         $('#productosListaMobile').html(mobileHtml);
@@ -285,7 +300,7 @@ $(document).ready(function() {
             productosFactura.splice(index, 1);
         } else {
             item.cantidad--;
-            item.subtotal = item.cantidad * item.precio;
+            item.subtotal = subtotalLinea(item);
         }
         actualizarTablaProductos();
     };
@@ -294,9 +309,41 @@ $(document).ready(function() {
         if (index < 0 || index >= productosFactura.length) return;
         const item = productosFactura[index];
         item.cantidad++;
-        item.subtotal = item.cantidad * item.precio;
+        item.subtotal = subtotalLinea(item);
         actualizarTablaProductos();
     };
+
+    // Modal descuento: abrir con índice de línea
+    window.abrirModalDescuento = function(index) {
+        if (index < 0 || index >= productosFactura.length) return;
+        window._descuentoLineIndex = index;
+        var item = productosFactura[index];
+        $('#descuentoModalProducto').text(item.nombre + ' — $' + Number(item.subtotal).toLocaleString('es-CO'));
+        var modal = new bootstrap.Modal(document.getElementById('descuentoModal'));
+        modal.show();
+    };
+
+    // Aplicar porcentaje de descuento a la línea actual
+    $(document).on('click', '.btn-descuento', function() {
+        var pct = parseInt($(this).data('pct'), 10);
+        var index = window._descuentoLineIndex;
+        if (index == null || index < 0 || index >= productosFactura.length) return;
+        var item = productosFactura[index];
+        item.descuento_porcentaje = pct;
+        item.subtotal = subtotalLinea(item);
+        actualizarTablaProductos();
+        bootstrap.Modal.getInstance(document.getElementById('descuentoModal')).hide();
+    });
+
+    $('#quitarDescuentoBtn').on('click', function() {
+        var index = window._descuentoLineIndex;
+        if (index != null && index >= 0 && index < productosFactura.length) {
+            productosFactura[index].descuento_porcentaje = 0;
+            productosFactura[index].subtotal = subtotalLinea(productosFactura[index]);
+            actualizarTablaProductos();
+        }
+        bootstrap.Modal.getInstance(document.getElementById('descuentoModal')).hide();
+    });
 
     // Función para eliminar producto
     window.eliminarProducto = function(index) {
@@ -470,13 +517,17 @@ $(document).ready(function() {
             total: totalFactura,
             forma_pago: forma_pago,
             evento_id: evento_id || undefined,
-            productos: productosFactura.map(p => ({
-                producto_id: p.producto_id,
-                cantidad: p.cantidad,
-                precio: p.precio,
-                unidad: p.unidad,
-                subtotal: p.subtotal
-            }))
+            productos: productosFactura.map(p => {
+                var desc = (p.descuento_porcentaje || 0) / 100;
+                var precioFinal = p.precio * (1 - desc);
+                return {
+                    producto_id: p.producto_id,
+                    cantidad: p.cantidad,
+                    precio: Math.round(precioFinal * 100) / 100,
+                    unidad: p.unidad,
+                    subtotal: Math.round(p.subtotal * 100) / 100
+                };
+            })
         };
 
         console.log('Factura a enviar:', factura);

@@ -5,9 +5,14 @@ $(function() {
   const canvas = new bootstrap.Offcanvas('#canvasPedido');
   let pedidoActual = null; // { id, mesa_id }
   let items = []; // items del pedido en UI
+  let descuentosPorItem = {}; // { itemId: percent } - solo para esta venta; no cambia el precio del producto en catálogo
 
   // Helpers UI
   function formatear(valor){return `$${Number(valor||0).toLocaleString('es-CO')}`}
+  function subtotalConDescuento(cantidad, precio, itemId) {
+    const pct = descuentosPorItem[itemId] != null ? descuentosPorItem[itemId] : 0;
+    return cantidad * precio * (1 - pct / 100);
+  }
   function renderItems(){
     const tbody = $('#tbodyItems');
     tbody.empty();
@@ -15,14 +20,16 @@ $(function() {
     items.forEach((it, idx) => {
       const cantidad = Number(it.cantidad || 0);
       const precio = Number((it.precio_unitario != null ? it.precio_unitario : it.precio) || 0);
-      const subtotal = Number(it.subtotal != null ? it.subtotal : (cantidad * precio));
+      const subtotal = subtotalConDescuento(cantidad, precio, it.id);
       total += subtotal;
+      const descBadge = (descuentosPorItem[it.id] != null && descuentosPorItem[it.id] > 0)
+        ? ' <span class="badge bg-success">-' + descuentosPorItem[it.id] + '%</span>' : '';
       tbody.append(`
         <tr>
-          <td>${it.producto_nombre || it.nombre || it.producto_id}</td>
+          <td>${(it.producto_nombre || it.nombre || it.producto_id) + descBadge}</td>
           <td class="text-end">${cantidad}</td>
           <td class="text-end">${formatear(precio)}</td>
-          <td class="text-end d-flex align-items-center justify-content-end gap-1">
+          <td class="text-end d-flex align-items-center justify-content-end gap-1 flex-wrap">
             <button class="btn btn-sm btn-outline-secondary btn-menos-item" data-item-id="${it.id}" data-cantidad="${cantidad}" title="Quitar cantidad"><i class="bi bi-dash"></i></button>
             <span>${formatear(subtotal)}</span>
             <button class="btn btn-sm btn-outline-secondary btn-mas-item" data-item-id="${it.id}" data-cantidad="${cantidad}" title="Agregar cantidad"><i class="bi bi-plus"></i></button>
@@ -95,8 +102,62 @@ $(function() {
     const data = await resp.json();
     if(!resp.ok) throw new Error(data.error||'Error al cargar pedido');
     items = data.items || [];
+    descuentosPorItem = {}; // descuentos son solo por sesión de esta venta
     renderItems();
   }
+
+  // Botón "Aplicar descuento" (arriba de Mover a mesa): paso 1 = elegir producto, paso 2 = elegir %
+  $('#btnAplicarDescuentoMesa').on('click', function(){
+    if(items.length === 0){
+      Swal.fire({ icon: 'warning', title: 'No hay productos en el pedido', text: 'Agregue productos para aplicar un descuento.' });
+      return;
+    }
+    const $lista = $('#descuentoMesaListaProductos');
+    $lista.empty();
+    items.forEach(function(it){
+      const nombre = it.producto_nombre || it.nombre || it.producto_id || 'Producto';
+      const cantidad = Number(it.cantidad || 0);
+      const precio = Number((it.precio_unitario != null ? it.precio_unitario : it.precio) || 0);
+      const subtotal = subtotalConDescuento(cantidad, precio, it.id);
+      const descTexto = (descuentosPorItem[it.id] != null && descuentosPorItem[it.id] > 0) ? ' <span class="badge bg-success">-' + descuentosPorItem[it.id] + '%</span>' : '';
+      const $a = $('<a href="#" class="list-group-item list-group-item-action"></a>')
+        .html('<div><strong>' + nombre + '</strong>' + descTexto + '</div><div class="small text-muted">Cant: ' + cantidad + ' · ' + formatear(subtotal) + '</div>')
+        .on('click', function(e){ e.preventDefault(); elegirProductoParaDescuento(it.id, nombre); });
+      $lista.append($a);
+    });
+    $('#descuentoModalMesaTitulo').text('Seleccione el producto');
+    $('#descuentoMesaPaso1').show();
+    $('#descuentoMesaPaso2').hide();
+    new bootstrap.Modal(document.getElementById('descuentoModalMesa')).show();
+  });
+
+  function elegirProductoParaDescuento(itemId, nombre){
+    window._descuentoItemIdMesa = itemId;
+    const it = items.find(i => i.id === itemId);
+    const subtotal = it ? formatear(subtotalConDescuento(Number(it.cantidad || 0), Number((it.precio_unitario != null ? it.precio_unitario : it.precio) || 0), itemId)) : '$0';
+    $('#descuentoModalProductoMesa').text(nombre + ' — ' + subtotal);
+    $('#descuentoModalMesaTitulo').text('Aplicar descuento');
+    $('#descuentoMesaPaso1').hide();
+    $('#descuentoMesaPaso2').show();
+  }
+
+  $(document).on('click', '.btn-descuento-mesa', function(){
+    const pct = parseInt($(this).data('pct'), 10);
+    const itemId = window._descuentoItemIdMesa;
+    if(itemId != null){ descuentosPorItem[itemId] = pct; renderItems(); }
+    bootstrap.Modal.getInstance(document.getElementById('descuentoModalMesa')).hide();
+  });
+  $('#quitarDescuentoMesaBtn').on('click', function(){
+    const itemId = window._descuentoItemIdMesa;
+    if(itemId != null){ delete descuentosPorItem[itemId]; renderItems(); }
+    bootstrap.Modal.getInstance(document.getElementById('descuentoModalMesa')).hide();
+  });
+
+  $('#descuentoModalMesa').on('hidden.bs.modal', function(){
+    $('#descuentoMesaPaso1').show();
+    $('#descuentoMesaPaso2').hide();
+    $('#descuentoModalMesaTitulo').text('Aplicar descuento');
+  });
 
   // Buscar productos
   let to;
@@ -248,12 +309,12 @@ $(function() {
         return;
       }
       
-      // Calcular total del pedido desde los items actuales
+      // Calcular total del pedido con descuentos aplicados (temporales para esta venta)
       let totalPedido = 0;
       items.forEach(it => {
         const cantidad = Number(it.cantidad || 0);
         const precio = Number((it.precio_unitario != null ? it.precio_unitario : it.precio) || 0);
-        const subtotal = Number(it.subtotal != null ? it.subtotal : (cantidad * precio));
+        const subtotal = subtotalConDescuento(cantidad, precio, it.id);
         totalPedido += subtotal;
       });
       
@@ -390,7 +451,8 @@ $(function() {
           headers: {'Content-Type': 'application/json'},
           body: JSON.stringify({
             cliente_id: clienteId,
-            forma_pago: formaPagoSeleccionada
+            forma_pago: formaPagoSeleccionada,
+            descuentos: descuentosPorItem
           })
         });
         const data = await resp.json();
