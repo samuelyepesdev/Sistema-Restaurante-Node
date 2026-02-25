@@ -42,7 +42,9 @@
     "@types/node": "25.3.0",
     "artillery": "^2.0.0",
     "autocannon": "^7.14.0",
-    "nodemon": "^3.1.11"
+    "jest": "^29.7.0",
+    "nodemon": "^3.1.11",
+    "supertest": "^6.3.4"
   },
   "overrides": {
     "@opentelemetry/api": "1.9.0"

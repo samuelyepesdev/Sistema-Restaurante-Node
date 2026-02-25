@@ -10,9 +10,16 @@ tests/
 ├── README.md                # Este archivo
 ├── unit/                     # Tests unitarios (lógica aislada, mocks)
 │   ├── utils/
-│   │   └── constants.test.js
+│   │   ├── constants.test.js
+│   │   └── planPermissions.test.js
+│   ├── middleware/
+│   │   ├── auth.test.js
+│   │   ├── planFeature.test.js
+│   │   └── tenant.test.js
 │   └── services/
-│       └── FacturaService.test.js
+│       ├── AuthService.test.js   # hasRole, hasPermission
+│       ├── FacturaService.test.js
+│       └── PlanService.test.js
 └── integration/              # Tests de integración (app Express, rutas)
     └── api/
         └── app.test.js
