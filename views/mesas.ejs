@@ -87,6 +87,11 @@
             background: #f8f9fa;
         }
 
+        .table-pedido-mesas tbody td { vertical-align: middle !important; }
+        .table-pedido-mesas .td-producto { max-width: 140px; }
+        .table-pedido-mesas .td-subtotal { font-weight: 600; white-space: nowrap; }
+        .table-pedido-mesas .btn-group-item { display: inline-flex; align-items: center; gap: 2px; }
+
     </style>
  </head>
 <body>
@@ -182,14 +187,14 @@
                 <button id="btnLiberarMesaHeader" class="btn btn-outline-secondary btn-sm"><i class="bi bi-unlock"></i> Liberar mesa</button>
             </div>
             <div class="table-responsive flex-grow-1">
-                <table class="table table-sm">
+                <table class="table table-sm table-pedido-mesas align-middle">
                     <thead class="table-light">
                         <tr>
                             <th>Producto</th>
-                            <th class="text-end">Cant</th>
-                            <th class="text-end">Precio</th>
-                            <th class="text-end">Subt</th>
-                            <th></th>
+                            <th class="text-center">Cant</th>
+                            <th class="text-end">P. unit.</th>
+                            <th class="text-end">Subtotal</th>
+                            <th class="text-center" style="width: 100px;">Acciones</th>
                         </tr>
                     </thead>
                     <tbody id="tbodyItems"></tbody>

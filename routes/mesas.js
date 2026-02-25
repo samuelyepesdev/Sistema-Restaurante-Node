@@ -437,7 +437,7 @@ router.post('/pedidos/:pedidoId/facturar', async (req, res) => {
                 const subtotal = Math.round(cant * precioUnit * (1 - desc) * 100) / 100;
                 const precioUnitFactura = desc > 0 ? Math.round(precioUnit * (1 - desc) * 100) / 100 : precioUnit;
                 total += subtotal;
-                return { producto_id: i.producto_id, cantidad: cant, precio_unitario: precioUnitFactura, unidad_medida: i.unidad_medida || 'UND', subtotal };
+                return { producto_id: i.producto_id, cantidad: cant, precio_unitario: precioUnitFactura, unidad_medida: i.unidad_medida || 'UND', subtotal, descuento_porcentaje: desc > 0 ? pct : null };
             });
             total = Math.round(total * 100) / 100;
 
@@ -447,9 +447,9 @@ router.post('/pedidos/:pedidoId/facturar', async (req, res) => {
             );
             const facturaId = facturaInsert.insertId;
 
-            const detallesValuesFinal = lineasFactura.map(l => [facturaId, l.producto_id, l.cantidad, l.precio_unitario, l.unidad_medida, l.subtotal]);
+            const detallesValuesFinal = lineasFactura.map(l => [facturaId, l.producto_id, l.cantidad, l.precio_unitario, l.unidad_medida, l.subtotal, l.descuento_porcentaje]);
             await connection.query(
-                `INSERT INTO detalle_factura (factura_id, producto_id, cantidad, precio_unitario, unidad_medida, subtotal) VALUES ?`,
+                `INSERT INTO detalle_factura (factura_id, producto_id, cantidad, precio_unitario, unidad_medida, subtotal, descuento_porcentaje) VALUES ?`,
                 [detallesValuesFinal]
             );
 

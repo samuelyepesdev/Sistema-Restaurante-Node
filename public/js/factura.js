@@ -525,7 +525,8 @@ $(document).ready(function() {
                     cantidad: p.cantidad,
                     precio: Math.round(precioFinal * 100) / 100,
                     unidad: p.unidad,
-                    subtotal: Math.round(p.subtotal * 100) / 100
+                    subtotal: Math.round(p.subtotal * 100) / 100,
+                    descuento_porcentaje: (p.descuento_porcentaje && p.descuento_porcentaje > 0) ? p.descuento_porcentaje : null
                 };
             })
         };

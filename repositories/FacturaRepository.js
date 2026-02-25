@@ -29,18 +29,19 @@ class FacturaRepository {
 
             const factura_id = result.insertId;
 
-            // Insert invoice details
+            // Insert invoice details (incl. descuento_porcentaje si viene para mostrar en factura impresa)
             const detallesValues = facturaData.productos.map(p => [
                 factura_id,
                 p.producto_id,
                 p.cantidad,
                 p.precio,
                 p.unidad,
-                p.subtotal
+                p.subtotal,
+                (p.descuento_porcentaje != null && p.descuento_porcentaje > 0) ? p.descuento_porcentaje : null
             ]);
 
             await connection.query(
-                'INSERT INTO detalle_factura (factura_id, producto_id, cantidad, precio_unitario, unidad_medida, subtotal) VALUES ?',
+                'INSERT INTO detalle_factura (factura_id, producto_id, cantidad, precio_unitario, unidad_medida, subtotal, descuento_porcentaje) VALUES ?',
                 [detallesValues]
             );
 

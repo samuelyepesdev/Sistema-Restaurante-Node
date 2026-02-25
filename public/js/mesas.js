@@ -26,16 +26,16 @@ $(function() {
         ? ' <span class="badge bg-success">-' + descuentosPorItem[it.id] + '%</span>' : '';
       tbody.append(`
         <tr>
-          <td>${(it.producto_nombre || it.nombre || it.producto_id) + descBadge}</td>
-          <td class="text-end">${cantidad}</td>
+          <td class="td-producto">${(it.producto_nombre || it.nombre || it.producto_id) + descBadge}</td>
+          <td class="text-center">${cantidad}</td>
           <td class="text-end">${formatear(precio)}</td>
-          <td class="text-end d-flex align-items-center justify-content-end gap-1 flex-wrap">
-            <button class="btn btn-sm btn-outline-secondary btn-menos-item" data-item-id="${it.id}" data-cantidad="${cantidad}" title="Quitar cantidad"><i class="bi bi-dash"></i></button>
-            <span>${formatear(subtotal)}</span>
-            <button class="btn btn-sm btn-outline-secondary btn-mas-item" data-item-id="${it.id}" data-cantidad="${cantidad}" title="Agregar cantidad"><i class="bi bi-plus"></i></button>
-          </td>
-          <td class="text-end">
-            <button class="btn btn-sm btn-outline-danger btn-eliminar-item" data-idx="${idx}" data-item-id="${it.id}"><i class="bi bi-trash"></i></button>
+          <td class="text-end td-subtotal">${formatear(subtotal)}</td>
+          <td class="text-center">
+            <div class="btn-group-item">
+              <button type="button" class="btn btn-sm btn-outline-secondary btn-menos-item" data-item-id="${it.id}" data-cantidad="${cantidad}" title="Quitar"><i class="bi bi-dash"></i></button>
+              <button type="button" class="btn btn-sm btn-outline-secondary btn-mas-item" data-item-id="${it.id}" data-cantidad="${cantidad}" title="Agregar"><i class="bi bi-plus"></i></button>
+              <button type="button" class="btn btn-sm btn-outline-danger btn-eliminar-item" data-idx="${idx}" data-item-id="${it.id}" title="Eliminar"><i class="bi bi-trash"></i></button>
+            </div>
           </td>
         </tr>
       `);
@@ -85,6 +85,7 @@ $(function() {
   // Cargar pedido por mesa
   async function abrirPedido(mesaId, mesaNumero){
     try{
+      descuentosPorItem = {}; // nuevo pedido = sin descuentos previos
       const resp = await fetch('/api/mesas/abrir', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ mesa_id: mesaId })});
       const data = await resp.json();
       if(!resp.ok) throw new Error(data.error||'Error al abrir pedido');
@@ -102,7 +103,7 @@ $(function() {
     const data = await resp.json();
     if(!resp.ok) throw new Error(data.error||'Error al cargar pedido');
     items = data.items || [];
-    descuentosPorItem = {}; // descuentos son solo por sesión de esta venta
+    // No resetear descuentos aquí: se conservan para que al facturar se envíen. Solo se resetean al abrir otra mesa (abrirPedido).
     renderItems();
   }
 
