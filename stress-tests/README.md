@@ -52,16 +52,15 @@ npm run stress
    npx artillery run stress-tests/artillery-stress.yml -e stress-tests/env-stress.yml
    ```
 
-### Reporte HTML (opcional)
+### Reporte HTML
 
-Para generar un reporte HTML con gráficas:
+Para generar un reporte HTML con gráficas (se guarda en `stress-tests/reports/`; esa carpeta está en `.gitignore` y no se sube a Git):
 
 ```bash
-npx artillery run stress-tests/artillery-stress.yml --output report.json
-npx artillery report report.json --output report.html
+npm run stress:report
 ```
 
-Abre `report.html` en el navegador.
+Se crea `stress-tests/reports/report.html`. Ábrelo en el navegador. Los archivos `report.json` y `report.html` y la carpeta `stress-tests/reports/` están ignorados por Git.
 
 ---
 

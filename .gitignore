@@ -9,8 +9,11 @@ public/uploads/
 
 # Pruebas de estrés (credenciales e informes generados)
 stress-tests/env-stress.yml
+stress-tests/reports/
 report.json
 report.html
+*.report.json
+*.report.html
 
 # Logs
 npm-debug.log*
