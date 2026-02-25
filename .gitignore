@@ -7,6 +7,9 @@ public/uploads/
 .env
 .env.*
 
+# Cobertura de tests
+coverage/
+
 # Pruebas de estrés (credenciales e informes generados)
 stress-tests/env-stress.yml
 stress-tests/reports/

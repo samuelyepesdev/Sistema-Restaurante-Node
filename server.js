@@ -236,4 +236,9 @@ process.on('SIGINT', () => {
     process.exit(0);
 });
 
-startServer(); 
+// Exportar app para tests (supertest); no iniciar servidor en entorno test
+if (require.main === module && process.env.NODE_ENV !== 'test') {
+    startServer();
+}
+
+module.exports = { app }; 
