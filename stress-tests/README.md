@@ -42,15 +42,10 @@ npm run stress
 
 ### Usar otro entorno o credenciales
 
-1. Copia el archivo de ejemplo de entorno:
-   ```bash
-   cp stress-tests/env-stress.example.yml stress-tests/env-stress.yml
-   ```
-2. Edita `stress-tests/env-stress.yml` y ajusta `baseUrl`, `username` y `password`.
-3. Ejecuta apuntando a ese archivo:
-   ```bash
-   npx artillery run stress-tests/artillery-stress.yml -e stress-tests/env-stress.yml
-   ```
+Por defecto las pruebas usan `http://localhost:3000`, usuario `admin` y contraseña `admin123` (definidos en los YAML). Para cambiar:
+
+- **Opción rápida:** edita en `stress-tests/artillery-stress.yml` (y/o `artillery-quick.yml`) las líneas `target: "http://localhost:3000"` y `variables.username` / `variables.password`.
+- **Opción con archivo de entorno:** copia `stress-tests/env-stress.example.yml` a `stress-tress/env-stress.yml`, ajusta valores y usa `-e stress-tests/env-stress.yml` (para que la URL y credenciales del archivo se apliquen, en Artillery puede ser necesario definir un *processor* que lea `$environment`; si no aplica, usa la opción de editar el YAML).
 
 ### Reporte HTML
 
@@ -60,7 +55,11 @@ Para generar un reporte HTML con gráficas (se guarda en `stress-tests/reports/`
 npm run stress:report
 ```
 
-Se crea `stress-tests/reports/report.html`. Ábrelo en el navegador. Los archivos `report.json` y `report.html` y la carpeta `stress-tests/reports/` están ignorados por Git.
+Se crea `stress-tests/reports/report.html` a partir del JSON (Artillery deprecó su comando `report`; usamos el script local `generate-report-html.js`). Ábrelo en el navegador. Si ya tienes un `report.json`, puedes generar solo el HTML:
+
+```bash
+node stress-tests/generate-report-html.js stress-tests/reports/report.json
+```
 
 ---
 

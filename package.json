@@ -19,7 +19,7 @@
     "seed-tenants": "node scripts/seed-tenants-test.js",
     "stress": "artillery run stress-tests/artillery-stress.yml",
     "stress:quick": "artillery run stress-tests/artillery-quick.yml",
-    "stress:report": "node -e \"require('fs').mkdirSync('stress-tests/reports',{recursive:true})\" && artillery run stress-tests/artillery-stress.yml --output stress-tests/reports/report.json && artillery report stress-tests/reports/report.json --output stress-tests/reports/report.html",
+    "stress:report": "node -e \"require('fs').mkdirSync('stress-tests/reports',{recursive:true})\" && artillery run stress-tests/artillery-stress.yml --output stress-tests/reports/report.json && node stress-tests/generate-report-html.js stress-tests/reports/report.json",
     "stress:load": "node stress-tests/run-load.js"
   },
   "dependencies": {

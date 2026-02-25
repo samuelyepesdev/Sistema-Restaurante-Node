@@ -3,7 +3,8 @@
 # Con variables: npx artillery run stress-tests/artillery-stress.yml -e stress-tests/env-stress.yml
 
 config:
-  target: "{{ $environment.baseUrl || 'http://localhost:3000' }}"
+  # URL base (sin -e se usa esta; con -e env-stress.yml se puede sobreescribir vía environment.baseUrl)
+  target: "http://localhost:3000"
   phases:
     # Fase 1: calentamiento - pocos usuarios
     - duration: 30
@@ -23,8 +24,8 @@ config:
       arrivalRate: 40
       name: "Pico"
   variables:
-    username: "{{ $environment.username || 'admin' }}"
-    password: "{{ $environment.password || 'admin123' }}"
+    username: "admin"
+    password: "admin123"
   # Tiempos de espera (ms)
   timeout: 30
   # Opcional: descomentar para que el test falle si no se cumplen umbrales

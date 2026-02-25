@@ -3,14 +3,14 @@
 # Ejecutar: npx artillery run stress-tests/artillery-quick.yml
 
 config:
-  target: "{{ $environment.baseUrl || 'http://localhost:3000' }}"
+  target: "http://localhost:3000"
   phases:
     - duration: 20
       arrivalRate: 10
       name: "Quick load"
   variables:
-    username: "{{ $environment.username || 'admin' }}"
-    password: "{{ $environment.password || 'admin123' }}"
+    username: "admin"
+    password: "admin123"
   timeout: 15
 
 scenarios:
