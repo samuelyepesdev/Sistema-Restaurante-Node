@@ -5,14 +5,8 @@
   "main": "server.js",
   "bin": "server.js",
   "pkg": {
-    "assets": [
-      "views/**/*",
-      "public/**/*",
-      "node_modules/ejs/**/*"
-    ],
-    "targets": [
-      "node18-win-x64"
-    ],
+    "assets": ["views/**/*", "public/**/*", "node_modules/ejs/**/*"],
+    "targets": ["node18-win-x64"],
     "outputPath": "dist"
   },
   "scripts": {
@@ -22,7 +16,10 @@
     "migrate": "node scripts/run-migrations.js",
     "create-admin": "node scripts/create-admin.js",
     "create-test-users": "node scripts/create-test-users.js",
-    "seed-tenants": "node scripts/seed-tenants-test.js"
+    "seed-tenants": "node scripts/seed-tenants-test.js",
+    "stress": "artillery run stress-tests/artillery-stress.yml",
+    "stress:quick": "artillery run stress-tests/artillery-quick.yml",
+    "stress:load": "node stress-tests/run-load.js"
   },
   "dependencies": {
     "bcrypt": "^6.0.0",
@@ -38,6 +35,8 @@
     "mysql2": "^3.14.2"
   },
   "devDependencies": {
+    "artillery": "^2.0.0",
+    "autocannon": "^7.14.0",
     "nodemon": "^3.1.11"
   }
 }

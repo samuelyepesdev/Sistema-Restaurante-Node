@@ -1,0 +1,82 @@
+# Pruebas de estrés - Sistema Restaurante Node
+# Ejecutar: npx artillery run stress-tests/artillery-stress.yml
+# Con variables: npx artillery run stress-tests/artillery-stress.yml -e stress-tests/env-stress.yml
+
+config:
+  target: "{{ $environment.baseUrl || 'http://localhost:3000' }}"
+  phases:
+    # Fase 1: calentamiento - pocos usuarios
+    - duration: 30
+      arrivalRate: 2
+      name: "Calentamiento"
+    # Fase 2: carga creciente
+    - duration: 60
+      arrivalRate: 5
+      rampTo: 15
+      name: "Ramp up"
+    # Fase 3: carga sostenida (estrés)
+    - duration: 120
+      arrivalRate: 20
+      name: "Carga sostenida"
+    # Fase 4: pico máximo
+    - duration: 60
+      arrivalRate: 40
+      name: "Pico"
+  variables:
+    username: "{{ $environment.username || 'admin' }}"
+    password: "{{ $environment.password || 'admin123' }}"
+  # Tiempos de espera (ms)
+  timeout: 30
+  # Opcional: descomentar para que el test falle si no se cumplen umbrales
+  # ensure:
+  #   maxErrorRate: 0.1
+  #   p95: 5000
+
+scenarios:
+  - name: "Login y consultas protegidas"
+    weight: 1
+    flow:
+      # 1. Login (la cookie auth_token se guarda automáticamente para este virtual user)
+      - post:
+          url: "/auth/login"
+          json:
+            username: "{{ username }}"
+            password: "{{ password }}"
+          expect:
+            - statusCode: 200
+            - contentType: json
+            - hasProperty: success
+          capture:
+            - json: "$.token"
+              as: "token"
+      # 2. Dashboard stats (requiere auth + tenant)
+      - get:
+          url: "/api/dashboard/stats"
+          expect:
+            - statusCode: 200
+      # 3. Categorías de productos
+      - get:
+          url: "/productos/categorias"
+          expect:
+            - statusCode: 200
+      # 4. Página de productos (HTML)
+      - get:
+          url: "/productos"
+          expect:
+            - statusCode: 200
+      # 5. Mesas (API o página)
+      - get:
+          url: "/api/mesas"
+          expect:
+            - statusCode: 200
+
+  - name: "Solo login (máxima presión en auth)"
+    weight: 1
+    flow:
+      - post:
+          url: "/auth/login"
+          json:
+            username: "{{ username }}"
+            password: "{{ password }}"
+          expect:
+            - statusCode: 200

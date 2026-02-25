@@ -1,0 +1,8 @@
+# Copiar a env-stress.yml y ajustar valores.
+# Uso: npx artillery run stress-tests/artillery-stress.yml -e stress-tests/env-stress.yml
+# No subir env-stress.yml al repositorio si contiene credenciales reales.
+
+environment:
+  baseUrl: "http://localhost:3000"
+  username: "admin"
+  password: "admin123"
