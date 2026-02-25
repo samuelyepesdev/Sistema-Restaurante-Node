@@ -54,6 +54,7 @@ class StatsService {
             dailySales,
             eventos_count: eventStats.eventos_count,
             ventas_eventos_total: eventStats.ventas_eventos_total,
+            ventas_eventos_cantidad: eventStats.ventas_eventos_cantidad,
             ventasPorEvento,
             eventosEnRango,
             eventosCalendario

@@ -44,10 +44,14 @@ async function loadStats(filters = {}) {
     }
 }
 
+/** Últimas estadísticas cargadas (para modales al hacer clic en cards) */
+let lastStats = null;
+
 /**
  * Update statistics cards
  */
 function updateStatsCards(stats) {
+    lastStats = stats;
     $('#totalSales').text(formatCurrency(stats.totalSales));
     $('#totalInvoices').text(stats.totalInvoices);
     
@@ -56,7 +60,7 @@ function updateStatsCards(stats) {
         : 0;
     $('#avgInvoice').text(formatCurrency(avgInvoice));
     
-    $('#uniqueProducts').text(stats.topProducts ? stats.topProducts.length : 0);
+    if (stats.topProducts && $('#uniqueProducts').length) $('#uniqueProducts').text(stats.topProducts.length);
     $('#eventosCount').text(stats.eventos_count != null ? stats.eventos_count : 0);
     $('#ventasEventosTotal').text(formatCurrency(stats.ventas_eventos_total != null ? stats.ventas_eventos_total : 0));
 }
@@ -423,6 +427,39 @@ function clearFilters() {
     loadStats({});
 }
 
+/**
+ * Cards clicables: ir a Ventas/Eventos o mostrar modal con detalle
+ */
+function initStatsCardClicks() {
+    $(document).on('click', '.stat-card.clickable[data-action="go-ventas"]', function() {
+        window.location.href = '/ventas';
+    });
+    $(document).on('click', '.stat-card.clickable[data-action="go-eventos"]', function() {
+        window.location.href = '/eventos';
+    });
+    $(document).on('click', '.stat-card.clickable[data-action="modal-promedio"]', function() {
+        if (!lastStats) return;
+        var total = lastStats.totalSales != null ? lastStats.totalSales : 0;
+        var cant = lastStats.totalInvoices != null ? lastStats.totalInvoices : 0;
+        var avg = cant > 0 ? total / cant : 0;
+        $('#modalPromedioTotal').text(formatCurrency(total));
+        $('#modalPromedioCantidad').text(cant);
+        $('#modalPromedioValor').text(formatCurrency(avg));
+        $('#modalPromedioFormula').text('Total ventas ÷ Cantidad de facturas = ' + formatCurrency(avg));
+        var modalEl = document.getElementById('modalDetallePromedio');
+        if (modalEl) bootstrap.Modal.getOrCreateInstance(modalEl).show();
+    });
+    $(document).on('click', '.stat-card.clickable[data-action="modal-ventas-eventos"]', function() {
+        if (!lastStats) return;
+        var total = lastStats.ventas_eventos_total != null ? lastStats.ventas_eventos_total : 0;
+        var cant = lastStats.ventas_eventos_cantidad != null ? lastStats.ventas_eventos_cantidad : 0;
+        $('#modalVentasEventosTotal').text(formatCurrency(total));
+        $('#modalVentasEventosCantidad').text(cant);
+        var modalEl = document.getElementById('modalDetalleVentasEventos');
+        if (modalEl) bootstrap.Modal.getOrCreateInstance(modalEl).show();
+    });
+}
+
 // Initialize on page load
 $(document).ready(function() {
     // Set default date range (last 30 days)
@@ -442,5 +479,6 @@ $(document).ready(function() {
     // Event handlers
     $('#aplicarFiltros').on('click', applyFilters);
     $('#limpiarFiltros').on('click', clearFilters);
+    initStatsCardClicks();
 });
 

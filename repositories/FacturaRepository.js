@@ -131,6 +131,22 @@ class FacturaRepository {
             }))
         };
     }
+
+    /**
+     * Delete invoice and its details by id (used by superadmin only).
+     * @param {number} facturaId - Invoice ID
+     * @returns {Promise<{ deleted: boolean }>}
+     */
+    static async deleteById(facturaId) {
+        const connection = await db.getConnection();
+        try {
+            await connection.query('DELETE FROM detalle_factura WHERE factura_id = ?', [facturaId]);
+            const [result] = await connection.query('DELETE FROM facturas WHERE id = ?', [facturaId]);
+            return { deleted: result.affectedRows > 0 };
+        } finally {
+            connection.release();
+        }
+    }
 }
 
 module.exports = FacturaRepository;

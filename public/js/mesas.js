@@ -540,15 +540,14 @@ $(function() {
       // Cargar en iframe
       facturaFrame.src = blobUrl;
       
-      // Ocultar loading cuando el iframe dispara onload (puede no disparar con blob en algunos navegadores)
-      facturaFrame.onload = function(){
-        facturaLoading.style.display = 'none';
-      };
-      
-      // Ocultar loading tras 500ms siempre (el HTML ya está en el blob, el iframe lo muestra al instante)
-      setTimeout(() => {
-        facturaLoading.style.display = 'none';
-      }, 500);
+      function ocultarLoading(){
+        if(facturaLoading) facturaLoading.style.display = 'none';
+      }
+      facturaFrame.onload = ocultarLoading;
+      // Fallback: ocultar loading siempre tras 800ms (por si onload no dispara con blob en algunos navegadores)
+      setTimeout(ocultarLoading, 800);
+      // Doble fallback a 2s por si hay demora en render del iframe
+      setTimeout(ocultarLoading, 2000);
       
       // Manejar errores de carga del iframe
       facturaFrame.onerror = function(e){

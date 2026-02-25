@@ -357,74 +357,61 @@
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        const facturaModal = new bootstrap.Modal(document.getElementById('facturaModal'));
-        const detallesModal = new bootstrap.Modal(document.getElementById('detallesModal'));
+        function getFacturaModal() {
+            var el = document.getElementById('facturaModal');
+            return el ? bootstrap.Modal.getOrCreateInstance(el) : null;
+        }
+        function getDetallesModal() {
+            var el = document.getElementById('detallesModal');
+            return el ? bootstrap.Modal.getOrCreateInstance(el) : null;
+        }
         
-        // Función para mostrar alertas personalizadas
-        function mostrarAlerta(mensaje, tipo = 'success') {
-            const alertaDiv = document.createElement('div');
-            alertaDiv.className = `custom-alert ${tipo}`;
-            alertaDiv.innerHTML = `
-                <div class="alert-content">
-                    <i class="bi ${tipo === 'success' ? 'bi-check-circle' : 
-                                  tipo === 'error' ? 'bi-x-circle' : 
-                                  'bi-exclamation-triangle'} me-2"></i>
-                    ${mensaje}
-                </div>
-                <button type="button" class="btn-close btn-close-white ms-3" onclick="this.parentElement.remove()"></button>
-            `;
+        function mostrarAlerta(mensaje, tipo) {
+            tipo = tipo || 'success';
+            var alertaDiv = document.createElement('div');
+            alertaDiv.className = 'custom-alert ' + tipo;
+            alertaDiv.innerHTML = '<div class="alert-content"><i class="bi ' + (tipo === 'success' ? 'bi-check-circle' : tipo === 'error' ? 'bi-x-circle' : 'bi-exclamation-triangle') + ' me-2"></i>' + mensaje + '</div><button type="button" class="btn-close btn-close-white ms-3" onclick="this.parentElement.remove()"></button>';
             document.body.appendChild(alertaDiv);
-            setTimeout(() => alertaDiv.remove(), 5000);
+            setTimeout(function(){ alertaDiv.remove(); }, 5000);
         }
 
         function mostrarFactura(id) {
-            document.getElementById('facturaFrame').src = `/api/facturas/${id}/imprimir`;
-            document.querySelector('#facturaModal .modal-title').textContent = `Factura #${id}`;
-            facturaModal.show();
+            var modalEl = document.getElementById('facturaModal');
+            var frameEl = document.getElementById('facturaFrame');
+            var titleEl = modalEl && modalEl.querySelector('.modal-title');
+            if (!modalEl || !frameEl) return;
+            if (titleEl) titleEl.textContent = 'Factura #' + id;
+            frameEl.src = '/api/facturas/' + id + '/imprimir';
+            var modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+            modal.show();
         }
 
         function mostrarDetalles(id) {
             $.ajax({
-                url: `/api/facturas/${id}/detalles`,
+                url: '/api/facturas/' + id + '/detalles',
                 success: function(data) {
-                    // Información del cliente
-                    $('#detallesCliente').html(`
-                        <p><strong>Nombre:</strong> ${data.cliente.nombre}</p>
-                        <p><strong>Dirección:</strong> ${data.cliente.direccion || 'No especificada'}</p>
-                        <p><strong>Teléfono:</strong> ${data.cliente.telefono || 'No especificado'}</p>
-                    `);
-
-                    // Información de la factura
-                    $('#detallesFactura').html(`
-                        <p><strong>Factura #:</strong> ${data.factura.id}</p>
-                        <p><strong>Fecha:</strong> ${new Date(data.factura.fecha).toLocaleString()}</p>
-                        <p><strong>Forma de Pago:</strong> ${data.factura.forma_pago.charAt(0).toUpperCase() + data.factura.forma_pago.slice(1)}</p>
-                    `);
-
-                    // Productos
-                    const tbody = $('#detallesProductos');
+                    if (!data || !data.factura) {
+                        mostrarAlerta('No se encontraron detalles de la factura', 'error');
+                        return;
+                    }
+                    var cliente = data.cliente || {};
+                    var factura = data.factura || {};
+                    $('#detallesCliente').html('<p><strong>Nombre:</strong> ' + (cliente.nombre || '-') + '</p><p><strong>Dirección:</strong> ' + (cliente.direccion || 'No especificada') + '</p><p><strong>Teléfono:</strong> ' + (cliente.telefono || 'No especificado') + '</p>');
+                    $('#detallesFactura').html('<p><strong>Factura #:</strong> ' + factura.id + '</p><p><strong>Fecha:</strong> ' + (factura.fecha ? new Date(factura.fecha).toLocaleString() : '-') + '</p><p><strong>Forma de Pago:</strong> ' + (factura.forma_pago ? (factura.forma_pago.charAt(0).toUpperCase() + factura.forma_pago.slice(1)) : '-') + '</p>');
+                    var tbody = $('#detallesProductos');
                     tbody.empty();
-                    let totalGeneral = 0;
-                    
-                    data.productos.forEach(producto => {
-                        const cantidad = producto.cantidad || 0;
-                        const precio = producto.precio || 0;
-                        const subtotal = producto.subtotal || 0;
+                    var totalGeneral = 0;
+                    var productos = data.productos || [];
+                    productos.forEach(function(producto) {
+                        var cantidad = Number(producto.cantidad) || 0;
+                        var precio = Number(producto.precio) || 0;
+                        var subtotal = Number(producto.subtotal) || 0;
                         totalGeneral += subtotal;
-                        
-                        tbody.append(`
-                            <tr>
-                                <td>${producto.nombre}</td>
-                                <td class="text-end">${cantidad.toFixed(2)}</td>
-                                <td>${producto.unidad || 'N/A'}</td>
-                                <td class="text-end">$${precio.toFixed(2)}</td>
-                                <td class="text-end">$${subtotal.toFixed(2)}</td>
-                            </tr>
-                        `);
+                        tbody.append('<tr><td>' + (producto.nombre || '') + '</td><td class="text-end">' + cantidad.toFixed(2) + '</td><td>' + (producto.unidad || 'N/A') + '</td><td class="text-end">$' + precio.toFixed(2) + '</td><td class="text-end">$' + subtotal.toFixed(2) + '</td></tr>');
                     });
-
-                    $('#detallesTotal').text(`$${totalGeneral.toFixed(2)}`);
-                    detallesModal.show();
+                    $('#detallesTotal').text('$' + totalGeneral.toFixed(2));
+                    var modal = getDetallesModal();
+                    if (modal) modal.show();
                 },
                 error: function() {
                     mostrarAlerta('Error al cargar los detalles de la factura', 'error');
@@ -433,9 +420,23 @@
         }
 
         function imprimirFactura() {
-            const frame = document.getElementById('facturaFrame');
-            frame.contentWindow.print();
+            var frame = document.getElementById('facturaFrame');
+            if (frame && frame.contentWindow) frame.contentWindow.print();
         }
+
+        // Delegación de eventos para botones de acciones (funcionan aunque la tabla se actualice)
+        document.getElementById('ventasTabla').addEventListener('click', function(e) {
+            var btnDet = e.target.closest('.btn-detalles');
+            var btnReim = e.target.closest('.btn-reimprimir');
+            if (btnDet) {
+                var id = btnDet.getAttribute('data-factura-id');
+                if (id) mostrarDetalles(id);
+            }
+            if (btnReim) {
+                var id = btnReim.getAttribute('data-factura-id');
+                if (id) mostrarFactura(id);
+            }
+        });
 
         document.getElementById('filtrarVentas').addEventListener('click', function() {
             const desde = document.getElementById('fechaDesde').value;
@@ -507,21 +508,6 @@
 
         // Calcular total al cargar la página
         calcularTotales();
-
-        // Manejador para reimprimir facturas y ver detalles
-        document.querySelectorAll('.btn-reimprimir').forEach(button => {
-            button.addEventListener('click', function() {
-                const facturaId = this.getAttribute('data-factura-id');
-                mostrarFactura(facturaId);
-            });
-        });
-
-        document.querySelectorAll('.btn-detalles').forEach(button => {
-            button.addEventListener('click', function() {
-                const facturaId = this.getAttribute('data-factura-id');
-                mostrarDetalles(facturaId);
-            });
-        });
     </script>
 </body>
 </html> 

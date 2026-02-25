@@ -39,6 +39,11 @@ function canShow(mod) { if (!mod) return true; if (typeof allowedByPlan === 'und
                         <i class="bi bi-shield-lock"></i> Permisos
                     </a>
                 </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/admin/ventas">
+                        <i class="bi bi-trash"></i> Eliminar ventas
+                    </a>
+                </li>
                 <% } else { %>
                 <% if (user && user.rol === 'admin' && canShow('dashboard')) { %>
                 <li class="nav-item">

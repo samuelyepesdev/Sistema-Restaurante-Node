@@ -294,7 +294,7 @@ class StatsRepository {
             [tenantId, hasta, desde]
         );
         const [ventasEventos] = await db.query(
-            `SELECT COALESCE(SUM(total), 0) AS total 
+            `SELECT COALESCE(SUM(total), 0) AS total, COUNT(*) AS cantidad
              FROM facturas 
              WHERE tenant_id = ? AND evento_id IS NOT NULL 
              AND DATE(fecha) BETWEEN ? AND ?`,
@@ -302,7 +302,8 @@ class StatsRepository {
         );
         return {
             eventos_count: parseInt(eventosCount[0]?.total || 0),
-            ventas_eventos_total: parseFloat(ventasEventos[0]?.total || 0)
+            ventas_eventos_total: parseFloat(ventasEventos[0]?.total || 0),
+            ventas_eventos_cantidad: parseInt(ventasEventos[0]?.cantidad || 0)
         };
     }
 

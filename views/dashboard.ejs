@@ -28,6 +28,9 @@
         .stat-card:hover {
             transform: translateY(-5px);
         }
+        .stat-card.clickable {
+            cursor: pointer;
+        }
         .stat-card .card-body {
             padding: 1.5rem;
         }
@@ -202,10 +205,10 @@
             </div>
         </div>
 
-        <!-- Tarjetas de estadísticas generales -->
+        <!-- Tarjetas de estadísticas generales (clicables: navegación o modal con detalle) -->
         <div class="row" id="statsCards">
             <div class="col-md-3">
-                <div class="card stat-card text-white bg-primary">
+                <div class="card stat-card text-white bg-primary clickable" id="cardTotalVentas" data-action="go-ventas" title="Ir a Ventas">
                     <div class="card-body">
                         <div class="d-flex justify-content-between align-items-center">
                             <div>
@@ -218,7 +221,7 @@
                 </div>
             </div>
             <div class="col-md-3">
-                <div class="card stat-card text-white bg-success">
+                <div class="card stat-card text-white bg-success clickable" id="cardTotalFacturas" data-action="go-ventas" title="Ir a Ventas">
                     <div class="card-body">
                         <div class="d-flex justify-content-between align-items-center">
                             <div>
@@ -231,7 +234,7 @@
                 </div>
             </div>
             <div class="col-md-3">
-                <div class="card stat-card text-white bg-info">
+                <div class="card stat-card text-white bg-info clickable" id="cardPromedio" data-action="modal-promedio" title="Ver detalle del promedio">
                     <div class="card-body">
                         <div class="d-flex justify-content-between align-items-center">
                             <div>
@@ -243,13 +246,12 @@
                     </div>
                 </div>
             </div>
-            
         </div>
 
         <!-- Eventos del periodo -->
         <div class="row mb-3">
             <div class="col-md-6">
-                <div class="card stat-card text-white" style="background: linear-gradient(135deg, #6f42c1 0%, #5a32a3 100%);">
+                <div class="card stat-card text-white clickable" id="cardEventos" data-action="go-eventos" style="background: linear-gradient(135deg, #6f42c1 0%, #5a32a3 100%);" title="Ir a Eventos">
                     <div class="card-body">
                         <div class="d-flex justify-content-between align-items-center">
                             <div>
@@ -262,7 +264,7 @@
                 </div>
             </div>
             <div class="col-md-6">
-                <div class="card stat-card text-white" style="background: linear-gradient(135deg, #fd7e14 0%, #e8590c 100%);">
+                <div class="card stat-card text-white clickable" id="cardVentasEventos" data-action="modal-ventas-eventos" style="background: linear-gradient(135deg, #fd7e14 0%, #e8590c 100%);" title="Ver detalle de ventas en eventos">
                     <div class="card-body">
                         <div class="d-flex justify-content-between align-items-center">
                             <div>
@@ -366,6 +368,48 @@
                             </div>
                         </div>
                     </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: detalle Promedio por Factura -->
+    <div class="modal fade" id="modalDetallePromedio" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-info text-white">
+                    <h5 class="modal-title"><i class="bi bi-bar-chart me-2"></i>Promedio por Factura</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="mb-2">El promedio por factura se calcula así:</p>
+                    <div class="bg-light rounded p-3 mb-2 font-monospace text-center">
+                        <span id="modalPromedioFormula">Total ventas ÷ Cantidad de facturas = Promedio</span>
+                    </div>
+                    <ul class="list-unstyled mb-0">
+                        <li><strong>Total ventas (período):</strong> <span id="modalPromedioTotal">$0</span></li>
+                        <li><strong>Cantidad de facturas:</strong> <span id="modalPromedioCantidad">0</span></li>
+                        <li><strong>Promedio:</strong> <span id="modalPromedioValor" class="text-primary fw-bold">$0</span></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: detalle Ventas en eventos -->
+    <div class="modal fade" id="modalDetalleVentasEventos" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header text-white" style="background: linear-gradient(135deg, #fd7e14 0%, #e8590c 100%);">
+                    <h5 class="modal-title"><i class="bi bi-calendar-event me-2"></i>Ventas en eventos</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="mb-3">Resumen de ventas asociadas a eventos en el período seleccionado:</p>
+                    <ul class="list-unstyled mb-0">
+                        <li><strong>Total vendido en eventos:</strong> <span id="modalVentasEventosTotal" class="text-primary fw-bold">$0</span></li>
+                        <li><strong>Cantidad de ventas (facturas) en eventos:</strong> <span id="modalVentasEventosCantidad">0</span></li>
+                    </ul>
                 </div>
             </div>
         </div>

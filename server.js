@@ -93,6 +93,7 @@ const adminTenantsRoutes = require('./routes/admin/tenants');
 const adminSistemaRoutes = require('./routes/admin/sistema');
 const adminPlanesRoutes = require('./routes/admin/planes');
 const adminPermisosRoutes = require('./routes/admin/permisos');
+const adminVentasRoutes = require('./routes/admin/ventas');
 const eventosRoutes = require('./routes/eventos');
 
 // Ruta principal - redirige según autenticación y rol
@@ -158,7 +159,7 @@ app.use('/admin/tenants', requireAuth, adminTenantsRoutes);
 app.use('/admin/sistema', requireAuth, adminSistemaRoutes);
 app.use('/admin/planes', requireAuth, adminPlanesRoutes);
 app.use('/admin/permisos', requireAuth, adminPermisosRoutes);
-
+app.use('/admin/ventas', requireAuth, adminVentasRoutes);
 
 // Manejo de errores 404
 app.use((req, res, next) => {
