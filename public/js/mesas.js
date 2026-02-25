@@ -399,37 +399,34 @@ $(function() {
         // Cerrar loading inmediatamente
         Swal.close();
         
-        // Cerrar modal de pago y offcanvas de pedido ANTES de mostrar factura
+        // Cerrar modal de pago y offcanvas de pedido; no abrir barra lateral de factura (evitar carga que se queda pegada)
         const modalPago = bootstrap.Modal.getInstance(document.getElementById('modalPago'));
         if(modalPago) modalPago.hide();
         canvas.hide();
         
-        // Mostrar factura INMEDIATAMENTE (sin esperar modales)
-        mostrarFacturaEnSidebar(data.factura_id, {
-          formaPago: formaPagoSeleccionada,
-          total: total,
-          recibido: montoRecibido
-        });
+        // Cerrar también el offcanvas de factura si estuviera abierto
+        const facturaCanvasEl = document.getElementById('canvasFactura');
+        if(facturaCanvasEl && facturaCanvasEl.classList.contains('show')){
+          const facturaCanvas = bootstrap.Offcanvas.getInstance(facturaCanvasEl);
+          if(facturaCanvas) facturaCanvas.hide();
+        }
         
-        // Mostrar información de cambio de forma no bloqueante (toast)
+        pedidoActual = null;
+        items = [];
+        renderItems();
+        
+        // Mensaje de éxito y quedarse en mesas
+        let html = '<p><strong>Factura #' + data.factura_id + '</strong> generada correctamente.</p>';
         if(formaPagoSeleccionada === 'efectivo' && montoRecibido > total){
           const cambio = montoRecibido - total;
-          Swal.fire({
-            icon: 'success',
-            title: 'Factura generada',
-            html: `
-              <div class="text-start">
-                <p><strong>Total:</strong> ${formatear(total)}</p>
-                <p><strong>Recibido:</strong> ${formatear(montoRecibido)}</p>
-                <p class="fs-4 text-success"><strong>Cambio:</strong> ${formatear(cambio)}</p>
-              </div>
-            `,
-            timer: 5000,
-            timerProgressBar: true,
-            showConfirmButton: true,
-            confirmButtonText: 'Cerrar'
-          });
+          html += '<div class="text-start mt-2"><p><strong>Total:</strong> ' + formatear(total) + '</p><p><strong>Recibido:</strong> ' + formatear(montoRecibido) + '</p><p class="text-success fw-bold">Cambio: ' + formatear(cambio) + '</p></div>';
         }
+        Swal.fire({
+          icon: 'success',
+          title: 'Listo',
+          html: html,
+          confirmButtonText: 'Cerrar'
+        });
       } catch(err){
         Swal.fire({icon:'error', title: err.message});
       }
