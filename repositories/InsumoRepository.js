@@ -43,19 +43,19 @@ class InsumoRepository {
     }
 
     static async create(tenantId, data) {
-        const { codigo, nombre, unidad_compra, costo_unitario } = data;
+        const { codigo, nombre, unidad_compra, cantidad_compra, precio_compra } = data;
         const [result] = await db.query(
-            'INSERT INTO insumos (tenant_id, codigo, nombre, unidad_compra, costo_unitario) VALUES (?, ?, ?, ?, ?)',
-            [tenantId, codigo, nombre || 'UND', unidad_compra, parseFloat(costo_unitario) || 0]
+            'INSERT INTO insumos (tenant_id, codigo, nombre, unidad_compra, cantidad_compra, precio_compra) VALUES (?, ?, ?, ?, ?, ?)',
+            [tenantId, codigo, nombre, unidad_compra || 'UND', parseFloat(cantidad_compra) || 1, parseFloat(precio_compra) || 0]
         );
         return result.insertId;
     }
 
     static async update(id, tenantId, data) {
-        const { codigo, nombre, unidad_compra, costo_unitario } = data;
+        const { codigo, nombre, unidad_compra, cantidad_compra, precio_compra } = data;
         const [result] = await db.query(
-            'UPDATE insumos SET codigo = ?, nombre = ?, unidad_compra = ?, costo_unitario = ? WHERE id = ? AND tenant_id = ?',
-            [codigo, nombre, unidad_compra || 'UND', parseFloat(costo_unitario) || 0, id, tenantId]
+            'UPDATE insumos SET codigo = ?, nombre = ?, unidad_compra = ?, cantidad_compra = ?, precio_compra = ? WHERE id = ? AND tenant_id = ?',
+            [codigo, nombre, unidad_compra || 'UND', parseFloat(cantidad_compra) || 1, parseFloat(precio_compra) || 0, id, tenantId]
         );
         return result;
     }

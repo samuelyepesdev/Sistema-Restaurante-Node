@@ -26,7 +26,8 @@ class InsumoService {
             codigo: data.codigo.trim(),
             nombre: data.nombre.trim(),
             unidad_compra: data.unidad_compra || 'UND',
-            costo_unitario: parseFloat(data.costo_unitario) || 0
+            cantidad_compra: parseFloat(data.cantidad_compra) || 1,
+            precio_compra: parseFloat(data.precio_compra) || 0
         });
     }
 
@@ -41,7 +42,8 @@ class InsumoService {
             codigo: (data.codigo || insumo.codigo).trim(),
             nombre: (data.nombre || insumo.nombre).trim(),
             unidad_compra: data.unidad_compra || insumo.unidad_compra,
-            costo_unitario: data.costo_unitario !== undefined ? parseFloat(data.costo_unitario) : insumo.costo_unitario
+            cantidad_compra: data.cantidad_compra !== undefined ? parseFloat(data.cantidad_compra) : insumo.cantidad_compra,
+            precio_compra: data.precio_compra !== undefined ? parseFloat(data.precio_compra) : insumo.precio_compra
         });
         return { message: 'Insumo actualizado' };
     }
@@ -56,7 +58,7 @@ class InsumoService {
     /**
      * Import insumos from Excel rows. If codigo exists, update; otherwise create.
      * @param {number} tenantId
-     * @param {Array<{codigo, nombre, unidad_compra?, costo_unitario?}>} rows
+     * @param {Array<{codigo, nombre, unidad_compra?, cantidad_compra?, precio_compra?}>} rows
      * @returns {{ creados: number, actualizados: number, errores: Array<{fila: number, mensaje: string}> }}
      */
     static async importFromExcel(tenantId, rows) {
@@ -76,7 +78,8 @@ class InsumoService {
                 continue;
             }
             const unidad_compra = (r.unidad_compra != null ? String(r.unidad_compra).trim() : '') || 'UND';
-            const costo_unitario = parseFloat(r.costo_unitario) || 0;
+            const cantidad_compra = parseFloat(r.cantidad_compra) || 1;
+            const precio_compra = parseFloat(r.precio_compra) || 0;
             try {
                 const existente = await InsumoRepository.findByCodigo(codigo, tenantId);
                 if (existente) {
@@ -84,7 +87,8 @@ class InsumoService {
                         codigo,
                         nombre,
                         unidad_compra,
-                        costo_unitario
+                        cantidad_compra,
+                        precio_compra
                     });
                     actualizados++;
                 } else {
@@ -92,7 +96,8 @@ class InsumoService {
                         codigo,
                         nombre,
                         unidad_compra,
-                        costo_unitario
+                        cantidad_compra,
+                        precio_compra
                     });
                     creados++;
                 }

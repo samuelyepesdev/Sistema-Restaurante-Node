@@ -62,7 +62,8 @@
                     <td>${escapeHtml(ins.codigo)}</td>
                     <td>${escapeHtml(ins.nombre)}</td>
                     <td>${escapeHtml(ins.unidad_compra)}</td>
-                    <td>${formatMoney(ins.costo_unitario)}</td>
+                    <td>${escapeHtml(String(ins.cantidad_compra != null ? ins.cantidad_compra : 1))}</td>
+                    <td>${formatMoney(ins.precio_compra)}</td>
                     <td class="text-end">
                         ${canEdit ? `<button class="btn btn-sm btn-outline-primary me-1 btnEditInsumo" data-id="${ins.id}">Editar</button>
                         <button class="btn btn-sm btn-outline-danger btnElimInsumo" data-id="${ins.id}">Eliminar</button>` : ''}
@@ -130,7 +131,8 @@
         document.getElementById('insumoCodigo').value = insumo ? insumo.codigo : '';
         document.getElementById('insumoNombre').value = insumo ? insumo.nombre : '';
         document.getElementById('insumoUnidad').value = insumo ? insumo.unidad_compra : 'UND';
-        document.getElementById('insumoCosto').value = insumo != null ? insumo.costo_unitario : '0';
+        document.getElementById('insumoCantidadCompra').value = insumo != null && insumo.cantidad_compra != null ? insumo.cantidad_compra : '1';
+        document.getElementById('insumoPrecioCompra').value = insumo != null ? (insumo.precio_compra != null ? insumo.precio_compra : '0') : '0';
         title.textContent = insumo ? 'Editar Insumo' : 'Nuevo Insumo';
         new bootstrap.Modal(modal).show();
     }
@@ -149,7 +151,8 @@
             codigo: document.getElementById('insumoCodigo').value.trim(),
             nombre: document.getElementById('insumoNombre').value.trim(),
             unidad_compra: document.getElementById('insumoUnidad').value,
-            costo_unitario: parseFloat(document.getElementById('insumoCosto').value) || 0
+            cantidad_compra: parseFloat(document.getElementById('insumoCantidadCompra').value) || 1,
+            precio_compra: parseFloat(document.getElementById('insumoPrecioCompra').value) || 0
         };
         const modalEl = document.getElementById('insumoModal');
         const instance = bootstrap.Modal.getInstance(modalEl);
@@ -472,8 +475,6 @@
             if (metodo) metodo.value = config.metodo_indirectos || 'porcentaje';
             const pct = document.getElementById('configPorcentaje');
             if (pct) pct.value = config.porcentaje_indirectos ?? 10;
-            const costoFijo = document.getElementById('configCostoFijo');
-            if (costoFijo) costoFijo.value = config.costo_fijo_mensual ?? 0;
             const platosMes = document.getElementById('configPlatosMes');
             if (platosMes) platosMes.value = config.platos_estimados_mes ?? 500;
             const factor = document.getElementById('configFactor');
@@ -483,18 +484,99 @@
             const margenMinimo = document.getElementById('configMargenMinimoAlerta');
             if (margenMinimo) margenMinimo.value = config.margen_minimo_alerta ?? 30;
             toggleConfigRows(config.metodo_indirectos);
+            if (config.metodo_indirectos === 'costo_fijo') loadCostosFijos();
             return config;
         });
     }
 
-    document.getElementById('configMetodo')?.addEventListener('change', (e) => toggleConfigRows(e.target.value));
+    function loadCostosFijos() {
+        return api('/api/costeo/costos-fijos').then(data => {
+            const tbody = document.getElementById('costosFijosBody');
+            const totalEl = document.getElementById('costosFijosTotal');
+            if (!tbody) return;
+            tbody.innerHTML = '';
+            const items = data.items || [];
+            const total = data.total != null ? data.total : items.filter(i => i.activo).reduce((s, i) => s + (parseFloat(i.monto_mensual) || 0), 0);
+            if (totalEl) totalEl.textContent = formatMoney(total);
+            items.forEach(cf => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${escapeHtml(cf.nombre)}</td>
+                    <td class="text-end">${formatMoney(cf.monto_mensual)}</td>
+                    <td>${cf.activo ? '<span class="badge bg-success">Sí</span>' : '<span class="badge bg-secondary">No</span>'}</td>
+                    <td class="text-end">
+                        ${canEdit ? `<button type="button" class="btn btn-sm btn-outline-primary me-1 btnEditCostoFijo" data-id="${cf.id}">Editar</button>
+                        <button type="button" class="btn btn-sm btn-outline-danger btnDelCostoFijo" data-id="${cf.id}">Eliminar</button>` : ''}
+                    </td>`;
+                tbody.appendChild(tr);
+            });
+            return data;
+        });
+    }
+
+    document.getElementById('btnNuevoCostoFijo')?.addEventListener('click', () => {
+        document.getElementById('costoFijoId').value = '';
+        document.getElementById('costoFijoNombre').value = '';
+        document.getElementById('costoFijoMonto').value = '0';
+        document.getElementById('costoFijoActivo').checked = true;
+        document.getElementById('modalCostoFijoTitle').textContent = 'Nuevo costo fijo';
+        new bootstrap.Modal(document.getElementById('modalCostoFijo')).show();
+    });
+
+    document.getElementById('costosFijosBody')?.addEventListener('click', (e) => {
+        const id = e.target.closest('[data-id]')?.getAttribute('data-id');
+        if (!id) return;
+        if (e.target.classList.contains('btnEditCostoFijo')) {
+            api('/api/costeo/costos-fijos').then(data => {
+                const cf = (data.items || []).find(i => String(i.id) === String(id));
+                if (!cf) return;
+                document.getElementById('costoFijoId').value = cf.id;
+                document.getElementById('costoFijoNombre').value = cf.nombre || '';
+                document.getElementById('costoFijoMonto').value = cf.monto_mensual != null ? cf.monto_mensual : '0';
+                document.getElementById('costoFijoActivo').checked = cf.activo;
+                document.getElementById('modalCostoFijoTitle').textContent = 'Editar costo fijo';
+                new bootstrap.Modal(document.getElementById('modalCostoFijo')).show();
+            });
+        } else if (e.target.classList.contains('btnDelCostoFijo')) {
+            if (!confirm('¿Eliminar este costo fijo?')) return;
+            api('/api/costeo/costos-fijos/' + id, { method: 'DELETE' })
+                .then(() => { loadCostosFijos(); showToast('Costo fijo eliminado', 'success'); })
+                .catch(err => showToast(err.message || err.error, 'danger'));
+        }
+    });
+
+    document.getElementById('btnGuardarCostoFijo')?.addEventListener('click', () => {
+        const id = document.getElementById('costoFijoId').value;
+        const payload = {
+            nombre: document.getElementById('costoFijoNombre').value.trim(),
+            monto_mensual: parseFloat(document.getElementById('costoFijoMonto').value) || 0,
+            activo: document.getElementById('costoFijoActivo').checked
+        };
+        if (!payload.nombre) { showToast('El nombre es obligatorio', 'warning'); return; }
+        const promise = id
+            ? api('/api/costeo/costos-fijos/' + id, { method: 'PUT', body: JSON.stringify(payload) })
+            : api('/api/costeo/costos-fijos', { method: 'POST', body: JSON.stringify(payload) });
+        promise.then(() => {
+            bootstrap.Modal.getInstance(document.getElementById('modalCostoFijo'))?.hide();
+            loadCostosFijos();
+            showToast('Costo fijo guardado', 'success');
+        }).catch(err => showToast(err.message || err.error, 'danger'));
+    });
+
+    document.getElementById('configMetodo')?.addEventListener('change', (e) => {
+        const metodo = e.target.value;
+        toggleConfigRows(metodo);
+        if (metodo === 'costo_fijo') loadCostosFijos();
+    });
+    document.getElementById('config-tab')?.addEventListener('shown.bs.tab', () => {
+        if (document.getElementById('configMetodo')?.value === 'costo_fijo') loadCostosFijos();
+    });
 
     document.getElementById('formConfigCosteo')?.addEventListener('submit', (e) => {
         e.preventDefault();
         const payload = {
             metodo_indirectos: document.getElementById('configMetodo')?.value || 'porcentaje',
             porcentaje_indirectos: parseFloat(document.getElementById('configPorcentaje')?.value) || 10,
-            costo_fijo_mensual: parseFloat(document.getElementById('configCostoFijo')?.value) || 0,
             platos_estimados_mes: parseInt(document.getElementById('configPlatosMes')?.value, 10) || 500,
             factor_carga: parseFloat(document.getElementById('configFactor')?.value) || 2.5,
             margen_objetivo_default: parseFloat(document.getElementById('configMargen')?.value) || 65,

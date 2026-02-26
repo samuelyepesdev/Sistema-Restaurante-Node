@@ -120,7 +120,7 @@
                         </div>
                         <div class="table-responsive">
                             <table class="table table-hover" id="tablaInsumos">
-                                <thead><tr><th>Código</th><th>Nombre</th><th>Unidad compra</th><th>Costo unitario</th><th></th></tr></thead>
+                                <thead><tr><th>Código</th><th>Nombre</th><th>Unidad compra</th><th>Cant. compra</th><th>Precio compra</th><th></th></tr></thead>
                                 <tbody></tbody>
                             </table>
                         </div>
@@ -256,15 +256,24 @@
                                 </div>
                             </div>
                             <div class="row mb-3 d-none" id="rowCostoFijo">
-                                <div class="col-md-4">
-                                    <label class="form-label">Costo fijo mensual ($)</label>
-                                    <input type="number" class="form-control" name="costo_fijo_mensual" id="configCostoFijo" step="0.01" min="0" placeholder="7670">
-                                    <small class="text-muted">Alquiler, personal, luz, etc.</small>
+                                <div class="col-12">
+                                    <label class="form-label fw-bold">Estructura de costos fijos</label>
+                                    <p class="small text-muted mb-2">Arriendo, personal, internet, etc. Solo se suman los activos. Costo fijo por plato = Total ÷ Platos estimados.</p>
+                                    <div class="table-responsive mb-2">
+                                        <table class="table table-sm table-hover" id="tablaCostosFijos">
+                                            <thead class="table-light"><tr><th>Nombre</th><th class="text-end">Monto mensual</th><th>Activo</th><th width="100"></th></tr></thead>
+                                            <tbody id="costosFijosBody"></tbody>
+                                        </table>
+                                    </div>
+                                    <p class="small mb-2"><strong>Total costos fijos activos:</strong> <span id="costosFijosTotal">0</span></p>
+                                    <% if (user && user.permisos && user.permisos.includes('costeo.editar')) { %>
+                                    <button type="button" class="btn btn-outline-primary btn-sm" id="btnNuevoCostoFijo"><i class="bi bi-plus-lg me-1"></i>Agregar costo fijo</button>
+                                    <% } %>
                                 </div>
-                                <div class="col-md-4">
+                                <div class="col-md-4 mt-3">
                                     <label class="form-label">Platos estimados por mes</label>
-                                    <input type="number" class="form-control" name="platos_estimados_mes" id="configPlatosMes" min="1" placeholder="150">
-                                    <small class="text-muted">Se reparte el costo fijo entre estos platos</small>
+                                    <input type="number" class="form-control" name="platos_estimados_mes" id="configPlatosMes" min="1" placeholder="500">
+                                    <small class="text-muted">Se reparte el total de costos fijos entre estos platos</small>
                                 </div>
                             </div>
                             <div class="row mb-3 d-none" id="rowFactor">
@@ -290,6 +299,37 @@
                             <button type="submit" form="formConfigCosteo" class="btn btn-primary"><i class="bi bi-save me-1"></i>Guardar configuración</button>
                             <% } %>
                         </form>
+
+                        <!-- Modal Costo fijo -->
+                        <div class="modal fade" id="modalCostoFijo" tabindex="-1">
+                            <div class="modal-dialog">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title" id="modalCostoFijoTitle">Nuevo costo fijo</h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <input type="hidden" id="costoFijoId">
+                                        <div class="mb-2">
+                                            <label class="form-label">Nombre</label>
+                                            <input type="text" class="form-control" id="costoFijoNombre" placeholder="Ej: Arriendo, Mesero, Internet" required>
+                                        </div>
+                                        <div class="mb-2">
+                                            <label class="form-label">Monto mensual ($)</label>
+                                            <input type="number" class="form-control" id="costoFijoMonto" step="0.01" min="0" value="0">
+                                        </div>
+                                        <div class="form-check">
+                                            <input type="checkbox" class="form-check-input" id="costoFijoActivo" checked>
+                                            <label class="form-check-label" for="costoFijoActivo">Activo (se incluye en el total)</label>
+                                        </div>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                                        <button type="button" class="btn btn-primary" id="btnGuardarCostoFijo">Guardar</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                     <% } %>
                 </div>
@@ -328,8 +368,12 @@
                         </select>
                     </div>
                     <div class="mb-2">
-                        <label class="form-label">Costo unitario</label>
-                        <input type="number" class="form-control" id="insumoCosto" step="0.01" min="0" value="0">
+                        <label class="form-label">Cantidad de compra</label>
+                        <input type="number" class="form-control" id="insumoCantidadCompra" step="0.0001" min="0.0001" value="1" title="Presentación comercial (ej: 4 kilos, 8 unidades)">
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label">Precio de compra</label>
+                        <input type="number" class="form-control" id="insumoPrecioCompra" step="0.01" min="0" value="0" title="Precio pagado por la presentación">
                     </div>
                 </div>
                 <div class="modal-footer">

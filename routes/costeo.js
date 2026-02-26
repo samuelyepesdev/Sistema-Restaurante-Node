@@ -16,6 +16,7 @@ const TemaService = require('../services/TemaService');
 const ParametroService = require('../services/ParametroService');
 const ProductoParametroRepository = require('../repositories/ProductoParametroRepository');
 const TenantService = require('../services/TenantService');
+const CostosFijosRepository = require('../repositories/CostosFijosRepository');
 const { requirePermission } = require('../middleware/auth');
 const { requirePlanFeature } = require('../middleware/planFeature');
 
@@ -72,7 +73,11 @@ router.get('/api/insumos', async (req, res) => {
         const tenantId = getTenantId(req);
         const filters = { q: req.query.q, unidad: req.query.unidad };
         const list = await InsumoService.list(tenantId, filters);
-        res.json(list);
+        const listWithCosto = (list || []).map(ins => ({
+            ...ins,
+            costo_unitario: CosteoService.getCostoUnitarioCalculado(ins)
+        }));
+        res.json(listWithCosto);
     } catch (error) {
         console.error('Error al listar insumos:', error);
         res.status(500).json({ error: error.message || 'Error al listar insumos' });
@@ -97,10 +102,10 @@ router.get('/api/insumos/plantilla', requirePermission('plantillas.ver'), requir
         const inst = wb.addWorksheet('Instrucciones');
         inst.addRow(['PLANTILLA DE INSUMOS']).font = { bold: true, size: 16 };
         inst.addRow(['1) No cambie los encabezados de la hoja "Insumos".']).font = { color: { argb: 'FF495057' } };
-        inst.addRow(['2) Columnas obligatorias: codigo, nombre. Unidad compra y costo unitario tienen valor por defecto.']).font = { color: { argb: 'FF495057' } };
-        inst.addRow(['3) Unidad compra: UND, kg, g, L, ml, lb, etc.']).font = { color: { argb: 'FF495057' } };
-        inst.addRow(['4) Use punto como decimal en costo (ej: 1500.50).']).font = { color: { argb: 'FF495057' } };
-        inst.addRow(['5) Si el código ya existe, se actualizarán nombre, unidad y costo.']).font = { color: { argb: 'FF495057' } };
+        inst.addRow(['2) Columnas obligatorias: codigo, nombre. Unidad compra, cantidad_compra y precio_compra tienen valor por defecto.']).font = { color: { argb: 'FF495057' } };
+        inst.addRow(['3) Unidad compra: UND, kg, g, L, ml, lb. Cantidad compra = presentación (ej: 4 kilos, 8 unidades).']).font = { color: { argb: 'FF495057' } };
+        inst.addRow(['4) Precio compra = precio pagado por esa presentación. El costo unitario se calcula: precio_compra / cantidad (en base).']).font = { color: { argb: 'FF495057' } };
+        inst.addRow(['5) Si el código ya existe, se actualizarán nombre, unidad, cantidad y precio.']).font = { color: { argb: 'FF495057' } };
         inst.getColumn(1).width = 70;
         inst.addRow([]);
 
@@ -109,15 +114,16 @@ router.get('/api/insumos/plantilla', requirePermission('plantillas.ver'), requir
             { header: 'codigo', key: 'codigo', width: 18 },
             { header: 'nombre', key: 'nombre', width: 32 },
             { header: 'unidad_compra', key: 'unidad_compra', width: 16 },
-            { header: 'costo_unitario', key: 'costo_unitario', width: 14 }
+            { header: 'cantidad_compra', key: 'cantidad_compra', width: 14 },
+            { header: 'precio_compra', key: 'precio_compra', width: 14 }
         ];
         const headerRow = sheet.getRow(1);
         headerRow.font = { bold: true };
         headerRow.alignment = { horizontal: 'center' };
         headerRow.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE9ECEF' } };
         sheet.views = [{ state: 'frozen', ySplit: 1 }];
-        sheet.addRow({ codigo: 'INS001', nombre: 'Harina 1kg', unidad_compra: 'kg', costo_unitario: 2500 });
-        sheet.addRow({ codigo: 'INS002', nombre: 'Azúcar 500g', unidad_compra: 'g', costo_unitario: 1200 });
+        sheet.addRow({ codigo: 'INS001', nombre: 'Harina 1kg', unidad_compra: 'kg', cantidad_compra: 1, precio_compra: 2500 });
+        sheet.addRow({ codigo: 'INS002', nombre: 'Salsa 4kg', unidad_compra: 'kg', cantidad_compra: 4, precio_compra: 6380 });
 
         res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
         res.setHeader('Content-Disposition', 'attachment; filename="plantilla_insumos.xlsx"');
@@ -142,7 +148,7 @@ router.post('/api/insumos/cargar', requirePermission('plantillas.ver'), requireP
         if (!ws) {
             return res.status(400).json({ error: 'Hoja "Insumos" no encontrada en el archivo' });
         }
-        const header = ['codigo', 'nombre', 'unidad_compra', 'costo_unitario'];
+        const header = ['codigo', 'nombre', 'unidad_compra', 'cantidad_compra', 'precio_compra'];
         const rows = [];
         ws.eachRow((row, idx) => {
             if (idx === 1) return;
@@ -155,7 +161,8 @@ router.post('/api/insumos/cargar', requirePermission('plantillas.ver'), requireP
                 codigo: String(r.codigo ?? '').trim(),
                 nombre: String(r.nombre ?? '').trim(),
                 unidad_compra: String(r.unidad_compra ?? 'UND').trim() || 'UND',
-                costo_unitario: Number(r.costo_unitario) || 0
+                cantidad_compra: Number(r.cantidad_compra) || 1,
+                precio_compra: Number(r.precio_compra) || 0
             });
         });
         if (rows.length === 0) {
@@ -178,7 +185,8 @@ router.get('/api/insumos/:id', async (req, res) => {
         const id = parseInt(req.params.id, 10);
         const insumo = await InsumoService.getById(id, tenantId);
         if (!insumo) return res.status(404).json({ error: 'Insumo no encontrado' });
-        res.json(insumo);
+        const withCosto = { ...insumo, costo_unitario: CosteoService.getCostoUnitarioCalculado(insumo) };
+        res.json(withCosto);
     } catch (error) {
         console.error('Error al obtener insumo:', error);
         res.status(500).json({ error: error.message || 'Error al obtener insumo' });
@@ -342,6 +350,66 @@ router.put('/api/costeo/config', async (req, res) => {
     } catch (error) {
         console.error('Error al guardar configuración:', error);
         res.status(400).json({ error: error.message || 'Error al guardar configuración' });
+    }
+});
+
+// --- Costos fijos (estructura del negocio: arriendo, personal, internet, etc.) ---
+router.get('/api/costeo/costos-fijos', async (req, res) => {
+    try {
+        const tenantId = getTenantId(req);
+        const list = await CostosFijosRepository.findAll(tenantId);
+        const total = await CostosFijosRepository.getTotalActivo(tenantId);
+        res.json({ items: list || [], total: Math.round(total * 100) / 100 });
+    } catch (error) {
+        console.error('Error al listar costos fijos:', error);
+        res.status(500).json({ error: error.message || 'Error al listar costos fijos' });
+    }
+});
+
+router.post('/api/costeo/costos-fijos', async (req, res) => {
+    try {
+        const tenantId = getTenantId(req);
+        const { nombre, monto_mensual, activo } = req.body;
+        if (!nombre || String(nombre).trim() === '') {
+            return res.status(400).json({ error: 'El nombre es obligatorio' });
+        }
+        const id = await CostosFijosRepository.create(tenantId, {
+            nombre: String(nombre).trim(),
+            monto_mensual: parseFloat(monto_mensual) || 0,
+            activo: activo !== false
+        });
+        res.status(201).json({ id, message: 'Costo fijo creado' });
+    } catch (error) {
+        console.error('Error al crear costo fijo:', error);
+        res.status(400).json({ error: error.message || 'Error al crear costo fijo' });
+    }
+});
+
+router.put('/api/costeo/costos-fijos/:id', async (req, res) => {
+    try {
+        const tenantId = getTenantId(req);
+        const id = parseInt(req.params.id, 10);
+        const existente = await CostosFijosRepository.findById(id, tenantId);
+        if (!existente) return res.status(404).json({ error: 'Costo fijo no encontrado' });
+        await CostosFijosRepository.update(id, tenantId, req.body);
+        res.json({ message: 'Costo fijo actualizado' });
+    } catch (error) {
+        console.error('Error al actualizar costo fijo:', error);
+        res.status(400).json({ error: error.message || 'Error al actualizar costo fijo' });
+    }
+});
+
+router.delete('/api/costeo/costos-fijos/:id', async (req, res) => {
+    try {
+        const tenantId = getTenantId(req);
+        const id = parseInt(req.params.id, 10);
+        const existente = await CostosFijosRepository.findById(id, tenantId);
+        if (!existente) return res.status(404).json({ error: 'Costo fijo no encontrado' });
+        await CostosFijosRepository.delete(id, tenantId);
+        res.json({ message: 'Costo fijo eliminado' });
+    } catch (error) {
+        console.error('Error al eliminar costo fijo:', error);
+        res.status(500).json({ error: error.message || 'Error al eliminar costo fijo' });
     }
 });
 
