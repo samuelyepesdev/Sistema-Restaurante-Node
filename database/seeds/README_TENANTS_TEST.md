@@ -39,6 +39,24 @@ Este script:
 
 **Nota:** Mesas, Productos, Clientes, Cocina, Ventas, Dashboard y Configuración ya filtran por tenant: cada usuario solo ve y gestiona datos de su restaurante/local.
 
+## Seed de datos para costeo
+
+Para validar el módulo de costeo con datos de prueba (insumos, recetas, configuración 30% ganancia y 2% merma):
+
+```bash
+node scripts/seed-costeo-datos.js
+```
+
+El script usa el tenant id 1 (Principal) o el primer tenant disponible. Crea:
+
+- **Insumos**: Arroz, Pollo, Tomate, Aceite, Sal (con precio_compra y cantidad_compra).
+- **Configuración**: margen objetivo 30%, porcentaje indirectos (merma) 2%, platos estimados 500.
+- **Productos**: "Arroz con pollo" y "Ensalada fresca" (códigos COSTEO-01, COSTEO-02).
+- **Recetas** ligadas a esos productos con cantidades por insumo.
+- **Costos fijos** opcionales (Arriendo, Servicios).
+
+Luego puedes revisar en la vista **Costeo** que el costo directo, indirecto (2%) y precio sugerido (30% ganancia) se calculen bien.
+
 ## Archivo SQL de referencia
 
 - `004_seed_tenants_test_REFERENCIA.sql`: solo **documentación/referencia** de los datos que el seeder crea.  

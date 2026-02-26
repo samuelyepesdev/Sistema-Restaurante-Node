@@ -113,14 +113,14 @@
                             </button>
                             <input type="file" accept=".xlsx,.xls" id="inputCargarExcelInsumos" class="d-none">
                             <% } %>
-                            <button type="button" class="btn btn-primary btn-sm ms-auto" data-bs-toggle="modal" data-bs-target="#insumoModal" id="btnNuevoInsumo">
+                            <button type="button" class="btn btn-primary btn-sm ms-auto" id="btnNuevoInsumo">
                                 <i class="bi bi-plus-lg me-1"></i>Nuevo Insumo
                             </button>
                             <% } %>
                         </div>
                         <div class="table-responsive">
                             <table class="table table-hover" id="tablaInsumos">
-                                <thead><tr><th>Código</th><th>Nombre</th><th>Unidad compra</th><th>Cant. compra</th><th>Precio compra</th><th></th></tr></thead>
+                                <thead><tr><th>Código</th><th>Nombre</th><th>Presentación</th><th>Precio compra</th><th></th></tr></thead>
                                 <tbody></tbody>
                             </table>
                         </div>
@@ -248,7 +248,7 @@
                             </div>
                             <div class="collapse show" id="comoFuncionaCosteo">
                                 <div class="card-body small text-muted">
-                                    <p class="mb-2"><strong>1. Insumos</strong> — Precio de compra y cantidad de presentación. El costo unitario se calcula: precio ÷ cantidad (en base: g, ml, UND).</p>
+                                    <p class="mb-2"><strong>1. Insumos</strong> — Precio de compra y presentación (tamaño en que comprás: ej. 450 ml, 1 kg). El costo unitario se calcula: precio ÷ presentación en base (g, ml, UND).</p>
                                     <p class="mb-2"><strong>2. Recetas</strong> — Porciones e ingredientes (insumo + cantidad + unidad). Costo por ingrediente = costo unitario × cantidad usada (convertida a la misma base).</p>
                                     <p class="mb-2"><strong>3. CVU (costo variable unitario)</strong> — Costo materia prima por porción + costos indirectos (merma % o costos fijos repartidos en las unidades estimadas al mes).</p>
                                     <p class="mb-2"><strong>4. Precio sugerido (margen sobre venta)</strong> — Precio = CVU ÷ (1 − margen). Ej: CVU $10, margen 65% → precio = 10 ÷ 0,35 = $28,57. El margen es sobre el precio final, no sobre el costo.</p>
@@ -413,23 +413,23 @@
                         <input type="text" class="form-control" id="insumoNombre" required>
                     </div>
                     <div class="mb-2">
-                        <label class="form-label">Unidad de compra</label>
-                        <select class="form-select" id="insumoUnidad">
-                            <option value="UND">UND</option>
-                            <option value="kg">kg</option>
-                            <option value="g">g</option>
-                            <option value="L">L</option>
-                            <option value="ml">ml</option>
-                            <option value="lb">lb</option>
-                        </select>
-                    </div>
-                    <div class="mb-2">
-                        <label class="form-label">Cantidad de compra</label>
-                        <input type="number" class="form-control" id="insumoCantidadCompra" step="0.0001" min="0.0001" value="1" title="Presentación comercial (ej: 4 kilos, 8 unidades)">
+                        <label class="form-label">Presentación</label>
+                        <small class="text-muted d-block mb-1">Tamaño en que comprás el producto (ej: aceite 450 ml, arroz 1 kg, huevos 12 unidades)</small>
+                        <div class="d-flex gap-2 align-items-center flex-wrap">
+                            <input type="number" class="form-control" id="insumoCantidadCompra" step="0.0001" min="0.0001" value="1" placeholder="Ej: 450" style="max-width: 140px;" title="Cantidad según la presentación">
+                            <select class="form-select" id="insumoUnidad" style="max-width: 100px;" title="Unidad de la presentación">
+                                <option value="UND">UND</option>
+                                <option value="kg">kg</option>
+                                <option value="g">g</option>
+                                <option value="L">L</option>
+                                <option value="ml">ml</option>
+                                <option value="lb">lb</option>
+                            </select>
+                        </div>
                     </div>
                     <div class="mb-2">
                         <label class="form-label">Precio de compra</label>
-                        <input type="number" class="form-control" id="insumoPrecioCompra" step="0.01" min="0" value="0" title="Precio pagado por la presentación">
+                        <input type="number" class="form-control" id="insumoPrecioCompra" step="0.01" min="0" value="0" title="Precio que pagás por esa presentación">
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -503,15 +503,12 @@
                         </table>
                     </div>
                     <div id="ingredienteAgregarEstandar" class="d-flex align-items-center gap-2 mt-2 flex-wrap">
-                        <select class="form-select form-select-sm" id="ingredienteInsumo" style="max-width: 220px;" title="Al elegir un insumo se usa su unidad de compra"></select>
+                        <select class="form-select form-select-sm" id="ingredienteInsumo" style="max-width: 220px;" title="Elegí el insumo; la unidad se ajusta: peso → g, líquido → ml, unidad → UND"></select>
                         <input type="number" class="form-control form-control-sm" id="ingredienteCantidad" placeholder="Cantidad" step="0.001" style="max-width: 100px;">
-                        <select class="form-select form-select-sm" id="ingredienteUnidad" style="max-width: 90px;" title="Se rellena con la unidad del insumo (puede cambiarse si hace falta)">
+                        <select class="form-select form-select-sm" id="ingredienteUnidad" style="max-width: 90px;" title="Peso en g, líquido en ml, unidades en UND. Se define según el insumo elegido.">
                             <option value="g">g</option>
-                            <option value="kg">kg</option>
                             <option value="ml">ml</option>
-                            <option value="L">L</option>
                             <option value="UND">UND</option>
-                            <option value="lb">lb</option>
                         </select>
                         <button type="button" class="btn btn-outline-primary btn-sm" id="btnAgregarIngrediente"><i class="bi bi-plus"></i> Agregar</button>
                     </div>

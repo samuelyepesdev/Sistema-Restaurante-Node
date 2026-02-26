@@ -58,11 +58,11 @@
             tbody.innerHTML = '';
             (list || []).forEach(ins => {
                 const tr = document.createElement('tr');
+                var presentacion = (ins.cantidad_compra != null ? ins.cantidad_compra : 1) + ' ' + (ins.unidad_compra || 'UND');
                 tr.innerHTML = `
                     <td>${escapeHtml(ins.codigo)}</td>
                     <td>${escapeHtml(ins.nombre)}</td>
-                    <td>${escapeHtml(ins.unidad_compra)}</td>
-                    <td>${escapeHtml(String(ins.cantidad_compra != null ? ins.cantidad_compra : 1))}</td>
+                    <td>${escapeHtml(presentacion)}</td>
                     <td>${formatMoney(ins.precio_compra)}</td>
                     <td class="text-end">
                         ${canEdit ? `<button class="btn btn-sm btn-outline-primary me-1 btnEditInsumo" data-id="${ins.id}">Editar</button>
@@ -134,16 +134,23 @@
         document.getElementById('insumoCantidadCompra').value = insumo != null && insumo.cantidad_compra != null ? insumo.cantidad_compra : '1';
         document.getElementById('insumoPrecioCompra').value = insumo != null ? (insumo.precio_compra != null ? insumo.precio_compra : '0') : '0';
         title.textContent = insumo ? 'Editar Insumo' : 'Nuevo Insumo';
-        new bootstrap.Modal(modal).show();
+        bootstrap.Modal.getOrCreateInstance(modal).show();
     }
 
-    document.getElementById('btnNuevoInsumo')?.addEventListener('click', () => openInsumoModal(null));
+    document.getElementById('btnNuevoInsumo')?.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        openInsumoModal(null);
+    });
     function quitarBackdropModal() {
         document.querySelectorAll('.modal-backdrop').forEach(el => el.remove());
         document.body.classList.remove('modal-open');
         document.body.style.overflow = '';
         document.body.style.paddingRight = '';
     }
+    document.getElementById('insumoModal')?.addEventListener('hidden.bs.modal', function () {
+        quitarBackdropModal();
+    });
 
     document.getElementById('btnGuardarInsumo')?.addEventListener('click', () => {
         const id = document.getElementById('insumoId').value;
@@ -329,6 +336,7 @@
     function openRecetaEditarModal(recetaId) {
         document.getElementById('recetaId').value = recetaId;
         recetaIngredientes = [];
+        if (typeof restoreOpcionesUnidadReceta === 'function') restoreOpcionesUnidadReceta();
         loadInsumosForSelect().then(() => api('/api/recetas/' + recetaId)).then(rec => {
             document.getElementById('recetaEditarTitle').textContent = 'Editar: ' + (rec.nombre_receta || '');
             document.getElementById('recetaNombre').value = rec.nombre_receta || '';
@@ -367,13 +375,49 @@
         }
     }
 
+    /**
+     * Unidad base para la receta según tipo de insumo:
+     * peso (kg, g, lb) → g; líquido (L, ml) → ml; resto → UND.
+     */
+    function getUnidadBaseReceta(unidadCompra) {
+        if (!unidadCompra) return 'UND';
+        const u = String(unidadCompra).trim().toLowerCase();
+        if (u === 'kg' || u === 'g' || u === 'gr' || u === 'lb') return 'g';
+        if (u === 'l' || u === 'ml') return 'ml';
+        return 'UND';
+    }
+
+    function setUnidadRecetaPorInsumo(ins) {
+        const unidadEl = document.getElementById('ingredienteUnidad');
+        if (!unidadEl) return;
+        const base = getUnidadBaseReceta(ins && ins.unidad_compra);
+        const opciones = { g: [{ value: 'g', label: 'g' }], ml: [{ value: 'ml', label: 'ml' }], UND: [{ value: 'UND', label: 'UND' }] };
+        const opts = opciones[base] || opciones.UND;
+        unidadEl.innerHTML = '';
+        opts.forEach(function (o) {
+            const opt = document.createElement('option');
+            opt.value = o.value;
+            opt.textContent = o.label;
+            unidadEl.appendChild(opt);
+        });
+        unidadEl.value = base;
+    }
+
+    function restoreOpcionesUnidadReceta() {
+        const unidadEl = document.getElementById('ingredienteUnidad');
+        if (!unidadEl) return;
+        unidadEl.innerHTML = '<option value="g">g</option><option value="ml">ml</option><option value="UND">UND</option>';
+        unidadEl.value = 'g';
+    }
+
     document.getElementById('ingredienteInsumo')?.addEventListener('change', function () {
         const insumoId = parseInt(this.value, 10);
         const ins = insumosList.find(i => i.id === insumoId);
-        const unidadEl = document.getElementById('ingredienteUnidad');
-        if (unidadEl && ins && ins.unidad_compra) {
-            unidadEl.value = ins.unidad_compra;
+        if (!ins) {
+            restoreOpcionesUnidadReceta();
+            return;
         }
+        setUnidadRecetaPorInsumo(ins);
     });
 
     document.getElementById('btnAgregarIngrediente')?.addEventListener('click', () => {
@@ -383,10 +427,11 @@
         const unidad = unidadEl ? unidadEl.value : 'g';
         if (!insumoId || cantidad <= 0) return;
         const ins = insumosList.find(i => i.id === insumoId);
+        var unidadGuardar = ins ? getUnidadBaseReceta(ins.unidad_compra) : unidad;
         recetaIngredientes.push({
             insumo_id: insumoId,
-            cantidad,
-            unidad: ins && ins.unidad_compra ? ins.unidad_compra : unidad,
+            cantidad: cantidad,
+            unidad: unidadGuardar,
             insumo_nombre: ins ? ins.nombre : '',
             insumo_codigo: ins ? ins.codigo : ''
         });
