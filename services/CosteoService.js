@@ -93,8 +93,8 @@ function calcularCostoIndirecto(costoDirecto, config, totalCostosFijos = 0) {
     }
     if (metodo === 'costo_fijo') {
         const totalFijo = typeof totalCostosFijos === 'number' ? totalCostosFijos : (parseFloat(config.costo_fijo_mensual) || 0);
-        const platos = parseInt(config.platos_estimados_mes, 10) || 500;
-        return platos > 0 ? Math.round((totalFijo / platos) * 100) / 100 : 0;
+        const unidadesEstimadasMes = parseInt(config.platos_estimados_mes, 10) || 500; // Total porciones/platos estimados al mes (mix productos)
+        return unidadesEstimadasMes > 0 ? Math.round((totalFijo / unidadesEstimadasMes) * 100) / 100 : 0;
     }
     return 0;
 }
@@ -138,13 +138,26 @@ class CosteoService {
         const porciones = parseFloat(receta.porciones) || 1;
         const costoMateriaPrimaPorcion = porciones > 0 ? costoDirecto / porciones : costoDirecto;
         const costoIndirecto = calcularCostoIndirecto(costoMateriaPrimaPorcion, config, totalCostosFijos);
-        const costoTotal = costoMateriaPrimaPorcion + costoIndirecto;
-        const precioSugerido = calcularPrecioSugerido(costoTotal, config);
+        const costoTotalPorcion = costoMateriaPrimaPorcion + costoIndirecto;
+        const cvuPorcion = Math.round(costoTotalPorcion * 100) / 100;
+        const precioSugerido = calcularPrecioSugerido(costoTotalPorcion, config);
         const precioActual = parseFloat(receta.precio_venta_actual) || 0;
-        const margenActual = precioActual > 0 ? ((precioActual - costoTotal) / precioActual) * 100 : null;
         const mermaPct = config && (config.metodo_indirectos || 'porcentaje') === 'porcentaje'
             ? (parseFloat(config.porcentaje_indirectos) || 0) : 0;
         const margenObjetivoPct = parseFloat(config?.margen_objetivo_default) || 65;
+
+        // Precio y rentabilidad (siempre recalculados, no guardados)
+        const utilidadBrutaPorcion = precioActual > 0 ? precioActual - cvuPorcion : 0;
+        const margenRealPct = precioActual > 0 ? ((precioActual - cvuPorcion) / precioActual) * 100 : null;
+        const markupRealPct = cvuPorcion > 0 && precioActual > 0 ? (utilidadBrutaPorcion / cvuPorcion) * 100 : null;
+        const margenContribucionPorcion = precioActual > 0 ? precioActual - cvuPorcion : 0;
+
+        // Punto de equilibrio: cuántas porciones vender para cubrir costos fijos
+        // PE = TotalCostosFijos / MargenContribucionPorcion
+        const puntoEquilibrioPorciones = margenContribucionPorcion > 0 && totalCostosFijos >= 0
+            ? totalCostosFijos / margenContribucionPorcion
+            : null;
+
         return {
             receta,
             ingredientes,
@@ -156,11 +169,16 @@ class CosteoService {
             merma_pct: mermaPct,
             merma_monto: Math.round(costoIndirecto * 100) / 100,
             costo_indirecto: Math.round(costoIndirecto * 100) / 100,
-            costo_total_porcion: Math.round(costoTotal * 100) / 100,
+            costo_total_porcion: cvuPorcion,
+            cvu_porcion: cvuPorcion,
             margen_objetivo_pct: margenObjetivoPct,
             precio_sugerido: precioSugerido,
             precio_venta_actual: precioActual,
-            margen_actual_pct: margenActual != null ? Math.round(margenActual * 100) / 100 : null
+            utilidad_bruta_porcion: Math.round(utilidadBrutaPorcion * 100) / 100,
+            margen_actual_pct: margenRealPct != null ? Math.round(margenRealPct * 100) / 100 : null,
+            markup_real_pct: markupRealPct != null ? Math.round(markupRealPct * 100) / 100 : null,
+            margen_contribucion_porcion: Math.round(margenContribucionPorcion * 100) / 100,
+            punto_equilibrio_porciones: puntoEquilibrioPorciones != null ? Math.round(puntoEquilibrioPorciones * 100) / 100 : null
         };
     }
 
@@ -218,6 +236,65 @@ class CosteoService {
             precioBajoCosto,
             sinReceta,
             margen_minimo_alerta: margenMinimo
+        };
+    }
+
+    /**
+     * Resumen financiero del negocio: punto de equilibrio y ventas necesarias
+     * considerando TODOS los productos con receta (mix del portafolio).
+     * MC% = suma(margen contribución por producto) / suma(precio por producto), asumiendo mix igual.
+     * Ventas equilibrio = Costos fijos / (MC% / 100).
+     * Ventas para meta = (Costos fijos + Ganancia deseada) / (MC% / 100).
+     * @param {number} tenantId
+     * @returns {Promise<Object>}
+     */
+    static async getResumenFinanciero(tenantId) {
+        const totalCostosFijos = await CostosFijosRepository.getTotalActivo(tenantId);
+        const config = await this.getConfig(tenantId);
+        const gananciaDeseada = parseFloat(config.ganancia_neta_deseada_mensual) || 0;
+        const recetas = await RecetaRepository.findAll(tenantId);
+        const productos = [];
+
+        let sumaPrecios = 0;
+        let sumaMargenContribucion = 0;
+
+        for (const receta of recetas || []) {
+            const costeo = await this.getCosteoReceta(receta.id, tenantId);
+            if (!costeo) continue;
+            const precio = parseFloat(costeo.precio_venta_actual) || 0;
+            const cvu = parseFloat(costeo.cvu_porcion) || costeo.costo_total_porcion || 0;
+            const mcPorcion = precio - cvu;
+            const mcPct = precio > 0 ? (mcPorcion / precio) * 100 : 0;
+
+            productos.push({
+                producto_id: receta.producto_id,
+                producto_nombre: costeo.receta?.producto_nombre || receta.nombre_receta,
+                producto_codigo: costeo.receta?.producto_codigo,
+                precio_venta: Math.round(precio * 100) / 100,
+                cvu_porcion: Math.round(cvu * 100) / 100,
+                margen_contribucion_porcion: Math.round(mcPorcion * 100) / 100,
+                margen_contribucion_pct: Math.round(mcPct * 100) / 100
+            });
+
+            sumaPrecios += precio;
+            sumaMargenContribucion += mcPorcion;
+        }
+
+        const mcPctNegocio = sumaPrecios > 0 ? (sumaMargenContribucion / sumaPrecios) * 100 : 0;
+        const ventasEquilibrio = mcPctNegocio > 0 ? totalCostosFijos / (mcPctNegocio / 100) : null;
+        const ventasParaMeta = mcPctNegocio > 0 && (totalCostosFijos + gananciaDeseada) > 0
+            ? (totalCostosFijos + gananciaDeseada) / (mcPctNegocio / 100)
+            : ventasEquilibrio;
+
+        return {
+            total_costos_fijos: Math.round(totalCostosFijos * 100) / 100,
+            ganancia_neta_deseada_mensual: Math.round(gananciaDeseada * 100) / 100,
+            numero_productos_con_receta: productos.length,
+            productos,
+            margen_contribucion_pct_negocio: Math.round(mcPctNegocio * 100) / 100,
+            ventas_equilibrio: ventasEquilibrio != null ? Math.round(ventasEquilibrio * 100) / 100 : null,
+            ventas_para_meta: ventasParaMeta != null ? Math.round(ventasParaMeta * 100) / 100 : null,
+            nota_mix: 'El margen % del negocio asume un mix ponderado por precio (una unidad de cada producto). Con ventas reales el mix puede variar.'
         };
     }
 }

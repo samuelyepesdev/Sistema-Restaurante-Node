@@ -15,20 +15,21 @@ class ConfiguracionCosteoRepository {
     }
 
     static async create(tenantId, data) {
-        const         {
+        const {
             metodo_indirectos = 'porcentaje',
             porcentaje_indirectos = 10,
             costo_fijo_mensual = 0,
             platos_estimados_mes = 500,
             factor_carga = 2.5,
             margen_objetivo_default = 65,
-            margen_minimo_alerta = 30
+            margen_minimo_alerta = 30,
+            ganancia_neta_deseada_mensual = 0
         } = data || {};
         const [result] = await db.query(
             `INSERT INTO configuracion_costeo 
-             (tenant_id, metodo_indirectos, porcentaje_indirectos, costo_fijo_mensual, platos_estimados_mes, factor_carga, margen_objetivo_default, margen_minimo_alerta) 
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-            [tenantId, metodo_indirectos, porcentaje_indirectos, costo_fijo_mensual, platos_estimados_mes, factor_carga, margen_objetivo_default, margen_minimo_alerta]
+             (tenant_id, metodo_indirectos, porcentaje_indirectos, costo_fijo_mensual, platos_estimados_mes, factor_carga, margen_objetivo_default, margen_minimo_alerta, ganancia_neta_deseada_mensual) 
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            [tenantId, metodo_indirectos, porcentaje_indirectos, costo_fijo_mensual, platos_estimados_mes, factor_carga, margen_objetivo_default, margen_minimo_alerta, ganancia_neta_deseada_mensual]
         );
         return result.insertId;
     }
@@ -41,7 +42,8 @@ class ConfiguracionCosteoRepository {
             platos_estimados_mes,
             factor_carga,
             margen_objetivo_default,
-            margen_minimo_alerta
+            margen_minimo_alerta,
+            ganancia_neta_deseada_mensual
         } = data;
         const [result] = await db.query(
             `UPDATE configuracion_costeo SET 
@@ -51,9 +53,10 @@ class ConfiguracionCosteoRepository {
              platos_estimados_mes = COALESCE(?, platos_estimados_mes),
              factor_carga = COALESCE(?, factor_carga),
              margen_objetivo_default = COALESCE(?, margen_objetivo_default),
-             margen_minimo_alerta = COALESCE(?, margen_minimo_alerta)
+             margen_minimo_alerta = COALESCE(?, margen_minimo_alerta),
+             ganancia_neta_deseada_mensual = COALESCE(?, ganancia_neta_deseada_mensual)
              WHERE tenant_id = ?`,
-            [metodo_indirectos, porcentaje_indirectos, costo_fijo_mensual, platos_estimados_mes, factor_carga, margen_objetivo_default, margen_minimo_alerta, tenantId]
+            [metodo_indirectos, porcentaje_indirectos, costo_fijo_mensual, platos_estimados_mes, factor_carga, margen_objetivo_default, margen_minimo_alerta, ganancia_neta_deseada_mensual, tenantId]
         );
         return result;
     }

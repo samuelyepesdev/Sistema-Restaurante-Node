@@ -218,15 +218,21 @@
 
     function showCosteo(recetaId) {
         const panel = document.getElementById('costeoRecetaPanel');
+        const set = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
         api('/api/costeo/receta/' + recetaId).then(data => {
-            document.getElementById('costeoDirecto').textContent = formatMoney(data.costo_materia_prima_porcion ?? data.costo_directo_porcion);
-            document.getElementById('costeoMermaPct').textContent = data.merma_pct != null ? data.merma_pct : '0';
-            document.getElementById('costeoIndirecto').textContent = formatMoney(data.merma_monto ?? data.costo_indirecto);
-            document.getElementById('costeoTotal').textContent = formatMoney(data.costo_total_porcion);
-            document.getElementById('costeoMargenObjetivo').textContent = (data.margen_objetivo_pct != null ? data.margen_objetivo_pct : 65) + '%';
-            document.getElementById('costeoPrecioSug').textContent = formatMoney(data.precio_sugerido);
-            document.getElementById('costeoPrecioActual').textContent = formatMoney(data.precio_venta_actual);
-            document.getElementById('costeoMargen').textContent = data.margen_actual_pct != null ? data.margen_actual_pct + '%' : '-';
+            set('costeoDirecto', formatMoney(data.costo_materia_prima_porcion ?? data.costo_directo_porcion));
+            set('costeoMermaPct', data.merma_pct != null ? data.merma_pct : '0');
+            set('costeoIndirecto', formatMoney(data.merma_monto ?? data.costo_indirecto));
+            set('costeoTotal', formatMoney(data.costo_total_porcion ?? data.cvu_porcion));
+            set('costeoMargenObjetivo', (data.margen_objetivo_pct != null ? data.margen_objetivo_pct : 65) + '%');
+            set('costeoPrecioSug', formatMoney(data.precio_sugerido));
+            set('costeoPrecioActual', formatMoney(data.precio_venta_actual));
+            set('costeoUtilidadBruta', formatMoney(data.utilidad_bruta_porcion));
+            set('costeoMargen', data.margen_actual_pct != null ? data.margen_actual_pct + '%' : '-');
+            set('costeoMarkup', data.markup_real_pct != null ? data.markup_real_pct + '%' : '-');
+            set('costeoTotalFijos', formatMoney(data.total_costos_fijos));
+            set('costeoMargenContrib', formatMoney(data.margen_contribucion_porcion));
+            set('costeoPuntoEquilibrio', data.punto_equilibrio_porciones != null ? formatMoney(data.punto_equilibrio_porciones) : '-');
             panel.classList.remove('d-none');
         }).catch(() => panel.classList.add('d-none'));
     }
@@ -483,9 +489,54 @@
             if (margen) margen.value = config.margen_objetivo_default ?? 65;
             const margenMinimo = document.getElementById('configMargenMinimoAlerta');
             if (margenMinimo) margenMinimo.value = config.margen_minimo_alerta ?? 30;
+            const gananciaDeseada = document.getElementById('configGananciaDeseada');
+            if (gananciaDeseada) gananciaDeseada.value = config.ganancia_neta_deseada_mensual ?? 0;
             toggleConfigRows(config.metodo_indirectos);
             if (config.metodo_indirectos === 'costo_fijo') loadCostosFijos();
+            loadResumenFinanciero();
             return config;
+        });
+    }
+
+    function loadResumenFinanciero() {
+        const loading = document.getElementById('resumenFinancieroLoading');
+        const content = document.getElementById('resumenFinancieroContent');
+        const vacio = document.getElementById('resumenFinancieroVacio');
+        if (!loading || !content) return;
+        loading.classList.remove('d-none');
+        content.classList.add('d-none');
+        if (vacio) vacio.classList.add('d-none');
+        api('/api/costeo/resumen-financiero').then(data => {
+            loading.classList.add('d-none');
+            if (!data.productos || data.productos.length === 0) {
+                if (vacio) vacio.classList.remove('d-none');
+                return;
+            }
+            content.classList.remove('d-none');
+            const set = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+            set('resumenTotalFijos', formatMoney(data.total_costos_fijos));
+            set('resumenMCPct', (data.margen_contribucion_pct_negocio != null ? data.margen_contribucion_pct_negocio : 0) + '%');
+            set('resumenVentasEquilibrio', data.ventas_equilibrio != null ? formatMoney(data.ventas_equilibrio) : '-');
+            set('resumenVentasMeta', data.ventas_para_meta != null ? formatMoney(data.ventas_para_meta) : '-');
+            const nota = document.getElementById('resumenNotaMix');
+            if (nota && data.nota_mix) nota.textContent = data.nota_mix;
+            const tbody = document.getElementById('resumenProductosBody');
+            if (tbody) {
+                tbody.innerHTML = '';
+                (data.productos || []).forEach(p => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td>${escapeHtml(p.producto_nombre || '')}</td>
+                        <td class="text-end">${formatMoney(p.precio_venta)}</td>
+                        <td class="text-end">${formatMoney(p.cvu_porcion)}</td>
+                        <td class="text-end">${formatMoney(p.margen_contribucion_porcion)}</td>
+                        <td class="text-end">${(p.margen_contribucion_pct != null ? p.margen_contribucion_pct : 0)}%</td>`;
+                    tbody.appendChild(tr);
+                });
+            }
+        }).catch(() => {
+            loading.classList.add('d-none');
+            if (vacio) vacio.classList.remove('d-none');
         });
     }
 
@@ -570,6 +621,7 @@
     });
     document.getElementById('config-tab')?.addEventListener('shown.bs.tab', () => {
         if (document.getElementById('configMetodo')?.value === 'costo_fijo') loadCostosFijos();
+        loadResumenFinanciero();
     });
 
     document.getElementById('formConfigCosteo')?.addEventListener('submit', (e) => {
@@ -580,7 +632,8 @@
             platos_estimados_mes: parseInt(document.getElementById('configPlatosMes')?.value, 10) || 500,
             factor_carga: parseFloat(document.getElementById('configFactor')?.value) || 2.5,
             margen_objetivo_default: parseFloat(document.getElementById('configMargen')?.value) || 65,
-            margen_minimo_alerta: parseFloat(document.getElementById('configMargenMinimoAlerta')?.value) || 30
+            margen_minimo_alerta: parseFloat(document.getElementById('configMargenMinimoAlerta')?.value) || 30,
+            ganancia_neta_deseada_mensual: parseFloat(document.getElementById('configGananciaDeseada')?.value) || 0
         };
         api('/api/costeo/config', { method: 'PUT', body: JSON.stringify(payload) })
             .then(() => showToast('Configuración guardada', 'success'))

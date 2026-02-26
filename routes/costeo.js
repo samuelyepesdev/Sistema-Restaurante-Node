@@ -353,6 +353,18 @@ router.put('/api/costeo/config', async (req, res) => {
     }
 });
 
+// --- Resumen financiero (punto de equilibrio considerando todos los productos) ---
+router.get('/api/costeo/resumen-financiero', async (req, res) => {
+    try {
+        const tenantId = getTenantId(req);
+        const resumen = await CosteoService.getResumenFinanciero(tenantId);
+        res.json(resumen);
+    } catch (error) {
+        console.error('Error al obtener resumen financiero:', error);
+        res.status(500).json({ error: error.message || 'Error al obtener resumen financiero' });
+    }
+});
+
 // --- Costos fijos (estructura del negocio: arriendo, personal, internet, etc.) ---
 router.get('/api/costeo/costos-fijos', async (req, res) => {
     try {
