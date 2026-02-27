@@ -65,16 +65,20 @@ class ProductManager {
         // Setup import/export buttons
         this.setupImportExport();
 
-        // Setup modal event for new product
+        // Setup modal event for new product (solo reset cuando se abre para crear, no al editar)
         const modal = document.getElementById('nuevoProductoModal');
         if (modal) {
             modal.addEventListener('show.bs.modal', (e) => {
-                if (!e.relatedTarget) {
+                const esModoEdicion = this.formManager.isEditMode;
+                if (!e.relatedTarget && !esModoEdicion) {
                     this.formManager.resetForm();
                     document.getElementById('productoParametrosContainer')?.classList.add('d-none');
                     setTimeout(() => {
                         document.getElementById('codigo')?.focus();
                     }, 500);
+                }
+                if (esModoEdicion) {
+                    document.getElementById('productoParametrosContainer')?.classList.remove('d-none');
                 }
             });
         }
@@ -229,14 +233,24 @@ class ProductManager {
      * Delete product
      */
     async deleteProduct(id) {
-        const confirmed = await AlertManager.confirm('¿Está seguro de eliminar este producto?');
-        if (!confirmed) return;
+        const result = await Swal.fire({
+            title: '¿Eliminar producto?',
+            text: 'Esta acción no se puede deshacer.',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#dc3545',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'Sí, eliminar',
+            cancelButtonText: 'Cancelar'
+        });
+        if (!result.isConfirmed) return;
 
         try {
             await ApiClient.delete(`/api/productos/${id}`);
+            await Swal.fire({ icon: 'success', title: 'Producto eliminado', timer: 1500, showConfirmButton: false });
             Utils.reload();
         } catch (error) {
-            AlertManager.alert(error.message, 'error');
+            Swal.fire({ icon: 'error', title: error.message || 'Error al eliminar' });
         }
     }
 

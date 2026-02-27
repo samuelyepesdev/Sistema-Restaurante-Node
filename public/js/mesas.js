@@ -91,6 +91,8 @@ $(function() {
       if(!resp.ok) throw new Error(data.error||'Error al abrir pedido');
       pedidoActual = data.pedido;
       $('#pedidoMesa').text(mesaNumero);
+      const $btnLiberar = $('#btnLiberarMesaHeader');
+      if ($btnLiberar.length) $btnLiberar.prop('disabled', currentMesaEstado === 'libre').toggleClass('d-none', currentMesaEstado === 'libre');
       await cargarPedido(pedidoActual.id);
       canvas.show();
     }catch(err){
@@ -103,6 +105,9 @@ $(function() {
     const data = await resp.json();
     if(!resp.ok) throw new Error(data.error||'Error al cargar pedido');
     items = data.items || [];
+    if (items.length > 0) currentMesaEstado = 'ocupada';
+    const $btnLiberar = $('#btnLiberarMesaHeader');
+    if ($btnLiberar.length) $btnLiberar.prop('disabled', currentMesaEstado === 'libre').toggleClass('d-none', currentMesaEstado === 'libre');
     // No resetear descuentos aquí: se conservan para que al facturar se envíen. Solo se resetean al abrir otra mesa (abrirPedido).
     renderItems();
   }
@@ -220,6 +225,7 @@ $(function() {
       const resp = await fetch(`/api/mesas/pedidos/${pedidoActual.id}/items`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) });
       const data = await resp.json();
       if(!resp.ok) return Swal.fire({icon:'error', title: data.error||'Error al agregar'});
+      currentMesaEstado = 'ocupada';
       await cargarPedido(pedidoActual.id);
       $('#buscarProductoMesa').val('').focus();
     });
@@ -245,7 +251,7 @@ $(function() {
       // Obtener mesas disponibles
       const resp = await fetch('/api/mesas/listar');
       const mesas = await resp.json();
-      const libres = mesas.filter(m => (m.pedidos_abiertos||0) === 0 && m.id !== pedidoActual.mesa_id);
+      const libres = mesas.filter(m => Number(m.pedidos_abiertos||0) === 0 && Number(m.id) !== Number(pedidoActual.mesa_id));
       if(libres.length === 0){
         return Swal.fire({ icon:'info', title:'No hay mesas libres' });
       }
@@ -260,11 +266,15 @@ $(function() {
       const data = await r.json();
       if(!r.ok) throw new Error(data.error||'No se pudo mover el pedido');
 
-      // Actualizar etiqueta de mesa y recargar items
+      const mesaOrigenId = pedidoActual.mesa_id;
       const mesaSel = libres.find(m => m.id === Number(destino));
+      const mesaOrigen = mesas.find(m => m.id === mesaOrigenId);
+      pedidoActual.mesa_id = Number(destino);
+      currentMesaEstado = 'ocupada';
       if(mesaSel){ $('#pedidoMesa').text(mesaSel.numero); }
       await cargarPedido(pedidoActual.id);
-      Swal.fire({ icon:'success', title:'Pedido movido' });
+      const msg = mesaOrigen ? `El pedido pasó a la Mesa ${mesaSel?.numero || destino}. La Mesa ${mesaOrigen.numero} quedó libre.` : `Pedido movido a la Mesa ${mesaSel?.numero || destino}.`;
+      Swal.fire({ icon:'success', title:'Pedido movido', text: msg });
     }catch(err){
       Swal.fire({ icon:'error', title: err.message });
     }
@@ -901,10 +911,12 @@ $(function() {
   }
 
   // Clicks en tarjetas de mesa
+  let currentMesaEstado = null;
   $('#gridMesas').on('click', '.btnAbrirPedido', function(){
     const card = $(this).closest('.card');
     const mesaId = card.data('mesa-id');
     const titulo = card.find('.card-title').text().replace('Mesa ','');
+    currentMesaEstado = card.data('mesa-estado') || 'libre';
     abrirPedido(mesaId, titulo);
   });
 
@@ -944,15 +956,54 @@ $(function() {
     const card = $(this).closest('.card');
     const mesaId = card.data('mesa-id');
     const titulo = card.find('.card-title').text().replace('Mesa ','');
+    currentMesaEstado = card.data('mesa-estado') || 'libre';
     abrirPedido(mesaId, titulo);
   });
 
-  // Crear nueva mesa (rápida)
+  // Editar mesa (número y descripción)
+  $('#gridMesas').on('click', '.btnEditarMesa', async function(){
+    const card = $(this).closest('.card');
+    const mesaId = card.data('mesa-id');
+    const numeroActual = $(this).data('mesa-numero');
+    const descActual = $(this).data('mesa-descripcion') || '';
+    const { value: form } = await Swal.fire({
+      title: 'Editar mesa',
+      html: `
+        <div class="text-start">
+          <label class="form-label small">Número</label>
+          <input id="editMesaNumero" class="form-control mb-2" value="${(numeroActual || '').toString().replace(/"/g, '&quot;')}" />
+          <label class="form-label small">Descripción</label>
+          <input id="editMesaDesc" class="form-control" value="${(descActual || '').toString().replace(/"/g, '&quot;')}" />
+        </div>
+      `,
+      showCancelButton: true,
+      confirmButtonText: 'Guardar',
+      preConfirm: () => {
+        const num = (document.getElementById('editMesaNumero').value || '').trim();
+        const desc = (document.getElementById('editMesaDesc').value || '').trim();
+        if (!num) { Swal.showValidationMessage('El número es obligatorio'); return false; }
+        if (!desc) { Swal.showValidationMessage('La descripción es obligatoria'); return false; }
+        return { numero: num, descripcion: desc };
+      }
+    });
+    if (!form) return;
+    try {
+      const r = await fetch(`/api/mesas/${mesaId}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(form) });
+      const data = await r.json();
+      if (!r.ok) throw new Error(data.error || 'Error al actualizar');
+      Swal.fire({ icon: 'success', title: 'Mesa actualizada' }).then(() => location.reload());
+    } catch (err) {
+      Swal.fire({ icon: 'error', title: err.message });
+    }
+  });
+
+  // Crear nueva mesa (rápida) - descripción obligatoria
   $('#btnNuevaMesa').on('click', async function(){
-    const { value: numero } = await Swal.fire({ title:'Número de mesa', input:'text', showCancelButton:true });
+    const { value: numero } = await Swal.fire({ title:'Número de mesa', input:'text', showCancelButton:true, inputValidator: v => !v?.trim() ? 'El número es obligatorio' : null });
     if(!numero) return;
-    const { value: descripcion } = await Swal.fire({ title:'Descripción', input:'text', showCancelButton:true });
-    const resp = await fetch('/api/mesas/crear', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ numero, descripcion }) });
+    const { value: descripcion } = await Swal.fire({ title:'Descripción (ubicación o nombre)', input:'text', showCancelButton:true, inputValidator: v => !v?.trim() ? 'La descripción es obligatoria (ej: Terraza, Interior)' : null });
+    if(!descripcion) return;
+    const resp = await fetch('/api/mesas/crear', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ numero, descripcion: descripcion.trim() }) });
     if(!resp.ok){ const err = await resp.json(); return Swal.fire({icon:'error', title: err.error||'Error'}); }
     Swal.fire({icon:'success', title:'Mesa creada'}).then(()=> location.reload());
   });

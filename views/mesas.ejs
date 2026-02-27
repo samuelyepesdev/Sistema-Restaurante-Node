@@ -113,7 +113,7 @@
         <div class="row" id="gridMesas">
             <% mesas.forEach(m => { %>
                 <div class="col-6 col-md-4 col-lg-3 mb-3">
-                    <div class="card mesa-card position-relative" data-mesa-id="<%= m.id %>">
+                    <div class="card mesa-card position-relative" data-mesa-id="<%= m.id %>" data-mesa-estado="<%= m.estado %>">
                         <div class="card-body">
                             <span class="badge rounded-pill bg-<%= m.estado === 'libre' ? 'success' : (m.estado === 'ocupada' ? 'warning' : 'secondary') %> estado-badge">
                                 <%= m.estado %>
@@ -121,14 +121,19 @@
                             <h5 class="card-title mb-1">Mesa <%= m.numero %></h5>
                             <p class="text-muted small mb-3"><%= m.descripcion || '' %></p>
                             <div class="d-grid gap-2">
+                                <% if (m.estado !== 'libre') { %>
                                 <button class="btn btn-outline-secondary btn-sm btnLiberarMesa">
                                     <i class="bi bi-unlock me-1"></i> Liberar mesa
                                 </button>
+                                <% } %>
                                 <button class="btn btn-outline-primary btn-sm btnAbrirPedido">
                                     <i class="bi bi-door-open me-1"></i> Abrir / Continuar pedido
                                 </button>
                                 <button class="btn btn-outline-secondary btn-sm btnVerPedido">
                                     <i class="bi bi-list-ul me-1"></i> Ver pedido
+                                </button>
+                                <button class="btn btn-outline-secondary btn-sm btnEditarMesa" data-mesa-numero="<%= m.numero %>" data-mesa-descripcion="<%= (m.descripcion || '') %>" title="Editar mesa">
+                                    <i class="bi bi-pencil me-1"></i> Editar mesa
                                 </button>
                             </div>
                         </div>

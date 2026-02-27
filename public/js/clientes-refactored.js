@@ -60,13 +60,20 @@ class ClientManager {
         const clientData = {
             nombre: data.nombre || document.getElementById('nombre').value,
             direccion: data.direccion || document.getElementById('direccion').value,
-            telefono: data.telefono || document.getElementById('telefono').value
+            telefono: (data.telefono || document.getElementById('telefono').value || '').replace(/\D/g, '')
         };
 
         // Validate required fields
         const validation = Utils.validateRequired(clientData, ['nombre']);
         if (!validation.valid) {
-            AlertManager.alert('El nombre es requerido', 'error');
+            if (typeof Swal !== 'undefined') Swal.fire({ icon: 'warning', title: 'El nombre es requerido' });
+            else AlertManager.alert('El nombre es requerido', 'error');
+            return;
+        }
+
+        if (clientData.telefono && !/^\d+$/.test(clientData.telefono)) {
+            if (typeof Swal !== 'undefined') Swal.fire({ icon: 'warning', title: 'El teléfono solo puede contener números' });
+            else AlertManager.alert('El teléfono solo puede contener números', 'error');
             return;
         }
 
@@ -110,14 +117,24 @@ class ClientManager {
      * Delete client
      */
     async deleteClient(id) {
-        const confirmed = await AlertManager.confirm('¿Está seguro de que desea eliminar este cliente?');
-        if (!confirmed) return;
+        const result = await Swal.fire({
+            title: '¿Eliminar cliente?',
+            text: 'Las facturas asociadas no se eliminarán, pero el cliente ya no aparecerá en el listado.',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#dc3545',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'Sí, eliminar',
+            cancelButtonText: 'Cancelar'
+        });
+        if (!result.isConfirmed) return;
 
         try {
             await ApiClient.delete(`/api/clientes/${id}`);
+            await Swal.fire({ icon: 'success', title: 'Cliente eliminado', timer: 1500, showConfirmButton: false });
             Utils.reload();
         } catch (error) {
-            AlertManager.alert(error.message, 'error');
+            Swal.fire({ icon: 'error', title: error.message || 'Error al eliminar' });
         }
     }
 

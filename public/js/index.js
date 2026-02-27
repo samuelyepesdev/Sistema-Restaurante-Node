@@ -210,48 +210,47 @@ $(document).ready(function() {
         });
     }
 
-    // Guardar nuevo cliente
-    $('#guardarCliente').click(function() {
-        const cliente = {
-            nombre: $('#nombreCliente').val().trim(),
-            direccion: $('#direccionNuevoCliente').val().trim(),
-            telefono: $('#telefonoNuevoCliente').val().trim()
-        };
-
-        if (!cliente.nombre) {
+    // Guardar nuevo cliente (facturación / venta para evento)
+    $(document).on('click', '#guardarCliente', function(e) {
+        e.preventDefault();
+        var nombre = ($('#nombreCliente').val() || '').trim();
+        var direccion = ($('#direccionNuevoCliente').val() || '').trim();
+        var telefono = ($('#telefonoNuevoCliente').val() || '').trim().replace(/\D/g, '');
+        if (!nombre) {
             mostrarAlerta('error', 'El nombre es requerido');
             return;
         }
-
+        if (telefono && !/^\d+$/.test(telefono)) {
+            mostrarAlerta('error', 'El teléfono solo puede contener números');
+            return;
+        }
+        var $btn = $(this);
+        $btn.prop('disabled', true);
         $.ajax({
             url: '/api/clientes',
             method: 'POST',
-            data: cliente,
+            contentType: 'application/json',
+            data: JSON.stringify({ nombre: nombre, direccion: direccion || null, telefono: telefono || null }),
             success: function(response) {
-                // Crear nueva opción en el select
-                const newOption = new Option(cliente.nombre, response.id, true, true);
-                $('#cliente').append(newOption).trigger('change');
-                
-                // Actualizar información del cliente
-                $('#direccionCliente').text(cliente.direccion || 'No especificada');
-                $('#telefonoCliente').text(cliente.telefono || 'No especificado');
-                $('#infoCliente').show();
-
-                // Cerrar modal y limpiar formulario
-                const modal = bootstrap.Modal.getInstance(document.getElementById('nuevoClienteModal'));
-                if (modal) {
-                    modal.hide();
-                } else {
-                    $('#nuevoClienteModal').modal('hide');
+                var id = response && (response.id != null) ? response.id : null;
+                if (id != null && $('#cliente').length) {
+                    var newOption = new Option(nombre, id, true, true);
+                    $('#cliente').append(newOption).trigger('change');
+                    $('#direccionCliente').text(direccion || 'No especificada');
+                    $('#telefonoCliente').text(telefono || 'No especificado');
+                    $('#infoCliente').show();
                 }
-                $('#formNuevoCliente')[0].reset();
-                
+                var modal = bootstrap.Modal.getInstance(document.getElementById('nuevoClienteModal'));
+                if (modal) modal.hide();
+                if (document.getElementById('formNuevoCliente')) document.getElementById('formNuevoCliente').reset();
                 mostrarAlerta('success', 'Cliente guardado exitosamente');
             },
             error: function(xhr) {
-                console.error('Error al guardar cliente:', xhr);
-                const error = xhr.responseJSON?.error || 'Error al guardar el cliente';
+                var error = (xhr.responseJSON && xhr.responseJSON.error) ? xhr.responseJSON.error : 'Error al guardar el cliente';
                 mostrarAlerta('error', error);
+            },
+            complete: function() {
+                $btn.prop('disabled', false);
             }
         });
     });

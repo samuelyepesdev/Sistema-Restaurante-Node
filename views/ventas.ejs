@@ -202,6 +202,7 @@
                         <div class="fw-semibold"><i class="bi bi-graph-up me-2"></i>Historial de Ventas</div>
                         <div class="d-flex flex-wrap gap-2">
                             <button class="btn btn-primary" id="filtrarVentas"><i class="bi bi-funnel"></i> Filtrar</button>
+                            <button class="btn btn-outline-secondary" id="limpiarFiltrosVentas" title="Quitar filtros y volver a cargar"><i class="bi bi-x-circle"></i> Limpiar filtros</button>
                             <% if (typeof allowedByPlan !== 'undefined' && allowedByPlan && allowedByPlan.plantillas && user && user.permisos && user.permisos.includes('plantillas.ver')) { %>
                             <button class="btn btn-success" id="exportarVentas"><i class="bi bi-file-earmark-excel"></i> Exportar</button>
                             <% } %>
@@ -247,7 +248,7 @@
                             <% ventas.forEach(function(venta) { %>
                                 <tr>
                                     <td data-label="Factura #"><%= venta.id %></td>
-                                    <td data-label="Fecha"><%= new Date(venta.fecha).toLocaleString() %></td>
+                                    <td data-label="Fecha"><%= new Date(venta.fecha).toLocaleString('es-CO', { dateStyle: 'short', timeStyle: 'medium' }) %></td>
                                     <td data-label="Cliente"><%= venta.cliente_nombre %></td>
                                     <td data-label="Forma de pago"><%= (venta.forma_pago || '').charAt(0).toUpperCase() + (venta.forma_pago || '').slice(1) %></td>
                                     <td data-label="Tipo"><span class="badge bg-<%= venta.evento_id ? 'info' : 'secondary' %>"><%= venta.tipo_venta || (venta.evento_id ? 'Evento' : 'Venta diaria') %></span></td>
@@ -410,7 +411,7 @@
             var titleEl = modalEl && modalEl.querySelector('.modal-title');
             if (!modalEl || !frameEl) return;
             if (titleEl) titleEl.textContent = 'Factura #' + id;
-            frameEl.src = '/api/facturas/' + id + '/imprimir';
+            frameEl.src = '/api/facturas/' + id + '/imprimir?return=' + encodeURIComponent('/ventas');
             var modal = bootstrap.Modal.getOrCreateInstance(modalEl);
             modal.show();
         }
@@ -426,7 +427,7 @@
                     var cliente = data.cliente || {};
                     var factura = data.factura || {};
                     $('#detallesCliente').html('<p><strong>Nombre:</strong> ' + (cliente.nombre || '-') + '</p><p><strong>Dirección:</strong> ' + (cliente.direccion || 'No especificada') + '</p><p><strong>Teléfono:</strong> ' + (cliente.telefono || 'No especificado') + '</p>');
-                    $('#detallesFactura').html('<p><strong>Factura #:</strong> ' + factura.id + '</p><p><strong>Fecha:</strong> ' + (factura.fecha ? new Date(factura.fecha).toLocaleString() : '-') + '</p><p><strong>Forma de Pago:</strong> ' + (factura.forma_pago ? (factura.forma_pago.charAt(0).toUpperCase() + factura.forma_pago.slice(1)) : '-') + '</p>');
+                    $('#detallesFactura').html('<p><strong>Factura #:</strong> ' + factura.id + '</p><p><strong>Fecha:</strong> ' + (factura.fecha ? new Date(factura.fecha).toLocaleString('es-CO', { dateStyle: 'short', timeStyle: 'medium' }) : '-') + '</p><p><strong>Forma de Pago:</strong> ' + (factura.forma_pago ? (factura.forma_pago.charAt(0).toUpperCase() + factura.forma_pago.slice(1)) : '-') + '</p>');
                     var tbody = $('#detallesProductos');
                     tbody.empty();
                     var totalGeneral = 0;
@@ -476,7 +477,16 @@
                 return;
             }
             const params = new URLSearchParams({ desde, hasta, q });
+            const eventoId = new URLSearchParams(window.location.search).get('evento_id');
+            if (eventoId) params.set('evento_id', eventoId);
             window.location.href = `/ventas?${params.toString()}`;
+        });
+        document.getElementById('limpiarFiltrosVentas').addEventListener('click', function() {
+            const params = new URLSearchParams(window.location.search);
+            params.delete('desde');
+            params.delete('hasta');
+            params.delete('q');
+            window.location.href = (params.toString() ? '/ventas?' + params.toString() : '/ventas');
         });
 
         document.getElementById('exportarVentas').addEventListener('click', function(){

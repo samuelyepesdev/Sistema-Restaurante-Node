@@ -52,11 +52,13 @@ router.get('/:id/imprimir', async (req, res) => {
         const { factura, detalles } = await FacturaService.getByIdForPrint(facturaId, tenantId);
         
         const config = await ConfiguracionService.getForPreview(tenantId);
+        const returnUrl = (req.query.return && typeof req.query.return === 'string') ? req.query.return : '/ventas';
         
         res.render('factura', {
             factura,
             detalles,
-            config
+            config,
+            returnUrl
         });
     } catch (error) {
         console.error('Error al obtener datos de factura:', error);

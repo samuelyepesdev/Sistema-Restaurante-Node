@@ -59,12 +59,19 @@ router.get('/impresoras', (req, res) => {
     res.json([]);
 });
 
-// GET /configuracion/preview - Invoice preview with example data (del tenant)
+// GET /configuracion/preview - Invoice preview with example data (del tenant). Query params sobrescriben config para ver cambios sin guardar.
 router.get('/preview', async (req, res) => {
     try {
         const tenantId = req.tenant?.id;
         if (!tenantId) return res.status(403).json({ error: 'Contexto de tenant no disponible' });
-        const config = await ConfiguracionService.getForPreview(tenantId);
+        let config = await ConfiguracionService.getForPreview(tenantId);
+        if (req.query.nombre_negocio !== undefined) config = { ...config, nombre_negocio: req.query.nombre_negocio };
+        if (req.query.direccion !== undefined) config = { ...config, direccion: req.query.direccion };
+        if (req.query.telefono !== undefined) config = { ...config, telefono: req.query.telefono };
+        if (req.query.nit !== undefined) config = { ...config, nit: req.query.nit };
+        if (req.query.pie_pagina !== undefined) config = { ...config, pie_pagina: req.query.pie_pagina };
+        if (req.query.ancho_papel !== undefined) config = { ...config, ancho_papel: parseInt(req.query.ancho_papel, 10) || config.ancho_papel };
+        if (req.query.font_size !== undefined) config = { ...config, font_size: parseInt(req.query.font_size, 10) || 1 };
 
         // Example data for preview
         const facturaEjemplo = {

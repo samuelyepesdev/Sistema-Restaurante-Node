@@ -66,9 +66,10 @@ router.post('/crear', async (req, res) => {
 
         const { numero, descripcion } = req.body || {};
         if (!numero) return res.status(400).json({ error: 'El número de mesa es requerido' });
+        if (!descripcion || !String(descripcion).trim()) return res.status(400).json({ error: 'La descripción es requerida (ej: Terraza, Interior)' });
         const [result] = await db.query(
             'INSERT INTO mesas (tenant_id, numero, descripcion, estado) VALUES (?, ?, ?, ?)',
-            [tenantId, String(numero), descripcion || null, 'libre']
+            [tenantId, String(numero), String(descripcion).trim(), 'libre']
         );
         res.status(201).json({ id: result.insertId });
     } catch (error) {
@@ -77,6 +78,32 @@ router.post('/crear', async (req, res) => {
             return res.status(400).json({ error: 'Ya existe una mesa con ese número' });
         }
         res.status(500).json({ error: 'Error al crear mesa' });
+    }
+});
+
+// PUT /mesas/:mesaId - API: actualizar mesa (numero, descripcion) del tenant
+router.put('/:mesaId', async (req, res) => {
+    try {
+        const tenantId = req.tenant?.id;
+        if (!tenantId) return res.status(403).json({ error: 'Contexto de tenant no disponible' });
+        const mesaId = req.params.mesaId;
+        const { numero, descripcion } = req.body || {};
+        const [rows] = await db.query('SELECT id FROM mesas WHERE id = ? AND tenant_id = ?', [mesaId, tenantId]);
+        if (rows.length === 0) return res.status(404).json({ error: 'Mesa no encontrada' });
+        if (numero != null && String(numero).trim() === '') return res.status(400).json({ error: 'El número de mesa es requerido' });
+        if (descripcion != null && String(descripcion).trim() === '') return res.status(400).json({ error: 'La descripción es requerida' });
+        const updates = [];
+        const values = [];
+        if (numero !== undefined) { updates.push('numero = ?'); values.push(String(numero).trim()); }
+        if (descripcion !== undefined) { updates.push('descripcion = ?'); values.push(String(descripcion).trim()); }
+        if (updates.length === 0) return res.status(400).json({ error: 'Indique numero o descripcion a actualizar' });
+        values.push(mesaId, tenantId);
+        await db.query(`UPDATE mesas SET ${updates.join(', ')} WHERE id = ? AND tenant_id = ?`, values);
+        res.json({ message: 'Mesa actualizada' });
+    } catch (error) {
+        console.error('Error al actualizar mesa:', error);
+        if (error.code === 'ER_DUP_ENTRY') return res.status(400).json({ error: 'Ya existe una mesa con ese número' });
+        res.status(500).json({ error: 'Error al actualizar mesa' });
     }
 });
 
@@ -214,11 +241,7 @@ router.post('/abrir', async (req, res) => {
                 [tenantId, mesa_id, cliente_id || null, notas || null]
             );
 
-            await connection.query(
-                `UPDATE mesas SET estado = 'ocupada' WHERE id = ?`,
-                [mesa_id]
-            );
-
+            // No marcar mesa como ocupada al solo abrir/ver pedido; se marcará al agregar el primer ítem
             await connection.commit();
             connection.release();
             res.status(201).json({ pedido: { id: insert.insertId, mesa_id, cliente_id: cliente_id || null, estado: 'abierto', total: 0, notas: notas || null } });
@@ -315,11 +338,14 @@ router.post('/pedidos/:pedidoId/items', async (req, res) => {
             return res.status(400).json({ error: 'producto_id, cantidad y precio son requeridos' });
         }
         const subtotal = Number(cantidad) * Number(precio);
+        const [pedidoRow] = await db.query('SELECT mesa_id FROM pedidos WHERE id = ? AND tenant_id = ?', [pedidoId, tenantId]);
+        const mesaId = pedidoRow && pedidoRow[0] && pedidoRow[0].mesa_id;
         const [result] = await db.query(
             `INSERT INTO pedido_items (tenant_id, pedido_id, producto_id, cantidad, unidad_medida, precio_unitario, subtotal, estado, nota)
              VALUES (?, ?, ?, ?, ?, ?, ?, 'pendiente', ?)` ,
             [tenantId, pedidoId, producto_id, cantidad, unidad || 'UND', precio, subtotal, nota || null]
         );
+        if (mesaId) await db.query("UPDATE mesas SET estado = 'ocupada' WHERE id = ? AND tenant_id = ?", [mesaId, tenantId]);
         res.status(201).json({ id: result.insertId });
     } catch (error) {
         console.error('Error al agregar item:', error);

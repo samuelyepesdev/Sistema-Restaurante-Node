@@ -57,10 +57,15 @@ class ClienteService {
             throw new Error('El nombre es requerido');
         }
 
+        const telefonoStr = telefono?.trim() || null;
+        if (telefonoStr && !/^\d+$/.test(telefonoStr)) {
+            throw new Error('El teléfono solo puede contener números');
+        }
+
         const result = await ClienteRepository.create(tenantId, {
             nombre: nombre.trim(),
             direccion: direccion?.trim() || null,
-            telefono: telefono?.trim() || null
+            telefono: telefonoStr
         });
 
         return {
@@ -84,6 +89,11 @@ class ClienteService {
             throw new Error('El nombre es requerido');
         }
 
+        const telefonoStr = telefono?.trim() || null;
+        if (telefonoStr && !/^\d+$/.test(telefonoStr)) {
+            throw new Error('El teléfono solo puede contener números');
+        }
+
         const existingClient = await ClienteRepository.findById(id, tenantId);
         if (!existingClient) {
             throw new Error('Cliente no encontrado');
@@ -92,7 +102,7 @@ class ClienteService {
         const result = await ClienteRepository.update(id, tenantId, {
             nombre: nombre.trim(),
             direccion: direccion?.trim() || null,
-            telefono: telefono?.trim() || null
+            telefono: telefonoStr
         });
 
         if (result.affectedRows === 0) {
