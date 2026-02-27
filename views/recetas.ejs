@@ -29,6 +29,12 @@
         .search-box {
             max-width: 320px;
         }
+        /* Columna Acciones: botones en fila con espacio, sin solapamiento en PC */
+        #tablaRecetas th:last-child,
+        #tablaRecetas td:last-child {
+            min-width: 140px;
+            white-space: nowrap;
+        }
     </style>
 </head>
 <body>
@@ -79,9 +85,11 @@
                                 <td><span class="badge bg-light text-dark"><%= r.porciones %> porciones</span></td>
                                 <td><small><%= (r.ingredientes && r.ingredientes.length) ? r.ingredientes.map(i => i.insumo_nombre + ' ' + i.cantidad + (i.unidad || 'g')).join(', ') : '-' %></small></td>
                                 <% if (user && user.permisos && user.permisos.includes('recetas.editar')) { %>
-                                <td class="text-center">
-                                    <button type="button" class="btn btn-sm btn-outline-primary" onclick="editarReceta(<%= r.id %>)">Editar</button>
-                                    <button type="button" class="btn btn-sm btn-outline-danger btn-eliminar-receta" data-id="<%= r.id %>" data-nombre="<%= typeof r.nombre_receta === 'string' ? r.nombre_receta.replace(/"/g, '&quot;') : '' %>">Eliminar</button>
+                                <td class="text-center align-middle">
+                                    <div class="d-flex flex-nowrap justify-content-center gap-1">
+                                        <button type="button" class="btn btn-sm btn-outline-primary" onclick="editarReceta(<%= r.id %>)">Editar</button>
+                                        <button type="button" class="btn btn-sm btn-outline-danger btn-eliminar-receta" data-id="<%= r.id %>" data-nombre="<%= typeof r.nombre_receta === 'string' ? r.nombre_receta.replace(/"/g, '&quot;') : '' %>">Eliminar</button>
+                                    </div>
                                 </td>
                                 <% } %>
                             </tr>

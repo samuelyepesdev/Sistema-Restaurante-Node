@@ -6,6 +6,7 @@
     <title>Inventario</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
         body { background: #f8f9fa; }
         .card { border: none; box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.05); }
@@ -341,7 +342,23 @@
                     return (it.nombre || it.codigo) + ' - ' + formatoNum(it.stock_actual) + ' / ' + formatoNum(it.stock_minimo) + ' ' + (it.unidad_base || '');
                 });
                 const texto = 'Lista de mercado\n' + (new Date().toLocaleDateString('es-CO')) + '\n\n' + (lineas.length ? lineas.join('\n') : 'Nada por reponer.');
-                navigator.clipboard.writeText(texto).then(function () { alert('Lista copiada al portapapeles'); }).catch(function () { alert('No se pudo copiar'); });
+                navigator.clipboard.writeText(texto).then(function () {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Listado copiado',
+                        text: 'La lista de mercado se copió al portapapeles. Puedes pegarla donde la necesites.',
+                        timer: 2500,
+                        timerProgressBar: true,
+                        showConfirmButton: false,
+                        toast: false
+                    });
+                }).catch(function () {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'No se pudo copiar',
+                        text: 'Comprueba que el navegador permita acceder al portapapeles.'
+                    });
+                });
             });
             document.getElementById('btnListaMercadoImprimir').addEventListener('click', function () {
                 const lineas = listaMercadoActual.map(function (it) {

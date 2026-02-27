@@ -34,6 +34,42 @@
         .table th {
             border-top: none;
         }
+        .tfoot-desktop {
+            border-top: 2px solid #dee2e6;
+        }
+        .tfoot-desktop tr:last-child td {
+            border-bottom: none;
+        }
+        /* En PC mostramos cards de totales; ocultamos el tfoot de la tabla */
+        @media (min-width: 992px) {
+            .tfoot-desktop {
+                display: none !important;
+            }
+        }
+        .resumen-cards-desktop .card-total {
+            border: none;
+            border-radius: 0.5rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            transition: box-shadow 0.2s ease;
+        }
+        .resumen-cards-desktop .card-total:hover {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        }
+        .resumen-cards-desktop .card-total .card-body {
+            padding: 1rem 1.25rem;
+        }
+        .resumen-cards-desktop .card-total .total-label {
+            font-size: 0.875rem;
+            color: #6c757d;
+            font-weight: 600;
+        }
+        .resumen-cards-desktop .card-total .total-value {
+            font-size: 1.35rem;
+            font-weight: 700;
+        }
+        .resumen-cards-desktop .card-total.card-general .total-value {
+            color: #0d6efd;
+        }
         .action-buttons .btn {
             padding: 0.25rem 0.5rem;
         }
@@ -152,6 +188,29 @@
             .resumen-totales {
                 display: none !important;
             }
+        }
+        /* Resumen totales: una fila por total en móvil (sin partir "Total Transferencia"), alineado en tablet */
+        .resumen-totales .resumen-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.65rem 0;
+            border-bottom: 1px solid rgba(0,0,0,0.1);
+            gap: 0.75rem;
+        }
+        .resumen-totales .resumen-item:last-child {
+            border-bottom-width: 2px;
+            border-bottom-color: rgba(0,0,0,0.2);
+        }
+        .resumen-totales .resumen-item .resumen-label {
+            white-space: nowrap;
+            font-weight: 600;
+            color: #495057;
+        }
+        .resumen-totales .resumen-item .resumen-value {
+            font-weight: 700;
+            text-align: right;
+            flex-shrink: 0;
         }
     </style>
 </head>
@@ -274,44 +333,63 @@
                         </tbody>
                         <tfoot class="table-light fw-bold tfoot-desktop">
                             <tr>
-                                <td colspan="5" class="text-end">Total Efectivo:</td>
-                                <td class="text-end" id="totalEfectivo">$<%= (typeof totalEfectivo !== 'undefined' ? Number(totalEfectivo).toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '0,00') %></td>
+                                <td colspan="5" class="text-end py-2">Total Efectivo:</td>
+                                <td class="text-end py-2">$<%= (typeof totalEfectivo !== 'undefined' ? Number(totalEfectivo).toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '0,00') %></td>
                                 <td></td>
                             </tr>
                             <tr>
-                                <td colspan="5" class="text-end">Total Transferencia:</td>
-                                <td class="text-end" id="totalTransferencia">$<%= (typeof totalTransferencia !== 'undefined' ? Number(totalTransferencia).toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '0,00') %></td>
+                                <td colspan="5" class="text-end py-2">Total Transferencia:</td>
+                                <td class="text-end py-2">$<%= (typeof totalTransferencia !== 'undefined' ? Number(totalTransferencia).toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '0,00') %></td>
                                 <td></td>
                             </tr>
-                            <tr>
-                                <td colspan="5" class="text-end">Total General:</td>
-                                <td class="text-end" id="totalGeneral">$<%= (typeof totalGeneral !== 'undefined' ? Number(totalGeneral).toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '0,00') %></td>
+                            <tr class="border-top">
+                                <td colspan="5" class="text-end py-2">Total General:</td>
+                                <td class="text-end py-2 text-primary">$<%= (typeof totalGeneral !== 'undefined' ? Number(totalGeneral).toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '0,00') %></td>
                                 <td></td>
                             </tr>
                         </tfoot>
                     </table>
                 </div>
-                <!-- Resumen totales: visible en móvil/tablet (misma línea label + valor) -->
+                <!-- Resumen en cards: solo en PC (aprovecha el ancho, sin espacio vacío a la izquierda) -->
+                <div class="resumen-cards-desktop row g-3 mt-3 d-none d-md-flex">
+                    <div class="col-md-4">
+                        <div class="card card-total h-100">
+                            <div class="card-body">
+                                <div class="total-label text-uppercase small mb-1">Total Efectivo</div>
+                                <div class="total-value" id="totalEfectivo">$<%= (typeof totalEfectivo !== 'undefined' ? Number(totalEfectivo).toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '0,00') %></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card card-total h-100">
+                            <div class="card-body">
+                                <div class="total-label text-uppercase small mb-1">Total Transferencia</div>
+                                <div class="total-value" id="totalTransferencia">$<%= (typeof totalTransferencia !== 'undefined' ? Number(totalTransferencia).toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '0,00') %></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card card-total card-general h-100">
+                            <div class="card-body">
+                                <div class="total-label text-uppercase small mb-1">Total General</div>
+                                <div class="total-value" id="totalGeneral">$<%= (typeof totalGeneral !== 'undefined' ? Number(totalGeneral).toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '0,00') %></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Resumen totales: visible en móvil/tablet; una fila por total para evitar desalineación -->
                 <div class="resumen-totales mt-3 p-3 bg-light rounded d-md-none">
-                    <div class="row g-2">
-                        <div class="col-6 col-sm-4">
-                            <div class="d-flex justify-content-between align-items-center py-2 border-bottom border-secondary border-opacity-25">
-                                <span class="fw-bold text-secondary">Total Efectivo</span>
-                                <span class="fw-bold" id="totalEfectivoResumen">$<%= (typeof totalEfectivo !== 'undefined' ? Number(totalEfectivo).toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '0,00') %></span>
-                            </div>
-                        </div>
-                        <div class="col-6 col-sm-4">
-                            <div class="d-flex justify-content-between align-items-center py-2 border-bottom border-secondary border-opacity-25">
-                                <span class="fw-bold text-secondary">Total Transferencia</span>
-                                <span class="fw-bold" id="totalTransferenciaResumen">$<%= (typeof totalTransferencia !== 'undefined' ? Number(totalTransferencia).toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '0,00') %></span>
-                            </div>
-                        </div>
-                        <div class="col-12 col-sm-4">
-                            <div class="d-flex justify-content-between align-items-center py-2 border-bottom border-dark">
-                                <span class="fw-bold">Total General</span>
-                                <span class="fw-bold fs-5 text-primary" id="totalGeneralResumen">$<%= (typeof totalGeneral !== 'undefined' ? Number(totalGeneral).toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '0,00') %></span>
-                            </div>
-                        </div>
+                    <div class="resumen-item">
+                        <span class="resumen-label text-secondary">Total Efectivo</span>
+                        <span class="resumen-value" id="totalEfectivoResumen">$<%= (typeof totalEfectivo !== 'undefined' ? Number(totalEfectivo).toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '0,00') %></span>
+                    </div>
+                    <div class="resumen-item">
+                        <span class="resumen-label text-secondary">Total Transferencia</span>
+                        <span class="resumen-value" id="totalTransferenciaResumen">$<%= (typeof totalTransferencia !== 'undefined' ? Number(totalTransferencia).toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '0,00') %></span>
+                    </div>
+                    <div class="resumen-item">
+                        <span class="resumen-label">Total General</span>
+                        <span class="resumen-value fs-5 text-primary" id="totalGeneralResumen">$<%= (typeof totalGeneral !== 'undefined' ? Number(totalGeneral).toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '0,00') %></span>
                     </div>
                 </div>
             </div>
