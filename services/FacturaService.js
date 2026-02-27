@@ -5,10 +5,11 @@
  */
 
 const FacturaRepository = require('../repositories/FacturaRepository');
+const InventarioService = require('./InventarioService');
 
 class FacturaService {
     /**
-     * Create invoice with details
+     * Create invoice with details. Valida stock para productos con receta y descuenta inventario.
      * @param {Object} facturaData - Invoice data
      * @returns {Promise<Object>} Created invoice result
      */
@@ -19,6 +20,14 @@ class FacturaService {
             throw new Error('Datos incompletos');
         }
 
+        for (const p of productos) {
+            const check = await InventarioService.checkStockParaProducto(tenantId, p.producto_id, parseFloat(p.cantidad) || 1);
+            if (!check.ok) {
+                const msg = (check.faltantes || []).map(f => `${f.insumo_nombre}: requiere ${f.requerido} ${f.unidad_base}, disponible ${f.disponible}`).join('; ');
+                throw new Error('No hay stock suficiente para realizar esta venta. ' + msg);
+            }
+        }
+
         const result = await FacturaRepository.createWithDetails(tenantId, {
             cliente_id,
             total,
@@ -27,7 +36,16 @@ class FacturaService {
             evento_id: evento_id || null
         });
 
-        return { id: result.insertId };
+        const facturaId = result.insertId;
+        for (const p of productos) {
+            try {
+                await InventarioService.descontarPorReceta(tenantId, p.producto_id, parseFloat(p.cantidad) || 1, 'factura_' + facturaId);
+            } catch (err) {
+                console.error('Error al descontar inventario por receta:', err);
+            }
+        }
+
+        return { id: facturaId };
     }
 
     /**

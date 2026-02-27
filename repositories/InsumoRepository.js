@@ -43,19 +43,46 @@ class InsumoRepository {
     }
 
     static async create(tenantId, data) {
-        const { codigo, nombre, unidad_compra, cantidad_compra, precio_compra } = data;
+        const { codigo, nombre, unidad_compra, cantidad_compra, precio_compra, unidad_base, stock_minimo } = data;
         const [result] = await db.query(
-            'INSERT INTO insumos (tenant_id, codigo, nombre, unidad_compra, cantidad_compra, precio_compra) VALUES (?, ?, ?, ?, ?, ?)',
-            [tenantId, codigo, nombre, unidad_compra || 'UND', parseFloat(cantidad_compra) || 1, parseFloat(precio_compra) || 0]
+            `INSERT INTO insumos (tenant_id, codigo, nombre, unidad_compra, cantidad_compra, precio_compra, unidad_base, stock_minimo)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+            [
+                tenantId, codigo, nombre, unidad_compra || 'UND', parseFloat(cantidad_compra) || 1, parseFloat(precio_compra) || 0,
+                (unidad_base && String(unidad_base).trim()) || 'g', parseFloat(stock_minimo) || 0
+            ]
         );
         return result.insertId;
     }
 
     static async update(id, tenantId, data) {
-        const { codigo, nombre, unidad_compra, cantidad_compra, precio_compra } = data;
+        const fields = [];
+        const params = [];
+        const allowed = ['codigo', 'nombre', 'unidad_compra', 'cantidad_compra', 'precio_compra', 'unidad_base', 'stock_minimo'];
+        for (const key of allowed) {
+            if (data[key] !== undefined) {
+                if (key === 'cantidad_compra' || key === 'precio_compra' || key === 'stock_minimo') {
+                    fields.push(`${key} = ?`);
+                    params.push(parseFloat(data[key]));
+                } else {
+                    fields.push(`${key} = ?`);
+                    params.push(key === 'unidad_base' ? (data[key] || 'g') : data[key]);
+                }
+            }
+        }
+        if (fields.length === 0) return null;
+        params.push(id, tenantId);
         const [result] = await db.query(
-            'UPDATE insumos SET codigo = ?, nombre = ?, unidad_compra = ?, cantidad_compra = ?, precio_compra = ? WHERE id = ? AND tenant_id = ?',
-            [codigo, nombre, unidad_compra || 'UND', parseFloat(cantidad_compra) || 1, parseFloat(precio_compra) || 0, id, tenantId]
+            `UPDATE insumos SET ${fields.join(', ')} WHERE id = ? AND tenant_id = ?`,
+            params
+        );
+        return result;
+    }
+
+    static async updateStockAndCosto(id, tenantId, stock_actual, costo_promedio) {
+        const [result] = await db.query(
+            'UPDATE insumos SET stock_actual = ?, costo_promedio = ? WHERE id = ? AND tenant_id = ?',
+            [parseFloat(stock_actual), costo_promedio != null ? parseFloat(costo_promedio) : null, id, tenantId]
         );
         return result;
     }

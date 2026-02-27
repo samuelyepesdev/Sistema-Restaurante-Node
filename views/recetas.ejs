@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recetas</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <style>
+        body { background: #f8f9fa; }
+        .card { border: none; box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.05); }
+    </style>
+</head>
+<body>
+    <%- include('partials/navbar', { user: typeof user !== 'undefined' ? user : null, tenant: typeof tenant !== 'undefined' ? tenant : null, allowedByPlan: typeof allowedByPlan !== 'undefined' ? allowedByPlan : {} }) %>
+
+    <div class="container-fluid py-4">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1 class="h4 mb-0"><i class="bi bi-journal-text me-2"></i>Recetas</h1>
+            <% if (user && user.permisos && user.permisos.includes('recetas.editar')) { %>
+            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalReceta" onclick="document.getElementById('recetaId').value = ''; document.getElementById('recetaProductoId').disabled = false;">
+                <i class="bi bi-plus-lg me-1"></i> Nueva receta
+            </button>
+            <% } %>
+        </div>
+        <p class="text-muted small">Las recetas usan insumos del inventario. Al vender un producto con receta se descuenta el stock automáticamente.</p>
+
+        <div class="card">
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Producto</th>
+                                <th>Nombre receta</th>
+                                <th>Porciones</th>
+                                <th>Ingredientes</th>
+                                <% if (user && user.permisos && user.permisos.includes('recetas.editar')) { %>
+                                <th class="text-center">Acciones</th>
+                                <% } %>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% (recetas || []).forEach(function(r) { %>
+                            <tr>
+                                <td><%= r.producto_nombre || '-' %> <small class="text-muted">(<%= r.producto_codigo || '' %>)</small></td>
+                                <td><%= r.nombre_receta %></td>
+                                <td><%= r.porciones %></td>
+                                <td><small><%= (r.ingredientes && r.ingredientes.length) ? r.ingredientes.map(i => i.insumo_nombre + ' ' + i.cantidad + (i.unidad || 'g')).join(', ') : '-' %></small></td>
+                                <% if (user && user.permisos && user.permisos.includes('recetas.editar')) { %>
+                                <td class="text-center">
+                                    <button type="button" class="btn btn-sm btn-outline-primary" onclick="editarReceta(<%= r.id %>)">Editar</button>
+                                    <button type="button" class="btn btn-sm btn-outline-danger" onclick="eliminarReceta(<%= r.id %>, '<%= (r.nombre_receta || "").replace(/'/g, "\\'") %>')">Eliminar</button>
+                                </td>
+                                <% } %>
+                            </tr>
+                            <% }); %>
+                            <% if (!recetas || recetas.length === 0) { %>
+                            <tr><td colspan="5" class="text-center text-muted py-4">No hay recetas. Crea una vinculada a un producto.</td></tr>
+                            <% } %>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Receta (simplificado: producto, nombre, porciones, ingredientes) -->
+    <div class="modal fade" id="modalReceta" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header"><h5 class="modal-title" id="modalRecetaTitulo">Nueva receta</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                <div class="modal-body">
+                    <input type="hidden" id="recetaId">
+                    <div class="mb-2"><label class="form-label">Producto</label><select class="form-select" id="recetaProductoId" required></select></div>
+                    <div class="mb-2"><label class="form-label">Nombre de la receta</label><input type="text" class="form-control" id="recetaNombre" placeholder="Ej: Hamburguesa clásica"></div>
+                    <div class="mb-3"><label class="form-label">Porciones (rendimiento)</label><input type="number" step="0.01" class="form-control" id="recetaPorciones" value="1"></div>
+                    <label class="form-label">Ingredientes (insumos del inventario)</label>
+                    <div id="recetaIngredientesContainer"></div>
+                    <button type="button" class="btn btn-sm btn-outline-secondary mt-2" id="btnAgregarIngrediente"><i class="bi bi-plus"></i> Agregar ingrediente</button>
+                </div>
+                <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button><button type="button" class="btn btn-primary" id="btnGuardarReceta">Guardar</button></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        const base = '/recetas';
+        let insumosList = [];
+        let recetasList = [];
+
+        async function loadProductos() {
+            const r = await fetch(base + '/api/productos', { credentials: 'same-origin' });
+            const data = await r.json();
+            const sel = document.getElementById('recetaProductoId');
+            sel.innerHTML = '<option value="">-- Seleccionar producto --</option>' + (data || []).map(p => `<option value="${p.id}">${p.nombre} (${p.codigo || ''})</option>`).join('');
+        }
+        async function loadInsumos() {
+            const r = await fetch(base + '/api/insumos', { credentials: 'same-origin' });
+            insumosList = await r.json();
+        }
+        function addIngredienteRow(insumoId = '', cantidad = '', unidad = 'g') {
+            const div = document.getElementById('recetaIngredientesContainer');
+            const row = document.createElement('div');
+            row.className = 'row g-2 mb-2 align-items-center';
+            row.innerHTML = `
+                <div class="col-5"><select class="form-select form-select-sm insumo-select">${insumosList.map(i => `<option value="${i.id}" ${i.id == insumoId ? 'selected' : ''}>${i.nombre} (${i.unidad_base || 'g'})</option>`).join('')}</select></div>
+                <div class="col-3"><input type="number" step="0.0001" class="form-control form-control-sm cantidad-input" placeholder="Cantidad" value="${cantidad}"></div>
+                <div class="col-2"><input type="text" class="form-control form-control-sm unidad-input" placeholder="g" value="${unidad}"></div>
+                <div class="col-2"><button type="button" class="btn btn-sm btn-outline-danger quitar-ing">Quitar</button></div>
+            `;
+            row.querySelector('.quitar-ing').onclick = () => row.remove();
+            div.appendChild(row);
+        }
+        document.getElementById('btnAgregarIngrediente').addEventListener('click', () => addIngredienteRow());
+
+        document.getElementById('btnGuardarReceta').addEventListener('click', async () => {
+            const id = document.getElementById('recetaId').value;
+            const producto_id = document.getElementById('recetaProductoId').value;
+            const nombre_receta = document.getElementById('recetaNombre').value.trim();
+            const porciones = parseFloat(document.getElementById('recetaPorciones').value) || 1;
+            const rows = document.querySelectorAll('#recetaIngredientesContainer .row');
+            const ingredientes = [];
+            rows.forEach(row => {
+                const insumoId = row.querySelector('.insumo-select').value;
+                const cantidad = row.querySelector('.cantidad-input').value;
+                if (insumoId && cantidad) ingredientes.push({ insumo_id: parseInt(insumoId, 10), cantidad: parseFloat(cantidad), unidad: row.querySelector('.unidad-input').value || 'g' });
+            });
+            if (!producto_id || !nombre_receta) { alert('Producto y nombre son obligatorios'); return; }
+            const payload = { producto_id: parseInt(producto_id, 10), nombre_receta, porciones, ingredientes };
+            const url = id ? base + '/api/recetas/' + id : base + '/api/recetas';
+            const method = id ? 'PUT' : 'POST';
+            const r = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(id ? { nombre_receta, porciones, ingredientes } : payload), credentials: 'same-origin' });
+            if (r.ok) { bootstrap.Modal.getInstance(document.getElementById('modalReceta')).hide(); location.reload(); } else { const e = await r.json(); alert(e.error || 'Error'); }
+        });
+
+        document.getElementById('modalReceta').addEventListener('show.bs.modal', async () => {
+            const id = document.getElementById('recetaId').value;
+            if (!id) {
+                document.getElementById('recetaProductoId').value = '';
+                document.getElementById('recetaProductoId').disabled = false;
+                document.getElementById('recetaNombre').value = '';
+                document.getElementById('recetaPorciones').value = '1';
+                document.getElementById('recetaIngredientesContainer').innerHTML = '';
+                document.getElementById('modalRecetaTitulo').textContent = 'Nueva receta';
+                await loadProductos();
+                await loadInsumos();
+                addIngredienteRow();
+            }
+        });
+
+        async function editarReceta(recetaId) {
+            const r = await fetch(base + '/api/recetas/' + recetaId, { credentials: 'same-origin' });
+            const rec = await r.json();
+            if (!rec) return;
+            document.getElementById('recetaId').value = rec.id;
+            document.getElementById('modalRecetaTitulo').textContent = 'Editar receta';
+            await loadProductos();
+            await loadInsumos();
+            document.getElementById('recetaProductoId').value = rec.producto_id;
+            document.getElementById('recetaProductoId').disabled = true;
+            document.getElementById('recetaNombre').value = rec.nombre_receta || '';
+            document.getElementById('recetaPorciones').value = rec.porciones || 1;
+            document.getElementById('recetaIngredientesContainer').innerHTML = '';
+            (rec.ingredientes || []).forEach(ing => addIngredienteRow(ing.insumo_id, ing.cantidad, ing.unidad || 'g'));
+            new bootstrap.Modal(document.getElementById('modalReceta')).show();
+        }
+        function eliminarReceta(id, nombre) {
+            if (!confirm('¿Eliminar la receta "' + nombre + '"?')) return;
+            fetch(base + '/api/recetas/' + id, { method: 'DELETE', credentials: 'same-origin' }).then(r => { if (r.ok) location.reload(); else r.json().then(e => alert(e.error)); });
+        }
+    </script>
+</body>
+</html>

@@ -2,7 +2,7 @@
 // Navbar partial: permisos + plan. Solo se muestra enlace si el usuario tiene permiso Y el plan del tenant incluye el módulo.
 const isSuperadmin = user && String(user.rol || '').toLowerCase() === 'superadmin';
 const brandHref = isSuperadmin ? '/admin/dashboard' : '/';
-const planLabels = { productos: 'Productos', clientes: 'Clientes', mesas: 'Mesas', ventas: 'Ventas', dashboard: 'Dashboard', configuracion: 'Configuración', plantillas: 'Plantillas', importar_exportar: 'Import/Export', costeo: 'Costeo', analitica: 'Analítica', prediccion_ml: 'Predicción ML', eventos: 'Eventos' };
+const planLabels = { productos: 'Productos', clientes: 'Clientes', mesas: 'Mesas', ventas: 'Ventas', dashboard: 'Dashboard', configuracion: 'Configuración', plantillas: 'Plantillas', importar_exportar: 'Import/Export', inventario: 'Inventario', recetas: 'Recetas', analitica: 'Analítica', prediccion_ml: 'Predicción ML', eventos: 'Eventos' };
 const ap = typeof allowedByPlan !== 'undefined' && allowedByPlan ? allowedByPlan : {};
 function canShow(mod) { if (!mod) return true; if (typeof allowedByPlan === 'undefined') return true; return ap[mod] === true; }
 %>
@@ -112,10 +112,17 @@ function canShow(mod) { if (!mod) return true; if (typeof allowedByPlan === 'und
                     </a>
                 </li>
                 <% } %>
-                <% if (user && user.permisos && user.permisos.includes('costeo.ver') && canShow('costeo')) { %>
+                <% if (user && user.permisos && user.permisos.includes('inventario.ver') && canShow('inventario')) { %>
                 <li class="nav-item">
-                    <a class="nav-link" href="/costeo">
-                        <i class="bi bi-calculator"></i> Costeo
+                    <a class="nav-link" href="/inventario">
+                        <i class="bi bi-boxes"></i> Inventario
+                    </a>
+                </li>
+                <% } %>
+                <% if (user && user.permisos && user.permisos.includes('recetas.ver') && canShow('recetas')) { %>
+                <li class="nav-item">
+                    <a class="nav-link" href="/recetas">
+                        <i class="bi bi-journal-text"></i> Recetas
                     </a>
                 </li>
                 <% } %>

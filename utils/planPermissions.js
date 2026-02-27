@@ -27,6 +27,10 @@ const PERMISSION_TO_MODULE = {
     'configuracion.editar': 'configuracion',
     'costeo.ver': 'costeo',
     'costeo.editar': 'costeo',
+    'inventario.ver': 'inventario',
+    'inventario.editar': 'inventario',
+    'recetas.ver': 'recetas',
+    'recetas.editar': 'recetas',
     'usuarios.ver': 'configuracion',
     'usuarios.gestionar': 'configuracion',
     'plantillas.ver': 'plantillas',
@@ -42,7 +46,7 @@ const PERMISSION_TO_MODULE = {
 // Módulos que se usan en navbar / rutas (para allowedByPlan)
 const PLAN_MODULES = [
     'productos', 'clientes', 'mesas', 'ventas', 'dashboard', 'configuracion',
-    'plantillas', 'importar_exportar', 'costeo', 'analitica', 'prediccion_ml', 'eventos'
+    'plantillas', 'importar_exportar', 'inventario', 'recetas', 'analitica', 'prediccion_ml', 'eventos'
 ];
 
 /**

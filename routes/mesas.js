@@ -338,6 +338,12 @@ router.post('/pedidos/:pedidoId/items', async (req, res) => {
         if (!producto_id || !cantidad || !precio) {
             return res.status(400).json({ error: 'producto_id, cantidad y precio son requeridos' });
         }
+        const InventarioService = require('../services/InventarioService');
+        const check = await InventarioService.checkStockParaProducto(tenantId, producto_id, parseFloat(cantidad) || 1);
+        if (!check.ok) {
+            const msg = (check.faltantes || []).map(f => `${f.insumo_nombre}: requiere ${f.requerido} ${f.unidad_base}, disponible ${f.disponible}`).join('; ');
+            return res.status(400).json({ error: 'No hay stock suficiente para este producto. ' + msg });
+        }
         const subtotal = Number(cantidad) * Number(precio);
         const [pedidoRow] = await db.query('SELECT mesa_id FROM pedidos WHERE id = ? AND tenant_id = ?', [pedidoId, tenantId]);
         const mesaId = pedidoRow && pedidoRow[0] && pedidoRow[0].mesa_id;
@@ -479,6 +485,15 @@ router.post('/pedidos/:pedidoId/facturar', async (req, res) => {
                 `INSERT INTO detalle_factura (factura_id, producto_id, cantidad, precio_unitario, unidad_medida, subtotal, descuento_porcentaje) VALUES ?`,
                 [detallesValuesFinal]
             );
+
+            const InventarioService = require('../services/InventarioService');
+            for (const l of lineasFactura) {
+                try {
+                    await InventarioService.descontarPorReceta(tenantId, l.producto_id, l.cantidad, 'factura_' + facturaId);
+                } catch (invErr) {
+                    console.error('Error al descontar inventario por receta:', invErr);
+                }
+            }
 
             await connection.query(`UPDATE pedidos SET estado = 'cerrado', total = ? WHERE id = ?`, [total, pedidoId]);
             await connection.query(`UPDATE mesas SET estado = 'libre' WHERE id = ?`, [pedido.mesa_id]);

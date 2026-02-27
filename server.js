@@ -96,6 +96,8 @@ const adminPermisosRoutes = require('./routes/admin/permisos');
 const adminVentasRoutes = require('./routes/admin/ventas');
 const adminDashboardRoutes = require('./routes/admin/dashboard');
 const eventosRoutes = require('./routes/eventos');
+const inventarioRoutes = require('./routes/inventario');
+const recetasRoutes = require('./routes/recetas');
 
 // Ruta principal - redirige según autenticación y rol
 app.get('/', optionalAuth, (req, res) => {
@@ -151,6 +153,8 @@ app.use('/api/cocina', requireAuthWithTenant, requirePlanFeature('mesas'), cocin
 app.use('/configuracion', requireAuthWithTenant, requirePlanFeature('configuracion'), configuracionRoutes);
 app.use('/ventas', requireAuthWithTenant, requirePlanFeature('ventas'), ventasRoutes);
 app.use('/eventos', requireAuthWithTenant, requirePlanFeature('eventos'), eventosRoutes);
+app.use('/inventario', requireAuthWithTenant, requirePlanFeature('inventario'), inventarioRoutes);
+app.use('/recetas', requireAuthWithTenant, requirePlanFeature('recetas'), recetasRoutes);
 app.use('/dashboard', requireAuthWithTenant, requirePlanFeature('dashboard'), dashboardRoutes);
 app.use('/api/dashboard', requireAuthWithTenant, requirePlanFeature('dashboard'), dashboardRoutes);
 app.use('/costeo', requireAuth, restrictSuperadminToAdmin, costeoTenantContext, requirePlanFeature('costeo'), costeoRoutes);
