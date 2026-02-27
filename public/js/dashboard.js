@@ -36,7 +36,11 @@ async function loadStats(filters = {}) {
         const stats = await response.json();
         updateStatsCards(stats);
         updateCharts(stats);
-        updateMiniCalendarioEventos(stats.eventosCalendario || []);
+        var eventosMes = stats.eventosCalendario || [];
+        if (!Array.isArray(eventosMes)) eventosMes = [];
+        var now = new Date();
+        calendarEventosCache[getMesKey(now.getFullYear(), now.getMonth())] = eventosMes;
+        updateMiniCalendarioEventos(eventosMes, null, null);
         updateTopProductsByCategoryTable(stats.topProductsByCategory);
     } catch (error) {
         console.error('Error:', error);
@@ -61,7 +65,9 @@ function updateStatsCards(stats) {
     $('#avgInvoice').text(formatCurrency(avgInvoice));
     
     if (stats.topProducts && $('#uniqueProducts').length) $('#uniqueProducts').text(stats.topProducts.length);
-    $('#eventosCount').text(stats.eventos_count != null ? stats.eventos_count : 0);
+    // Eventos del mes = cantidad del mes que muestra el calendario (al cargar = mes actual)
+    const eventosDelMes = (stats.eventosCalendario || []).length;
+    $('#eventosCount').text(eventosDelMes);
     $('#ventasEventosTotal').text(formatCurrency(stats.ventas_eventos_total != null ? stats.ventas_eventos_total : 0));
 }
 
@@ -183,16 +189,46 @@ function updateVentasEnEventosChart(data) {
 }
 
 /**
- * Build map: dateStr (YYYY-MM-DD) -> array of event names for that day
+ * Parsea fecha YYYY-MM-DD, ISO o Date como fecha local (evita que la zona horaria cambie el día).
+ */
+function parseFechaLocal(str) {
+    if (str == null) return null;
+    if (typeof str === 'object' && str instanceof Date) {
+        return new Date(str.getFullYear(), str.getMonth(), str.getDate());
+    }
+    var s = String(str).trim();
+    if (s.length >= 10 && s.charAt(4) === '-' && s.charAt(7) === '-') {
+        var y = parseInt(s.slice(0, 4), 10);
+        var m = parseInt(s.slice(5, 7), 10) - 1;
+        var d = parseInt(s.slice(8, 10), 10);
+        if (!isNaN(y) && !isNaN(m) && !isNaN(d)) return new Date(y, m, d);
+    }
+    var d2 = new Date(str);
+    return isNaN(d2.getTime()) ? null : new Date(d2.getFullYear(), d2.getMonth(), d2.getDate());
+}
+
+/**
+ * Fecha a clave YYYY-MM-DD en local.
+ */
+function dateToKey(d) {
+    var y = d.getFullYear();
+    var m = String(d.getMonth() + 1).padStart(2, '0');
+    var day = String(d.getDate()).padStart(2, '0');
+    return y + '-' + m + '-' + day;
+}
+
+/**
+ * Build map: dateStr (YYYY-MM-DD) -> array of event names for that day (usa fechas locales para que marzo y otros meses marquen bien).
  */
 function fechasConEventoMap(eventos) {
     const map = new Map();
     (eventos || []).forEach(ev => {
-        const ini = new Date(ev.fecha_inicio);
-        const fin = new Date(ev.fecha_fin);
+        const ini = parseFechaLocal(ev.fecha_inicio);
+        const fin = parseFechaLocal(ev.fecha_fin);
+        if (!ini || !fin) return;
         const nombre = (ev.nombre || 'Evento').trim();
-        for (let d = new Date(ini); d <= fin; d.setDate(d.getDate() + 1)) {
-            const key = d.toISOString().slice(0, 10);
+        for (let d = new Date(ini.getFullYear(), ini.getMonth(), ini.getDate()); d <= fin; d.setDate(d.getDate() + 1)) {
+            const key = dateToKey(d);
             if (!map.has(key)) map.set(key, []);
             if (map.get(key).indexOf(nombre) === -1) map.get(key).push(nombre);
         }
@@ -200,18 +236,58 @@ function fechasConEventoMap(eventos) {
     return map;
 }
 
+/** Mes mostrado en el calendario (para navegación) */
+var calendarViewYear = new Date().getFullYear();
+var calendarViewMonth = new Date().getMonth();
+
+/** Caché de eventos por mes (YYYY-MM) para que al volver con las flechas no se pierdan los eventos */
+var calendarEventosCache = {};
+
 /**
- * Render mini calendar: siempre mes actual, días con evento en rojo y tooltip con nombre(s)
+ * Obtiene la clave del mes (YYYY-MM)
  */
-function updateMiniCalendarioEventos(eventosCalendario) {
+function getMesKey(year, month) {
+    return year + '-' + String(month + 1).padStart(2, '0');
+}
+
+/**
+ * Fetch events for a given month and update calendar (usa caché si ya tenemos datos del mes)
+ */
+function fetchCalendarMonth(year, month) {
+    const mesParam = getMesKey(year, month);
+    if (calendarEventosCache[mesParam] !== undefined) {
+        updateMiniCalendarioEventos(calendarEventosCache[mesParam], year, month);
+        return;
+    }
+    fetch('/api/dashboard/eventos-calendario?mes=' + mesParam, { credentials: 'same-origin' })
+        .then(function (r) { return r.ok ? r.json() : Promise.reject(new Error('Error al cargar eventos')); })
+        .then(function (data) {
+            var list = data.eventosCalendario || data.eventos || [];
+            if (!Array.isArray(list)) list = [];
+            calendarEventosCache[mesParam] = list;
+            updateMiniCalendarioEventos(list, year, month);
+        })
+        .catch(function () {
+            updateMiniCalendarioEventos([], year, month);
+        });
+}
+
+/**
+ * Render mini calendar with optional year/month and nav (prev/next)
+ */
+function updateMiniCalendarioEventos(eventosCalendario, year, month) {
     const container = document.getElementById('miniCalendarioEventos');
     if (!container) return;
 
-    const eventosMap = fechasConEventoMap(eventosCalendario);
+    if (!Array.isArray(eventosCalendario)) eventosCalendario = [];
     const now = new Date();
-    const year = now.getFullYear();
-    const month = now.getMonth();
-    const hoy = now.toISOString().slice(0, 10);
+    if (year == null) year = now.getFullYear();
+    if (month == null) month = now.getMonth();
+    calendarViewYear = year;
+    calendarViewMonth = month;
+
+    const eventosMap = fechasConEventoMap(eventosCalendario);
+    const hoy = dateToKey(now);
 
     const first = new Date(year, month, 1);
     const last = new Date(year, month + 1, 0);
@@ -219,11 +295,16 @@ function updateMiniCalendarioEventos(eventosCalendario) {
     const startDay = first.getDay();
     const monthNames = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
 
-    let html = '<div class="mes-titulo">' + monthNames[month] + ' ' + year + '</div>';
+    let html = '<div class="mini-calendario-nav">';
+    html += '<button type="button" class="btn btn-outline-secondary btn-sm" id="calPrevMonth" title="Mes anterior"><i class="bi bi-chevron-left"></i></button>';
+    html += '<span class="mes-titulo">' + monthNames[month] + ' ' + year + '</span>';
+    html += '<button type="button" class="btn btn-outline-secondary btn-sm" id="calNextMonth" title="Mes siguiente"><i class="bi bi-chevron-right"></i></button>';
+    html += '</div>';
     html += '<table class="mini-calendario table table-bordered mb-0"><thead><tr>';
     html += '<th>Do</th><th>Lu</th><th>Ma</th><th>Mi</th><th>Ju</th><th>Vi</th><th>Sá</th></tr></thead><tbody><tr>';
 
     for (let i = 0; i < startDay; i++) html += '<td></td>';
+    let cellCount = startDay;
     for (let day = 1; day <= daysInMonth; day++) {
         const dateStr = year + '-' + String(month + 1).padStart(2, '0') + '-' + String(day).padStart(2, '0');
         const nombres = eventosMap.get(dateStr) || [];
@@ -235,14 +316,30 @@ function updateMiniCalendarioEventos(eventosCalendario) {
         const titulo = hasEvent ? ('Evento' + (nombres.length > 1 ? 's' : '') + ': ' + nombres.join(', ')) : '';
         const attrTooltip = titulo ? ' data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="' + titulo.replace(/"/g, '&quot;') + '" title="' + titulo.replace(/"/g, '&quot;') + '"' : '';
         html += '<td class="' + cls.trim() + '"' + attrTooltip + '>' + day + '</td>';
-        if ((startDay + day) % 7 === 0 && day < daysInMonth) html += '</tr><tr>';
+        cellCount++;
+        if (cellCount % 7 === 0 && day < daysInMonth) html += '</tr><tr>';
     }
+    var rest = 7 - (cellCount % 7);
+    if (rest < 7) for (let i = 0; i < rest; i++) html += '<td></td>';
     html += '</tr></tbody></table>';
     container.innerHTML = html;
 
     var tooltipTriggerList = container.querySelectorAll('[data-bs-toggle="tooltip"]');
     tooltipTriggerList.forEach(function (el) {
         new bootstrap.Tooltip(el, { trigger: 'hover click' });
+    });
+
+    document.getElementById('calPrevMonth').addEventListener('click', function () {
+        var m = calendarViewMonth - 1;
+        var y = calendarViewYear;
+        if (m < 0) { m = 11; y--; }
+        fetchCalendarMonth(y, m);
+    });
+    document.getElementById('calNextMonth').addEventListener('click', function () {
+        var m = calendarViewMonth + 1;
+        var y = calendarViewYear;
+        if (m > 11) { m = 0; y++; }
+        fetchCalendarMonth(y, m);
     });
 }
 

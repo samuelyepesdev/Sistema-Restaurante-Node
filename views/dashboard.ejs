@@ -89,39 +89,69 @@
             margin-bottom: 1.5rem;
         }
         .mini-calendario-container {
-            min-height: 220px;
+            min-height: 260px;
+        }
+        .mini-calendario-nav {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 0.75rem;
+            gap: 0.5rem;
+        }
+        .mini-calendario-nav .mes-titulo {
+            font-weight: 700;
+            font-size: 1rem;
+            color: #2c3e50;
+            margin: 0;
+            flex: 1;
+            text-align: center;
+        }
+        .mini-calendario-nav .btn-sm {
+            padding: 0.35rem 0.6rem;
         }
         .mini-calendario {
-            font-size: 0.8rem;
+            font-size: 0.875rem;
             width: 100%;
+            table-layout: fixed;
+            border-collapse: separate;
+            border-spacing: 2px;
         }
         .mini-calendario th {
-            padding: 0.25rem;
+            padding: 0.4rem 0.25rem;
             text-align: center;
-            color: #6c757d;
+            color: #5a6c7d;
             font-weight: 600;
+            font-size: 0.75rem;
         }
         .mini-calendario td {
-            padding: 0.2rem;
+            padding: 0.4rem;
             text-align: center;
-            border-radius: 4px;
+            border-radius: 6px;
+            min-width: 28px;
+            height: 32px;
+            vertical-align: middle;
+            background: #f8f9fa;
+        }
+        .mini-calendario td:not(.dia-evento):hover {
+            background: #e9ecef;
         }
         .mini-calendario .dia-evento {
-            background: rgba(220, 53, 69, 0.35);
-            color: #b02a37;
-            font-weight: 600;
+            background: rgba(111, 66, 193, 0.25);
+            color: #5a32a3;
+            font-weight: 700;
             cursor: pointer;
         }
         .mini-calendario .dia-evento:hover {
-            background: rgba(220, 53, 69, 0.5);
+            background: rgba(111, 66, 193, 0.4);
         }
         .mini-calendario .dia-hoy {
-            border: 1px solid #0d6efd;
+            border: 2px solid #0d6efd;
+            background: rgba(13, 110, 253, 0.08) !important;
+            font-weight: 700;
         }
-        .mini-calendario .mes-titulo {
-            font-weight: 600;
-            margin-bottom: 0.5rem;
-            text-align: center;
+        .mini-calendario .dia-otro-mes {
+            visibility: hidden;
+            pointer-events: none;
         }
         @media (max-width: 992px) {
             .filter-section .row .col-md-3 {
@@ -153,17 +183,31 @@
             .chart-container-small {
                 height: 220px;
             }
-            .table tbody tr {
+            /* Tablas de datos: en móvil se apilan por fila */
+            .table:not(.mini-calendario) tbody tr {
                 display: block;
                 border-bottom: 1px solid #e9ecef;
             }
-            .table tbody td {
+            .table:not(.mini-calendario) tbody td {
                 display: flex;
                 justify-content: space-between;
                 padding: 0.5rem;
             }
-            .table thead {
+            .table:not(.mini-calendario) thead {
                 display: none;
+            }
+            /* Calendario: siempre en grilla 7 columnas en móvil */
+            .mini-calendario {
+                font-size: 0.8rem;
+            }
+            .mini-calendario th,
+            .mini-calendario td {
+                padding: 0.25rem;
+                min-width: 0;
+                height: 28px;
+            }
+            .mini-calendario .mes-titulo {
+                font-size: 0.9rem;
             }
             .card:not(.no-card-dark) {
                 background-color: #e2e8f0;
@@ -248,15 +292,16 @@
             </div>
         </div>
 
-        <!-- Eventos del periodo -->
+        <!-- Eventos del mes mostrado en el calendario -->
         <div class="row mb-3">
             <div class="col-md-6">
                 <div class="card stat-card text-white clickable" id="cardEventos" data-action="go-eventos" style="background: linear-gradient(135deg, #6f42c1 0%, #5a32a3 100%);" title="Ir a Eventos">
                     <div class="card-body">
                         <div class="d-flex justify-content-between align-items-center">
                             <div>
-                                <div class="stat-label">Eventos del periodo</div>
+                                <div class="stat-label">Eventos del mes</div>
                                 <div class="stat-value" id="eventosCount">0</div>
+                                <small class="opacity-75" style="font-size: 0.7rem;">Del mes actual</small>
                             </div>
                             <i class="bi bi-calendar-event stat-icon"></i>
                         </div>
@@ -278,9 +323,9 @@
             </div>
         </div>
 
-        <!-- Gráficos principales -->
+        <!-- Gráficos principales: en tablet/móvil se apilan (col-lg para que debajo de 992px cada uno vaya a ancho completo) -->
         <div class="row">
-            <div class="col-md-8">
+            <div class="col-12 col-lg-8">
                 <div class="card">
                     <div class="card-header">
                         <i class="bi bi-graph-up me-2"></i>
@@ -293,17 +338,17 @@
                     </div>
                 </div>
             </div>
-            <div class="col-md-4">
+            <div class="col-12 col-lg-4">
                 <div class="card">
                     <div class="card-header">
                         <i class="bi bi-calendar3 me-2"></i>
-                        Días con evento
+                        Calendario: días del mes con evento
                     </div>
                     <div class="card-body">
                         <div id="miniCalendarioEventos" class="mini-calendario-container">
                             <div class="text-muted small text-center py-3">Cargando...</div>
                         </div>
-                        <p class="small text-muted mb-0 mt-2">Mes actual. Días en rojo = con evento. Pase el mouse o toque para ver el nombre.</p>
+                        <p class="small text-muted mb-0 mt-2">Cada día del mes que tenga al menos un evento se marca en violeta. Hoy en azul. Usá las flechas para ver otros meses.</p>
                     </div>
                 </div>
             </div>
