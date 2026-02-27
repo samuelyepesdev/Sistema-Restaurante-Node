@@ -256,19 +256,19 @@ class StatsRepository {
     static async getMonthlySales(tenantId, months = 3, options = {}) {
         let query = `
             SELECT 
-                YEAR(fecha) AS year,
-                MONTH(fecha) AS month,
+                YEAR(f.fecha) AS year,
+                MONTH(f.fecha) AS month,
                 COUNT(*) AS cantidad_facturas,
-                COALESCE(SUM(total), 0) AS total_ventas
-            FROM facturas
-            WHERE tenant_id = ?
-              AND fecha >= DATE_FORMAT(DATE_SUB(CURDATE(), INTERVAL ? MONTH), '%Y-%m-01')
+                COALESCE(SUM(f.total), 0) AS total_ventas
+            FROM facturas f
+            WHERE f.tenant_id = ?
+              AND f.fecha >= DATE_FORMAT(DATE_SUB(CURDATE(), INTERVAL ? MONTH), '%Y-%m-01')
         `;
         if (options.excludeEventos) {
-            query += ' AND evento_id IS NULL';
+            query += ` AND (f.evento_id IS NULL OR EXISTS (SELECT 1 FROM eventos e WHERE e.id = f.evento_id AND e.tenant_id = f.tenant_id AND e.tipo = 'permanente'))`;
         }
         query += `
-            GROUP BY YEAR(fecha), MONTH(fecha)
+            GROUP BY YEAR(f.fecha), MONTH(f.fecha)
             ORDER BY year ASC, month ASC
         `;
         const [result] = await db.query(query, [tenantId, months]);

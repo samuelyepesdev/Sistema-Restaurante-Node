@@ -8,7 +8,7 @@ const db = require('../config/database');
 class EventoRepository {
     static async findAllByTenant(tenantId, filters = {}) {
         let query = `
-            SELECT id, tenant_id, nombre, fecha_inicio, fecha_fin, descripcion, activo, created_at
+            SELECT id, tenant_id, nombre, fecha_inicio, fecha_fin, descripcion, activo, tipo, created_at
             FROM eventos
             WHERE tenant_id = ?
         `;
@@ -46,21 +46,29 @@ class EventoRepository {
     }
 
     static async create(tenantId, data) {
-        const { nombre, fecha_inicio, fecha_fin, descripcion } = data;
+        const { nombre, fecha_inicio, fecha_fin, descripcion, tipo } = data;
+        const tipoVal = tipo === 'ocasional' ? 'ocasional' : 'permanente';
         const [result] = await db.query(
-            `INSERT INTO eventos (tenant_id, nombre, fecha_inicio, fecha_fin, descripcion, activo)
-             VALUES (?, ?, ?, ?, ?, TRUE)`,
-            [tenantId, nombre, fecha_inicio, fecha_fin, descripcion || null]
+            `INSERT INTO eventos (tenant_id, nombre, fecha_inicio, fecha_fin, descripcion, activo, tipo)
+             VALUES (?, ?, ?, ?, ?, TRUE, ?)`,
+            [tenantId, nombre, fecha_inicio, fecha_fin, descripcion || null, tipoVal]
         );
         return result.insertId;
     }
 
     static async update(id, tenantId, data) {
-        const { nombre, fecha_inicio, fecha_fin, descripcion, activo } = data;
+        const { nombre, fecha_inicio, fecha_fin, descripcion, activo, tipo } = data;
+        const tipoVal = tipo === 'ocasional' ? 'ocasional' : (tipo === 'permanente' ? 'permanente' : undefined);
+        const updates = ['nombre = ?', 'fecha_inicio = ?', 'fecha_fin = ?', 'descripcion = ?', 'activo = COALESCE(?, activo)'];
+        const params = [nombre, fecha_inicio, fecha_fin, descripcion || null, activo];
+        if (tipoVal !== undefined) {
+            updates.push('tipo = ?');
+            params.push(tipoVal);
+        }
+        params.push(id, tenantId);
         await db.query(
-            `UPDATE eventos SET nombre = ?, fecha_inicio = ?, fecha_fin = ?, descripcion = ?, activo = COALESCE(?, activo)
-             WHERE id = ? AND tenant_id = ?`,
-            [nombre, fecha_inicio, fecha_fin, descripcion || null, activo, id, tenantId]
+            `UPDATE eventos SET ${updates.join(', ')} WHERE id = ? AND tenant_id = ?`,
+            params
         );
     }
 

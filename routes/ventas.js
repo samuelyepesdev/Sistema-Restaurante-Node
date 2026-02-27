@@ -35,10 +35,20 @@ router.get('/', async (req, res) => {
             VentaService.getWithFilters(tenantId, filters),
             VentaService.getTablesReadyToPay(tenantId)
         ]);
+        let totalEfectivo = 0, totalTransferencia = 0, totalGeneral = 0;
+        (ventas || []).forEach(function (v) {
+            const t = Number(v.total) || 0;
+            totalGeneral += t;
+            const fp = String(v.forma_pago || '').toLowerCase().trim();
+            if (fp === 'efectivo') totalEfectivo += t; else if (fp === 'transferencia') totalTransferencia += t;
+        });
         res.render('ventas', {
             ventas,
             mesasListas: mesasListas || [],
             eventoFiltro,
+            totalEfectivo,
+            totalTransferencia,
+            totalGeneral,
             user: req.user,
             tenant: req.tenant,
             allowedByPlan: res.locals.allowedByPlan || {}
