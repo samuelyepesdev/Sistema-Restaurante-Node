@@ -94,6 +94,7 @@ const adminSistemaRoutes = require('./routes/admin/sistema');
 const adminPlanesRoutes = require('./routes/admin/planes');
 const adminPermisosRoutes = require('./routes/admin/permisos');
 const adminVentasRoutes = require('./routes/admin/ventas');
+const adminDashboardRoutes = require('./routes/admin/dashboard');
 const eventosRoutes = require('./routes/eventos');
 
 // Ruta principal - redirige según autenticación y rol
@@ -101,7 +102,7 @@ app.get('/', optionalAuth, (req, res) => {
     if (req.user) {
         const rol = String((req.user.rol || '')).toLowerCase();
         if (rol === 'superadmin') {
-            res.redirect('/admin/tenants');
+            res.redirect('/admin/dashboard');
         } else if (rol === 'admin') {
             res.redirect('/dashboard');
         } else if (rol === 'mesero') {
@@ -155,6 +156,7 @@ app.use('/api/dashboard', requireAuthWithTenant, requirePlanFeature('dashboard')
 app.use('/costeo', requireAuth, restrictSuperadminToAdmin, costeoTenantContext, requirePlanFeature('costeo'), costeoRoutes);
 app.use('/analitica', requireAuthWithTenant, requirePlanFeature('analitica'), analiticaRoutes);
 // Superadmin: solo requireAuth (no tenant); el panel solo permite rol superadmin
+app.use('/admin/dashboard', requireAuth, adminDashboardRoutes);
 app.use('/admin/tenants', requireAuth, adminTenantsRoutes);
 app.use('/admin/sistema', requireAuth, adminSistemaRoutes);
 app.use('/admin/planes', requireAuth, adminPlanesRoutes);

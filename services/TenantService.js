@@ -87,6 +87,64 @@ class TenantService {
         return result;
     }
 
+    /**
+     * Estadísticas para el dashboard del superadministrador.
+     * @returns {Promise<{ totalRestaurantes, restaurantesActivos, restaurantesInactivos, porPlan: Array<{ plan_nombre, plan_slug, cantidad }>, totalUsuarios }>}
+     */
+    static async getDashboardStats() {
+        const [resumen] = await db.query(`
+            SELECT
+                COUNT(*) AS total,
+                SUM(CASE WHEN t.activo = 1 THEN 1 ELSE 0 END) AS activos,
+                SUM(CASE WHEN t.activo = 0 OR t.activo IS NULL THEN 1 ELSE 0 END) AS inactivos
+            FROM tenants t
+        `);
+        const [porPlan] = await db.query(`
+            SELECT p.nombre AS plan_nombre, p.slug AS plan_slug, p.orden, COUNT(t.id) AS cantidad
+            FROM planes p
+            LEFT JOIN tenants t ON t.plan_id = p.id
+            WHERE p.activo = 1
+            GROUP BY p.id, p.nombre, p.slug, p.orden
+            ORDER BY p.orden ASC, p.nombre ASC
+        `);
+        const [sinPlanRow] = await db.query(`SELECT COUNT(*) AS cantidad FROM tenants WHERE plan_id IS NULL`);
+        const sinPlanCount = parseInt(sinPlanRow[0]?.cantidad || 0, 10);
+        const porPlanList = (porPlan || []).map(row => ({
+            plan_nombre: row.plan_nombre || 'Sin plan',
+            plan_slug: row.plan_slug || '',
+            cantidad: parseInt(row.cantidad || 0, 10)
+        }));
+        if (sinPlanCount > 0) porPlanList.push({ plan_nombre: 'Sin plan', plan_slug: '', cantidad: sinPlanCount });
+        const [usuariosRow] = await db.query(`
+            SELECT COUNT(*) AS total FROM usuarios WHERE tenant_id IS NOT NULL
+        `);
+        const [facturasRows] = await db.query(`SELECT COUNT(*) AS cnt FROM facturas`);
+        const [ventasMontoRows] = await db.query(`SELECT COALESCE(SUM(total), 0) AS total FROM facturas`);
+        const [productosRows] = await db.query(`SELECT COUNT(*) AS cnt FROM productos WHERE tenant_id IS NOT NULL`);
+        const [clientesRows] = await db.query(`SELECT COUNT(*) AS cnt FROM clientes WHERE tenant_id IS NOT NULL`);
+        const [mesasRows] = await db.query(`SELECT COUNT(*) AS cnt FROM mesas WHERE tenant_id IS NOT NULL`);
+        const [recientesRow] = await db.query(`
+            SELECT COUNT(*) AS cantidad FROM tenants
+            WHERE created_at >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)
+        `);
+        const r = resumen[0] || {};
+        const toNum = (val) => (val === undefined || val === null) ? 0 : (typeof val === 'bigint' ? Number(val) : parseFloat(val) || 0);
+        const rowVal = (row) => (row && typeof row === 'object') ? toNum(Object.values(row)[0]) : 0;
+        return {
+            totalRestaurantes: parseInt(toNum(r.total ?? r.TOTAL) || 0, 10),
+            restaurantesActivos: parseInt(toNum(r.activos ?? r.ACTIVOS) || 0, 10),
+            restaurantesInactivos: parseInt(toNum(r.inactivos ?? r.INACTIVOS) || 0, 10),
+            porPlan: porPlanList,
+            totalUsuarios: parseInt(rowVal(usuariosRow?.[0]) || 0, 10),
+            totalFacturas: parseInt(rowVal(facturasRows?.[0]) || 0, 10),
+            totalVentasMonto: parseFloat(rowVal(ventasMontoRows?.[0]) || 0),
+            totalProductos: parseInt(rowVal(productosRows?.[0]) || 0, 10),
+            totalClientes: parseInt(rowVal(clientesRows?.[0]) || 0, 10),
+            totalMesas: parseInt(rowVal(mesasRows?.[0]) || 0, 10),
+            restaurantesUltimos30Dias: parseInt(rowVal(recientesRow?.[0]) || 0, 10)
+        };
+    }
+
     static async getTenantById(id) {
         const [rows] = await db.query(
             'SELECT t.*, p.nombre AS plan_nombre, p.slug AS plan_slug FROM tenants t LEFT JOIN planes p ON t.plan_id = p.id WHERE t.id = ?',

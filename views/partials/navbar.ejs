@@ -1,7 +1,7 @@
 <% 
 // Navbar partial: permisos + plan. Solo se muestra enlace si el usuario tiene permiso Y el plan del tenant incluye el módulo.
 const isSuperadmin = user && String(user.rol || '').toLowerCase() === 'superadmin';
-const brandHref = isSuperadmin ? '/admin/tenants' : '/';
+const brandHref = isSuperadmin ? '/admin/dashboard' : '/';
 const planLabels = { productos: 'Productos', clientes: 'Clientes', mesas: 'Mesas', ventas: 'Ventas', dashboard: 'Dashboard', configuracion: 'Configuración', plantillas: 'Plantillas', importar_exportar: 'Import/Export', costeo: 'Costeo', analitica: 'Analítica', prediccion_ml: 'Predicción ML', eventos: 'Eventos' };
 const ap = typeof allowedByPlan !== 'undefined' && allowedByPlan ? allowedByPlan : {};
 function canShow(mod) { if (!mod) return true; if (typeof allowedByPlan === 'undefined') return true; return ap[mod] === true; }
@@ -20,27 +20,32 @@ function canShow(mod) { if (!mod) return true; if (typeof allowedByPlan === 'und
             <ul class="navbar-nav me-auto">
                 <% if (isSuperadmin) { %>
                 <li class="nav-item">
-                    <a class="nav-link active" href="/admin/tenants">
+                    <a class="nav-link <%= (typeof currentAdminPage !== 'undefined' && currentAdminPage === 'dashboard') ? 'active' : '' %>" href="/admin/dashboard">
+                        <i class="bi bi-speedometer2"></i> Dashboard
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link <%= (typeof currentAdminPage !== 'undefined' && currentAdminPage === 'tenants') ? 'active' : '' %>" href="/admin/tenants">
                         <i class="bi bi-building"></i> Restaurantes
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="/admin/sistema">
+                    <a class="nav-link <%= (typeof currentAdminPage !== 'undefined' && currentAdminPage === 'sistema') ? 'active' : '' %>" href="/admin/sistema">
                         <i class="bi bi-gear-wide-connected"></i> Sistema
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="/admin/planes">
+                    <a class="nav-link <%= (typeof currentAdminPage !== 'undefined' && currentAdminPage === 'planes') ? 'active' : '' %>" href="/admin/planes">
                         <i class="bi bi-layers"></i> Planes
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="/admin/permisos">
+                    <a class="nav-link <%= (typeof currentAdminPage !== 'undefined' && currentAdminPage === 'permisos') ? 'active' : '' %>" href="/admin/permisos">
                         <i class="bi bi-shield-lock"></i> Permisos
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="/admin/ventas">
+                    <a class="nav-link <%= (typeof currentAdminPage !== 'undefined' && currentAdminPage === 'ventas') ? 'active' : '' %>" href="/admin/ventas">
                         <i class="bi bi-trash"></i> Eliminar ventas
                     </a>
                 </li>

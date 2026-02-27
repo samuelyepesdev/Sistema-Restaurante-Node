@@ -43,7 +43,7 @@
     </style>
 </head>
 <body>
-<%- include('../partials/navbar', { user, tenant: selectedTenant || null }) %>
+<%- include('../partials/navbar', { user, tenant: selectedTenant || null, currentAdminPage: 'tenants' }) %>
 
 <div class="container-fluid py-4">
     <div class="admin-page-header d-flex flex-wrap align-items-center justify-content-between gap-3">

@@ -190,7 +190,7 @@
                         localStorage.setItem('user', JSON.stringify(data.user));
                     }
 
-                    // Redirect: superadmin solo va a gestión de restaurantes
+                    // Redirect: superadmin al dashboard de administración
                     const rol = (data.user.rol || '').toString().toLowerCase();
                     const isSuperadmin = rol === 'superadmin';
                     Swal.fire({
@@ -200,7 +200,7 @@
                         timer: 1500,
                         showConfirmButton: false
                     }).then(() => {
-                        window.location.href = isSuperadmin ? '/admin/tenants' : '/';
+                        window.location.href = isSuperadmin ? '/admin/dashboard' : '/';
                     });
 
                 } catch (error) {
