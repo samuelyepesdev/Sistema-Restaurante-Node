@@ -163,6 +163,16 @@ app.use('/admin/planes', requireAuth, adminPlanesRoutes);
 app.use('/admin/permisos', requireAuth, adminPermisosRoutes);
 app.use('/admin/ventas', requireAuth, adminVentasRoutes);
 
+// Favicon: servir logo.png como icono de pestaña (el navegador pide /favicon.ico)
+const faviconPath = path.join(__dirname, 'public', 'logo.png');
+app.get('/favicon.ico', (req, res) => {
+    if (fs.existsSync(faviconPath)) {
+        res.type('image/png').sendFile(faviconPath);
+    } else {
+        res.status(204).end();
+    }
+});
+
 // Manejo de errores 404
 app.use((req, res, next) => {
     console.log('404 - Ruta no encontrada:', req.url);
