@@ -12,6 +12,10 @@ class CocinaRepository {
      * @param {number} tenantId - Tenant ID
      * @returns {Promise<Array>} Array of kitchen items
      */
+    /**
+     * Cola de cocina: solo ítems de pedidos abiertos (no cerrados ni cancelados).
+     * Al facturar, el pedido pasa a 'cerrado' y sus ítems dejan de mostrarse en cocina.
+     */
     static async getQueue(tenantId) {
         const [items] = await db.query(`
             SELECT i.*, p.mesa_id, m.numero AS mesa_numero, pr.nombre AS producto_nombre
@@ -19,7 +23,8 @@ class CocinaRepository {
             JOIN pedidos p ON p.id = i.pedido_id
             JOIN mesas m ON m.id = p.mesa_id
             JOIN productos pr ON pr.id = i.producto_id
-            WHERE p.tenant_id = ? AND i.estado IN ('enviado','preparando','listo')
+            WHERE p.tenant_id = ? AND p.estado NOT IN ('cerrado', 'cancelado')
+              AND i.estado IN ('enviado','preparando','listo')
             ORDER BY COALESCE(i.enviado_at, i.created_at) ASC, i.id ASC
         `, [tenantId]);
         return items;
