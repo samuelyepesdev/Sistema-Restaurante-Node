@@ -292,9 +292,9 @@
             </div>
         </div>
 
-        <!-- Eventos del mes mostrado en el calendario -->
+        <!-- Eventos del mes e insumos bajo stock -->
         <div class="row mb-3">
-            <div class="col-md-6">
+            <div class="col-md-4">
                 <div class="card stat-card text-white clickable" id="cardEventos" data-action="go-eventos" style="background: linear-gradient(135deg, #6f42c1 0%, #5a32a3 100%);" title="Ir a Eventos">
                     <div class="card-body">
                         <div class="d-flex justify-content-between align-items-center">
@@ -308,7 +308,7 @@
                     </div>
                 </div>
             </div>
-            <div class="col-md-6">
+            <div class="col-md-4">
                 <div class="card stat-card text-white clickable" id="cardVentasEventos" data-action="modal-ventas-eventos" style="background: linear-gradient(135deg, #fd7e14 0%, #e8590c 100%);" title="Ver detalle de ventas en eventos">
                     <div class="card-body">
                         <div class="d-flex justify-content-between align-items-center">
@@ -317,6 +317,20 @@
                                 <div class="stat-value" id="ventasEventosTotal">$0.00</div>
                             </div>
                             <i class="bi bi-currency-dollar stat-icon"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4" id="wrapCardInsumosBajoStock" style="<%= (typeof allowedByPlan !== 'undefined' && allowedByPlan.inventario) ? '' : 'display:none;' %>">
+                <div class="card stat-card text-white clickable" id="cardInsumosBajoStock" data-action="go-inventario" style="background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);" title="Ver inventario">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <div class="stat-label">Insumos bajo stock</div>
+                                <div class="stat-value" id="insumosBajoStock">0</div>
+                                <small class="opacity-75" style="font-size: 0.7rem;">Ir a inventario</small>
+                            </div>
+                            <i class="bi bi-exclamation-triangle stat-icon"></i>
                         </div>
                     </div>
                 </div>

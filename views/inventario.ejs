@@ -93,13 +93,18 @@
         </div>
 
         <div class="card">
-            <div class="card-header d-flex justify-content-between align-items-center">
+            <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
                 <span><i class="bi bi-list-ul me-2"></i>Insumos y stock</span>
-                <% if (user && user.permisos && user.permisos.includes('inventario.editar')) { %>
-                <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#modalNuevoInsumo">
-                    <i class="bi bi-plus"></i> Nuevo insumo
-                </button>
-                <% } %>
+                <div class="d-flex gap-2">
+                    <button type="button" class="btn btn-sm btn-outline-warning" id="btnListaMercado" title="Ver insumos bajo stock o cerca del mínimo para hacer el mercado">
+                        <i class="bi bi-cart-check"></i> Lista de mercado
+                    </button>
+                    <% if (user && user.permisos && user.permisos.includes('inventario.editar')) { %>
+                    <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#modalNuevoInsumo">
+                        <i class="bi bi-plus"></i> Nuevo insumo
+                    </button>
+                    <% } %>
+                </div>
             </div>
             <div class="card-body">
                 <!-- Vista tabla (desktop y tablets) -->
@@ -212,6 +217,34 @@
         <div class="modal-dialog"><div class="modal-content"><div class="modal-header">Ajuste - <span id="ajusteInsumoNombre"></span></div><div class="modal-body"><input type="hidden" id="ajusteInsumoId"><label class="form-label">Cantidad (+ suma, - resta)</label><input type="number" step="0.0001" class="form-control" id="ajusteCantidad"><label class="form-label mt-2">Referencia</label><input type="text" class="form-control" id="ajusteRef" value="Ajuste manual"></div><div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button><button type="button" class="btn btn-primary" id="btnConfirmarAjuste">Aplicar ajuste</button></div></div></div>
     </div>
 
+    <!-- Modal Lista de mercado -->
+    <div class="modal fade" id="modalListaMercado" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="bi bi-cart-check me-2"></i>Lista de mercado</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="text-muted small mb-2">Insumos bajo stock o cerca del mínimo para reponer.</p>
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" id="listaMercadoIncluirCerca">
+                        <label class="form-check-label" for="listaMercadoIncluirCerca">Incluir insumos cerca del mínimo (hasta 120% del mínimo)</label>
+                    </div>
+                    <div id="listaMercadoContenido">
+                        <ul class="list-group list-group-flush" id="listaMercadoItems"></ul>
+                        <p class="text-muted small mt-2 mb-0" id="listaMercadoVacio" style="display:none;">No hay insumos bajo stock.</p>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" id="btnListaMercadoCopiar" title="Copiar lista al portapapeles"><i class="bi bi-clipboard"></i> Copiar lista</button>
+                    <button type="button" class="btn btn-outline-primary" id="btnListaMercadoImprimir" title="Imprimir lista"><i class="bi bi-printer"></i> Imprimir</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         const base = '/inventario';
@@ -263,6 +296,64 @@
                     const match = !term || codigo.includes(term) || nombre.includes(term);
                     card.style.display = match ? '' : 'none';
                 });
+            });
+        })();
+
+        // Lista de mercado: cargar, copiar e imprimir
+        (function () {
+            let listaMercadoActual = [];
+            const modal = document.getElementById('modalListaMercado');
+            const ul = document.getElementById('listaMercadoItems');
+            const vacio = document.getElementById('listaMercadoVacio');
+            const incluirCerca = document.getElementById('listaMercadoIncluirCerca');
+
+            function formatoNum(n) { return Number(n).toLocaleString('es-CO', { minimumFractionDigits: 0, maximumFractionDigits: 2 }); }
+            function renderLista(lista) {
+                listaMercadoActual = lista || [];
+                ul.innerHTML = '';
+                if (!listaMercadoActual.length) {
+                    vacio.style.display = 'block';
+                    return;
+                }
+                vacio.style.display = 'none';
+                listaMercadoActual.forEach(function (it) {
+                    const li = document.createElement('li');
+                    li.className = 'list-group-item d-flex justify-content-between align-items-center' + (it.bajo ? ' list-group-item-warning' : '');
+                    li.innerHTML = '<span>' + (it.nombre || it.codigo) + '</span><span class="badge bg-secondary">' + formatoNum(it.stock_actual) + ' / ' + formatoNum(it.stock_minimo) + ' ' + (it.unidad_base || '') + '</span>';
+                    ul.appendChild(li);
+                });
+            }
+            async function cargarListaMercado() {
+                const incluir = incluirCerca && incluirCerca.checked;
+                const r = await fetch(base + '/api/lista-mercado?incluir_cerca=' + (incluir ? '1' : '0'), { credentials: 'same-origin' });
+                if (!r.ok) { renderLista([]); return; }
+                const data = await r.json();
+                renderLista(data.lista || []);
+            }
+            document.getElementById('btnListaMercado').addEventListener('click', function () {
+                incluirCerca.checked = false;
+                cargarListaMercado();
+                new bootstrap.Modal(modal).show();
+            });
+            if (incluirCerca) incluirCerca.addEventListener('change', cargarListaMercado);
+            document.getElementById('btnListaMercadoCopiar').addEventListener('click', function () {
+                const lineas = listaMercadoActual.map(function (it) {
+                    return (it.nombre || it.codigo) + ' - ' + formatoNum(it.stock_actual) + ' / ' + formatoNum(it.stock_minimo) + ' ' + (it.unidad_base || '');
+                });
+                const texto = 'Lista de mercado\n' + (new Date().toLocaleDateString('es-CO')) + '\n\n' + (lineas.length ? lineas.join('\n') : 'Nada por reponer.');
+                navigator.clipboard.writeText(texto).then(function () { alert('Lista copiada al portapapeles'); }).catch(function () { alert('No se pudo copiar'); });
+            });
+            document.getElementById('btnListaMercadoImprimir').addEventListener('click', function () {
+                const lineas = listaMercadoActual.map(function (it) {
+                    return (it.nombre || it.codigo) + ' — ' + formatoNum(it.stock_actual) + ' / ' + formatoNum(it.stock_minimo) + ' ' + (it.unidad_base || '');
+                });
+                const titulo = 'Lista de mercado - ' + (new Date().toLocaleDateString('es-CO'));
+                const html = '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>' + titulo + '</title><style>body{font-family:sans-serif;padding:1rem;} h1{font-size:1.25rem;} ul{list-style:none;padding:0;} li{padding:0.25rem 0;border-bottom:1px solid #eee;}</style></head><body><h1>' + titulo + '</h1><ul><li>' + (lineas.length ? lineas.join('</li><li>') : 'Nada por reponer.') + '</li></ul></body></html>';
+                const w = window.open('', '_blank');
+                w.document.write(html);
+                w.document.close();
+                w.print();
+                w.close();
             });
         })();
     </script>

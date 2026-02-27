@@ -58,6 +58,18 @@ router.get('/api/resumen', async (req, res) => {
     }
 });
 
+// GET /inventario/api/lista-mercado?incluir_cerca=1 - Insumos bajo stock (y opcionalmente cerca del mínimo) para lista de compras
+router.get('/api/lista-mercado', async (req, res) => {
+    try {
+        const tenantId = getTenantId(req);
+        const incluirCerca = req.query.incluir_cerca === '1' || req.query.incluir_cerca === 'true';
+        const result = await InventarioService.getListaMercado(tenantId, incluirCerca);
+        res.json(result);
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
 // GET /inventario/api/check-producto/:productoId?cantidad=1 - Para POS/mesas: verificar si hay stock para producto con receta
 router.get('/api/check-producto/:productoId', async (req, res) => {
     try {

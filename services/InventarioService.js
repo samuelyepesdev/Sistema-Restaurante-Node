@@ -210,6 +210,52 @@ class InventarioService {
             valor_total: Math.round(valorTotal * 100) / 100
         };
     }
+
+    /**
+     * Insumos con stock actual <= stock mínimo (para alertas en dashboard).
+     * @returns {{ cantidad: number, lista: Array }}
+     */
+    static async getResumenBajoStock(tenantId) {
+        const insumos = await InsumoRepository.findAll(tenantId, {});
+        const lista = (insumos || []).filter(i => {
+            const actual = parseFloat(i.stock_actual) || 0;
+            const min = parseFloat(i.stock_minimo) || 0;
+            return actual <= min;
+        }).map(i => ({
+            id: i.id,
+            codigo: i.codigo,
+            nombre: i.nombre,
+            stock_actual: parseFloat(i.stock_actual) || 0,
+            stock_minimo: parseFloat(i.stock_minimo) || 0,
+            unidad_base: i.unidad_base || 'g'
+        }));
+        return { cantidad: lista.length, lista: lista.slice(0, 10) };
+    }
+
+    /**
+     * Lista de mercado: insumos bajo stock o cerca del mínimo (para compras).
+     * @param {number} tenantId
+     * @param {boolean} incluirCerca - si true, incluye insumos con stock <= 120% del mínimo
+     */
+    static async getListaMercado(tenantId, incluirCerca = false) {
+        const insumos = await InsumoRepository.findAll(tenantId, {});
+        const lista = (insumos || []).filter(i => {
+            const actual = parseFloat(i.stock_actual) || 0;
+            const min = parseFloat(i.stock_minimo) || 0;
+            if (actual <= min) return true;
+            if (incluirCerca && min > 0 && actual <= min * 1.2) return true;
+            return false;
+        }).map(i => ({
+            id: i.id,
+            codigo: i.codigo,
+            nombre: i.nombre,
+            stock_actual: parseFloat(i.stock_actual) || 0,
+            stock_minimo: parseFloat(i.stock_minimo) || 0,
+            unidad_base: i.unidad_base || 'g',
+            bajo: (parseFloat(i.stock_actual) || 0) <= (parseFloat(i.stock_minimo) || 0)
+        }));
+        return { lista };
+    }
 }
 
 module.exports = InventarioService;
