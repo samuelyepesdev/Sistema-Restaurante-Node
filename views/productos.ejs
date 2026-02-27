@@ -147,7 +147,7 @@
                                     <td><%= producto.codigo %></td>
                                     <td><%= producto.nombre %></td>
                                     <td><span class="badge bg-secondary"><%= producto.categoria_nombre || 'Sin categoría' %></span></td>
-                                    <td class="text-end">$<%= (Number(producto.precio_unidad) || 0).toFixed(2) %></td>
+                                    <td class="text-end">$<%= (Number(producto.precio_unidad) || 0).toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) %></td>
                                     <td class="text-center">
                                         <div class="action-buttons">
                                             <% if (user && user.permisos && user.permisos.includes('costeo.ver') && tieneReceta) { %>

@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../config/database');
+const { requirePermission } = require('../middleware/auth');
 
 // Rutas para gestión de mesas y pedidos de restaurante
 // - Renderiza la vista de mesas (GET /mesas)
@@ -81,8 +82,8 @@ router.post('/crear', async (req, res) => {
     }
 });
 
-// PUT /mesas/:mesaId - API: actualizar mesa (numero, descripcion) del tenant
-router.put('/:mesaId', async (req, res) => {
+// PUT /mesas/:mesaId - API: actualizar mesa (numero, descripcion) del tenant (requiere mesas.editar)
+router.put('/:mesaId', requirePermission('mesas.editar'), async (req, res) => {
     try {
         const tenantId = req.tenant?.id;
         if (!tenantId) return res.status(403).json({ error: 'Contexto de tenant no disponible' });

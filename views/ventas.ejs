@@ -174,7 +174,7 @@
                                 <h5 class="card-title">Mesa <%= mesa.mesa_numero %></h5>
                                 <p class="card-text">
                                     <strong>Pedido #<%= mesa.pedido_id %></strong><br>
-                                    <span class="text-muted">Total: $<%= Number(mesa.pedido_total || 0).toFixed(2) %></span>
+                                    <span class="text-muted">Total: $<%= (Number(mesa.pedido_total) || 0).toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) %></span>
                                 </p>
                                 <button class="btn btn-success btn-sm" onclick="window.location.href='/mesas?pedido=<%= mesa.pedido_id %>'">
                                     <i class="bi bi-cash-stack"></i> Facturar
@@ -252,7 +252,7 @@
                                     <td data-label="Cliente"><%= venta.cliente_nombre %></td>
                                     <td data-label="Forma de pago"><%= (venta.forma_pago || '').charAt(0).toUpperCase() + (venta.forma_pago || '').slice(1) %></td>
                                     <td data-label="Tipo"><span class="badge bg-<%= venta.evento_id ? 'info' : 'secondary' %>"><%= venta.tipo_venta || (venta.evento_id ? 'Evento' : 'Venta diaria') %></span></td>
-                                    <td class="text-end" data-label="Total" data-total="<%= venta.total %>">$<%= Number(venta.total).toFixed(2) %></td>
+                                    <td class="text-end" data-label="Total" data-total="<%= venta.total %>">$<%= (Number(venta.total) || 0).toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) %></td>
                                     <td class="text-center" data-label="Acciones">
                                         <div class="d-flex gap-1 justify-content-center flex-wrap">
                                             <button class="btn btn-sm btn-outline-info btn-detalles" 
@@ -275,17 +275,17 @@
                         <tfoot class="table-light fw-bold tfoot-desktop">
                             <tr>
                                 <td colspan="5" class="text-end">Total Efectivo:</td>
-                                <td class="text-end" id="totalEfectivo">$<%= (typeof totalEfectivo !== 'undefined' ? Number(totalEfectivo).toFixed(2) : '0.00') %></td>
+                                <td class="text-end" id="totalEfectivo">$<%= (typeof totalEfectivo !== 'undefined' ? Number(totalEfectivo).toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '0,00') %></td>
                                 <td></td>
                             </tr>
                             <tr>
                                 <td colspan="5" class="text-end">Total Transferencia:</td>
-                                <td class="text-end" id="totalTransferencia">$<%= (typeof totalTransferencia !== 'undefined' ? Number(totalTransferencia).toFixed(2) : '0.00') %></td>
+                                <td class="text-end" id="totalTransferencia">$<%= (typeof totalTransferencia !== 'undefined' ? Number(totalTransferencia).toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '0,00') %></td>
                                 <td></td>
                             </tr>
                             <tr>
                                 <td colspan="5" class="text-end">Total General:</td>
-                                <td class="text-end" id="totalGeneral">$<%= (typeof totalGeneral !== 'undefined' ? Number(totalGeneral).toFixed(2) : '0.00') %></td>
+                                <td class="text-end" id="totalGeneral">$<%= (typeof totalGeneral !== 'undefined' ? Number(totalGeneral).toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '0,00') %></td>
                                 <td></td>
                             </tr>
                         </tfoot>
@@ -297,19 +297,19 @@
                         <div class="col-6 col-sm-4">
                             <div class="d-flex justify-content-between align-items-center py-2 border-bottom border-secondary border-opacity-25">
                                 <span class="fw-bold text-secondary">Total Efectivo</span>
-                                <span class="fw-bold" id="totalEfectivoResumen">$<%= (typeof totalEfectivo !== 'undefined' ? Number(totalEfectivo).toFixed(2) : '0.00') %></span>
+                                <span class="fw-bold" id="totalEfectivoResumen">$<%= (typeof totalEfectivo !== 'undefined' ? Number(totalEfectivo).toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '0,00') %></span>
                             </div>
                         </div>
                         <div class="col-6 col-sm-4">
                             <div class="d-flex justify-content-between align-items-center py-2 border-bottom border-secondary border-opacity-25">
                                 <span class="fw-bold text-secondary">Total Transferencia</span>
-                                <span class="fw-bold" id="totalTransferenciaResumen">$<%= (typeof totalTransferencia !== 'undefined' ? Number(totalTransferencia).toFixed(2) : '0.00') %></span>
+                                <span class="fw-bold" id="totalTransferenciaResumen">$<%= (typeof totalTransferencia !== 'undefined' ? Number(totalTransferencia).toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '0,00') %></span>
                             </div>
                         </div>
                         <div class="col-12 col-sm-4">
                             <div class="d-flex justify-content-between align-items-center py-2 border-bottom border-dark">
                                 <span class="fw-bold">Total General</span>
-                                <span class="fw-bold fs-5 text-primary" id="totalGeneralResumen">$<%= (typeof totalGeneral !== 'undefined' ? Number(totalGeneral).toFixed(2) : '0.00') %></span>
+                                <span class="fw-bold fs-5 text-primary" id="totalGeneralResumen">$<%= (typeof totalGeneral !== 'undefined' ? Number(totalGeneral).toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '0,00') %></span>
                             </div>
                         </div>
                     </div>
@@ -432,14 +432,15 @@
                     tbody.empty();
                     var totalGeneral = 0;
                     var productos = data.productos || [];
+                    var fmtNum = function(n) { return (Number(n) || 0).toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); };
                     productos.forEach(function(producto) {
                         var cantidad = Number(producto.cantidad) || 0;
                         var precio = Number(producto.precio) || 0;
                         var subtotal = Number(producto.subtotal) || 0;
                         totalGeneral += subtotal;
-                        tbody.append('<tr><td>' + (producto.nombre || '') + '</td><td class="text-end">' + cantidad.toFixed(2) + '</td><td>' + (producto.unidad || 'N/A') + '</td><td class="text-end">$' + precio.toFixed(2) + '</td><td class="text-end">$' + subtotal.toFixed(2) + '</td></tr>');
+                        tbody.append('<tr><td>' + (producto.nombre || '') + '</td><td class="text-end">' + fmtNum(cantidad) + '</td><td>' + (producto.unidad || 'N/A') + '</td><td class="text-end">$' + fmtNum(precio) + '</td><td class="text-end">$' + fmtNum(subtotal) + '</td></tr>');
                     });
-                    $('#detallesTotal').text('$' + totalGeneral.toFixed(2));
+                    $('#detallesTotal').text('$' + fmtNum(totalGeneral));
                     var modal = getDetallesModal();
                     if (modal) modal.show();
                 },
@@ -523,9 +524,9 @@
         const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
         const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl));
 
-        // Función para calcular el total general
+        // Función para calcular el total general (formato miles es-CO)
+        function fmtMoneda(n) { return (Number(n) || 0).toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
         function calcularTotales() {
-            const totales = document.querySelectorAll('tbody#ventasTabla td[data-total]');
             let total = 0, tef = 0, ttr = 0;
             document.querySelectorAll('#ventasTabla tr').forEach(tr => {
                 const totalEl = tr.querySelector('[data-total]');
@@ -534,15 +535,15 @@
                 total += val;
                 if (forma === 'efectivo') tef += val; else if (forma === 'transferencia') ttr += val;
             });
-            document.getElementById('totalGeneral').textContent = `$${total.toFixed(2)}`;
-            document.getElementById('totalEfectivo').textContent = `$${tef.toFixed(2)}`;
-            document.getElementById('totalTransferencia').textContent = `$${ttr.toFixed(2)}`;
+            document.getElementById('totalGeneral').textContent = '$' + fmtMoneda(total);
+            document.getElementById('totalEfectivo').textContent = '$' + fmtMoneda(tef);
+            document.getElementById('totalTransferencia').textContent = '$' + fmtMoneda(ttr);
             var rE = document.getElementById('totalEfectivoResumen');
             var rT = document.getElementById('totalTransferenciaResumen');
             var rG = document.getElementById('totalGeneralResumen');
-            if (rE) rE.textContent = `$${tef.toFixed(2)}`;
-            if (rT) rT.textContent = `$${ttr.toFixed(2)}`;
-            if (rG) rG.textContent = `$${total.toFixed(2)}`;
+            if (rE) rE.textContent = '$' + fmtMoneda(tef);
+            if (rT) rT.textContent = '$' + fmtMoneda(ttr);
+            if (rG) rG.textContent = '$' + fmtMoneda(total);
         }
 
         // Calcular total al cargar la página

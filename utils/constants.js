@@ -28,6 +28,7 @@ const PERMISSIONS = {
     // Tables
     MESAS_VER: 'mesas.ver',
     MESAS_GESTIONAR: 'mesas.gestionar',
+    MESAS_EDITAR: 'mesas.editar',
     
     // Kitchen
     COCINA_VER: 'cocina.ver',
@@ -61,7 +62,7 @@ const PERMISSIONS = {
 const PERMISSION_SECTIONS = {
     Productos: ['productos.ver', 'productos.crear', 'productos.editar', 'productos.eliminar', 'productos.importar'],
     Clientes: ['clientes.ver', 'clientes.crear', 'clientes.editar', 'clientes.eliminar'],
-    Mesas: ['mesas.ver', 'mesas.gestionar'],
+    Mesas: ['mesas.ver', 'mesas.gestionar', 'mesas.editar'],
     Cocina: ['cocina.ver', 'cocina.gestionar'],
     Facturas: ['facturas.crear', 'facturas.ver'],
     Ventas: ['ventas.ver', 'ventas.exportar'],

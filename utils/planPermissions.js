@@ -16,6 +16,7 @@ const PERMISSION_TO_MODULE = {
     'clientes.eliminar': 'clientes',
     'mesas.ver': 'mesas',
     'mesas.gestionar': 'mesas',
+    'mesas.editar': 'mesas',
     'cocina.ver': 'mesas',
     'cocina.gestionar': 'mesas',
     'ventas.ver': 'ventas',

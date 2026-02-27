@@ -132,9 +132,11 @@
                                 <button class="btn btn-outline-secondary btn-sm btnVerPedido">
                                     <i class="bi bi-list-ul me-1"></i> Ver pedido
                                 </button>
+                                <% if (user && user.permisos && user.permisos.includes('mesas.editar')) { %>
                                 <button class="btn btn-outline-secondary btn-sm btnEditarMesa" data-mesa-numero="<%= m.numero %>" data-mesa-descripcion="<%= (m.descripcion || '') %>" title="Editar mesa">
                                     <i class="bi bi-pencil me-1"></i> Editar mesa
                                 </button>
+                                <% } %>
                             </div>
                         </div>
                     </div>
