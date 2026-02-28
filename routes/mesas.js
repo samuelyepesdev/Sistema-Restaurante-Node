@@ -282,6 +282,25 @@ router.get('/pedidos/:pedidoId', async (req, res) => {
     }
 });
 
+// PATCH /mesas/pedidos/:pedidoId/propina - Registrar propina del cliente en el pedido
+router.patch('/pedidos/:pedidoId/propina', async (req, res) => {
+    try {
+        const tenantId = req.tenant?.id;
+        if (!tenantId) return res.status(403).json({ error: 'Contexto de tenant no disponible' });
+        const pedidoId = req.params.pedidoId;
+        const propina = Math.max(0, parseFloat(req.body?.propina) || 0);
+        const [result] = await db.query(
+            'UPDATE pedidos SET propina = ? WHERE id = ? AND tenant_id = ?',
+            [propina, pedidoId, tenantId]
+        );
+        if (result.affectedRows === 0) return res.status(404).json({ error: 'Pedido no encontrado' });
+        res.json({ propina });
+    } catch (error) {
+        console.error('Error al actualizar propina:', error);
+        res.status(500).json({ error: 'Error al actualizar propina' });
+    }
+});
+
 // Helper: verificar que un item de pedido pertenece al tenant
 async function itemPerteneceAlTenant(itemId, tenantId) {
     const [rows] = await db.query(
@@ -443,7 +462,7 @@ router.post('/pedidos/:pedidoId/facturar', async (req, res) => {
     if (!tenantId) return res.status(403).json({ error: 'Contexto de tenant no disponible' });
 
     const pedidoId = req.params.pedidoId;
-    const { cliente_id, forma_pago, descuentos } = req.body || {};
+    const { cliente_id, forma_pago, descuentos, propina: propinaBody } = req.body || {};
     if (!cliente_id) return res.status(400).json({ error: 'cliente_id requerido para facturar' });
     if (!forma_pago) return res.status(400).json({ error: 'forma_pago requerido' });
     const descuentosMap = descuentos && typeof descuentos === 'object' ? descuentos : {};
@@ -476,6 +495,8 @@ router.post('/pedidos/:pedidoId/facturar', async (req, res) => {
                 return { producto_id: i.producto_id, cantidad: cant, precio_unitario: precioUnitFactura, unidad_medida: i.unidad_medida || 'UND', subtotal, descuento_porcentaje: desc > 0 ? pct : null };
             });
             total = Math.round(total * 100) / 100;
+            const propina = Math.max(0, parseFloat(propinaBody != null ? propinaBody : pedido.propina) || 0);
+            const totalConPropina = Math.round((total + propina) * 100) / 100;
 
             const [rowsNum] = await connection.query(
                 'SELECT COALESCE(MAX(numero), 0) + 1 AS siguiente FROM facturas WHERE tenant_id = ?',
@@ -483,8 +504,8 @@ router.post('/pedidos/:pedidoId/facturar', async (req, res) => {
             );
             const numeroFactura = (rowsNum && rowsNum[0] && rowsNum[0].siguiente) || 1;
             const [facturaInsert] = await connection.query(
-                `INSERT INTO facturas (tenant_id, numero, cliente_id, total, forma_pago) VALUES (?, ?, ?, ?, ?)`,
-                [tenantId, numeroFactura, cliente_id, total, forma_pago]
+                `INSERT INTO facturas (tenant_id, numero, cliente_id, total, forma_pago, propina) VALUES (?, ?, ?, ?, ?, ?)`,
+                [tenantId, numeroFactura, cliente_id, totalConPropina, forma_pago, propina]
             );
             const facturaId = facturaInsert.insertId;
 
@@ -503,7 +524,7 @@ router.post('/pedidos/:pedidoId/facturar', async (req, res) => {
                 }
             }
 
-            await connection.query(`UPDATE pedidos SET estado = 'cerrado', total = ? WHERE id = ?`, [total, pedidoId]);
+            await connection.query(`UPDATE pedidos SET estado = 'cerrado', total = ? WHERE id = ?`, [totalConPropina, pedidoId]);
             await connection.query(`UPDATE mesas SET estado = 'libre' WHERE id = ?`, [pedido.mesa_id]);
 
             await connection.commit();

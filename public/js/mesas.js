@@ -6,6 +6,7 @@ $(function() {
   let pedidoActual = null; // { id, mesa_id }
   let items = []; // items del pedido en UI
   let descuentosPorItem = {}; // { itemId: percent } - solo para esta venta; no cambia el precio del producto en catálogo
+  let propinaPedido = 0; // propina que deja el cliente (se suma al total)
 
   // Helpers UI
   function formatear(valor){return `$${Number(valor||0).toLocaleString('es-CO')}`}
@@ -40,7 +41,10 @@ $(function() {
         </tr>
       `);
     });
-    $('#totalPedido').text(formatear(total));
+    const totalConPropina = total + propinaPedido;
+    $('#totalPedido').text(formatear(totalConPropina));
+    $('#propinaLinea').toggleClass('d-none', propinaPedido <= 0);
+    $('#propinaMonto').text(formatear(propinaPedido));
   }
 
   // +/- cantidad en items del pedido (mesa)
@@ -85,7 +89,8 @@ $(function() {
   // Cargar pedido por mesa
   async function abrirPedido(mesaId, mesaNumero){
     try{
-      descuentosPorItem = {}; // nuevo pedido = sin descuentos previos
+      descuentosPorItem = {};
+      propinaPedido = 0;
       const resp = await fetch('/api/mesas/abrir', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ mesa_id: mesaId })});
       const data = await resp.json();
       if(!resp.ok) throw new Error(data.error||'Error al abrir pedido');
@@ -105,6 +110,7 @@ $(function() {
     const data = await resp.json();
     if(!resp.ok) throw new Error(data.error||'Error al cargar pedido');
     items = data.items || [];
+    propinaPedido = Number(data.pedido?.propina) || 0;
     if (items.length > 0) currentMesaEstado = 'ocupada';
     const $btnLiberar = $('#btnLiberarMesaHeader');
     if ($btnLiberar.length) $btnLiberar.prop('disabled', currentMesaEstado === 'libre').toggleClass('d-none', currentMesaEstado === 'libre');
@@ -163,6 +169,50 @@ $(function() {
     $('#descuentoMesaPaso1').show();
     $('#descuentoMesaPaso2').hide();
     $('#descuentoModalMesaTitulo').text('Aplicar descuento');
+  });
+
+  // Botón "Propina": abrir modal y aplicar/quitar propina
+  $('#btnPropinaMesa').on('click', function(){
+    if(!pedidoActual || !pedidoActual.id){
+      Swal.fire({ icon: 'warning', title: 'No hay pedido abierto' });
+      return;
+    }
+    $('#propinaInputMesa').val(propinaPedido > 0 ? propinaPedido : '');
+    new bootstrap.Modal(document.getElementById('propinaModalMesa')).show();
+  });
+  $('.btn-propina-rapida').on('click', function(){
+    const val = Number($(this).data('val')) || 0;
+    $('#propinaInputMesa').val(val);
+  });
+  $('#aplicarPropinaMesaBtn').on('click', async function(){
+    const valor = Math.max(0, parseFloat($('#propinaInputMesa').val()) || 0);
+    try {
+      const r = await fetch(`/api/mesas/pedidos/${pedidoActual.id}/propina`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ propina: valor })
+      });
+      const data = await r.json();
+      if (!r.ok) throw new Error(data.error || 'Error');
+      propinaPedido = valor;
+      renderItems();
+      bootstrap.Modal.getInstance(document.getElementById('propinaModalMesa')).hide();
+      if (valor > 0) Swal.fire({ icon: 'success', title: 'Propina aplicada', text: formatear(valor), timer: 1500, showConfirmButton: false });
+    } catch (e) { Swal.fire({ icon: 'error', title: e.message }); }
+  });
+  $('#quitarPropinaMesaBtn').on('click', async function(){
+    try {
+      const r = await fetch(`/api/mesas/pedidos/${pedidoActual.id}/propina`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ propina: 0 })
+      });
+      if (!r.ok) { const d = await r.json(); throw new Error(d.error || 'Error'); }
+      propinaPedido = 0;
+      $('#propinaInputMesa').val('');
+      renderItems();
+      bootstrap.Modal.getInstance(document.getElementById('propinaModalMesa')).hide();
+    } catch (e) { Swal.fire({ icon: 'error', title: e.message }); }
   });
 
   // Buscar productos
@@ -320,7 +370,7 @@ $(function() {
         return;
       }
       
-      // Calcular total del pedido con descuentos aplicados (temporales para esta venta)
+      // Calcular total del pedido con descuentos aplicados (temporales para esta venta) + propina
       let totalPedido = 0;
       items.forEach(it => {
         const cantidad = Number(it.cantidad || 0);
@@ -328,6 +378,7 @@ $(function() {
         const subtotal = subtotalConDescuento(cantidad, precio, it.id);
         totalPedido += subtotal;
       });
+      const totalConPropinaFacturar = totalPedido + propinaPedido;
       
       if(totalPedido <= 0){
         Swal.fire({icon:'warning', title: 'El total del pedido es cero'});
@@ -341,8 +392,8 @@ $(function() {
         return;
       }
       
-      // Mostrar modal de pago
-      await mostrarModalPago(totalPedido, cliente.id);
+      // Mostrar modal de pago (total incluye propina)
+      await mostrarModalPago(totalConPropinaFacturar, cliente.id);
     }catch(err){
       Swal.fire({icon:'error', title: err.message});
     }
@@ -463,7 +514,8 @@ $(function() {
           body: JSON.stringify({
             cliente_id: clienteId,
             forma_pago: formaPagoSeleccionada,
-            descuentos: descuentosPorItem
+            descuentos: descuentosPorItem,
+            propina: propinaPedido
           })
         });
         const data = await resp.json();
@@ -486,6 +538,7 @@ $(function() {
         
         pedidoActual = null;
         items = [];
+        propinaPedido = 0;
         renderItems();
         
         // Mensaje de éxito y quedarse en mesas

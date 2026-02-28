@@ -174,7 +174,14 @@
                     </div>
                 </div>
             <% }); %>
-            
+            <% if (factura.propina != null && Number(factura.propina) > 0) { %>
+            <div class="producto-item" style="border-bottom: none;">
+                <div class="producto-detalles">
+                    <span class="producto-nombre">Propina</span>
+                    <span>$<%= Number(factura.propina).toLocaleString('es-CO') %></span>
+                </div>
+            </div>
+            <% } %>
             <div class="total-final">
                 Total: $<%= Number(factura.total).toLocaleString('es-CO') %>
             </div>

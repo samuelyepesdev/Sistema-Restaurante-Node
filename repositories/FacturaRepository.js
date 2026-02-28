@@ -127,7 +127,7 @@ class FacturaRepository {
      */
     static async findByIdWithClient(id, tenantId) {
         const [facturas] = await db.query(`
-            SELECT f.id, f.tenant_id, f.numero, f.cliente_id, f.total, f.forma_pago, f.evento_id,
+            SELECT f.id, f.tenant_id, f.numero, f.cliente_id, f.total, f.forma_pago, f.propina, f.evento_id,
                    DATE_FORMAT(f.fecha, '%Y-%m-%d %H:%i:%s') AS fecha,
                    c.nombre AS cliente_nombre, c.direccion, c.telefono
             FROM facturas f
@@ -159,7 +159,7 @@ class FacturaRepository {
      */
     static async getDetailsForAPI(id, tenantId) {
         const [facturas] = await db.query(`
-            SELECT f.id, f.tenant_id, f.numero, f.cliente_id, f.total, f.forma_pago, f.evento_id,
+            SELECT f.id, f.tenant_id, f.numero, f.cliente_id, f.total, f.forma_pago, f.propina, f.evento_id,
                    DATE_FORMAT(f.fecha, '%Y-%m-%d %H:%i:%s') AS fecha,
                    c.nombre AS cliente_nombre, c.direccion, c.telefono
             FROM facturas f
