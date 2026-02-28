@@ -6,6 +6,15 @@
 
 const db = require('../config/database');
 
+/**
+ * Retorna la fecha actual en timezone América/Bogotá (Colombia) como string 'YYYY-MM-DD'.
+ * Evita usar CURDATE() de MySQL que opera en UTC del servidor.
+ * @returns {string} Fecha en formato 'YYYY-MM-DD'
+ */
+function getFechaColombia() {
+    return new Date().toLocaleDateString('en-CA', { timeZone: 'America/Bogota' });
+}
+
 class StatsRepository {
     /**
      * Get total sales amount
@@ -32,10 +41,12 @@ class StatsRepository {
      * @returns {Promise<{ total: number, cantidad: number }>}
      */
     static async getVentasHoy(tenantId) {
+        // Usar fecha de Colombia, no CURDATE() del servidor MySQL (que opera en UTC)
+        const hoy = getFechaColombia();
         const [rows] = await db.query(
             `SELECT COALESCE(SUM(total), 0) AS total, COUNT(*) AS cantidad
-             FROM facturas WHERE tenant_id = ? AND DATE(fecha) = CURDATE()`,
-            [tenantId]
+             FROM facturas WHERE tenant_id = ? AND DATE(CONVERT_TZ(fecha, '+00:00', '-05:00')) = ?`,
+            [tenantId, hoy]
         );
         const r = rows[0] || {};
         return {
@@ -214,7 +225,7 @@ class StatsRepository {
         `;
 
         const [result] = await db.query(query, params);
-        
+
         // Group by category and limit products per category
         const grouped = {};
         result.forEach(row => {
@@ -246,14 +257,16 @@ class StatsRepository {
      * @returns {Promise<Array>} Array of daily sales
      */
     static async getDailySales(tenantId, days = 30) {
+        // Agrupar por fecha en Colombia (UTC-5) para que el gráfico de días sea correcto
         const query = `
             SELECT 
-                DATE(fecha) AS fecha,
+                DATE(CONVERT_TZ(fecha, '+00:00', '-05:00')) AS fecha,
                 COUNT(*) AS cantidad_facturas,
                 SUM(total) AS total_ventas
             FROM facturas
-            WHERE tenant_id = ? AND fecha >= DATE_SUB(CURDATE(), INTERVAL ? DAY)
-            GROUP BY DATE(fecha)
+            WHERE tenant_id = ?
+              AND CONVERT_TZ(fecha, '+00:00', '-05:00') >= DATE_SUB(CONVERT_TZ(NOW(), '+00:00', '-05:00'), INTERVAL ? DAY)
+            GROUP BY DATE(CONVERT_TZ(fecha, '+00:00', '-05:00'))
             ORDER BY fecha ASC
         `;
         const [result] = await db.query(query, [tenantId, days]);

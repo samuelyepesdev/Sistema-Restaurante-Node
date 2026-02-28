@@ -15,12 +15,19 @@ class StatsService {
      * @returns {Promise<Object>} Dashboard statistics object
      */
     static async getDashboardStats(tenantId, filters = {}) {
-        const desde = filters.desde || new Date().toISOString().slice(0, 8) + '01';
-        const hasta = filters.hasta || new Date().toISOString().slice(0, 10);
+        // Calcular fechas en timezone Colombia (America/Bogota), no en UTC
+        const fechaHoyColombia = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Bogota' }); // 'YYYY-MM-DD'
+        const [anioColombia, mesColombia] = fechaHoyColombia.split('-').map(Number);
+        const ultimoDiaMes = new Date(anioColombia, mesColombia, 0).getDate();
+        const mesInicioStr = `${anioColombia}-${String(mesColombia).padStart(2, '0')}-01`;
+        const mesFinStr = `${anioColombia}-${String(mesColombia).padStart(2, '0')}-${String(ultimoDiaMes).padStart(2, '0')}`;
 
-        const now = new Date();
-        const mesInicio = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`;
-        const mesFin = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate()).padStart(2, '0')}`;
+        const desde = filters.desde || mesInicioStr;
+        const hasta = filters.hasta || fechaHoyColombia;
+
+        const mesInicio = mesInicioStr;
+        const mesFin = mesFinStr;
+
 
         const [
             ventasHoy,
