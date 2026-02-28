@@ -85,10 +85,11 @@ class FacturaRepository {
                 [tenantId]
             );
             const numero = (rowsNum && rowsNum[0] && rowsNum[0].siguiente) || 1;
+            const fechaEmisionUtc = new Date().toISOString().slice(0, 19).replace('T', ' ');
 
             const [result] = await connection.query(
-                'INSERT INTO facturas (tenant_id, numero, cliente_id, total, forma_pago, evento_id) VALUES (?, ?, ?, ?, ?, ?)',
-                [tenantId, numero, facturaData.cliente_id, facturaData.total, facturaData.forma_pago, evento_id]
+                'INSERT INTO facturas (tenant_id, numero, cliente_id, total, forma_pago, evento_id, fecha) VALUES (?, ?, ?, ?, ?, ?, ?)',
+                [tenantId, numero, facturaData.cliente_id, facturaData.total, facturaData.forma_pago, evento_id, fechaEmisionUtc]
             );
 
             const factura_id = result.insertId;
@@ -127,7 +128,7 @@ class FacturaRepository {
      */
     static async findByIdWithClient(id, tenantId) {
         const [facturas] = await db.query(`
-            SELECT f.id, f.tenant_id, f.numero, f.cliente_id, f.total, f.forma_pago, f.evento_id,
+            SELECT f.id, f.tenant_id, f.numero, f.cliente_id, f.total, f.forma_pago, f.propina, f.evento_id,
                    DATE_FORMAT(f.fecha, '%Y-%m-%d %H:%i:%s') AS fecha,
                    c.nombre AS cliente_nombre, c.direccion, c.telefono
             FROM facturas f
@@ -159,7 +160,7 @@ class FacturaRepository {
      */
     static async getDetailsForAPI(id, tenantId) {
         const [facturas] = await db.query(`
-            SELECT f.id, f.tenant_id, f.numero, f.cliente_id, f.total, f.forma_pago, f.evento_id,
+            SELECT f.id, f.tenant_id, f.numero, f.cliente_id, f.total, f.forma_pago, f.propina, f.evento_id,
                    DATE_FORMAT(f.fecha, '%Y-%m-%d %H:%i:%s') AS fecha,
                    c.nombre AS cliente_nombre, c.direccion, c.telefono
             FROM facturas f
@@ -186,7 +187,8 @@ class FacturaRepository {
                 fecha: factura.fecha,
                 fechaISO: toFechaISOUtc(factura.fecha),
                 total: parseFloat(factura.total || 0),
-                forma_pago: factura.forma_pago
+                forma_pago: factura.forma_pago,
+                propina: parseFloat(factura.propina || 0)
             },
             cliente: {
                 nombre: factura.cliente_nombre || '',

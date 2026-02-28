@@ -44,7 +44,21 @@ async function loadStats(filters = {}) {
         updateTopProductsByCategoryTable(stats.topProductsByCategory);
     } catch (error) {
         console.error('Error:', error);
-        alert('Error al cargar las estadísticas');
+        // Fallback: mostrar ceros sin modal de error
+        updateStatsCards({
+            ventasHoyTotal: 0,
+            ventasHoyCantidad: 0,
+            totalSales: 0,
+            totalInvoices: 0,
+            avgInvoice: 0,
+            insumosBajoStock: lastStats?.insumosBajoStock ?? 0,
+            dailySales: [],
+            ventasEnEventos: lastStats?.ventasEnEventos ?? 0,
+            ventasNoEventos: lastStats?.ventasNoEventos ?? 0,
+            salesByCategory: lastStats?.salesByCategory ?? [],
+            topProductsByCategory: lastStats?.topProductsByCategory ?? [],
+            eventosCalendario: lastStats?.eventosCalendario ?? []
+        });
     }
 }
 
@@ -56,6 +70,10 @@ let lastStats = null;
  */
 function updateStatsCards(stats) {
     lastStats = stats;
+    // Ventas de hoy (arriba)
+    $('#ventasHoyTotal').text(formatCurrency(stats.ventasHoyTotal != null ? stats.ventasHoyTotal : 0));
+    $('#ventasHoyCantidad').text(stats.ventasHoyCantidad != null ? stats.ventasHoyCantidad : 0);
+    // Totales del período (abajo)
     $('#totalSales').text(formatCurrency(stats.totalSales));
     $('#totalInvoices').text(stats.totalInvoices);
     

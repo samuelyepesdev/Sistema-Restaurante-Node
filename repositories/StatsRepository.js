@@ -27,6 +27,24 @@ class StatsRepository {
     }
 
     /**
+     * Ventas del día de hoy (total en $ y cantidad de facturas).
+     * @param {number} tenantId - Tenant ID
+     * @returns {Promise<{ total: number, cantidad: number }>}
+     */
+    static async getVentasHoy(tenantId) {
+        const [rows] = await db.query(
+            `SELECT COALESCE(SUM(total), 0) AS total, COUNT(*) AS cantidad
+             FROM facturas WHERE tenant_id = ? AND DATE(fecha) = CURDATE()`,
+            [tenantId]
+        );
+        const r = rows[0] || {};
+        return {
+            total: parseFloat(r.total || 0),
+            cantidad: parseInt(r.cantidad || 0)
+        };
+    }
+
+    /**
      * Get total number of invoices
      * @param {number} tenantId - Tenant ID
      * @param {Object} filters - Date filters (optional)
@@ -239,11 +257,15 @@ class StatsRepository {
             ORDER BY fecha ASC
         `;
         const [result] = await db.query(query, [tenantId, days]);
-        return result.map(row => ({
-            fecha: row.fecha.toISOString().split('T')[0],
-            cantidad_facturas: parseInt(row.cantidad_facturas || 0),
-            total_ventas: parseFloat(row.total_ventas || 0)
-        }));
+        return result.map(row => {
+            const f = row.fecha;
+            const fechaStr = (f instanceof Date) ? f.toISOString().split('T')[0] : String(f || '').substring(0, 10);
+            return {
+                fecha: fechaStr,
+                cantidad_facturas: parseInt(row.cantidad_facturas || 0),
+                total_ventas: parseFloat(row.total_ventas || 0)
+            };
+        });
     }
 
     /**

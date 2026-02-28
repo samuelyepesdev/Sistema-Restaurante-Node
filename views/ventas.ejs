@@ -307,7 +307,7 @@
                             <% ventas.forEach(function(venta) { %>
                                 <tr>
                                     <td data-label="Factura #"><%= typeof venta.numero !== 'undefined' && venta.numero != null ? venta.numero : venta.id %></td>
-                                    <td data-label="Fecha" class="fecha-cell" data-fecha-iso="<%= venta.fechaISO || '' %>"><span class="fecha-venta-local"><%= venta.fecha ? new Date(venta.fecha).toLocaleString('es-CO', { dateStyle: 'short', timeStyle: 'medium' }) : '' %></span></td>
+                                    <td data-label="Fecha" class="fecha-cell" data-fecha-iso="<%= venta.fechaISO || '' %>"><span class="fecha-venta-local"><%= venta.fechaISO ? '' : (venta.fecha ? new Date(venta.fecha).toLocaleString('es-CO', { timeZone: 'America/Bogota', dateStyle: 'short', timeStyle: 'medium' }) : '') %></span></td>
                                     <td data-label="Cliente"><%= venta.cliente_nombre %></td>
                                     <td data-label="Forma de pago"><%= (venta.forma_pago || '').charAt(0).toUpperCase() + (venta.forma_pago || '').slice(1) %></td>
                                     <td data-label="Tipo"><span class="badge bg-<%= venta.evento_id ? 'info' : 'secondary' %>"><%= venta.tipo_venta || (venta.evento_id ? 'Evento' : 'Venta diaria') %></span></td>
@@ -507,7 +507,11 @@
                     var cliente = data.cliente || {};
                     var factura = data.factura || {};
                     $('#detallesCliente').html('<p><strong>Nombre:</strong> ' + (cliente.nombre || '-') + '</p><p><strong>Dirección:</strong> ' + (cliente.direccion || 'No especificada') + '</p><p><strong>Teléfono:</strong> ' + (cliente.telefono || 'No especificado') + '</p>');
-                    $('#detallesFactura').html('<p><strong>Factura #:</strong> ' + (factura.numero != null ? factura.numero : factura.id) + '</p><p><strong>Fecha:</strong> ' + ((factura.fechaISO || factura.fecha) ? new Date(factura.fechaISO || factura.fecha).toLocaleString('es-CO', { dateStyle: 'short', timeStyle: 'medium' }) : '-') + '</p><p><strong>Forma de Pago:</strong> ' + (factura.forma_pago ? (factura.forma_pago.charAt(0).toUpperCase() + factura.forma_pago.slice(1)) : '-') + '</p>');
+                    var facturaHtml = '<p><strong>Factura #:</strong> ' + (factura.numero != null ? factura.numero : factura.id) + '</p><p><strong>Fecha:</strong> ' + ((factura.fechaISO || factura.fecha) ? new Date(factura.fechaISO || factura.fecha).toLocaleString('es-CO', { timeZone: 'America/Bogota', dateStyle: 'short', timeStyle: 'medium' }) : '-') + '</p><p><strong>Forma de Pago:</strong> ' + (factura.forma_pago ? (factura.forma_pago.charAt(0).toUpperCase() + factura.forma_pago.slice(1)) : '-') + '</p>';
+                    if (factura.propina != null && Number(factura.propina) > 0) {
+                        facturaHtml += '<p><strong>Propina:</strong> $' + (Number(factura.propina) || 0).toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '</p>';
+                    }
+                    $('#detallesFactura').html(facturaHtml);
                     var tbody = $('#detallesProductos');
                     tbody.empty();
                     var totalGeneral = 0;
@@ -601,14 +605,15 @@
             }
         })();
 
-        // Formatear fechas de la tabla en hora local del usuario (misma que en detalle de factura)
+        // Formatear fechas de la tabla en hora de Colombia (America/Bogota)
+        var optsColombia = { timeZone: 'America/Bogota', dateStyle: 'short', timeStyle: 'medium' };
         document.querySelectorAll('.fecha-cell[data-fecha-iso]').forEach(function(cell) {
             var iso = cell.getAttribute('data-fecha-iso');
             var span = cell.querySelector('.fecha-venta-local');
             if (iso && span) {
                 try {
                     var d = new Date(iso);
-                    if (!isNaN(d.getTime())) span.textContent = d.toLocaleString('es-CO', { dateStyle: 'short', timeStyle: 'medium' });
+                    if (!isNaN(d.getTime())) span.textContent = d.toLocaleString('es-CO', optsColombia);
                 } catch (e) {}
             }
         });
