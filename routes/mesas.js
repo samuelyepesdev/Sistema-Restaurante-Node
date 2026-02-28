@@ -503,9 +503,11 @@ router.post('/pedidos/:pedidoId/facturar', async (req, res) => {
                 [tenantId]
             );
             const numeroFactura = (rowsNum && rowsNum[0] && rowsNum[0].siguiente) || 1;
+            // Fecha de emisión en UTC desde Node para que al mostrar en Colombia (America/Bogota) cuadre con la hora real
+            const fechaEmisionUtc = new Date().toISOString().slice(0, 19).replace('T', ' ');
             const [facturaInsert] = await connection.query(
-                `INSERT INTO facturas (tenant_id, numero, cliente_id, total, forma_pago, propina) VALUES (?, ?, ?, ?, ?, ?)`,
-                [tenantId, numeroFactura, cliente_id, totalConPropina, forma_pago, propina]
+                `INSERT INTO facturas (tenant_id, numero, cliente_id, total, forma_pago, propina, fecha) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+                [tenantId, numeroFactura, cliente_id, totalConPropina, forma_pago, propina, fechaEmisionUtc]
             );
             const facturaId = facturaInsert.insertId;
 

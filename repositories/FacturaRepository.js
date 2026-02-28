@@ -85,10 +85,11 @@ class FacturaRepository {
                 [tenantId]
             );
             const numero = (rowsNum && rowsNum[0] && rowsNum[0].siguiente) || 1;
+            const fechaEmisionUtc = new Date().toISOString().slice(0, 19).replace('T', ' ');
 
             const [result] = await connection.query(
-                'INSERT INTO facturas (tenant_id, numero, cliente_id, total, forma_pago, evento_id) VALUES (?, ?, ?, ?, ?, ?)',
-                [tenantId, numero, facturaData.cliente_id, facturaData.total, facturaData.forma_pago, evento_id]
+                'INSERT INTO facturas (tenant_id, numero, cliente_id, total, forma_pago, evento_id, fecha) VALUES (?, ?, ?, ?, ?, ?, ?)',
+                [tenantId, numero, facturaData.cliente_id, facturaData.total, facturaData.forma_pago, evento_id, fechaEmisionUtc]
             );
 
             const factura_id = result.insertId;
@@ -186,7 +187,8 @@ class FacturaRepository {
                 fecha: factura.fecha,
                 fechaISO: toFechaISOUtc(factura.fecha),
                 total: parseFloat(factura.total || 0),
-                forma_pago: factura.forma_pago
+                forma_pago: factura.forma_pago,
+                propina: parseFloat(factura.propina || 0)
             },
             cliente: {
                 nombre: factura.cliente_nombre || '',

@@ -257,11 +257,15 @@ class StatsRepository {
             ORDER BY fecha ASC
         `;
         const [result] = await db.query(query, [tenantId, days]);
-        return result.map(row => ({
-            fecha: row.fecha.toISOString().split('T')[0],
-            cantidad_facturas: parseInt(row.cantidad_facturas || 0),
-            total_ventas: parseFloat(row.total_ventas || 0)
-        }));
+        return result.map(row => {
+            const f = row.fecha;
+            const fechaStr = (f instanceof Date) ? f.toISOString().split('T')[0] : String(f || '').substring(0, 10);
+            return {
+                fecha: fechaStr,
+                cantidad_facturas: parseInt(row.cantidad_facturas || 0),
+                total_ventas: parseFloat(row.total_ventas || 0)
+            };
+        });
     }
 
     /**
