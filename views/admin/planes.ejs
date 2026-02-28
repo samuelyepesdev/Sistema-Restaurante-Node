@@ -1,75 +1,468 @@
 <%
 const planLabels = {
-  productos: 'Gestión de productos',
-  clientes: 'Gestión de clientes',
-  mesas: 'Gestión de mesas',
-  ventas: 'Registro de ventas',
-  dashboard: 'Dashboard general',
-  configuracion: 'Configuración del negocio',
-  plantillas: 'Plantillas (reportes, diseños, layouts)',
-  importar_exportar: 'Importación y exportación de datos',
-  costeo: 'Módulo de costeo / análisis de costos',
-  analitica: 'Módulos avanzados de analítica',
-  prediccion_ml: 'Predicción (ML): ventas y ganancias esperadas'
+  productos: 'Gestión de productos', clientes: 'Gestión de clientes',
+  mesas: 'Gestión de mesas', ventas: 'Registro de ventas',
+  dashboard: 'Dashboard general', configuracion: 'Configuración del negocio',
+  plantillas: 'Plantillas (reportes/layouts)', importar_exportar: 'Importación y exportación',
+  costeo: 'Módulo de costeo', analitica: 'Analítica avanzada',
+  prediccion_ml: 'Predicción ML', inventario: 'Inventario',
+  recetas: 'Recetas', eventos: 'Eventos'
 };
+const planColors = { basico: '#64748b', pro: '#0d6efd', premium: '#6366f1' };
+const tamanoLabel = { pequeno: 'Pequeño', mediano: 'Mediano', grande: 'Grande' };
+function fmtCOP(n) {
+  return '$' + Number(n||0).toLocaleString('es-CO');
+}
 %>
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Planes - Superadmin</title>
+    <title>Planes & Add-ons — Superadmin</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <style>
-        body { background: linear-gradient(180deg, #f0f4f8 0%, #e2e8f0 100%); min-height: 100vh; }
-        .navbar { background: linear-gradient(135deg, #1e3a5f 0%, #0f172a 100%) !important; box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
-        .admin-page-header { background: #fff; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.06); padding: 1.5rem 2rem; margin-bottom: 1.5rem; border-left: 4px solid #6366f1; }
-        .plan-card { border: none; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.06); transition: transform 0.2s, box-shadow 0.2s; overflow: hidden; }
-        .plan-card:hover { transform: translateY(-4px); box-shadow: 0 12px 32px rgba(0,0,0,0.1); }
-        .plan-card.basico .plan-header { background: linear-gradient(135deg, #64748b 0%, #475569 100%); }
-        .plan-card.pro .plan-header { background: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%); }
-        .plan-card.premium .plan-header { background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%); }
-        .plan-header { color: #fff; padding: 1.5rem; text-align: center; }
-        .plan-header h5 { font-weight: 700; margin: 0; font-size: 1.35rem; }
-        .plan-header p { margin: 0.35rem 0 0 0; opacity: 0.9; font-size: 0.9rem; }
-        .plan-body { padding: 1.5rem; background: #fff; }
-        .plan-body ul { list-style: none; padding: 0; margin: 0; }
-        .plan-body li { padding: 0.5rem 0; border-bottom: 1px solid #f1f5f9; display: flex; align-items: center; gap: 0.5rem; }
-        .plan-body li:last-child { border-bottom: none; }
-        .plan-body li i { color: #22c55e; }
+        body { background: linear-gradient(180deg,#f0f4f8 0%,#e2e8f0 100%); min-height:100vh; font-family:'Segoe UI',system-ui,sans-serif; }
+        .navbar { background: linear-gradient(135deg,#1e3a5f 0%,#0f172a 100%) !important; box-shadow:0 4px 12px rgba(0,0,0,.15); }
+        .page-header { background:#fff; border-radius:16px; box-shadow:0 4px 20px rgba(0,0,0,.06); padding:1.5rem 2rem; margin-bottom:1.5rem; border-left:4px solid #6366f1; }
+        .page-header h1 { font-weight:700; color:#1e293b; margin:0; font-size:1.75rem; }
+        .nav-tabs .nav-link { border-radius:10px 10px 0 0; font-weight:600; color:#64748b; }
+        .nav-tabs .nav-link.active { color:#0d6efd; border-bottom-color:#fff; }
+        .tab-content { background:#fff; border:1px solid #dee2e6; border-top:none; border-radius:0 0 16px 16px; padding:1.5rem; box-shadow:0 4px 20px rgba(0,0,0,.06); }
+
+        /* Tabla restaurantes */
+        .tbl-subs thead th { background:#f8fafc; font-weight:600; color:#475569; font-size:.8rem; text-transform:uppercase; letter-spacing:.4px; }
+        .tbl-subs tbody tr:hover { background:#f8fafc; }
+        .badge-plan { padding:.35em .75em; border-radius:20px; font-size:.75rem; font-weight:600; color:#fff; }
+        .badge-tamano { background:#e2e8f0; color:#475569; padding:.3em .6em; border-radius:8px; font-size:.75rem; font-weight:500; }
+        .total-precio { font-weight:700; font-size:1rem; color:#0d6efd; }
+        .addon-chip { display:inline-block; background:#eff6ff; color:#1d4ed8; border-radius:20px; padding:.2em .6em; font-size:.72rem; font-weight:500; margin:.1rem; }
+
+        /* Cards de planes */
+        .plan-card { border:none; border-radius:16px; box-shadow:0 4px 20px rgba(0,0,0,.06); overflow:hidden; transition:transform .2s,box-shadow .2s; }
+        .plan-card:hover { transform:translateY(-4px); box-shadow:0 12px 32px rgba(0,0,0,.1); }
+        .plan-header { color:#fff; padding:1.25rem 1.5rem; text-align:center; }
+        .plan-header h5 { font-weight:700; margin:0; font-size:1.2rem; }
+        .price-field { display:flex; align-items:center; gap:.5rem; margin-bottom:.6rem; }
+        .price-field label { min-width:70px; font-size:.8rem; font-weight:600; color:#64748b; margin:0; }
+        .price-field input { border-radius:8px; border:1px solid #e2e8f0; padding:.3rem .6rem; font-size:.9rem; }
+        .price-field input:focus { border-color:#0d6efd; box-shadow:0 0 0 2px rgba(13,110,253,.15); outline:none; }
+
+        /* Tabla add-ons */
+        .tbl-addons thead th { background:#f8fafc; font-weight:600; color:#475569; font-size:.8rem; text-transform:uppercase; }
+        .price-inline { width:130px; border-radius:8px; border:1px solid #e2e8f0; padding:.3rem .6rem; font-size:.9rem; }
+        .price-inline:focus { border-color:#0d6efd; box-shadow:0 0 0 2px rgba(13,110,253,.15); outline:none; }
+        .btn-save-sm { padding:.25rem .6rem; font-size:.78rem; border-radius:7px; }
+
+        /* Modal add-ons de tenant */
+        .addon-toggle { display:flex; align-items:center; justify-content:space-between; padding:.7rem 1rem;
+            border:1px solid #e2e8f0; border-radius:10px; margin-bottom:.5rem; transition:background .15s; cursor:pointer; }
+        .addon-toggle:hover { background:#f8fafc; }
+        .addon-toggle.active-addon { background:#eff6ff; border-color:#93c5fd; }
+        .addon-precio-tag { font-weight:700; color:#0d6efd; font-size:.9rem; }
+        #totalModal { font-size:1.3rem; font-weight:800; color:#0d6efd; }
     </style>
 </head>
 <body>
 <%- include('../partials/navbar', { user, tenant: null, currentAdminPage: 'planes' }) %>
 
 <div class="container-fluid py-4">
-    <div class="admin-page-header">
-        <h1><i class="bi bi-layers me-2"></i> Planes</h1>
-        <p class="mb-0">Planes de suscripción disponibles. Asigna un plan al crear o editar un restaurante.</p>
+    <div class="page-header d-flex align-items-start gap-3">
+        <div>
+            <h1><i class="bi bi-layers me-2"></i>Planes & Add-ons</h1>
+            <p class="text-muted mb-0">Gestiona los planes, los módulos adicionales y la suscripción de cada restaurante.</p>
+        </div>
     </div>
 
-    <div class="row g-4">
-        <% plans.forEach(p => { %>
-        <div class="col-md-4">
-            <div class="plan-card <%= p.slug %>">
-                <div class="plan-header">
-                    <h5><%= p.nombre %></h5>
-                    <p><%= p.descripcion %></p>
-                </div>
-                <div class="plan-body">
-                    <ul>
-                        <% (p.caracteristicas || []).forEach(c => { %>
-                        <li><i class="bi bi-check-circle-fill"></i> <%= planLabels[c] || c %></li>
-                        <% }); %>
-                    </ul>
-                </div>
+    <!-- TABS -->
+    <ul class="nav nav-tabs mb-0" id="mainTabs" role="tablist">
+        <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tabRestaurantes"><i class="bi bi-building me-1"></i> Restaurantes</button></li>
+        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabPlanes"><i class="bi bi-box me-1"></i> Planes</button></li>
+        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabAddons"><i class="bi bi-puzzle me-1"></i> Add-ons</button></li>
+    </ul>
+
+    <div class="tab-content" id="mainTabContent">
+
+        <!-- ══════════════ TAB 1: RESTAURANTES ══════════════════════════════ -->
+        <div class="tab-pane fade show active" id="tabRestaurantes">
+            <h6 class="section-title mb-3"><i class="bi bi-building me-1"></i> Restaurantes y suscripción</h6>
+            <p class="text-muted small mb-3">Haz clic en <i class="bi bi-pencil-square"></i> para gestionar los add-ons y el tamaño del negocio.</p>
+            <div class="table-responsive">
+                <table class="table tbl-subs align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th>Restaurante</th>
+                            <th>Plan</th>
+                            <th>Tamaño</th>
+                            <th>Add-ons activos</th>
+                            <th class="text-end">Total/mes</th>
+                            <th width="60"></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% tenants.forEach(t => { %>
+                        <tr id="row-tenant-<%= t.id %>">
+                            <td>
+                                <strong><%= t.nombre %></strong>
+                                <br><small class="text-muted"><%= t.slug %></small>
+                            </td>
+                            <td>
+                                <% if (t.plan_slug) { %>
+                                <span class="badge-plan" style="background:<%= planColors[t.plan_slug] || '#64748b' %>"><%= t.plan_nombre %></span>
+                                <% } else { %>
+                                <span class="text-muted small">Sin plan</span>
+                                <% } %>
+                            </td>
+                            <td>
+                                <span class="badge-tamano" id="tamano-badge-<%= t.id %>"><%= tamanoLabel[t.tamano] || 'Pequeño' %></span>
+                            </td>
+                            <td id="addons-chips-<%= t.id %>">
+                                <% if (t.addons && t.addons.length > 0) { %>
+                                    <% t.addons.forEach(a => { %><span class="addon-chip"><%= a.nombre %></span><% }) %>
+                                <% } else { %>
+                                <span class="text-muted small">Ninguno</span>
+                                <% } %>
+                            </td>
+                            <td class="text-end">
+                                <span class="total-precio" id="total-precio-<%= t.id %>"><%= fmtCOP(t.precio_total) %></span>
+                                <br><small class="text-muted">Plan: <%= fmtCOP(t.precio_plan) %> + Add-ons: <span id="totalAddons-<%= t.id %>"><%= fmtCOP(t.precio_addons) %></span></small>
+                            </td>
+                            <td>
+                                <button class="btn btn-sm btn-outline-primary" title="Gestionar add-ons"
+                                    onclick='openAddonModal(<%- JSON.stringify({
+                                        id: t.id,
+                                        nombre: t.nombre,
+                                        plan_id: t.plan_id,
+                                        plan_nombre: t.plan_nombre,
+                                        plan_slug: t.plan_slug,
+                                        tamano: t.tamano,
+                                        addons: t.addons,
+                                        precio_plan: t.precio_plan
+                                    }) %>)'>
+                                    <i class="bi bi-pencil-square"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        <% }) %>
+                    </tbody>
+                </table>
             </div>
         </div>
-        <% }); %>
+
+        <!-- ══════════════ TAB 2: PLANES ════════════════════════════════════ -->
+        <div class="tab-pane fade" id="tabPlanes">
+            <h6 class="mb-3"><i class="bi bi-box me-1"></i> Planes de suscripción — Editar precios</h6>
+            <div class="row g-4">
+                <% plans.forEach(p => { %>
+                <div class="col-md-4">
+                    <div class="plan-card">
+                        <div class="plan-header" style="background: linear-gradient(135deg, <%= planColors[p.slug] || '#64748b' %> 0%, <%= planColors[p.slug] || '#475569' %>cc 100%);">
+                            <h5><%= p.nombre %></h5>
+                            <p class="mb-0 opacity-90 small"><%= p.descripcion %></p>
+                        </div>
+                        <div class="p-3">
+                            <p class="text-muted small mb-3">Módulos incluidos:</p>
+                            <ul class="list-unstyled mb-3">
+                                <% (p.caracteristicas||[]).forEach(c => { %>
+                                <li class="small"><i class="bi bi-check-circle-fill text-success me-1"></i><%= planLabels[c] || c %></li>
+                                <% }) %>
+                            </ul>
+                            <hr>
+                            <p class="fw-600 small text-muted mb-2">Precio por tamaño de negocio:</p>
+                            <div class="price-field">
+                                <label>🟢 Pequeño</label>
+                                <input type="number" id="plan-<%= p.id %>-pequeno" value="<%= p.precio_pequeno %>" min="0" step="100">
+                            </div>
+                            <div class="price-field">
+                                <label>🟡 Mediano</label>
+                                <input type="number" id="plan-<%= p.id %>-mediano" value="<%= p.precio_mediano %>" min="0" step="100">
+                            </div>
+                            <div class="price-field">
+                                <label>🔴 Grande</label>
+                                <input type="number" id="plan-<%= p.id %>-grande" value="<%= p.precio_grande %>" min="0" step="100">
+                            </div>
+                            <button class="btn btn-primary btn-sm w-100 mt-2" onclick="savePlanPrecios(<%= p.id %>)">
+                                <i class="bi bi-floppy me-1"></i>Guardar precios
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <% }) %>
+            </div>
+        </div>
+
+        <!-- ══════════════ TAB 3: ADD-ONS ═══════════════════════════════════ -->
+        <div class="tab-pane fade" id="tabAddons">
+            <h6 class="mb-3"><i class="bi bi-puzzle me-1"></i> Catálogo de add-ons — Editar precios</h6>
+            <div class="table-responsive">
+                <table class="table tbl-addons align-middle">
+                    <thead>
+                        <tr>
+                            <th>Add-on</th>
+                            <th>Descripción</th>
+                            <th class="text-end">Precio/mes</th>
+                            <th width="80"></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% addons.forEach(a => { %>
+                        <tr>
+                            <td><strong><%= a.nombre %></strong><br><small class="text-muted badge bg-light text-dark border"><%= a.slug %></small></td>
+                            <td class="text-muted small"><%= a.descripcion %></td>
+                            <td class="text-end">
+                                <input type="number" class="price-inline" id="addon-precio-<%= a.id %>" value="<%= a.precio %>" min="0" step="100">
+                            </td>
+                            <td>
+                                <button class="btn btn-success btn-save-sm" onclick="saveAddon(<%= a.id %>)">
+                                    <i class="bi bi-floppy"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        <% }) %>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div><!-- /tab-content -->
+</div>
+
+<!-- ══════ MODAL: Gestión de add-ons de un tenant ══════════════════════════ -->
+<div class="modal fade" id="modalAddons" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content border-0 shadow-lg" style="border-radius:16px;">
+            <div class="modal-header border-bottom">
+                <h5 class="modal-title fw-bold"><i class="bi bi-building me-2"></i><span id="modalTenantNombre"></span></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Tamaño del negocio -->
+                <div class="mb-3">
+                    <label class="form-label fw-600">Tamaño del negocio</label>
+                    <select id="modalTamano" class="form-select" onchange="recalcTotal()">
+                        <option value="pequeno">🟢 Pequeño</option>
+                        <option value="mediano">🟡 Mediano</option>
+                        <option value="grande">🔴 Grande</option>
+                    </select>
+                </div>
+                <!-- Plan info -->
+                <div class="mb-3 p-3 bg-light rounded-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <span class="fw-600">Plan: </span><span id="modalPlanNombre" class="badge-plan ms-1" style="padding:.35em .75em;border-radius:20px;color:#fff;"></span>
+                        </div>
+                        <div class="text-end">
+                            <small class="text-muted">Precio del plan</small><br>
+                            <strong id="modalPlanPrecio" class="text-dark">$0</strong>
+                        </div>
+                    </div>
+                </div>
+                <!-- Add-ons disponibles -->
+                <label class="form-label fw-600 mb-2">Add-ons disponibles</label>
+                <div id="addonsList"></div>
+                <!-- Total -->
+                <div class="mt-3 p-3 border border-primary border-opacity-25 rounded-3 bg-primary bg-opacity-10 text-center">
+                    <small class="text-muted d-block">Total mensual a cobrar</small>
+                    <span id="totalModal">$0</span>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" id="btnGuardarAddons">
+                    <i class="bi bi-floppy me-1"></i>Guardar cambios
+                </button>
+            </div>
+        </div>
     </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+// ─── Datos del servidor ────────────────────────────────────────────────────
+const ALL_ADDONS = <%- JSON.stringify(addons) %>;
+const ALL_PLANS  = <%- JSON.stringify(plans) %>;
+
+// Estado del modal
+let modalState = { tenantId: null, planId: null, tamano: 'pequeno', precioPlan: 0, activeAddonIds: new Set() };
+
+// ─── Abrir modal de add-ons de un tenant ──────────────────────────────────
+function openAddonModal(tenant) {
+    modalState.tenantId    = tenant.id;
+    modalState.planId      = tenant.plan_id;
+    modalState.tamano      = tenant.tamano || 'pequeno';
+    modalState.precioPlan  = tenant.precio_plan || 0;
+    modalState.activeAddonIds = new Set((tenant.addons || []).map(a => a.id));
+
+    document.getElementById('modalTenantNombre').textContent = tenant.nombre;
+    document.getElementById('modalTamano').value = modalState.tamano;
+
+    const planEl = document.getElementById('modalPlanNombre');
+    planEl.textContent = tenant.plan_nombre || 'Sin plan';
+    planEl.style.background = {'basico':'#64748b','pro':'#0d6efd','premium':'#6366f1'}[tenant.plan_slug] || '#64748b';
+
+    renderAddonsList();
+    recalcTotal();
+    new bootstrap.Modal(document.getElementById('modalAddons')).show();
+}
+
+function renderAddonsList() {
+    const container = document.getElementById('addonsList');
+    container.innerHTML = '';
+    ALL_ADDONS.forEach(a => {
+        const active = modalState.activeAddonIds.has(a.id);
+        const div = document.createElement('div');
+        div.className = 'addon-toggle' + (active ? ' active-addon' : '');
+        div.id = 'addon-toggle-' + a.id;
+        div.innerHTML = `
+            <div>
+                <strong>${a.nombre}</strong>
+                <br><small class="text-muted">${a.descripcion}</small>
+            </div>
+            <div class="d-flex align-items-center gap-3">
+                <span class="addon-precio-tag">${fmtCOP(a.precio)}</span>
+                <div class="form-check form-switch mb-0">
+                    <input class="form-check-input" type="checkbox" id="chk-addon-${a.id}" ${active ? 'checked' : ''}
+                        onchange="toggleAddon(${a.id}, this.checked)">
+                </div>
+            </div>`;
+        container.appendChild(div);
+    });
+}
+
+function toggleAddon(addonId, checked) {
+    if (checked) modalState.activeAddonIds.add(addonId);
+    else         modalState.activeAddonIds.delete(addonId);
+    document.getElementById('addon-toggle-' + addonId).classList.toggle('active-addon', checked);
+    recalcTotal();
+}
+
+function recalcTotal() {
+    // Precio del plan según tamaño
+    const tamano  = document.getElementById('modalTamano').value;
+    modalState.tamano = tamano;
+    const plan    = ALL_PLANS.find(p => p.id === modalState.planId);
+    const keyPlan = 'precio_' + tamano;
+    modalState.precioPlan = plan ? (plan[keyPlan] || 0) : 0;
+    document.getElementById('modalPlanPrecio').textContent = fmtCOP(modalState.precioPlan);
+
+    // Suma de add-ons activos
+    const precioAddons = ALL_ADDONS.filter(a => modalState.activeAddonIds.has(a.id))
+                                   .reduce((s, a) => s + a.precio, 0);
+    const total = modalState.precioPlan + precioAddons;
+    document.getElementById('totalModal').textContent = fmtCOP(total);
+}
+
+// ─── Guardar add-ons y tamaño del tenant ──────────────────────────────────
+document.getElementById('btnGuardarAddons').addEventListener('click', async () => {
+    const tenantId = modalState.tenantId;
+    const tamano   = document.getElementById('modalTamano').value;
+    const newSet   = new Set(modalState.activeAddonIds);
+
+    try {
+        // 1. Actualizar tamaño
+        await apiFetch(`/admin/planes/api/tenant/${tenantId}/tamano`, 'PUT', { tamano });
+
+        // 2. Obtener add-ons actuales del servidor
+        const currentAddons = await apiFetch(`/admin/planes/api/tenant/${tenantId}/addons`, 'GET');
+        const currentIds    = new Set(currentAddons.map(a => a.id));
+
+        // 3. Agregar los nuevos
+        for (const id of newSet) {
+            if (!currentIds.has(id)) await apiFetch(`/admin/planes/api/tenant/${tenantId}/addons`, 'POST', { addon_id: id });
+        }
+        // 4. Quitar los removidos
+        for (const id of currentIds) {
+            if (!newSet.has(id)) await apiFetch(`/admin/planes/api/tenant/${tenantId}/addons/${id}`, 'DELETE');
+        }
+
+        bootstrap.Modal.getInstance(document.getElementById('modalAddons')).hide();
+
+        // Actualizar fila en la tabla sin recargar
+        refreshRow(tenantId, tamano, newSet);
+
+        Swal.fire({ icon:'success', title:'Guardado', timer:1400, showConfirmButton:false });
+    } catch (e) {
+        Swal.fire({ icon:'error', title:'Error', text: e.message });
+    }
+});
+
+function refreshRow(tenantId, tamano, addonIds) {
+    const plan = ALL_PLANS.find(p => p.id === modalState.planId);
+    const keyPlan  = 'precio_' + tamano;
+    const precioPlan   = plan ? (plan[keyPlan] || 0) : 0;
+    const activeAddons = ALL_ADDONS.filter(a => addonIds.has(a.id));
+    const precioAddons = activeAddons.reduce((s, a) => s + a.precio, 0);
+    const total        = precioPlan + precioAddons;
+
+    // Chips de add-ons
+    const chipsEl = document.getElementById('addons-chips-' + tenantId);
+    if (chipsEl) {
+        chipsEl.innerHTML = activeAddons.length > 0
+            ? activeAddons.map(a => `<span class="addon-chip">${a.nombre}</span>`).join('')
+            : '<span class="text-muted small">Ninguno</span>';
+    }
+    // Total
+    const totalEl = document.getElementById('total-precio-' + tenantId);
+    if (totalEl) totalEl.textContent = fmtCOP(total);
+    const totalAddonsEl = document.getElementById('totalAddons-' + tenantId);
+    if (totalAddonsEl) totalAddonsEl.textContent = fmtCOP(precioAddons);
+    // Badge tamaño
+    const tamanoEl = document.getElementById('tamano-badge-' + tenantId);
+    if (tamanoEl) tamanoEl.textContent = { pequeno:'Pequeño', mediano:'Mediano', grande:'Grande' }[tamano] || tamano;
+}
+
+// ─── Guardar precios de un plan ───────────────────────────────────────────
+async function savePlanPrecios(planId) {
+    const p = v => parseFloat(document.getElementById(`plan-${planId}-${v}`)?.value || 0);
+    try {
+        await apiFetch(`/admin/planes/api/planes/${planId}/precios`, 'PUT', {
+            precio_pequeno: p('pequeno'), precio_mediano: p('mediano'), precio_grande: p('grande')
+        });
+        // Actualizar el plan en memoria
+        const plan = ALL_PLANS.find(pl => pl.id === planId);
+        if (plan) {
+            plan.precio_pequeno = p('pequeno');
+            plan.precio_mediano = p('mediano');
+            plan.precio_grande  = p('grande');
+        }
+        Swal.fire({ icon:'success', title:'Precios actualizados', timer:1400, showConfirmButton:false });
+    } catch (e) {
+        Swal.fire({ icon:'error', title:'Error', text: e.message });
+    }
+}
+
+// ─── Guardar precio de un add-on ──────────────────────────────────────────
+async function saveAddon(addonId) {
+    const precio = parseFloat(document.getElementById('addon-precio-' + addonId)?.value || 0);
+    try {
+        await apiFetch(`/admin/planes/api/addons/${addonId}`, 'PUT', { precio });
+        // Actualizar en memoria
+        const addon = ALL_ADDONS.find(a => a.id === addonId);
+        if (addon) addon.precio = precio;
+        Swal.fire({ icon:'success', title:'Precio actualizado', timer:1300, showConfirmButton:false });
+    } catch (e) {
+        Swal.fire({ icon:'error', title:'Error', text: e.message });
+    }
+}
+
+// ─── Helper fetch JSON ────────────────────────────────────────────────────
+async function apiFetch(url, method, body) {
+    const opts = { method, credentials:'same-origin', headers:{'Content-Type':'application/json'} };
+    if (body && method !== 'GET') opts.body = JSON.stringify(body);
+    const resp = await fetch(url, opts);
+    if (!resp.ok) {
+        const err = await resp.json().catch(() => ({}));
+        throw new Error(err.error || `HTTP ${resp.status}`);
+    }
+    if (method === 'DELETE') return null;
+    return resp.json().catch(() => null);
+}
+
+function fmtCOP(n) {
+    return '$' + Number(n||0).toLocaleString('es-CO');
+}
+</script>
 </body>
 </html>
