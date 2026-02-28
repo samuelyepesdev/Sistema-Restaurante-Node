@@ -11,10 +11,14 @@ const connectionConfig = process.env.MYSQL_URL || process.env.DATABASE_URL
         database: process.env.DB_NAME || 'restaurante',
         waitForConnections: true,
         connectionLimit: 10,
-        queueLimit: 0
+        queueLimit: 0,
+        timezone: 'Z',
+        dateStrings: true
     };
 
-const pool = mysql.createPool(connectionConfig).promise();
+const pool = typeof connectionConfig === 'string'
+    ? mysql.createPool(connectionConfig, { timezone: 'Z', dateStrings: true }).promise()
+    : mysql.createPool(connectionConfig).promise();
 
 // Verify connection on startup
 pool.getConnection()

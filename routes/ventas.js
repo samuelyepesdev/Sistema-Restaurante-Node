@@ -10,6 +10,7 @@ const VentaService = require('../services/VentaService');
 const ConfiguracionService = require('../services/ConfiguracionService');
 const EventoService = require('../services/EventoService');
 const { requirePermission } = require('../middleware/auth');
+const { toFechaISOUtc } = require('../utils/dateHelpers');
 const { requirePlanFeature } = require('../middleware/planFeature');
 let ExcelJS; // Lazy import for Excel export
 
@@ -41,6 +42,7 @@ router.get('/', async (req, res) => {
             totalGeneral += t;
             const fp = String(v.forma_pago || '').toLowerCase().trim();
             if (fp === 'efectivo') totalEfectivo += t; else if (fp === 'transferencia') totalTransferencia += t;
+            v.fechaISO = toFechaISOUtc(v.fecha);
         });
         res.render('ventas', {
             ventas,

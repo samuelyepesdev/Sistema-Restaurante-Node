@@ -8,6 +8,7 @@ const express = require('express');
 const router = express.Router();
 const FacturaService = require('../services/FacturaService');
 const EventoService = require('../services/EventoService');
+const { toFechaISOUtc } = require('../utils/dateHelpers');
 
 // GET /facturas/facturar - Pantalla para realizar venta (POS). Opcional: ?evento_id=X para venta de evento
 router.get('/facturar', async (req, res) => {
@@ -53,6 +54,7 @@ router.get('/:id/imprimir', async (req, res) => {
         
         const config = await ConfiguracionService.getForPreview(tenantId);
         const returnUrl = (req.query.return && typeof req.query.return === 'string') ? req.query.return : '/ventas';
+        factura.fechaISO = toFechaISOUtc(factura.fecha);
         
         res.render('factura', {
             factura,

@@ -137,7 +137,7 @@
 
         <div class="mb-3">
             <div>Factura #: <%= typeof factura.numero !== 'undefined' && factura.numero != null ? factura.numero : factura.id %></div>
-            <div>Fecha: <%= new Date(factura.fecha).toLocaleString() %></div>
+            <div>Fecha: <span id="fechaFactura" data-fecha-iso="<%= factura.fechaISO || '' %>"><%= factura.fecha ? new Date(factura.fecha).toLocaleString('es-CO', { dateStyle: 'short', timeStyle: 'medium' }) : '' %></span></div>
         </div>
 
         <div class="mb-3">
@@ -194,5 +194,14 @@
             </div>
         </div>
     </div>
+    <script>
+        (function(){
+            var s = document.getElementById('fechaFactura');
+            if (s && s.getAttribute('data-fecha-iso')) {
+                var d = new Date(s.getAttribute('data-fecha-iso'));
+                if (!isNaN(d.getTime())) s.textContent = d.toLocaleString('es-CO', { dateStyle: 'short', timeStyle: 'medium' });
+            }
+        })();
+    </script>
 </body>
 </html> 

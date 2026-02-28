@@ -5,6 +5,7 @@
  */
 
 const db = require('../config/database');
+const { toFechaISOUtc } = require('../utils/dateHelpers');
 
 class FacturaRepository {
     /**
@@ -179,6 +180,7 @@ class FacturaRepository {
                 id: factura.id,
                 numero: factura.numero != null ? factura.numero : factura.id,
                 fecha: factura.fecha,
+                fechaISO: toFechaISOUtc(factura.fecha),
                 total: parseFloat(factura.total || 0),
                 forma_pago: factura.forma_pago
             },
