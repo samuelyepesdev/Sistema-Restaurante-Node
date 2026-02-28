@@ -23,6 +23,7 @@ class StatsService {
         const mesFin = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate()).padStart(2, '0')}`;
 
         const [
+            ventasHoy,
             totalSales,
             totalInvoices,
             topProducts,
@@ -34,6 +35,7 @@ class StatsService {
             eventosEnRango,
             eventosCalendario
         ] = await Promise.all([
+            StatsRepository.getVentasHoy(tenantId),
             StatsRepository.getTotalSales(tenantId, filters),
             StatsRepository.getTotalInvoices(tenantId, filters),
             StatsRepository.getTopProducts(tenantId, 10, filters),
@@ -57,6 +59,8 @@ class StatsService {
         }
 
         return {
+            ventasHoyTotal: ventasHoy.total,
+            ventasHoyCantidad: ventasHoy.cantidad,
             totalSales,
             totalInvoices,
             topProducts,

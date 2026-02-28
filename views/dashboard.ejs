@@ -249,10 +249,48 @@
             </div>
         </div>
 
-        <!-- Tarjetas de estadísticas generales (clicables: navegación o modal con detalle) -->
+        <!-- Ventas de hoy (estadísticas del día) -->
+        <div class="row mb-2">
+            <div class="col-12">
+                <h5 class="text-muted mb-2 small text-uppercase fw-bold">Ventas de hoy</h5>
+            </div>
+            <div class="col-md-6">
+                <div class="card stat-card text-white bg-primary clickable" id="cardVentasHoy" data-action="go-ventas" title="Ir a Ventas">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <div class="stat-label">Ventas hoy ($)</div>
+                                <div class="stat-value" id="ventasHoyTotal">$0</div>
+                                <small class="opacity-75" style="font-size: 0.75rem;">Lo llevado en el día</small>
+                            </div>
+                            <i class="bi bi-currency-dollar stat-icon"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card stat-card text-white bg-success clickable" id="cardFacturasHoy" data-action="go-ventas" title="Ir a Ventas">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <div class="stat-label">Facturas hoy</div>
+                                <div class="stat-value" id="ventasHoyCantidad">0</div>
+                                <small class="opacity-75" style="font-size: 0.75rem;">Cantidad en el día</small>
+                            </div>
+                            <i class="bi bi-receipt stat-icon"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Totales del período (según filtros) -->
         <div class="row" id="statsCards">
+            <div class="col-12 mb-2">
+                <h5 class="text-muted mb-2 small text-uppercase fw-bold">Totales del período</h5>
+            </div>
             <div class="col-md-3">
-                <div class="card stat-card text-white bg-primary clickable" id="cardTotalVentas" data-action="go-ventas" title="Ir a Ventas">
+                <div class="card stat-card text-white bg-secondary clickable" id="cardTotalVentas" data-action="go-ventas" title="Ir a Ventas">
                     <div class="card-body">
                         <div class="d-flex justify-content-between align-items-center">
                             <div>
@@ -265,7 +303,7 @@
                 </div>
             </div>
             <div class="col-md-3">
-                <div class="card stat-card text-white bg-success clickable" id="cardTotalFacturas" data-action="go-ventas" title="Ir a Ventas">
+                <div class="card stat-card text-white bg-secondary clickable" id="cardTotalFacturas" data-action="go-ventas" title="Ir a Ventas">
                     <div class="card-body">
                         <div class="d-flex justify-content-between align-items-center">
                             <div>
