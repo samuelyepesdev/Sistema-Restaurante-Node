@@ -9,13 +9,19 @@
 function toFechaISOUtc(fecha) {
     if (fecha == null) return '';
     if (typeof fecha === 'string') {
+        // MySQL devuelve '0000-00-00 00:00:00' para fechas invalidas/vacias
+        if (fecha.startsWith('0000-00-00')) return '';
         const mysqlMatch = fecha.match(/^(\d{4}-\d{2}-\d{2}) (\d{2}:\d{2}:\d{2})/);
         if (mysqlMatch) return mysqlMatch[1] + 'T' + mysqlMatch[2] + '.000Z';
         if (fecha.endsWith('Z') || fecha.includes('T')) return new Date(fecha).toISOString();
     }
-    if (fecha instanceof Date) return fecha.toISOString();
+    if (fecha instanceof Date) {
+        if (isNaN(fecha.getTime())) return '';
+        return fecha.toISOString();
+    }
     try {
-        return new Date(fecha).toISOString();
+        const d = new Date(fecha);
+        return isNaN(d.getTime()) ? '' : d.toISOString();
     } catch (e) {
         return '';
     }
