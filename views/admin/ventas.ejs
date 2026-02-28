@@ -63,14 +63,14 @@
                     <tbody id="tbodyVentas">
                         <% (ventas || []).forEach(function(v) { %>
                         <tr data-factura-id="<%= v.id %>">
-                            <td><%= v.id %></td>
+                            <td><%= typeof v.numero !== 'undefined' && v.numero != null ? v.numero : v.id %></td>
                             <td><%= new Date(v.fecha).toLocaleString() %></td>
                             <td><%= v.cliente_nombre %></td>
                             <td><%= (v.forma_pago || '').charAt(0).toUpperCase() + (v.forma_pago || '').slice(1) %></td>
                             <td><span class="badge bg-<%= v.evento_id ? 'info' : 'secondary' %>"><%= v.tipo_venta || (v.evento_id ? 'Evento' : 'Venta diaria') %></span></td>
                             <td class="text-end">$<%= Number(v.total || 0).toFixed(2) %></td>
                             <td class="text-center">
-                                <button type="button" class="btn btn-sm btn-outline-danger btn-eliminar-venta" data-id="<%= v.id %>" data-cliente="<%= (v.cliente_nombre || '').replace(/"/g, '') %>" data-total="<%= v.total %>">
+                                <button type="button" class="btn btn-sm btn-outline-danger btn-eliminar-venta" data-id="<%= v.id %>" data-numero="<%= typeof v.numero !== 'undefined' && v.numero != null ? v.numero : v.id %>" data-cliente="<%= (v.cliente_nombre || '').replace(/"/g, '') %>" data-total="<%= v.total %>">
                                     <i class="bi bi-trash"></i> Eliminar
                                 </button>
                             </td>
@@ -103,12 +103,13 @@
         var btn = e.target.closest('.btn-eliminar-venta');
         if (!btn) return;
         var id = btn.getAttribute('data-id');
+        var numero = btn.getAttribute('data-numero') || id;
         var cliente = btn.getAttribute('data-cliente') || '';
         var total = btn.getAttribute('data-total') || '0';
         if (!id) return;
         Swal.fire({
             title: '¿Eliminar esta venta?',
-            html: 'Factura #' + id + '<br>Cliente: ' + cliente + '<br>Total: $' + parseFloat(total).toFixed(2) + '<br><strong>Esta acción no se puede deshacer.</strong>',
+            html: 'Factura #' + numero + '<br>Cliente: ' + cliente + '<br>Total: $' + parseFloat(total).toFixed(2) + '<br><strong>Esta acción no se puede deshacer.</strong>',
             icon: 'warning',
             showCancelButton: true,
             confirmButtonColor: '#dc3545',

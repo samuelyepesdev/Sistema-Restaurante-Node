@@ -8,6 +8,61 @@ const db = require('../config/database');
 
 class FacturaRepository {
     /**
+     * Si hay facturas sin numerar (numero NULL) o con numeración que no empieza en 1 por tenant
+     * (p. ej. migración que puso numero = id), las acomoda a 1, 2, 3... por tenant (orden por id).
+     * Usa la misma connection (dentro de transacción).
+     * @param {import('mysql2/promise').PoolConnection} connection
+     * @param {number} tenantId - Tenant actual (para acomodar solo su secuencia si hace falta)
+     */
+    static async acomodarNumeracionSiFalta(connection, tenantId) {
+        let tieneColumnaNumero = true;
+        try {
+            const [rows] = await connection.query('SELECT COUNT(*) AS total FROM facturas WHERE numero IS NULL');
+            const total = (rows && rows[0] && rows[0].total) || 0;
+            if (total > 0) {
+                const [tenants] = await connection.query('SELECT DISTINCT tenant_id FROM facturas ORDER BY tenant_id ASC');
+                for (const { tenant_id } of tenants) {
+                    const [facturas] = await connection.query(
+                        'SELECT id FROM facturas WHERE tenant_id <=> ? ORDER BY id ASC',
+                        [tenant_id]
+                    );
+                    let n = 1;
+                    for (const f of facturas || []) {
+                        await connection.query('UPDATE facturas SET numero = ? WHERE id = ?', [n, f.id]);
+                        n++;
+                    }
+                }
+                return;
+            }
+        } catch (err) {
+            if (err.code === 'ER_BAD_FIELD_ERROR' || (err.message && err.message.includes('numero'))) return;
+            throw err;
+        }
+
+        try {
+            const [minRows] = await connection.query(
+                'SELECT MIN(numero) AS min_num FROM facturas WHERE tenant_id = ?',
+                [tenantId]
+            );
+            const minNum = minRows && minRows[0] && minRows[0].min_num != null ? Number(minRows[0].min_num) : null;
+            if (minNum === null || minNum === 1) return;
+
+            const [facturas] = await connection.query(
+                'SELECT id FROM facturas WHERE tenant_id = ? ORDER BY id ASC',
+                [tenantId]
+            );
+            let n = 1;
+            for (const f of facturas || []) {
+                await connection.query('UPDATE facturas SET numero = ? WHERE id = ?', [n, f.id]);
+                n++;
+            }
+        } catch (err) {
+            if (err.code === 'ER_BAD_FIELD_ERROR' || (err.message && err.message.includes('numero'))) return;
+            throw err;
+        }
+    }
+
+    /**
      * Create invoice with details (transactional)
      * @param {Object} facturaData - Invoice data
      * @param {number} facturaData.cliente_id - Client ID
@@ -21,10 +76,18 @@ class FacturaRepository {
         try {
             await connection.beginTransaction();
 
+            await FacturaRepository.acomodarNumeracionSiFalta(connection, tenantId);
+
             const evento_id = facturaData.evento_id || null;
+            const [rowsNum] = await connection.query(
+                'SELECT COALESCE(MAX(numero), 0) + 1 AS siguiente FROM facturas WHERE tenant_id = ?',
+                [tenantId]
+            );
+            const numero = (rowsNum && rowsNum[0] && rowsNum[0].siguiente) || 1;
+
             const [result] = await connection.query(
-                'INSERT INTO facturas (tenant_id, cliente_id, total, forma_pago, evento_id) VALUES (?, ?, ?, ?, ?)',
-                [tenantId, facturaData.cliente_id, facturaData.total, facturaData.forma_pago, evento_id]
+                'INSERT INTO facturas (tenant_id, numero, cliente_id, total, forma_pago, evento_id) VALUES (?, ?, ?, ?, ?, ?)',
+                [tenantId, numero, facturaData.cliente_id, facturaData.total, facturaData.forma_pago, evento_id]
             );
 
             const factura_id = result.insertId;
@@ -48,7 +111,7 @@ class FacturaRepository {
             await connection.commit();
             connection.release();
 
-            return { insertId: factura_id };
+            return { insertId: factura_id, numero };
         } catch (error) {
             await connection.rollback();
             connection.release();
@@ -114,6 +177,7 @@ class FacturaRepository {
         return {
             factura: {
                 id: factura.id,
+                numero: factura.numero != null ? factura.numero : factura.id,
                 fecha: factura.fecha,
                 total: parseFloat(factura.total || 0),
                 forma_pago: factura.forma_pago

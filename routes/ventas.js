@@ -119,15 +119,15 @@ router.get('/export', requirePermission('plantillas.ver'), requirePlanFeature('p
 
         // Table header
         ws.addRow([]);
-        const headerRow = ws.addRow(['ID', 'Fecha', 'Cliente', 'Forma de Pago', 'Total']);
+        const headerRow = ws.addRow(['Factura #', 'Fecha', 'Cliente', 'Forma de Pago', 'Total']);
         headerRow.font = { bold: true, color: { argb: 'FFFFFFFF' } };
         headerRow.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF495057' } };
         headerRow.alignment = { horizontal: 'center' };
 
-        // Data rows
+        // Data rows (numero = secuencial por tenant)
         rows.forEach(row => {
             ws.addRow([
-                row.id,
+                row.numero != null ? row.numero : row.id,
                 new Date(row.fecha),
                 row.cliente,
                 row.forma_pago,
@@ -137,7 +137,7 @@ router.get('/export', requirePermission('plantillas.ver'), requirePlanFeature('p
 
         // Format columns
         ws.columns = [
-            { key: 'id', width: 8 },
+            { key: 'numero', width: 10 },
             { key: 'fecha', width: 18 },
             { key: 'cliente', width: 30 },
             { key: 'forma_pago', width: 15 },

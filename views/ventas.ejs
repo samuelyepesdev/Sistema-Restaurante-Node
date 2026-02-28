@@ -306,7 +306,7 @@
                         <tbody id="ventasTabla">
                             <% ventas.forEach(function(venta) { %>
                                 <tr>
-                                    <td data-label="Factura #"><%= venta.id %></td>
+                                    <td data-label="Factura #"><%= typeof venta.numero !== 'undefined' && venta.numero != null ? venta.numero : venta.id %></td>
                                     <td data-label="Fecha"><%= new Date(venta.fecha).toLocaleString('es-CO', { dateStyle: 'short', timeStyle: 'medium' }) %></td>
                                     <td data-label="Cliente"><%= venta.cliente_nombre %></td>
                                     <td data-label="Forma de pago"><%= (venta.forma_pago || '').charAt(0).toUpperCase() + (venta.forma_pago || '').slice(1) %></td>
@@ -316,12 +316,14 @@
                                         <div class="d-flex gap-1 justify-content-center flex-wrap">
                                             <button class="btn btn-sm btn-outline-info btn-detalles" 
                                                     data-factura-id="<%= venta.id %>"
+                                                    data-factura-numero="<%= typeof venta.numero !== 'undefined' && venta.numero != null ? venta.numero : venta.id %>"
                                                     data-bs-toggle="tooltip" 
                                                     data-bs-title="Ver factura">
                                                 <i class="bi bi-eye"></i> Ver
                                             </button>
                                             <button class="btn btn-sm btn-outline-primary btn-reimprimir" 
                                                     data-factura-id="<%= venta.id %>"
+                                                    data-factura-numero="<%= typeof venta.numero !== 'undefined' && venta.numero != null ? venta.numero : venta.id %>"
                                                     data-bs-toggle="tooltip" 
                                                     data-bs-title="Reimprimir factura">
                                                 <i class="bi bi-printer"></i> Imprimir
@@ -483,12 +485,12 @@
             setTimeout(function(){ alertaDiv.remove(); }, 5000);
         }
 
-        function mostrarFactura(id) {
+        function mostrarFactura(id, numeroDisplay) {
             var modalEl = document.getElementById('facturaModal');
             var frameEl = document.getElementById('facturaFrame');
             var titleEl = modalEl && modalEl.querySelector('.modal-title');
             if (!modalEl || !frameEl) return;
-            if (titleEl) titleEl.textContent = 'Factura #' + id;
+            if (titleEl) titleEl.textContent = 'Factura #' + (numeroDisplay != null ? numeroDisplay : id);
             frameEl.src = '/api/facturas/' + id + '/imprimir?return=' + encodeURIComponent('/ventas');
             var modal = bootstrap.Modal.getOrCreateInstance(modalEl);
             modal.show();
@@ -505,7 +507,7 @@
                     var cliente = data.cliente || {};
                     var factura = data.factura || {};
                     $('#detallesCliente').html('<p><strong>Nombre:</strong> ' + (cliente.nombre || '-') + '</p><p><strong>Dirección:</strong> ' + (cliente.direccion || 'No especificada') + '</p><p><strong>Teléfono:</strong> ' + (cliente.telefono || 'No especificado') + '</p>');
-                    $('#detallesFactura').html('<p><strong>Factura #:</strong> ' + factura.id + '</p><p><strong>Fecha:</strong> ' + (factura.fecha ? new Date(factura.fecha).toLocaleString('es-CO', { dateStyle: 'short', timeStyle: 'medium' }) : '-') + '</p><p><strong>Forma de Pago:</strong> ' + (factura.forma_pago ? (factura.forma_pago.charAt(0).toUpperCase() + factura.forma_pago.slice(1)) : '-') + '</p>');
+                    $('#detallesFactura').html('<p><strong>Factura #:</strong> ' + (factura.numero != null ? factura.numero : factura.id) + '</p><p><strong>Fecha:</strong> ' + (factura.fecha ? new Date(factura.fecha).toLocaleString('es-CO', { dateStyle: 'short', timeStyle: 'medium' }) : '-') + '</p><p><strong>Forma de Pago:</strong> ' + (factura.forma_pago ? (factura.forma_pago.charAt(0).toUpperCase() + factura.forma_pago.slice(1)) : '-') + '</p>');
                     var tbody = $('#detallesProductos');
                     tbody.empty();
                     var totalGeneral = 0;
@@ -543,7 +545,8 @@
             }
             if (btnReim) {
                 var id = btnReim.getAttribute('data-factura-id');
-                if (id) mostrarFactura(id);
+                var numero = btnReim.getAttribute('data-factura-numero');
+                if (id) mostrarFactura(id, numero != null && numero !== '' ? numero : undefined);
             }
         });
 

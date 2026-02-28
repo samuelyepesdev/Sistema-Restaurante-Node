@@ -45,7 +45,7 @@ class FacturaService {
             }
         }
 
-        return { id: facturaId };
+        return { id: facturaId, numero: result.numero };
     }
 
     /**

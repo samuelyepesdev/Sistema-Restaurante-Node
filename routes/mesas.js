@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const db = require('../config/database');
 const { requirePermission } = require('../middleware/auth');
+const FacturaRepository = require('../repositories/FacturaRepository');
 
 // Rutas para gestión de mesas y pedidos de restaurante
 // - Renderiza la vista de mesas (GET /mesas)
@@ -451,6 +452,8 @@ router.post('/pedidos/:pedidoId/facturar', async (req, res) => {
         try {
             await connection.beginTransaction();
 
+            await FacturaRepository.acomodarNumeracionSiFalta(connection, tenantId);
+
             const [pedidos] = await connection.query('SELECT * FROM pedidos WHERE id = ? AND tenant_id = ? FOR UPDATE', [pedidoId, tenantId]);
             if (pedidos.length === 0) throw new Error('Pedido no encontrado');
             const pedido = pedidos[0];
@@ -474,9 +477,14 @@ router.post('/pedidos/:pedidoId/facturar', async (req, res) => {
             });
             total = Math.round(total * 100) / 100;
 
+            const [rowsNum] = await connection.query(
+                'SELECT COALESCE(MAX(numero), 0) + 1 AS siguiente FROM facturas WHERE tenant_id = ?',
+                [tenantId]
+            );
+            const numeroFactura = (rowsNum && rowsNum[0] && rowsNum[0].siguiente) || 1;
             const [facturaInsert] = await connection.query(
-                `INSERT INTO facturas (tenant_id, cliente_id, total, forma_pago) VALUES (?, ?, ?, ?)`,
-                [tenantId, cliente_id, total, forma_pago]
+                `INSERT INTO facturas (tenant_id, numero, cliente_id, total, forma_pago) VALUES (?, ?, ?, ?, ?)`,
+                [tenantId, numeroFactura, cliente_id, total, forma_pago]
             );
             const facturaId = facturaInsert.insertId;
 
@@ -500,7 +508,7 @@ router.post('/pedidos/:pedidoId/facturar', async (req, res) => {
 
             await connection.commit();
             connection.release();
-            res.status(201).json({ factura_id: facturaId });
+            res.status(201).json({ factura_id: facturaId, numero: numeroFactura });
         } catch (error) {
             await connection.rollback();
             connection.release();
