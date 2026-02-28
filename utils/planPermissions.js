@@ -17,8 +17,8 @@ const PERMISSION_TO_MODULE = {
     'mesas.ver': 'mesas',
     'mesas.gestionar': 'mesas',
     'mesas.editar': 'mesas',
-    'cocina.ver': 'mesas',
-    'cocina.gestionar': 'mesas',
+    'cocina.ver': 'cocina',
+    'cocina.gestionar': 'cocina',
     'ventas.ver': 'ventas',
     'ventas.exportar': 'importar_exportar',
     'facturas.ver': 'ventas',
@@ -27,6 +27,10 @@ const PERMISSION_TO_MODULE = {
     'configuracion.editar': 'configuracion',
     'costeo.ver': 'costeo',
     'costeo.editar': 'costeo',
+    'inventario.ver': 'inventario',
+    'inventario.editar': 'inventario',
+    'recetas.ver': 'recetas',
+    'recetas.editar': 'recetas',
     'usuarios.ver': 'configuracion',
     'usuarios.gestionar': 'configuracion',
     'plantillas.ver': 'plantillas',
@@ -40,9 +44,12 @@ const PERMISSION_TO_MODULE = {
 };
 
 // Módulos que se usan en navbar / rutas (para allowedByPlan)
+// Básico: dashboard, productos, clientes, mesas, cocina, ventas, configuracion
+// Pro: + inventario, recetas | Premium: + eventos, analitica, prediccion_ml
 const PLAN_MODULES = [
-    'productos', 'clientes', 'mesas', 'ventas', 'dashboard', 'configuracion',
-    'plantillas', 'importar_exportar', 'costeo', 'analitica', 'prediccion_ml', 'eventos'
+    'dashboard', 'productos', 'clientes', 'mesas', 'cocina', 'ventas', 'configuracion',
+    'inventario', 'recetas', 'eventos', 'analitica', 'prediccion_ml',
+    'plantillas', 'importar_exportar', 'costeo'
 ];
 
 /**
@@ -81,7 +88,6 @@ function planHasModule(plan, moduleSlug) {
 
 /**
  * Objeto { productos: true, clientes: true, costeo: false, ... } según el plan.
- * Se usa en vistas (navbar) para mostrar u ocultar por plan.
  * @param {Object|null} plan
  * @returns {Object}
  */
@@ -93,11 +99,32 @@ function getAllowedByPlan(plan) {
     return out;
 }
 
+/**
+ * Objeto { productos: true, ... } según plan O permisos del usuario.
+ * Si el Superadmin asignó un permiso (ej. inventario.ver) a un usuario de plan Básico,
+ * el módulo debe mostrarse en el navbar y permitir acceso.
+ * @param {Object|null} plan
+ * @param {string[]} userPermissions - permisos del usuario (req.user.permisos)
+ * @returns {Object}
+ */
+function getAllowedForUser(plan, userPermissions) {
+    const out = {};
+    const permisos = Array.isArray(userPermissions) ? userPermissions : [];
+    PLAN_MODULES.forEach(m => {
+        const planIncludes = planHasModule(plan, m);
+        const permisosQueDesbloquean = getPermissionNamesForModule(m);
+        const userHasPermiso = permisosQueDesbloquean.some(p => permisos.includes(p));
+        out[m] = planIncludes || userHasPermiso;
+    });
+    return out;
+}
+
 module.exports = {
     PERMISSION_TO_MODULE,
     PLAN_MODULES,
     planAllowsPermission,
     planHasModule,
     getAllowedByPlan,
+    getAllowedForUser,
     getPermissionNamesForModule
 };

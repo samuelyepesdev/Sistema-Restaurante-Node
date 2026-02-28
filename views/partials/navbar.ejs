@@ -2,7 +2,7 @@
 // Navbar partial: permisos + plan. Solo se muestra enlace si el usuario tiene permiso Y el plan del tenant incluye el módulo.
 const isSuperadmin = user && String(user.rol || '').toLowerCase() === 'superadmin';
 const brandHref = isSuperadmin ? '/admin/dashboard' : '/';
-const planLabels = { productos: 'Productos', clientes: 'Clientes', mesas: 'Mesas', ventas: 'Ventas', dashboard: 'Dashboard', configuracion: 'Configuración', plantillas: 'Plantillas', importar_exportar: 'Import/Export', costeo: 'Costeo', analitica: 'Analítica', prediccion_ml: 'Predicción ML', eventos: 'Eventos' };
+const planLabels = { dashboard: 'Dashboard', productos: 'Productos', clientes: 'Clientes', mesas: 'Mesas', cocina: 'Cocina', ventas: 'Ventas', configuracion: 'Configuración', inventario: 'Inventario', recetas: 'Recetas', eventos: 'Eventos', analitica: 'Analítica', prediccion_ml: 'Predicción', plantillas: 'Plantillas', importar_exportar: 'Import/Export', costeo: 'Costeo' };
 const ap = typeof allowedByPlan !== 'undefined' && allowedByPlan ? allowedByPlan : {};
 function canShow(mod) { if (!mod) return true; if (typeof allowedByPlan === 'undefined') return true; return ap[mod] === true; }
 %>
@@ -84,7 +84,7 @@ function canShow(mod) { if (!mod) return true; if (typeof allowedByPlan === 'und
                     </a>
                 </li>
                 <% } %>
-                <% if (user && user.permisos && user.permisos.includes('cocina.ver') && canShow('mesas')) { %>
+                <% if (user && user.permisos && user.permisos.includes('cocina.ver') && canShow('cocina')) { %>
                 <li class="nav-item">
                     <a class="nav-link" href="/cocina">
                         <i class="bi bi-fire"></i> Cocina
@@ -105,21 +105,28 @@ function canShow(mod) { if (!mod) return true; if (typeof allowedByPlan === 'und
                     </a>
                 </li>
                 <% } %>
-                <% if (user && user.permisos && user.permisos.includes('eventos.ver')) { %>
+                <% if (user && user.permisos && user.permisos.includes('eventos.ver') && canShow('eventos')) { %>
                 <li class="nav-item">
                     <a class="nav-link" href="/eventos">
                         <i class="bi bi-calendar-event"></i> Eventos
                     </a>
                 </li>
                 <% } %>
-                <% if (user && user.permisos && user.permisos.includes('costeo.ver') && canShow('costeo')) { %>
+                <% if (user && user.permisos && user.permisos.includes('inventario.ver') && canShow('inventario')) { %>
                 <li class="nav-item">
-                    <a class="nav-link" href="/costeo">
-                        <i class="bi bi-calculator"></i> Costeo
+                    <a class="nav-link" href="/inventario">
+                        <i class="bi bi-boxes"></i> Inventario
                     </a>
                 </li>
                 <% } %>
-                <% if (user && user.permisos && user.permisos.includes('analitica.ver')) { %>
+                <% if (user && user.permisos && user.permisos.includes('recetas.ver') && canShow('recetas')) { %>
+                <li class="nav-item">
+                    <a class="nav-link" href="/recetas">
+                        <i class="bi bi-journal-text"></i> Recetas
+                    </a>
+                </li>
+                <% } %>
+                <% if (user && user.permisos && user.permisos.includes('analitica.ver') && canShow('analitica')) { %>
                 <li class="nav-item">
                     <a class="nav-link" href="/analitica">
                         <i class="bi bi-graph-up-arrow"></i> Analítica

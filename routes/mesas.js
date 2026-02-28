@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const db = require('../config/database');
 const { requirePermission } = require('../middleware/auth');
+const FacturaRepository = require('../repositories/FacturaRepository');
 
 // Rutas para gestión de mesas y pedidos de restaurante
 // - Renderiza la vista de mesas (GET /mesas)
@@ -338,6 +339,12 @@ router.post('/pedidos/:pedidoId/items', async (req, res) => {
         if (!producto_id || !cantidad || !precio) {
             return res.status(400).json({ error: 'producto_id, cantidad y precio son requeridos' });
         }
+        const InventarioService = require('../services/InventarioService');
+        const check = await InventarioService.checkStockParaProducto(tenantId, producto_id, parseFloat(cantidad) || 1);
+        if (!check.ok) {
+            const msg = (check.faltantes || []).map(f => `${f.insumo_nombre}: requiere ${f.requerido} ${f.unidad_base}, disponible ${f.disponible}`).join('; ');
+            return res.status(400).json({ error: 'No hay stock suficiente para este producto. ' + msg });
+        }
         const subtotal = Number(cantidad) * Number(precio);
         const [pedidoRow] = await db.query('SELECT mesa_id FROM pedidos WHERE id = ? AND tenant_id = ?', [pedidoId, tenantId]);
         const mesaId = pedidoRow && pedidoRow[0] && pedidoRow[0].mesa_id;
@@ -445,6 +452,8 @@ router.post('/pedidos/:pedidoId/facturar', async (req, res) => {
         try {
             await connection.beginTransaction();
 
+            await FacturaRepository.acomodarNumeracionSiFalta(connection, tenantId);
+
             const [pedidos] = await connection.query('SELECT * FROM pedidos WHERE id = ? AND tenant_id = ? FOR UPDATE', [pedidoId, tenantId]);
             if (pedidos.length === 0) throw new Error('Pedido no encontrado');
             const pedido = pedidos[0];
@@ -468,9 +477,14 @@ router.post('/pedidos/:pedidoId/facturar', async (req, res) => {
             });
             total = Math.round(total * 100) / 100;
 
+            const [rowsNum] = await connection.query(
+                'SELECT COALESCE(MAX(numero), 0) + 1 AS siguiente FROM facturas WHERE tenant_id = ?',
+                [tenantId]
+            );
+            const numeroFactura = (rowsNum && rowsNum[0] && rowsNum[0].siguiente) || 1;
             const [facturaInsert] = await connection.query(
-                `INSERT INTO facturas (tenant_id, cliente_id, total, forma_pago) VALUES (?, ?, ?, ?)`,
-                [tenantId, cliente_id, total, forma_pago]
+                `INSERT INTO facturas (tenant_id, numero, cliente_id, total, forma_pago) VALUES (?, ?, ?, ?, ?)`,
+                [tenantId, numeroFactura, cliente_id, total, forma_pago]
             );
             const facturaId = facturaInsert.insertId;
 
@@ -480,12 +494,21 @@ router.post('/pedidos/:pedidoId/facturar', async (req, res) => {
                 [detallesValuesFinal]
             );
 
+            const InventarioService = require('../services/InventarioService');
+            for (const l of lineasFactura) {
+                try {
+                    await InventarioService.descontarPorReceta(tenantId, l.producto_id, l.cantidad, 'factura_' + facturaId);
+                } catch (invErr) {
+                    console.error('Error al descontar inventario por receta:', invErr);
+                }
+            }
+
             await connection.query(`UPDATE pedidos SET estado = 'cerrado', total = ? WHERE id = ?`, [total, pedidoId]);
             await connection.query(`UPDATE mesas SET estado = 'libre' WHERE id = ?`, [pedido.mesa_id]);
 
             await connection.commit();
             connection.release();
-            res.status(201).json({ factura_id: facturaId });
+            res.status(201).json({ factura_id: facturaId, numero: numeroFactura });
         } catch (error) {
             await connection.rollback();
             connection.release();

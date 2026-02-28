@@ -489,7 +489,7 @@ $(function() {
         renderItems();
         
         // Mensaje de éxito y quedarse en mesas
-        let html = '<p><strong>Factura #' + data.factura_id + '</strong> generada correctamente.</p>';
+        let html = '<p><strong>Factura #' + (data.numero != null ? data.numero : data.factura_id) + '</strong> generada correctamente.</p>';
         if(formaPagoSeleccionada === 'efectivo' && montoRecibido > total){
           const cambio = montoRecibido - total;
           html += '<div class="text-start mt-2"><p><strong>Total:</strong> ' + formatear(total) + '</p><p><strong>Recibido:</strong> ' + formatear(montoRecibido) + '</p><p class="text-success fw-bold">Cambio: ' + formatear(cambio) + '</p></div>';

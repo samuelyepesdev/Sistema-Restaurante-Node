@@ -15,7 +15,7 @@ class VentaRepository {
      */
     static async getAllWithFilters(tenantId, filters) {
         let query = `
-            SELECT f.id, f.fecha, f.cliente_id, f.forma_pago, f.total, f.evento_id,
+            SELECT f.id, f.numero, f.fecha, f.cliente_id, f.forma_pago, f.total, f.evento_id,
                    c.nombre AS cliente_nombre,
                    e.nombre AS evento_nombre,
                    CASE WHEN f.evento_id IS NOT NULL THEN CONCAT('Evento: ', e.nombre) ELSE 'Venta diaria' END AS tipo_venta
@@ -63,6 +63,7 @@ class VentaRepository {
         let query = `
             SELECT 
                 f.id,
+                f.numero,
                 f.fecha,
                 c.nombre AS cliente,
                 f.forma_pago,
@@ -88,9 +89,9 @@ class VentaRepository {
         }
 
         if (filters.q) {
-            query += ` AND (CAST(f.id AS CHAR) LIKE ? OR c.nombre LIKE ? OR c.telefono LIKE ?)`;
+            query += ` AND (CAST(f.numero AS CHAR) LIKE ? OR CAST(f.id AS CHAR) LIKE ? OR c.nombre LIKE ? OR c.telefono LIKE ?)`;
             const searchTerm = `%${filters.q}%`;
-            params.push(searchTerm, searchTerm, searchTerm);
+            params.push(searchTerm, searchTerm, searchTerm, searchTerm);
         }
 
         if (filters.evento_id) {

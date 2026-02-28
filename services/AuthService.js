@@ -34,21 +34,21 @@ async function authenticateUser(username, password) {
             return { success: false, message: 'Usuario o contraseña incorrectos' };
         }
 
-        // Permisos del rol + permisos directos del usuario (user_permisos)
+        // Permisos efectivos: si el Superadmin asignó user_permisos (aunque sea para quitar), solo esos; si no, los del rol
         const [rolePerms] = await db.query(`
             SELECT p.nombre FROM permisos p
             INNER JOIN rol_permisos rp ON p.id = rp.permiso_id
             WHERE rp.rol_id = ?
         `, [user.rol_id]);
-        const [userPerms] = await db.query(`
+        const [userPermsRows] = await db.query(`
             SELECT p.nombre FROM permisos p
             INNER JOIN user_permisos up ON p.id = up.permiso_id
             WHERE up.user_id = ?
         `, [user.id]).catch(() => [[]]);
-        const userPermissions = [...new Set([
-            ...rolePerms.map(p => p.nombre),
-            ...(userPerms || []).map(p => p.nombre)
-        ])];
+        const userPerms = (userPermsRows || []).map(p => p.nombre);
+        const userPermissions = userPerms.length > 0
+            ? userPerms
+            : (rolePerms || []).map(p => p.nombre);
 
         // Generate JWT token (include tenant_id for multi-tenancy)
         const token = generateToken({
@@ -129,12 +129,13 @@ async function getUserById(userId) {
             INNER JOIN rol_permisos rp ON p.id = rp.permiso_id
             WHERE rp.rol_id = ?
         `, [user.rol_id]);
-        const [userPerms] = await db.query(`
+        const [userPermsRows] = await db.query(`
             SELECT p.nombre FROM permisos p
             INNER JOIN user_permisos up ON p.id = up.permiso_id
             WHERE up.user_id = ?
         `, [user.id]).catch(() => [[]]);
-        const permisos = [...new Set([...rolePerms.map(p => p.nombre), ...userPerms.map(p => p.nombre)])];
+        const userPerms = (userPermsRows || []).map(p => p.nombre);
+        const permisos = userPerms.length > 0 ? userPerms : (rolePerms || []).map(p => p.nombre);
 
         return {
             id: user.id,

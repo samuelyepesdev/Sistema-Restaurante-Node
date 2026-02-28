@@ -400,7 +400,14 @@ async function updateTenant(event, id) {
         const text = await resp.text();
         Swal.fire({ icon: 'error', title: 'Error', text: text });
     } else {
-        Swal.fire({ icon: 'success', title: 'Guardado', timer: 1500, showConfirmButton: false }).then(() => window.location.reload());
+        const contentType = resp.headers.get('content-type');
+        const isJson = contentType && contentType.indexOf('application/json') !== -1;
+        let msg = 'Guardado';
+        if (isJson) {
+            const data = await resp.json();
+            if (data.planUpdated) msg = 'Plan actualizado. La página se recargará para aplicar los nuevos módulos.';
+        }
+        Swal.fire({ icon: 'success', title: msg, timer: msg.indexOf('Plan') === 0 ? 2500 : 1500, showConfirmButton: false }).then(() => window.location.reload());
     }
     return false;
 }

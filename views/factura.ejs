@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Factura #<%= factura.id %></title>
+    <title>Factura #<%= typeof factura.numero !== 'undefined' && factura.numero != null ? factura.numero : factura.id %></title>
     <style>
         @media print {
             body {
@@ -136,7 +136,7 @@
         <div class="divider"></div>
 
         <div class="mb-3">
-            <div>Factura #: <%= factura.id %></div>
+            <div>Factura #: <%= typeof factura.numero !== 'undefined' && factura.numero != null ? factura.numero : factura.id %></div>
             <div>Fecha: <%= new Date(factura.fecha).toLocaleString() %></div>
         </div>
 

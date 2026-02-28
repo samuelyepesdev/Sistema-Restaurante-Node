@@ -27,7 +27,9 @@ class InsumoService {
             nombre: data.nombre.trim(),
             unidad_compra: data.unidad_compra || 'UND',
             cantidad_compra: parseFloat(data.cantidad_compra) || 1,
-            precio_compra: parseFloat(data.precio_compra) || 0
+            precio_compra: parseFloat(data.precio_compra) || 0,
+            unidad_base: data.unidad_base || 'g',
+            stock_minimo: data.stock_minimo !== undefined ? parseFloat(data.stock_minimo) : 0
         });
     }
 
@@ -38,13 +40,16 @@ class InsumoService {
             const exists = await InsumoRepository.findByCodigo(data.codigo.trim(), tenantId, id);
             if (exists) throw new Error('Ya existe un insumo con ese código');
         }
-        await InsumoRepository.update(id, tenantId, {
+        const updateData = {
             codigo: (data.codigo || insumo.codigo).trim(),
             nombre: (data.nombre || insumo.nombre).trim(),
             unidad_compra: data.unidad_compra || insumo.unidad_compra,
             cantidad_compra: data.cantidad_compra !== undefined ? parseFloat(data.cantidad_compra) : insumo.cantidad_compra,
             precio_compra: data.precio_compra !== undefined ? parseFloat(data.precio_compra) : insumo.precio_compra
-        });
+        };
+        if (data.unidad_base !== undefined) updateData.unidad_base = data.unidad_base;
+        if (data.stock_minimo !== undefined) updateData.stock_minimo = parseFloat(data.stock_minimo);
+        await InsumoRepository.update(id, tenantId, updateData);
         return { message: 'Insumo actualizado' };
     }
 

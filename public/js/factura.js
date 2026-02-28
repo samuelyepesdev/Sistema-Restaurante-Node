@@ -574,7 +574,7 @@ $(document).ready(function() {
                             seleccionarCliente({ id: cf.id, nombre: cf.nombre || 'Consumidor final', direccion: cf.direccion || '', telefono: cf.telefono || '' });
                         }
                     });
-                    mostrarAlerta('success', 'Factura generada exitosamente');
+                    mostrarAlerta('success', response.numero != null ? 'Factura #' + response.numero + ' generada exitosamente' : 'Factura generada exitosamente');
                 } else {
                     mostrarAlerta('error', 'Error: No se recibió el ID de la factura');
                 }

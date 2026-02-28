@@ -5,10 +5,12 @@
  */
 
 const TenantRepository = require('../repositories/TenantRepository');
-const { getAllowedByPlan } = require('../utils/planPermissions');
+const AuthService = require('../services/AuthService');
+const { getAllowedByPlan, getAllowedForUser } = require('../utils/planPermissions');
 
 /**
  * Resolve tenant for the current user and attach to request.
+ * - Refresca permisos del usuario desde BD (para que cambios del Superadmin se vean sin cerrar sesión).
  * - Uses req.user.tenant_id from JWT; if missing, falls back to default tenant (principal).
  * - Validates tenant exists and is active.
  * - Sets req.tenant (full tenant object with config) for views and services.
@@ -17,6 +19,14 @@ async function attachTenantContext(req, res, next) {
     try {
         if (!req.user) {
             return res.status(401).json({ error: 'No autenticado' });
+        }
+
+        const rol = String(req.user.rol || '').toLowerCase();
+        if (rol !== 'superadmin' && req.user.id) {
+            const freshUser = await AuthService.getUserById(req.user.id);
+            if (freshUser && Array.isArray(freshUser.permisos)) {
+                req.user.permisos = freshUser.permisos;
+            }
         }
 
         let tenantId = req.user.tenant_id;
@@ -55,7 +65,8 @@ async function attachTenantContext(req, res, next) {
 
         req.tenant = tenant;
         res.locals.tenant = tenant;
-        res.locals.allowedByPlan = getAllowedByPlan(tenant.plan || null);
+        // Navbar y vistas: mostrar módulo si el plan lo incluye O si el usuario tiene permiso (Superadmin lo asignó)
+        res.locals.allowedByPlan = getAllowedForUser(tenant.plan || null, req.user.permisos || []);
         next();
     } catch (error) {
         console.error('Error en attachTenantContext:', error);

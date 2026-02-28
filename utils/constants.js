@@ -46,10 +46,15 @@ const PERMISSIONS = {
     CONFIGURACION_VER: 'configuracion.ver',
     CONFIGURACION_EDITAR: 'configuracion.editar',
     
-    // Costeo
+    // Costeo (deshabilitado en UI; se usa inventario + recetas)
     COSTEO_VER: 'costeo.ver',
     COSTEO_EDITAR: 'costeo.editar',
-    
+    // Inventario
+    INVENTARIO_VER: 'inventario.ver',
+    INVENTARIO_EDITAR: 'inventario.editar',
+    // Recetas (vinculadas a productos)
+    RECETAS_VER: 'recetas.ver',
+    RECETAS_EDITAR: 'recetas.editar',
     // Plantillas Excel (descargas, exportaciones)
     PLANTILLAS_VER: 'plantillas.ver',
     
@@ -68,6 +73,8 @@ const PERMISSION_SECTIONS = {
     Ventas: ['ventas.ver', 'ventas.exportar'],
     Configuración: ['configuracion.ver', 'configuracion.editar'],
     Costeo: ['costeo.ver', 'costeo.editar'],
+    Inventario: ['inventario.ver', 'inventario.editar'],
+    Recetas: ['recetas.ver', 'recetas.editar'],
     Usuarios: ['usuarios.ver', 'usuarios.gestionar'],
     Plantillas: ['plantillas.ver'],
     Eventos: ['eventos.ver', 'eventos.crear', 'eventos.editar', 'eventos.eliminar', 'ventas_evento.realizar'],

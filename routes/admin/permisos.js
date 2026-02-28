@@ -52,12 +52,12 @@ router.get('/usuarios', async (req, res) => {
     }
 });
 
-// GET /admin/permisos/usuario/:userId - API: permisos actuales del usuario (IDs)
+// GET /admin/permisos/usuario/:userId - API: permisos efectivos (para mostrar en panel; si hay user_permisos son esos, si no los del rol)
 router.get('/usuario/:userId', async (req, res) => {
     try {
         const userId = parseInt(req.params.userId);
         if (!userId) return res.status(400).json({ error: 'userId inválido' });
-        const permisoIds = await PermisoRepository.getPermisoIdsByUser(userId);
+        const permisoIds = await PermisoRepository.getEffectivePermisoIdsByUser(userId);
         res.json({ permiso_ids: permisoIds });
     } catch (error) {
         console.error('Error al cargar permisos del usuario:', error);
@@ -72,7 +72,7 @@ router.put('/usuario/:userId', async (req, res) => {
         const permisoIds = Array.isArray(req.body.permiso_ids) ? req.body.permiso_ids.map(id => parseInt(id)).filter(id => !isNaN(id)) : [];
         if (!userId) return res.status(400).json({ error: 'userId inválido' });
         await PermisoRepository.setPermisosForUser(userId, permisoIds);
-        res.json({ success: true, message: 'Permisos guardados. El usuario debe volver a iniciar sesión para que se apliquen.' });
+        res.json({ success: true, message: 'Permisos guardados. Los cambios se aplican al instante en la próxima recarga o al volver a iniciar sesión.' });
     } catch (error) {
         console.error('Error al actualizar permisos del usuario:', error);
         res.status(500).json({ error: error.message || 'Error al actualizar' });

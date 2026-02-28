@@ -5,6 +5,7 @@
  */
 
 const StatsRepository = require('../repositories/StatsRepository');
+const InventarioService = require('./InventarioService');
 
 class StatsService {
     /**
@@ -45,6 +46,16 @@ class StatsService {
             StatsRepository.getEventosEnRango(tenantId, mesInicio, mesFin)
         ]);
 
+        let insumosBajoStock = 0;
+        let insumosBajoStockLista = [];
+        try {
+            const resumen = await InventarioService.getResumenBajoStock(tenantId);
+            insumosBajoStock = resumen.cantidad;
+            insumosBajoStockLista = resumen.lista || [];
+        } catch (e) {
+            // Inventario puede no estar disponible en todos los tenants
+        }
+
         return {
             totalSales,
             totalInvoices,
@@ -57,7 +68,9 @@ class StatsService {
             ventas_eventos_cantidad: eventStats.ventas_eventos_cantidad,
             ventasPorEvento,
             eventosEnRango,
-            eventosCalendario
+            eventosCalendario,
+            insumosBajoStock,
+            insumosBajoStockLista
         };
     }
 

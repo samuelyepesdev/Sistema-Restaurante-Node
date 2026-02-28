@@ -69,6 +69,9 @@ function updateStatsCards(stats) {
     const eventosDelMes = (stats.eventosCalendario || []).length;
     $('#eventosCount').text(eventosDelMes);
     $('#ventasEventosTotal').text(formatCurrency(stats.ventas_eventos_total != null ? stats.ventas_eventos_total : 0));
+    // Insumos bajo stock
+    const insumosBajo = stats.insumosBajoStock != null ? stats.insumosBajoStock : 0;
+    $('#insumosBajoStock').text(insumosBajo);
 }
 
 /**
@@ -533,6 +536,9 @@ function initStatsCardClicks() {
     });
     $(document).on('click', '.stat-card.clickable[data-action="go-eventos"]', function() {
         window.location.href = '/eventos';
+    });
+    $(document).on('click', '.stat-card.clickable[data-action="go-inventario"]', function() {
+        window.location.href = '/inventario';
     });
     $(document).on('click', '.stat-card.clickable[data-action="modal-promedio"]', function() {
         if (!lastStats) return;
