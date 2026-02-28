@@ -13,7 +13,8 @@ const connectionConfig = process.env.MYSQL_URL || process.env.DATABASE_URL
         connectionLimit: 10,
         queueLimit: 0,
         timezone: 'Z',
-        dateStrings: true
+        dateStrings: true,
+        charset: 'utf8mb4'
     };
 
 const pool = typeof connectionConfig === 'string'

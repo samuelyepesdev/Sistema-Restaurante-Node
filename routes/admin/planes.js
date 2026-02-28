@@ -27,7 +27,23 @@ router.get('/', async (req, res) => {
             AddonService.getAll()
         ]);
         const tenants = await AddonService.enrichTenants(tenantsRaw, plans);
-        res.render('admin/planes', { user: req.user, plans, tenants, addons });
+
+        const serverData = JSON.stringify({
+            addons,
+            plans,
+            tenants: tenants.map(t => ({
+                id: t.id,
+                nombre: t.nombre,
+                slug: t.slug,
+                plan_id: t.plan_id || null,
+                plan_nombre: t.plan_nombre || 'Sin plan',
+                plan_slug: t.plan_slug || '',
+                tamano: t.tamano || 'pequeno',
+                addonIds: (t.addons || []).map(a => a.id)
+            }))
+        });
+
+        res.render('admin/planes', { user: req.user, plans, tenants, addons, serverData });
     } catch (error) {
         console.error('Error al cargar planes:', error);
         res.status(500).render('error', { error });
