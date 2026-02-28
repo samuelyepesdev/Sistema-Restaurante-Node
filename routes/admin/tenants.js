@@ -5,6 +5,7 @@ const TenantUserService = require('../../services/TenantUserService');
 const TenantAuditService = require('../../services/TenantAuditService');
 const CategoryService = require('../../services/CategoryService');
 const PlanService = require('../../services/PlanService');
+const { syncPlanPermissionsToTenantUsers } = require('../../services/PlanPermissionSyncService');
 const { ROLES } = require('../../utils/constants');
 const authService = require('../../services/AuthService');
 
@@ -76,15 +77,23 @@ router.put('/:id', async (req, res) => {
             activo: activoBool,
             config: JSON.parse(config || '{}')
         };
-        if (plan_id !== undefined && plan_id !== null && plan_id !== '') update.plan_id = plan_id;
+        const planChanged = plan_id !== undefined && plan_id !== null && plan_id !== '';
+        if (planChanged) update.plan_id = plan_id;
         await TenantService.updateTenant(req.params.id, update);
+        if (planChanged && plan_id) {
+            await syncPlanPermissionsToTenantUsers(Number(req.params.id), Number(plan_id));
+        }
         await TenantAuditService.log({
             tenantId: req.params.id,
             userId: req.user?.id || null,
             accion: 'actualizar_config',
-            detalles: `Activo=${activo}`
+            detalles: `Activo=${activo}${planChanged ? ` Plan=${plan_id}` : ''}`
         });
-        res.sendStatus(204);
+        if (planChanged) {
+            res.status(200).json({ planUpdated: true });
+        } else {
+            res.sendStatus(204);
+        }
     } catch (error) {
         console.error('Error al actualizar tenant:', error);
         res.status(400).send(error.message);

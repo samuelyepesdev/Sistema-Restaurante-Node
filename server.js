@@ -148,8 +148,8 @@ app.use('/facturas', requireAuthWithTenant, requirePlanFeature('ventas'), factur
 app.use('/api/facturas', requireAuthWithTenant, requirePlanFeature('ventas'), facturasRoutes);
 app.use('/mesas', requireAuthWithTenant, requirePlanFeature('mesas'), mesasRoutes);
 app.use('/api/mesas', requireAuthWithTenant, requirePlanFeature('mesas'), mesasRoutes);
-app.use('/cocina', requireAuthWithTenant, requirePlanFeature('mesas'), cocinaRoutes);
-app.use('/api/cocina', requireAuthWithTenant, requirePlanFeature('mesas'), cocinaRoutes);
+app.use('/cocina', requireAuthWithTenant, requirePlanFeature('cocina'), cocinaRoutes);
+app.use('/api/cocina', requireAuthWithTenant, requirePlanFeature('cocina'), cocinaRoutes);
 app.use('/configuracion', requireAuthWithTenant, requirePlanFeature('configuracion'), configuracionRoutes);
 app.use('/ventas', requireAuthWithTenant, requirePlanFeature('ventas'), ventasRoutes);
 app.use('/eventos', requireAuthWithTenant, requirePlanFeature('eventos'), eventosRoutes);
