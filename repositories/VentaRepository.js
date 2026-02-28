@@ -15,7 +15,7 @@ class VentaRepository {
      */
     static async getAllWithFilters(tenantId, filters) {
         let query = `
-            SELECT f.id, f.numero, f.fecha, f.cliente_id, f.forma_pago, f.total, f.evento_id,
+            SELECT f.id, f.numero, DATE_FORMAT(f.fecha, '%Y-%m-%d %H:%i:%s') AS fecha, f.cliente_id, f.forma_pago, f.total, f.evento_id,
                    c.nombre AS cliente_nombre,
                    e.nombre AS evento_nombre,
                    CASE WHEN f.evento_id IS NOT NULL THEN CONCAT('Evento: ', e.nombre) ELSE 'Venta diaria' END AS tipo_venta
@@ -64,7 +64,7 @@ class VentaRepository {
             SELECT 
                 f.id,
                 f.numero,
-                f.fecha,
+                DATE_FORMAT(f.fecha, '%Y-%m-%d %H:%i:%s') AS fecha,
                 c.nombre AS cliente,
                 f.forma_pago,
                 f.total,
