@@ -11,12 +11,13 @@
 </head>
 
 <body>
-    <%- include('partials/navbar', { user: typeof user !=='undefined' ? user : null, tenant: typeof tenant !=='undefined' ? tenant : null }) %>
+    <%- include('partials/navbar', { user: typeof user !=='undefined' ? user : null, tenant: typeof tenant
+        !=='undefined' ? tenant : null }) %>
 
         <div class="container mt-4">
             <h1 class="mb-4">
                 <i class="bi bi-graph-up-arrow me-2"></i>
-                Dashboard de EstadÃ­sticas
+                Dashboard de Estadísticas
             </h1>
 
             <!-- Filtros de fecha -->
@@ -43,7 +44,7 @@
                 </div>
             </div>
 
-            <!-- Ventas de hoy (estadÃ­sticas del dÃ­a) -->
+            <!-- Ventas de hoy (estadísticas del día) -->
             <div class="row mb-2">
                 <div class="col-12">
                     <h5 class="text-muted mb-2 small text-uppercase fw-bold">Ventas de hoy</h5>
@@ -56,7 +57,7 @@
                                 <div>
                                     <div class="stat-label">Ventas hoy ($)</div>
                                     <div class="stat-value" id="ventasHoyTotal">$0</div>
-                                    <small class="opacity-75" style="font-size: 0.75rem;">Lo llevado en el dÃ­a</small>
+                                    <small class="opacity-75" style="font-size: 0.75rem;">Lo llevado en el día</small>
                                 </div>
                                 <i class="bi bi-currency-dollar stat-icon"></i>
                             </div>
@@ -71,7 +72,7 @@
                                 <div>
                                     <div class="stat-label">Facturas hoy</div>
                                     <div class="stat-value" id="ventasHoyCantidad">0</div>
-                                    <small class="opacity-75" style="font-size: 0.75rem;">Cantidad en el dÃ­a</small>
+                                    <small class="opacity-75" style="font-size: 0.75rem;">Cantidad en el día</small>
                                 </div>
                                 <i class="bi bi-receipt stat-icon"></i>
                             </div>
@@ -80,10 +81,10 @@
                 </div>
             </div>
 
-            <!-- Totales del perÃ­odo (segÃºn filtros) -->
+            <!-- Totales del período (según filtros) -->
             <div class="row" id="statsCards">
                 <div class="col-12 mb-2">
-                    <h5 class="text-muted mb-2 small text-uppercase fw-bold">Totales del perÃ­odo</h5>
+                    <h5 class="text-muted mb-2 small text-uppercase fw-bold">Totales del período</h5>
                 </div>
                 <div class="col-md-3">
                     <div class="card stat-card c-blue text-white clickable" id="cardTotalVentas" data-action="go-ventas"
@@ -178,13 +179,13 @@
                 </div>
             </div>
 
-            <!-- GrÃ¡ficos principales: en tablet/mÃ³vil se apilan (col-lg para que debajo de 992px cada uno vaya a ancho completo) -->
+            <!-- Gráficos principales: en tablet/móvil se apilan (col-lg para que debajo de 992px cada uno vaya a ancho completo) -->
             <div class="row">
                 <div class="col-12 col-lg-8">
                     <div class="card">
                         <div class="card-header">
                             <i class="bi bi-graph-up me-2"></i>
-                            Ventas Diarias (Ãšltimos 30 dÃ­as)
+                            Ventas Diarias (Últimos 30 días)
                         </div>
                         <div class="card-body">
                             <div class="chart-container">
@@ -197,15 +198,15 @@
                     <div class="card">
                         <div class="card-header">
                             <i class="bi bi-calendar3 me-2"></i>
-                            Calendario: dÃ­as del mes con evento
+                            Calendario: días del mes con evento
                         </div>
                         <div class="card-body">
                             <div id="miniCalendarioEventos" class="mini-calendario-container">
                                 <div class="text-muted small text-center py-3">Cargando...</div>
                             </div>
-                            <p class="small text-muted mb-0 mt-2">Cada dÃ­a del mes que tenga al menos un evento se
+                            <p class="small text-muted mb-0 mt-2">Cada día del mes que tenga al menos un evento se
                                 marca
-                                en violeta. Hoy en azul. UsÃ¡ las flechas para ver otros meses.</p>
+                                en violeta. Hoy en azul. Usá las flechas para ver otros meses.</p>
                         </div>
                     </div>
                 </div>
@@ -229,7 +230,7 @@
                     <div class="card">
                         <div class="card-header">
                             <i class="bi bi-bar-chart me-2"></i>
-                            Ventas por CategorÃ­a
+                            Ventas por Categoría
                         </div>
                         <div class="card-body">
                             <div class="chart-container-small">
@@ -242,7 +243,7 @@
                     <div class="card">
                         <div class="card-header">
                             <i class="bi bi-trophy me-2"></i>
-                            Top 10 Productos MÃ¡s Vendidos
+                            Top 10 Productos Más Vendidos
                         </div>
                         <div class="card-body">
                             <div class="chart-container-small">
@@ -253,13 +254,13 @@
                 </div>
             </div>
 
-            <!-- Tabla de productos mÃ¡s vendidos por categorÃ­a -->
+            <!-- Tabla de productos más vendidos por categoría -->
             <div class="row">
                 <div class="col-12">
                     <div class="card">
                         <div class="card-header">
                             <i class="bi bi-list-ul me-2"></i>
-                            Productos MÃ¡s Vendidos por CategorÃ­a
+                            Productos Más Vendidos por Categoría
                         </div>
                         <div class="card-body">
                             <div id="topProductsByCategoryTable">
@@ -284,12 +285,12 @@
                         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                     </div>
                     <div class="modal-body">
-                        <p class="mb-2">El promedio por factura se calcula asÃ­:</p>
+                        <p class="mb-2">El promedio por factura se calcula así:</p>
                         <div class="bg-light rounded p-3 mb-2 font-monospace text-center">
-                            <span id="modalPromedioFormula">Total ventas Ã· Cantidad de facturas = Promedio</span>
+                            <span id="modalPromedioFormula">Total ventas ÷ Cantidad de facturas = Promedio</span>
                         </div>
                         <ul class="list-unstyled mb-0">
-                            <li><strong>Total ventas (perÃ­odo):</strong> <span id="modalPromedioTotal">$0</span></li>
+                            <li><strong>Total ventas (período):</strong> <span id="modalPromedioTotal">$0</span></li>
                             <li><strong>Cantidad de facturas:</strong> <span id="modalPromedioCantidad">0</span></li>
                             <li><strong>Promedio:</strong> <span id="modalPromedioValor"
                                     class="text-primary fw-bold">$0</span></li>
@@ -309,7 +310,7 @@
                         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                     </div>
                     <div class="modal-body">
-                        <p class="mb-3">Resumen de ventas asociadas a eventos en el perÃ­odo seleccionado:</p>
+                        <p class="mb-3">Resumen de ventas asociadas a eventos en el período seleccionado:</p>
                         <ul class="list-unstyled mb-0">
                             <li><strong>Total vendido en eventos:</strong> <span id="modalVentasEventosTotal"
                                     class="text-primary fw-bold">$0</span></li>

@@ -1,152 +1,213 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><%= title || 'Iniciar Sesión' %> - Sistema de Restaurante</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <title>
+        <%= title || 'Iniciar Sesión' %> - Sistema de Restaurante
+    </title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-        <link rel="stylesheet" href="/css/auth-login.css">
+    <link rel="stylesheet" href="/css/auth-login.css">
 </head>
+
 <body>
-    <div class="login-container">
-        <div class="login-header">
-            <h1><i class="bi bi-shop"></i> Restaurante</h1>
-            <p>Sistema de Gestión</p>
+
+    <!-- ── Panel izquierdo: marca ── -->
+    <aside class="login-brand">
+        <div class="brand-top">
+            <div class="brand-icon"><i class="bi bi-shop"></i></div>
+            <span class="brand-name">Restaurante SaaS</span>
         </div>
 
-        <div id="errorAlert" class="alert alert-danger d-none" role="alert"></div>
-        <% if (typeof mensaje !== 'undefined' && mensaje) { %>
-        <div id="mensajeTenant" class="alert alert-warning" role="alert">
-            <i class="bi bi-exclamation-triangle me-2"></i><%= mensaje %>
+        <div class="brand-center">
+            <h2 class="brand-headline">
+                Gestiona tu<br>negocio <span>sin límites</span>
+            </h2>
+            <p class="brand-sub">
+                Control total de mesas, ventas, inventario y facturación
+                desde un solo lugar.
+            </p>
         </div>
-        <% } %>
 
-        <form id="loginForm">
-            <div class="mb-3">
-                <label for="username" class="form-label">
-                    <i class="bi bi-person"></i> Usuario
-                </label>
-                <div class="input-group">
-                    <span class="input-group-text">
-                        <i class="bi bi-person-fill"></i>
-                    </span>
-                    <input 
-                        type="text" 
-                        class="form-control" 
-                        id="username" 
-                        name="username" 
-                        placeholder="Ingrese su usuario"
-                        required
-                        autofocus
-                    >
-                </div>
+        <div class="brand-features">
+            <div class="feat-item">
+                <div class="feat-icon"><i class="bi bi-grid-3x3-gap"></i></div>
+                Gestión de mesas en tiempo real
+            </div>
+            <div class="feat-item">
+                <div class="feat-icon"><i class="bi bi-receipt"></i></div>
+                Facturación rápida e intuitiva
+            </div>
+            <div class="feat-item">
+                <div class="feat-icon"><i class="bi bi-boxes"></i></div>
+                Control de inventario y costos
+            </div>
+            <div class="feat-item">
+                <div class="feat-icon"><i class="bi bi-bar-chart-line"></i></div>
+                Analítica y reportes en vivo
+            </div>
+        </div>
+    </aside>
+
+    <!-- ── Panel derecho: formulario ── -->
+    <main class="login-form-side">
+        <div class="login-card">
+
+            <!-- Logo visible en móvil -->
+            <div class="mobile-logo">
+                <div class="mobile-logo-icon"><i class="bi bi-shop"></i></div>
+                <span class="mobile-logo-text">Restaurante SaaS</span>
             </div>
 
-            <div class="mb-4">
-                <label for="password" class="form-label">
-                    <i class="bi bi-lock"></i> Contraseña
-                </label>
-                <div class="input-group">
-                    <span class="input-group-text">
-                        <i class="bi bi-lock-fill"></i>
-                    </span>
-                    <input 
-                        type="password" 
-                        class="form-control" 
-                        id="password" 
-                        name="password" 
-                        placeholder="Ingrese su contraseña"
-                        required
-                    >
-                </div>
+            <h1 class="login-title">Bienvenido</h1>
+            <p class="login-subtitle">Ingresa tus credenciales para continuar</p>
+
+            <!-- Alerta de error -->
+            <div id="errorAlert" class="login-alert error" style="display:none;" role="alert">
+                <i class="bi bi-exclamation-circle-fill"></i>
+                <span id="errorMsg"></span>
             </div>
 
-            <button type="submit" class="btn btn-primary btn-login">
-                <i class="bi bi-box-arrow-in-right"></i> Iniciar Sesión
-            </button>
-        </form>
-    </div>
+            <!-- Mensaje de tenant / sesión expirada -->
+            <% if (typeof mensaje !=='undefined' && mensaje) { %>
+                <div class="login-alert warning" role="alert" id="mensajeTenant">
+                    <i class="bi bi-exclamation-triangle-fill"></i>
+                    <%= mensaje %>
+                </div>
+                <% } %>
 
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+                    <!-- Formulario -->
+                    <form id="loginForm" autocomplete="off" novalidate>
+
+                        <div>
+                            <label for="username" class="field-label">Usuario</label>
+                            <div class="field-wrap">
+                                <input type="text" class="field-input" id="username" name="username"
+                                    placeholder="tu_usuario" required autofocus autocomplete="username">
+                                <i class="bi bi-person field-icon"></i>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label for="password" class="field-label">Contraseña</label>
+                            <div class="field-wrap">
+                                <input type="password" class="field-input has-toggle" id="password" name="password"
+                                    placeholder="••••••••" required autocomplete="current-password">
+                                <i class="bi bi-lock field-icon"></i>
+                                <button type="button" class="pwd-toggle" id="togglePwd" aria-label="Mostrar contraseña"
+                                    tabindex="-1">
+                                    <i class="bi bi-eye" id="togglePwdIcon"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn-login" id="btnLogin">
+                            <i class="bi bi-box-arrow-in-right"></i>
+                            Iniciar sesión
+                        </button>
+                    </form>
+
+                    <p class="login-footer">
+                        &copy; <%= new Date().getFullYear() %> Restaurante SaaS · Todos los derechos reservados
+                    </p>
+        </div>
+    </main>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        $(document).ready(function() {
-            if (document.getElementById('mensajeTenant')) {
-                localStorage.removeItem('auth_token');
-                localStorage.removeItem('user');
+        // ── Toggle contraseña ─────────────────────────────────────────────────
+        const toggleBtn = document.getElementById('togglePwd');
+        const pwdInput = document.getElementById('password');
+        const toggleIcon = document.getElementById('togglePwdIcon');
+
+        toggleBtn.addEventListener('click', () => {
+            const isHidden = pwdInput.type === 'password';
+            pwdInput.type = isHidden ? 'text' : 'password';
+            toggleIcon.className = isHidden ? 'bi bi-eye-slash' : 'bi bi-eye';
+        });
+
+        // ── Limpiar sesión si hay mensaje de tenant ───────────────────────────
+        if (document.getElementById('mensajeTenant')) {
+            localStorage.removeItem('auth_token');
+            localStorage.removeItem('user');
+        }
+
+        // ── Login ─────────────────────────────────────────────────────────────
+        function showError(msg) {
+            const box = document.getElementById('errorAlert');
+            document.getElementById('errorMsg').textContent = msg;
+            box.style.display = 'flex';
+            box.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+
+        function hideError() {
+            document.getElementById('errorAlert').style.display = 'none';
+        }
+
+        function setLoading(loading) {
+            const btn = document.getElementById('btnLogin');
+            if (loading) {
+                btn.disabled = true;
+                btn.innerHTML = '<span class="spinner-border spinner-border-sm" style="width:1em;height:1em;border-width:2px;"></span> Verificando...';
+            } else {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="bi bi-box-arrow-in-right"></i> Iniciar sesión';
             }
-            $('#loginForm').on('submit', async function(e) {
-                e.preventDefault();
-                
-                const username = $('#username').val().trim();
-                const password = $('#password').val();
+        }
 
-                if (!username || !password) {
-                    showError('Por favor complete todos los campos');
-                    return;
-                }
+        document.getElementById('loginForm').addEventListener('submit', async function (e) {
+            e.preventDefault();
+            hideError();
 
-                // Disable form
-                const $submitBtn = $(this).find('button[type="submit"]');
-                const originalText = $submitBtn.html();
-                $submitBtn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-2"></span>Iniciando sesión...');
-                $('#errorAlert').addClass('d-none');
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value;
 
-                try {
-                    const response = await fetch('/auth/login', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({ username, password })
-                    });
-
-                    const data = await response.json();
-
-                    if (!response.ok) {
-                        throw new Error(data.error || 'Error al iniciar sesión');
-                    }
-
-                    // Store token in localStorage for API calls
-                    if (data.token) {
-                        localStorage.setItem('auth_token', data.token);
-                        localStorage.setItem('user', JSON.stringify(data.user));
-                    }
-
-                    // Redirect: superadmin al dashboard de administración
-                    const rol = (data.user.rol || '').toString().toLowerCase();
-                    const isSuperadmin = rol === 'superadmin';
-                    Swal.fire({
-                        icon: 'success',
-                        title: '¡Bienvenido!',
-                        text: `Hola ${data.user.nombre_completo || data.user.username}`,
-                        timer: 1500,
-                        showConfirmButton: false
-                    }).then(() => {
-                        window.location.href = isSuperadmin ? '/admin/dashboard' : '/';
-                    });
-
-                } catch (error) {
-                    showError(error.message);
-                    $submitBtn.prop('disabled', false).html(originalText);
-                }
-            });
-
-            function showError(message) {
-                $('#errorAlert').removeClass('d-none').text(message);
-                $('#errorAlert')[0].scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            if (!username || !password) {
+                showError('Por favor completa todos los campos.');
+                return;
             }
 
-            // Enter key handling
-            $('#username, #password').on('keypress', function(e) {
-                if (e.which === 13) {
-                    $('#loginForm').submit();
+            setLoading(true);
+
+            try {
+                const response = await fetch('/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.error || 'Error al iniciar sesión');
                 }
-            });
+
+                if (data.token) {
+                    localStorage.setItem('auth_token', data.token);
+                    localStorage.setItem('user', JSON.stringify(data.user));
+                }
+
+                const rol = (data.user.rol || '').toString().toLowerCase();
+                const isSuperadmin = rol === 'superadmin';
+
+                Swal.fire({
+                    icon: 'success',
+                    title: `¡Hola, ${data.user.nombre_completo || data.user.username}!`,
+                    text: 'Acceso concedido. Redirigiendo...',
+                    timer: 1400,
+                    showConfirmButton: false
+                }).then(() => {
+                    window.location.href = isSuperadmin ? '/admin/dashboard' : '/';
+                });
+
+            } catch (error) {
+                showError(error.message);
+                setLoading(false);
+            }
         });
     </script>
 </body>
-</html>
 
+</html>
