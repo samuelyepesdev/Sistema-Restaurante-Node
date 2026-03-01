@@ -1,0 +1,190 @@
+/* ============================================================
+   mesas.css — Estilos del módulo de mesas
+   Usado por: views/mesas.ejs
+   ============================================================ */
+
+body {
+    background-color: #f1f5f9;
+}
+
+/* Tarjetas de mesa */
+.mesa-card {
+    border: none;
+    border-radius: 16px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, .07);
+    transition: transform .15s, box-shadow .15s;
+    cursor: pointer;
+    overflow: hidden;
+}
+
+.mesa-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 18px rgba(0, 0, 0, .12);
+}
+
+/* Borde superior por estado */
+.mesa-card.libre {
+    border-top: 4px solid #22c55e;
+}
+
+.mesa-card.ocupada {
+    border-top: 4px solid #f59e0b;
+}
+
+.mesa-card.reservada {
+    border-top: 4px solid #64748b;
+}
+
+/* Pill de estado */
+.mesa-estado-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: .3rem;
+    border-radius: 20px;
+    padding: .2rem .65rem;
+    font-size: .72rem;
+    font-weight: 700;
+    letter-spacing: .3px;
+}
+
+.pill-libre {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.pill-ocupada {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.pill-reservada {
+    background: #e2e8f0;
+    color: #475569;
+}
+
+/* Número de mesa */
+.mesa-num {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: #0f172a;
+    line-height: 1;
+}
+
+.mesa-desc {
+    font-size: .78rem;
+    color: #64748b;
+    min-height: 16px;
+}
+
+/* Botones de la tarjeta */
+.btn-cta {
+    font-weight: 600;
+    border-radius: 10px;
+}
+
+.btn-sec {
+    border-radius: 8px;
+    font-size: .8rem;
+}
+
+/* Sidebar de factura */
+#canvasFactura .offcanvas-body {
+    padding: 0;
+    overflow: hidden;
+}
+
+#facturaFrame {
+    width: 100%;
+    height: 100%;
+    border: none;
+    background: white;
+}
+
+#canvasFactura .offcanvas-header {
+    padding: 1rem 1.5rem;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+#canvasFactura .offcanvas-title {
+    color: white;
+    font-weight: 600;
+}
+
+#canvasFactura .btn-close {
+    filter: invert(1);
+}
+
+#btnImprimirFactura {
+    background: rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 255, 255, 0.3);
+    color: white;
+}
+
+#btnImprimirFactura:hover {
+    background: rgba(255, 255, 255, 0.3);
+    border-color: rgba(255, 255, 255, 0.5);
+    color: white;
+}
+
+/* Tabla de pedido */
+.table-pedido-mesas tbody td {
+    vertical-align: middle !important;
+}
+
+.table-pedido-mesas .td-producto {
+    max-width: 140px;
+}
+
+.table-pedido-mesas .td-subtotal {
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.table-pedido-mesas .btn-group-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+}
+
+/* Modal de pago */
+.payment-card {
+    border-color: #dee2e6 !important;
+    transition: all 0.3s;
+    cursor: pointer;
+}
+
+.payment-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+}
+
+.payment-card.selected {
+    border-color: #0d6efd !important;
+    background: linear-gradient(135deg, #e7f1ff 0%, #cfe2ff 100%);
+}
+
+.payment-card[data-payment-type="efectivo"].selected {
+    border-color: #198754 !important;
+    background: linear-gradient(135deg, #d1e7dd 0%, #a3cfbb 100%);
+}
+
+.denominacion-btn {
+    padding: 1rem;
+    font-size: 1.1rem;
+    font-weight: 600;
+    border: 2px solid #dee2e6;
+    transition: all 0.2s;
+}
+
+.denominacion-btn:hover {
+    border-color: #198754;
+    background-color: #d1e7dd;
+    transform: scale(1.05);
+}
+
+.denominacion-btn.selected {
+    border-color: #198754;
+    background-color: #198754;
+    color: white;
+}

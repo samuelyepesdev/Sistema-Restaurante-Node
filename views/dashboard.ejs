@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="es">
 
 <head>
@@ -7,296 +7,16 @@
     <title>Dashboard - Sistema de Facturación</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
-    <style>
-        body {
-            background-color: #f8f9fa;
-            font-size: 16px;
-        }
-
-        .navbar {
-            background: linear-gradient(135deg, #1e3a5f 0%, #0f172a 100%);
-            box-shadow: 0 2px 12px rgba(0, 0, 0, .2);
-        }
-
-        .navbar-brand {
-            color: white !important;
-            font-weight: bold;
-        }
-
-        .stat-card {
-            border: none;
-            border-radius: 14px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, .08);
-            margin-bottom: 1.5rem;
-            transition: transform 0.2s, box-shadow 0.2s;
-            overflow: hidden;
-        }
-
-        .stat-card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 10px 28px rgba(0, 0, 0, .14);
-        }
-
-        .stat-card.clickable {
-            cursor: pointer;
-        }
-
-        .stat-card .card-body {
-            padding: 1.4rem 1.5rem;
-        }
-
-        /* Paleta unificada: azul oscuro principal */
-        .stat-card.c-primary {
-            background: linear-gradient(135deg, #1e3a5f 0%, #1e40af 100%);
-        }
-
-        .stat-card.c-blue {
-            background: linear-gradient(135deg, #1d4ed8 0%, #2563eb 100%);
-        }
-
-        .stat-card.c-slate {
-            background: linear-gradient(135deg, #334155 0%, #475569 100%);
-        }
-
-        .stat-card.c-indigo {
-            background: linear-gradient(135deg, #4338ca 0%, #6366f1 100%);
-        }
-
-        .stat-card.c-teal {
-            background: linear-gradient(135deg, #0f766e 0%, #14b8a6 100%);
-        }
-
-        .stat-card.c-danger {
-            background: linear-gradient(135deg, #b91c1c 0%, #dc2626 100%);
-        }
-
-        .stat-icon {
-            font-size: 2.2rem;
-            opacity: 0.35;
-        }
-
-        .stat-value {
-            font-size: 2rem;
-            font-weight: bold;
-            margin: 0.5rem 0;
-        }
-
-        .stat-label {
-            color: #1a1a1a;
-            font-size: 0.9rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .chart-container {
-            position: relative;
-            height: 400px;
-            margin-bottom: 2rem;
-        }
-
-        .chart-container-small {
-            position: relative;
-            height: 300px;
-            margin-bottom: 2rem;
-        }
-
-        .card {
-            border: none;
-            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.05);
-            margin-bottom: 1.5rem;
-        }
-
-        .card-header {
-            background-color: #fff;
-            border-bottom: 2px solid #f8f9fa;
-            font-weight: 600;
-            font-size: 1.2rem;
-        }
-
-        .table {
-            background-color: white;
-            font-size: 1rem;
-        }
-
-        .loading-spinner {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 400px;
-        }
-
-        .filter-section {
-            background: white;
-            padding: 1rem;
-            border-radius: 0.5rem;
-            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.05);
-            margin-bottom: 1.5rem;
-        }
-
-        .mini-calendario-container {
-            min-height: 260px;
-        }
-
-        .mini-calendario-nav {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 0.75rem;
-            gap: 0.5rem;
-        }
-
-        .mini-calendario-nav .mes-titulo {
-            font-weight: 700;
-            font-size: 1rem;
-            color: #2c3e50;
-            margin: 0;
-            flex: 1;
-            text-align: center;
-        }
-
-        .mini-calendario-nav .btn-sm {
-            padding: 0.35rem 0.6rem;
-        }
-
-        .mini-calendario {
-            font-size: 0.875rem;
-            width: 100%;
-            table-layout: fixed;
-            border-collapse: separate;
-            border-spacing: 2px;
-        }
-
-        .mini-calendario th {
-            padding: 0.4rem 0.25rem;
-            text-align: center;
-            color: #5a6c7d;
-            font-weight: 600;
-            font-size: 0.75rem;
-        }
-
-        .mini-calendario td {
-            padding: 0.4rem;
-            text-align: center;
-            border-radius: 6px;
-            min-width: 28px;
-            height: 32px;
-            vertical-align: middle;
-            background: #f8f9fa;
-        }
-
-        .mini-calendario td:not(.dia-evento):hover {
-            background: #e9ecef;
-        }
-
-        .mini-calendario .dia-evento {
-            background: rgba(111, 66, 193, 0.25);
-            color: #5a32a3;
-            font-weight: 700;
-            cursor: pointer;
-        }
-
-        .mini-calendario .dia-evento:hover {
-            background: rgba(111, 66, 193, 0.4);
-        }
-
-        .mini-calendario .dia-hoy {
-            border: 2px solid #0d6efd;
-            background: rgba(13, 110, 253, 0.08) !important;
-            font-weight: 700;
-        }
-
-        .mini-calendario .dia-otro-mes {
-            visibility: hidden;
-            pointer-events: none;
-        }
-
-        @media (max-width: 992px) {
-            .filter-section .row .col-md-3 {
-                flex: 0 0 100%;
-                max-width: 100%;
-            }
-
-            .filter-section .row .col-md-3:not(:first-child) {
-                margin-top: 0.75rem;
-            }
-
-            .stat-card {
-                margin-bottom: 1rem;
-            }
-
-            .chart-container,
-            .chart-container-small {
-                height: 230px;
-            }
-
-            .card-header {
-                font-size: 1rem;
-            }
-        }
-
-        @media (max-width: 576px) {
-            .stat-card .card-body {
-                padding: 1rem;
-            }
-
-            .filter-section .btn {
-                font-size: 0.9rem;
-            }
-
-            .chart-container,
-            .chart-container-small {
-                height: 220px;
-            }
-
-            /* Tablas de datos: en móvil se apilan por fila */
-            .table:not(.mini-calendario) tbody tr {
-                display: block;
-                border-bottom: 1px solid #e9ecef;
-            }
-
-            .table:not(.mini-calendario) tbody td {
-                display: flex;
-                justify-content: space-between;
-                padding: 0.5rem;
-            }
-
-            .table:not(.mini-calendario) thead {
-                display: none;
-            }
-
-            /* Calendario: siempre en grilla 7 columnas en móvil */
-            .mini-calendario {
-                font-size: 0.8rem;
-            }
-
-            .mini-calendario th,
-            .mini-calendario td {
-                padding: 0.25rem;
-                min-width: 0;
-                height: 28px;
-            }
-
-            .mini-calendario .mes-titulo {
-                font-size: 0.9rem;
-            }
-
-            .card:not(.no-card-dark) {
-                background-color: #e2e8f0;
-                border-color: #cbd5f5;
-            }
-        }
-    </style>
+    <link rel="stylesheet" href="/css/dashboard.css">
 </head>
 
 <body>
-    <%- include('partials/navbar', { user: typeof user !=='undefined' ? user : null, tenant: typeof tenant
-        !=='undefined' ? tenant : null }) %>
+    <%- include('partials/navbar', { user: typeof user !=='undefined' ? user : null, tenant: typeof tenant !=='undefined' ? tenant : null }) %>
 
         <div class="container mt-4">
             <h1 class="mb-4">
                 <i class="bi bi-graph-up-arrow me-2"></i>
-                Dashboard de Estadísticas
+                Dashboard de EstadÃ­sticas
             </h1>
 
             <!-- Filtros de fecha -->
@@ -323,7 +43,7 @@
                 </div>
             </div>
 
-            <!-- Ventas de hoy (estadísticas del día) -->
+            <!-- Ventas de hoy (estadÃ­sticas del dÃ­a) -->
             <div class="row mb-2">
                 <div class="col-12">
                     <h5 class="text-muted mb-2 small text-uppercase fw-bold">Ventas de hoy</h5>
@@ -336,7 +56,7 @@
                                 <div>
                                     <div class="stat-label">Ventas hoy ($)</div>
                                     <div class="stat-value" id="ventasHoyTotal">$0</div>
-                                    <small class="opacity-75" style="font-size: 0.75rem;">Lo llevado en el día</small>
+                                    <small class="opacity-75" style="font-size: 0.75rem;">Lo llevado en el dÃ­a</small>
                                 </div>
                                 <i class="bi bi-currency-dollar stat-icon"></i>
                             </div>
@@ -351,7 +71,7 @@
                                 <div>
                                     <div class="stat-label">Facturas hoy</div>
                                     <div class="stat-value" id="ventasHoyCantidad">0</div>
-                                    <small class="opacity-75" style="font-size: 0.75rem;">Cantidad en el día</small>
+                                    <small class="opacity-75" style="font-size: 0.75rem;">Cantidad en el dÃ­a</small>
                                 </div>
                                 <i class="bi bi-receipt stat-icon"></i>
                             </div>
@@ -360,10 +80,10 @@
                 </div>
             </div>
 
-            <!-- Totales del período (según filtros) -->
+            <!-- Totales del perÃ­odo (segÃºn filtros) -->
             <div class="row" id="statsCards">
                 <div class="col-12 mb-2">
-                    <h5 class="text-muted mb-2 small text-uppercase fw-bold">Totales del período</h5>
+                    <h5 class="text-muted mb-2 small text-uppercase fw-bold">Totales del perÃ­odo</h5>
                 </div>
                 <div class="col-md-3">
                     <div class="card stat-card c-blue text-white clickable" id="cardTotalVentas" data-action="go-ventas"
@@ -458,13 +178,13 @@
                 </div>
             </div>
 
-            <!-- Gráficos principales: en tablet/móvil se apilan (col-lg para que debajo de 992px cada uno vaya a ancho completo) -->
+            <!-- GrÃ¡ficos principales: en tablet/mÃ³vil se apilan (col-lg para que debajo de 992px cada uno vaya a ancho completo) -->
             <div class="row">
                 <div class="col-12 col-lg-8">
                     <div class="card">
                         <div class="card-header">
                             <i class="bi bi-graph-up me-2"></i>
-                            Ventas Diarias (Últimos 30 días)
+                            Ventas Diarias (Ãšltimos 30 dÃ­as)
                         </div>
                         <div class="card-body">
                             <div class="chart-container">
@@ -477,14 +197,15 @@
                     <div class="card">
                         <div class="card-header">
                             <i class="bi bi-calendar3 me-2"></i>
-                            Calendario: días del mes con evento
+                            Calendario: dÃ­as del mes con evento
                         </div>
                         <div class="card-body">
                             <div id="miniCalendarioEventos" class="mini-calendario-container">
                                 <div class="text-muted small text-center py-3">Cargando...</div>
                             </div>
-                            <p class="small text-muted mb-0 mt-2">Cada día del mes que tenga al menos un evento se marca
-                                en violeta. Hoy en azul. Usá las flechas para ver otros meses.</p>
+                            <p class="small text-muted mb-0 mt-2">Cada dÃ­a del mes que tenga al menos un evento se
+                                marca
+                                en violeta. Hoy en azul. UsÃ¡ las flechas para ver otros meses.</p>
                         </div>
                     </div>
                 </div>
@@ -508,7 +229,7 @@
                     <div class="card">
                         <div class="card-header">
                             <i class="bi bi-bar-chart me-2"></i>
-                            Ventas por Categoría
+                            Ventas por CategorÃ­a
                         </div>
                         <div class="card-body">
                             <div class="chart-container-small">
@@ -521,7 +242,7 @@
                     <div class="card">
                         <div class="card-header">
                             <i class="bi bi-trophy me-2"></i>
-                            Top 10 Productos Más Vendidos
+                            Top 10 Productos MÃ¡s Vendidos
                         </div>
                         <div class="card-body">
                             <div class="chart-container-small">
@@ -532,13 +253,13 @@
                 </div>
             </div>
 
-            <!-- Tabla de productos más vendidos por categoría -->
+            <!-- Tabla de productos mÃ¡s vendidos por categorÃ­a -->
             <div class="row">
                 <div class="col-12">
                     <div class="card">
                         <div class="card-header">
                             <i class="bi bi-list-ul me-2"></i>
-                            Productos Más Vendidos por Categoría
+                            Productos MÃ¡s Vendidos por CategorÃ­a
                         </div>
                         <div class="card-body">
                             <div id="topProductsByCategoryTable">
@@ -563,12 +284,12 @@
                         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                     </div>
                     <div class="modal-body">
-                        <p class="mb-2">El promedio por factura se calcula así:</p>
+                        <p class="mb-2">El promedio por factura se calcula asÃ­:</p>
                         <div class="bg-light rounded p-3 mb-2 font-monospace text-center">
-                            <span id="modalPromedioFormula">Total ventas ÷ Cantidad de facturas = Promedio</span>
+                            <span id="modalPromedioFormula">Total ventas Ã· Cantidad de facturas = Promedio</span>
                         </div>
                         <ul class="list-unstyled mb-0">
-                            <li><strong>Total ventas (período):</strong> <span id="modalPromedioTotal">$0</span></li>
+                            <li><strong>Total ventas (perÃ­odo):</strong> <span id="modalPromedioTotal">$0</span></li>
                             <li><strong>Cantidad de facturas:</strong> <span id="modalPromedioCantidad">0</span></li>
                             <li><strong>Promedio:</strong> <span id="modalPromedioValor"
                                     class="text-primary fw-bold">$0</span></li>
@@ -588,7 +309,7 @@
                         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                     </div>
                     <div class="modal-body">
-                        <p class="mb-3">Resumen de ventas asociadas a eventos en el período seleccionado:</p>
+                        <p class="mb-3">Resumen de ventas asociadas a eventos en el perÃ­odo seleccionado:</p>
                         <ul class="list-unstyled mb-0">
                             <li><strong>Total vendido en eventos:</strong> <span id="modalVentasEventosTotal"
                                     class="text-primary fw-bold">$0</span></li>

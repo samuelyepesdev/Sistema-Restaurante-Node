@@ -1,0 +1,57 @@
+/* ============================================================
+   inventario.css — Estilos del módulo de inventario
+   Usado por: views/inventario.ejs
+   ============================================================ */
+
+body {
+    background: #f8f9fa;
+}
+
+.card {
+    border: none;
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.05);
+}
+
+.stock-bajo {
+    background: #fff3cd !important;
+}
+
+.table th {
+    border-top: none;
+}
+
+.search-box {
+    max-width: 320px;
+}
+
+.inventario-card {
+    border-radius: 0.75rem;
+    border: 1px solid #e2e8f0;
+    padding: 0.75rem 1rem;
+    background: #ffffff;
+    margin-bottom: 0.75rem;
+}
+
+.inventario-card .titulo {
+    font-weight: 600;
+    font-size: 0.95rem;
+}
+
+.inventario-card .codigo {
+    font-size: 0.8rem;
+}
+
+.inventario-card .badge {
+    font-size: 0.75rem;
+}
+
+.inventario-card.stock-bajo {
+    border-color: #facc15;
+    background: #fffbeb;
+}
+
+@media (max-width: 576px) {
+    h1.h4 {
+        font-size: 1.15rem;
+    }
+}
