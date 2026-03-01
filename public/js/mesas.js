@@ -1,7 +1,7 @@
 // JS de Mesas: UI para abrir/gestionar pedidos por mesa y enviar a cocina
 // Relacionado con: views/mesas.ejs, routes/mesas.js, routes/productos.js, routes/facturas.js
 
-$(function() {
+$(function () {
   const canvas = new bootstrap.Offcanvas('#canvasPedido');
   let pedidoActual = null; // { id, mesa_id }
   let items = []; // items del pedido en UI
@@ -9,12 +9,12 @@ $(function() {
   let propinaPedido = 0; // propina que deja el cliente (se suma al total)
 
   // Helpers UI
-  function formatear(valor){return `$${Number(valor||0).toLocaleString('es-CO')}`}
+  function formatear(valor) { return `$${Number(valor || 0).toLocaleString('es-CO')}` }
   function subtotalConDescuento(cantidad, precio, itemId) {
     const pct = descuentosPorItem[itemId] != null ? descuentosPorItem[itemId] : 0;
     return cantidad * precio * (1 - pct / 100);
   }
-  function renderItems(){
+  function renderItems() {
     const tbody = $('#tbodyItems');
     tbody.empty();
     let total = 0;
@@ -48,7 +48,7 @@ $(function() {
   }
 
   // +/- cantidad en items del pedido (mesa)
-  $(document).on('click', '.btn-mas-item', async function(){
+  $(document).on('click', '.btn-mas-item', async function () {
     const id = $(this).data('item-id');
     const cant = Number($(this).data('cantidad')) + 1;
     try {
@@ -59,7 +59,7 @@ $(function() {
     } catch (e) { Swal.fire({ icon: 'error', title: e.message }); }
   });
 
-  $(document).on('click', '.btn-menos-item', async function(){
+  $(document).on('click', '.btn-menos-item', async function () {
     const id = $(this).data('item-id');
     const cant = Number($(this).data('cantidad'));
     if (cant <= 1) return;
@@ -71,7 +71,7 @@ $(function() {
     } catch (e) { Swal.fire({ icon: 'error', title: e.message }); }
   });
 
-  $(document).on('click', '.btn-eliminar-item', async function(){
+  $(document).on('click', '.btn-eliminar-item', async function () {
     const idx = $(this).data('idx');
     const itemId = $(this).data('item-id');
     const it = items[idx];
@@ -87,28 +87,28 @@ $(function() {
   });
 
   // Cargar pedido por mesa
-  async function abrirPedido(mesaId, mesaNumero){
-    try{
+  async function abrirPedido(mesaId, mesaNumero) {
+    try {
       descuentosPorItem = {};
       propinaPedido = 0;
-      const resp = await fetch('/api/mesas/abrir', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ mesa_id: mesaId })});
+      const resp = await fetch('/api/mesas/abrir', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ mesa_id: mesaId }) });
       const data = await resp.json();
-      if(!resp.ok) throw new Error(data.error||'Error al abrir pedido');
+      if (!resp.ok) throw new Error(data.error || 'Error al abrir pedido');
       pedidoActual = data.pedido;
       $('#pedidoMesa').text(mesaNumero);
       const $btnLiberar = $('#btnLiberarMesaHeader');
       if ($btnLiberar.length) $btnLiberar.prop('disabled', currentMesaEstado === 'libre').toggleClass('d-none', currentMesaEstado === 'libre');
       await cargarPedido(pedidoActual.id);
       canvas.show();
-    }catch(err){
-      Swal.fire({icon:'error', title: err.message});
+    } catch (err) {
+      Swal.fire({ icon: 'error', title: err.message });
     }
   }
 
-  async function cargarPedido(pedidoId){
+  async function cargarPedido(pedidoId) {
     const resp = await fetch(`/api/mesas/pedidos/${pedidoId}`);
     const data = await resp.json();
-    if(!resp.ok) throw new Error(data.error||'Error al cargar pedido');
+    if (!resp.ok) throw new Error(data.error || 'Error al cargar pedido');
     items = data.items || [];
     propinaPedido = Number(data.pedido?.propina) || 0;
     if (items.length > 0) currentMesaEstado = 'ocupada';
@@ -119,14 +119,14 @@ $(function() {
   }
 
   // Botón "Aplicar descuento" (arriba de Mover a mesa): paso 1 = elegir producto, paso 2 = elegir %
-  $('#btnAplicarDescuentoMesa').on('click', function(){
-    if(items.length === 0){
+  $('#btnAplicarDescuentoMesa').on('click', function () {
+    if (items.length === 0) {
       Swal.fire({ icon: 'warning', title: 'No hay productos en el pedido', text: 'Agregue productos para aplicar un descuento.' });
       return;
     }
     const $lista = $('#descuentoMesaListaProductos');
     $lista.empty();
-    items.forEach(function(it){
+    items.forEach(function (it) {
       const nombre = it.producto_nombre || it.nombre || it.producto_id || 'Producto';
       const cantidad = Number(it.cantidad || 0);
       const precio = Number((it.precio_unitario != null ? it.precio_unitario : it.precio) || 0);
@@ -134,7 +134,7 @@ $(function() {
       const descTexto = (descuentosPorItem[it.id] != null && descuentosPorItem[it.id] > 0) ? ' <span class="badge bg-success">-' + descuentosPorItem[it.id] + '%</span>' : '';
       const $a = $('<a href="#" class="list-group-item list-group-item-action"></a>')
         .html('<div><strong>' + nombre + '</strong>' + descTexto + '</div><div class="small text-muted">Cant: ' + cantidad + ' · ' + formatear(subtotal) + '</div>')
-        .on('click', function(e){ e.preventDefault(); elegirProductoParaDescuento(it.id, nombre); });
+        .on('click', function (e) { e.preventDefault(); elegirProductoParaDescuento(it.id, nombre); });
       $lista.append($a);
     });
     $('#descuentoModalMesaTitulo').text('Seleccione el producto');
@@ -143,7 +143,7 @@ $(function() {
     new bootstrap.Modal(document.getElementById('descuentoModalMesa')).show();
   });
 
-  function elegirProductoParaDescuento(itemId, nombre){
+  function elegirProductoParaDescuento(itemId, nombre) {
     window._descuentoItemIdMesa = itemId;
     const it = items.find(i => i.id === itemId);
     const subtotal = it ? formatear(subtotalConDescuento(Number(it.cantidad || 0), Number((it.precio_unitario != null ? it.precio_unitario : it.precio) || 0), itemId)) : '$0';
@@ -153,38 +153,38 @@ $(function() {
     $('#descuentoMesaPaso2').show();
   }
 
-  $(document).on('click', '.btn-descuento-mesa', function(){
+  $(document).on('click', '.btn-descuento-mesa', function () {
     const pct = parseInt($(this).data('pct'), 10);
     const itemId = window._descuentoItemIdMesa;
-    if(itemId != null){ descuentosPorItem[itemId] = pct; renderItems(); }
+    if (itemId != null) { descuentosPorItem[itemId] = pct; renderItems(); }
     bootstrap.Modal.getInstance(document.getElementById('descuentoModalMesa')).hide();
   });
-  $('#quitarDescuentoMesaBtn').on('click', function(){
+  $('#quitarDescuentoMesaBtn').on('click', function () {
     const itemId = window._descuentoItemIdMesa;
-    if(itemId != null){ delete descuentosPorItem[itemId]; renderItems(); }
+    if (itemId != null) { delete descuentosPorItem[itemId]; renderItems(); }
     bootstrap.Modal.getInstance(document.getElementById('descuentoModalMesa')).hide();
   });
 
-  $('#descuentoModalMesa').on('hidden.bs.modal', function(){
+  $('#descuentoModalMesa').on('hidden.bs.modal', function () {
     $('#descuentoMesaPaso1').show();
     $('#descuentoMesaPaso2').hide();
     $('#descuentoModalMesaTitulo').text('Aplicar descuento');
   });
 
   // Botón "Propina": abrir modal y aplicar/quitar propina
-  $('#btnPropinaMesa').on('click', function(){
-    if(!pedidoActual || !pedidoActual.id){
+  $('#btnPropinaMesa').on('click', function () {
+    if (!pedidoActual || !pedidoActual.id) {
       Swal.fire({ icon: 'warning', title: 'No hay pedido abierto' });
       return;
     }
     $('#propinaInputMesa').val(propinaPedido > 0 ? propinaPedido : '');
     new bootstrap.Modal(document.getElementById('propinaModalMesa')).show();
   });
-  $('.btn-propina-rapida').on('click', function(){
+  $('.btn-propina-rapida').on('click', function () {
     const val = Number($(this).data('val')) || 0;
     $('#propinaInputMesa').val(val);
   });
-  $('#aplicarPropinaMesaBtn').on('click', async function(){
+  $('#aplicarPropinaMesaBtn').on('click', async function () {
     const valor = Math.max(0, parseFloat($('#propinaInputMesa').val()) || 0);
     try {
       const r = await fetch(`/api/mesas/pedidos/${pedidoActual.id}/propina`, {
@@ -200,7 +200,7 @@ $(function() {
       if (valor > 0) Swal.fire({ icon: 'success', title: 'Propina aplicada', text: formatear(valor), timer: 1500, showConfirmButton: false });
     } catch (e) { Swal.fire({ icon: 'error', title: e.message }); }
   });
-  $('#quitarPropinaMesaBtn').on('click', async function(){
+  $('#quitarPropinaMesaBtn').on('click', async function () {
     try {
       const r = await fetch(`/api/mesas/pedidos/${pedidoActual.id}/propina`, {
         method: 'PATCH',
@@ -217,10 +217,10 @@ $(function() {
 
   // Buscar productos
   let to;
-  $('#buscarProductoMesa').on('input', function(){
+  $('#buscarProductoMesa').on('input', function () {
     clearTimeout(to);
     const q = this.value.trim();
-    if(q.length < 2){ $('#resultadosProductoMesa').empty(); return; }
+    if (q.length < 2) { $('#resultadosProductoMesa').empty(); return; }
     to = setTimeout(async () => {
       const resp = await fetch(`/api/productos/buscar?q=${encodeURIComponent(q)}`);
       const productos = await resp.json();
@@ -250,7 +250,7 @@ $(function() {
     return nombre === CATEGORIA_COMIDAS;
   }
 
-  async function seleccionarProducto(p){
+  async function seleccionarProducto(p) {
     await runWithOffcanvasHidden(async () => {
       let nota = '';
       if (esCategoriaComidas(p)) {
@@ -260,7 +260,7 @@ $(function() {
           didOpen: () => {
             const inp = document.querySelector('.swal2-input');
             if (inp) {
-              ['keydown','keyup','keypress','paste','copy','cut','contextmenu'].forEach(evt => {
+              ['keydown', 'keyup', 'keypress', 'paste', 'copy', 'cut', 'contextmenu'].forEach(evt => {
                 inp.addEventListener(evt, e => e.stopPropagation());
               });
             }
@@ -272,9 +272,9 @@ $(function() {
       const unidad = 'UND';
       const precio = p.precio_unidad;
       const body = { producto_id: p.id, cantidad: 1, unidad, precio: Number(precio), nota };
-      const resp = await fetch(`/api/mesas/pedidos/${pedidoActual.id}/items`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) });
+      const resp = await fetch(`/api/mesas/pedidos/${pedidoActual.id}/items`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
       const data = await resp.json();
-      if(!resp.ok) return Swal.fire({icon:'error', title: data.error||'Error al agregar'});
+      if (!resp.ok) return Swal.fire({ icon: 'error', title: data.error || 'Error al agregar' });
       currentMesaEstado = 'ocupada';
       await cargarPedido(pedidoActual.id);
       $('#buscarProductoMesa').val('').focus();
@@ -282,51 +282,51 @@ $(function() {
   }
 
   // Enviar todos los items pendientes a cocina
-  $('#btnEnviarCocina').on('click', async function(){
-    try{
+  $('#btnEnviarCocina').on('click', async function () {
+    try {
       const pendientes = items.filter(i => i.estado === 'pendiente');
-      for(const it of pendientes){
-        await fetch(`/api/mesas/items/${it.id}/enviar`, { method:'PUT' });
+      for (const it of pendientes) {
+        await fetch(`/api/mesas/items/${it.id}/enviar`, { method: 'PUT' });
       }
       await cargarPedido(pedidoActual.id);
-      Swal.fire({icon:'success', title:'Enviado a cocina'});
-    }catch(err){
-      Swal.fire({icon:'error', title:'No se pudo enviar a cocina'});
+      Swal.fire({ icon: 'success', title: 'Enviado a cocina' });
+    } catch (err) {
+      Swal.fire({ icon: 'error', title: 'No se pudo enviar a cocina' });
     }
   });
 
   // Mover pedido a otra mesa (handler compartido)
-  async function handleMoverMesa(){
-    try{
+  async function handleMoverMesa() {
+    try {
       // Obtener mesas disponibles
       const resp = await fetch('/api/mesas/listar');
       const mesas = await resp.json();
-      const libres = mesas.filter(m => Number(m.pedidos_abiertos||0) === 0 && Number(m.id) !== Number(pedidoActual.mesa_id));
-      if(libres.length === 0){
-        return Swal.fire({ icon:'info', title:'No hay mesas libres' });
+      const libres = mesas.filter(m => Number(m.pedidos_abiertos || 0) === 0 && Number(m.id) !== Number(pedidoActual.mesa_id));
+      if (libres.length === 0) {
+        return Swal.fire({ icon: 'info', title: 'No hay mesas libres' });
       }
 
-      const options = libres.reduce((acc, m) => { acc[m.id] = `Mesa ${m.numero}${m.descripcion? ' - '+m.descripcion:''}`; return acc; }, {});
+      const options = libres.reduce((acc, m) => { acc[m.id] = `Mesa ${m.numero}${m.descripcion ? ' - ' + m.descripcion : ''}`; return acc; }, {});
       const { value: destino } = await runWithOffcanvasHidden(async () => {
-        return await Swal.fire({ title:'Mover a mesa', input:'select', inputOptions: options, inputPlaceholder:'Seleccione mesa destino', showCancelButton:true });
+        return await Swal.fire({ title: 'Mover a mesa', input: 'select', inputOptions: options, inputPlaceholder: 'Seleccione mesa destino', showCancelButton: true });
       });
-      if(!destino) return;
+      if (!destino) return;
 
-      const r = await fetch(`/api/mesas/pedidos/${pedidoActual.id}/mover`, { method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ mesa_destino_id: Number(destino) }) });
+      const r = await fetch(`/api/mesas/pedidos/${pedidoActual.id}/mover`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ mesa_destino_id: Number(destino) }) });
       const data = await r.json();
-      if(!r.ok) throw new Error(data.error||'No se pudo mover el pedido');
+      if (!r.ok) throw new Error(data.error || 'No se pudo mover el pedido');
 
       const mesaOrigenId = pedidoActual.mesa_id;
       const mesaSel = libres.find(m => m.id === Number(destino));
       const mesaOrigen = mesas.find(m => m.id === mesaOrigenId);
       pedidoActual.mesa_id = Number(destino);
       currentMesaEstado = 'ocupada';
-      if(mesaSel){ $('#pedidoMesa').text(mesaSel.numero); }
+      if (mesaSel) { $('#pedidoMesa').text(mesaSel.numero); }
       await cargarPedido(pedidoActual.id);
       const msg = mesaOrigen ? `El pedido pasó a la Mesa ${mesaSel?.numero || destino}. La Mesa ${mesaOrigen.numero} quedó libre.` : `Pedido movido a la Mesa ${mesaSel?.numero || destino}.`;
-      Swal.fire({ icon:'success', title:'Pedido movido', text: msg });
-    }catch(err){
-      Swal.fire({ icon:'error', title: err.message });
+      Swal.fire({ icon: 'success', title: 'Pedido movido', text: msg });
+    } catch (err) {
+      Swal.fire({ icon: 'error', title: err.message });
     }
   }
 
@@ -342,11 +342,50 @@ $(function() {
       mesas.forEach(m => {
         const card = document.querySelector(`.mesa-card[data-mesa-id="${m.id}"]`);
         if (!card) return;
-        const badge = card.querySelector('.estado-badge');
-        if (badge) {
-          badge.textContent = m.estado;
-          badge.classList.remove('bg-success','bg-warning','bg-secondary');
-          badge.classList.add(m.estado === 'libre' ? 'bg-success' : (m.estado === 'ocupada' ? 'bg-warning' : 'bg-secondary'));
+        const estadoAnterior = card.dataset.mesaEstado;
+        if (estadoAnterior === m.estado) return; // sin cambio, no tocar DOM
+
+        // 1. Actualizar data-attribute
+        card.dataset.mesaEstado = m.estado;
+
+        // 2. Clase de color en la card (borde superior)
+        card.classList.remove('libre', 'ocupada', 'reservada');
+        card.classList.add(m.estado);
+
+        // 3. Pill de estado: clase y texto
+        const pill = card.querySelector('.mesa-estado-pill');
+        if (pill) {
+          pill.classList.remove('pill-libre', 'pill-ocupada', 'pill-reservada');
+          pill.classList.add('pill-' + m.estado);
+          const texto = m.estado === 'libre' ? 'Libre' : (m.estado === 'ocupada' ? 'Ocupada' : 'Reservada');
+          pill.innerHTML = '<i class="bi bi-circle-fill" style="font-size:.5rem;"></i>' + texto;
+        }
+
+        // 4. Botón CTA (Abrir pedido / Editar pedido)
+        const btnCta = card.querySelector('.btnAbrirPedido');
+        if (btnCta) {
+          if (m.estado === 'libre') {
+            btnCta.className = 'btn btn-success btn-cta btnAbrirPedido';
+            btnCta.innerHTML = '<i class="bi bi-plus-circle me-1"></i>Abrir pedido';
+          } else {
+            btnCta.className = 'btn btn-warning btn-cta btnAbrirPedido';
+            btnCta.innerHTML = '<i class="bi bi-pencil-square me-1"></i>Editar pedido';
+          }
+        }
+
+        // 5. Botón Liberar: mostrar si ocupada, ocultar si libre
+        const btnLiberar = card.querySelector('.btnLiberarMesa');
+        if (m.estado === 'libre') {
+          if (btnLiberar) btnLiberar.remove();
+        } else if (!btnLiberar) {
+          const btnVer = card.querySelector('.btnVerPedido');
+          if (btnVer) {
+            const nuevoBtn = document.createElement('button');
+            nuevoBtn.className = 'btn btn-outline-secondary btn-sec flex-fill btnLiberarMesa';
+            nuevoBtn.title = 'Liberar mesa';
+            nuevoBtn.innerHTML = '<i class="bi bi-unlock me-1"></i>Liberar';
+            btnVer.insertAdjacentElement('afterend', nuevoBtn);
+          }
         }
       });
     } catch (_) { /* ignorar errores de red */ }
@@ -358,18 +397,18 @@ $(function() {
   refreshMesas();
 
   // Facturar pedido - Usa cliente predeterminado automáticamente
-  $('#btnFacturarPedido').on('click', async function(){
-    try{
-      if(!pedidoActual || !pedidoActual.id){
-        Swal.fire({icon:'error', title: 'No hay pedido activo'});
+  $('#btnFacturarPedido').on('click', async function () {
+    try {
+      if (!pedidoActual || !pedidoActual.id) {
+        Swal.fire({ icon: 'error', title: 'No hay pedido activo' });
         return;
       }
-      
-      if(items.length === 0){
-        Swal.fire({icon:'warning', title: 'El pedido no tiene items'});
+
+      if (items.length === 0) {
+        Swal.fire({ icon: 'warning', title: 'El pedido no tiene items' });
         return;
       }
-      
+
       // Calcular total del pedido con descuentos aplicados (temporales para esta venta) + propina
       let totalPedido = 0;
       items.forEach(it => {
@@ -379,38 +418,38 @@ $(function() {
         totalPedido += subtotal;
       });
       const totalConPropinaFacturar = totalPedido + propinaPedido;
-      
-      if(totalPedido <= 0){
-        Swal.fire({icon:'warning', title: 'El total del pedido es cero'});
+
+      if (totalPedido <= 0) {
+        Swal.fire({ icon: 'warning', title: 'El total del pedido es cero' });
         return;
       }
-      
+
       // Obtener cliente predeterminado automáticamente
       const cliente = await getOrCreateConsumidorFinal();
-      if(!cliente || !cliente.id){
-        Swal.fire({icon:'error', title: 'No se pudo obtener el cliente predeterminado'});
+      if (!cliente || !cliente.id) {
+        Swal.fire({ icon: 'error', title: 'No se pudo obtener el cliente predeterminado' });
         return;
       }
-      
+
       // Mostrar modal de pago (total incluye propina)
       await mostrarModalPago(totalConPropinaFacturar, cliente.id);
-    }catch(err){
-      Swal.fire({icon:'error', title: err.message});
+    } catch (err) {
+      Swal.fire({ icon: 'error', title: err.message });
     }
   });
-  
+
   // Función para mostrar modal de pago
-  async function mostrarModalPago(total, clienteId){
+  async function mostrarModalPago(total, clienteId) {
     const modal = new bootstrap.Modal(document.getElementById('modalPago'));
     let formaPagoSeleccionada = null;
     let montoRecibido = null;
-    
+
     // Actualizar total en modal
     $('#modalTotalPago').text(formatear(total));
-    
+
     // Generar denominaciones según el total
     generarDenominaciones(total);
-    
+
     // Resetear estado
     $('.payment-card').removeClass('selected');
     $('#panelEfectivo').hide();
@@ -418,14 +457,14 @@ $(function() {
     $('#btnConfirmarPago').prop('disabled', true);
     $('#montoManual').val('');
     $('#infoCambio').hide();
-    
+
     // Handlers para seleccionar tipo de pago
-    $('.payment-card').off('click').on('click', function(){
+    $('.payment-card').off('click').on('click', function () {
       $('.payment-card').removeClass('selected');
       $(this).addClass('selected');
       formaPagoSeleccionada = $(this).data('payment-type');
-      
-      if(formaPagoSeleccionada === 'efectivo'){
+
+      if (formaPagoSeleccionada === 'efectivo') {
         $('#panelEfectivo').slideDown();
         $('#panelTransferencia').slideUp();
         $('#btnConfirmarPago').prop('disabled', true);
@@ -436,9 +475,9 @@ $(function() {
         montoRecibido = total; // Transferencia siempre es el total exacto
       }
     });
-    
+
     // Handler para denominaciones
-    $('.denominacion-btn').off('click').on('click', function(){
+    $('.denominacion-btn').off('click').on('click', function () {
       $('.denominacion-btn').removeClass('selected');
       $(this).addClass('selected');
       montoRecibido = parseFloat($(this).data('valor'));
@@ -446,12 +485,12 @@ $(function() {
       calcularCambio(total, montoRecibido);
       $('#btnConfirmarPago').prop('disabled', false);
     });
-    
+
     // Handler para monto manual
-    function usarMontoManual(){
+    function usarMontoManual() {
       const valor = parseFloat($('#montoManual').val()) || 0;
-      if(valor < total){
-        Swal.fire({icon:'warning', title: 'El monto debe ser mayor o igual al total'});
+      if (valor < total) {
+        Swal.fire({ icon: 'warning', title: 'El monto debe ser mayor o igual al total' });
         return;
       }
       montoRecibido = valor;
@@ -459,12 +498,12 @@ $(function() {
       calcularCambio(total, valor);
       $('#btnConfirmarPago').prop('disabled', false);
     }
-    
-    $('#montoManual').off('input keypress').on('input', function(){
+
+    $('#montoManual').off('input keypress').on('input', function () {
       const valor = parseFloat($(this).val()) || 0;
-      if(valor > 0){
+      if (valor > 0) {
         $('.denominacion-btn').removeClass('selected');
-        if(valor >= total){
+        if (valor >= total) {
           calcularCambio(total, valor);
           montoRecibido = valor;
           $('#btnConfirmarPago').prop('disabled', false);
@@ -476,41 +515,41 @@ $(function() {
         $('#infoCambio').hide();
         $('#btnConfirmarPago').prop('disabled', true);
       }
-    }).on('keypress', function(e){
-      if(e.which === 13){ // Enter
+    }).on('keypress', function (e) {
+      if (e.which === 13) { // Enter
         e.preventDefault();
         usarMontoManual();
       }
     });
-    
+
     $('#btnUsarMontoManual').off('click').on('click', usarMontoManual);
-    
+
     // Handler para confirmar pago
-    $('#btnConfirmarPago').off('click').on('click', async function(){
-      if(!formaPagoSeleccionada){
-        Swal.fire({icon:'warning', title: 'Seleccione una forma de pago'});
+    $('#btnConfirmarPago').off('click').on('click', async function () {
+      if (!formaPagoSeleccionada) {
+        Swal.fire({ icon: 'warning', title: 'Seleccione una forma de pago' });
         return;
       }
-      
-      if(formaPagoSeleccionada === 'efectivo' && (!montoRecibido || montoRecibido < total)){
-        Swal.fire({icon:'warning', title: 'El monto recibido debe ser mayor o igual al total'});
+
+      if (formaPagoSeleccionada === 'efectivo' && (!montoRecibido || montoRecibido < total)) {
+        Swal.fire({ icon: 'warning', title: 'El monto recibido debe ser mayor o igual al total' });
         return;
       }
-      
+
       // Cerrar modal
       modal.hide();
-      
+
       // Mostrar loading
       Swal.fire({
         title: 'Generando factura...',
         allowOutsideClick: false,
         didOpen: () => Swal.showLoading()
       });
-      
-      try{
+
+      try {
         const resp = await fetch(`/api/mesas/pedidos/${pedidoActual.id}/facturar`, {
           method: 'POST',
-          headers: {'Content-Type': 'application/json'},
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             cliente_id: clienteId,
             forma_pago: formaPagoSeleccionada,
@@ -519,31 +558,31 @@ $(function() {
           })
         });
         const data = await resp.json();
-        if(!resp.ok) throw new Error(data.error || 'Error al facturar');
-        
+        if (!resp.ok) throw new Error(data.error || 'Error al facturar');
+
         // Cerrar loading inmediatamente
         Swal.close();
-        
+
         // Cerrar modal de pago y offcanvas de pedido; no abrir barra lateral de factura (evitar carga que se queda pegada)
         const modalPago = bootstrap.Modal.getInstance(document.getElementById('modalPago'));
-        if(modalPago) modalPago.hide();
+        if (modalPago) modalPago.hide();
         canvas.hide();
-        
+
         // Cerrar también el offcanvas de factura si estuviera abierto
         const facturaCanvasEl = document.getElementById('canvasFactura');
-        if(facturaCanvasEl && facturaCanvasEl.classList.contains('show')){
+        if (facturaCanvasEl && facturaCanvasEl.classList.contains('show')) {
           const facturaCanvas = bootstrap.Offcanvas.getInstance(facturaCanvasEl);
-          if(facturaCanvas) facturaCanvas.hide();
+          if (facturaCanvas) facturaCanvas.hide();
         }
-        
+
         pedidoActual = null;
         items = [];
         propinaPedido = 0;
         renderItems();
-        
+
         // Mensaje de éxito y quedarse en mesas
         let html = '<p><strong>Factura #' + (data.numero != null ? data.numero : data.factura_id) + '</strong> generada correctamente.</p>';
-        if(formaPagoSeleccionada === 'efectivo' && montoRecibido > total){
+        if (formaPagoSeleccionada === 'efectivo' && montoRecibido > total) {
           const cambio = montoRecibido - total;
           html += '<div class="text-start mt-2"><p><strong>Total:</strong> ' + formatear(total) + '</p><p><strong>Recibido:</strong> ' + formatear(montoRecibido) + '</p><p class="text-success fw-bold">Cambio: ' + formatear(cambio) + '</p></div>';
         }
@@ -553,24 +592,24 @@ $(function() {
           html: html,
           confirmButtonText: 'Cerrar'
         });
-      } catch(err){
-        Swal.fire({icon:'error', title: err.message});
+      } catch (err) {
+        Swal.fire({ icon: 'error', title: err.message });
       }
     });
-    
+
     modal.show();
   }
-  
+
   // Función para generar denominaciones según el total
-  function generarDenominaciones(total){
+  function generarDenominaciones(total) {
     const denominaciones = [10000, 20000, 50000, 100000, 200000, 500000];
     const container = $('#denominacionesContainer');
     container.empty();
-    
+
     // Filtrar denominaciones que sean mayores o iguales al total
     const disponibles = denominaciones.filter(d => d >= total);
-    
-    if(disponibles.length === 0){
+
+    if (disponibles.length === 0) {
       // Si el total es muy grande, mostrar solo la más grande
       container.html(`
         <div class="col-12">
@@ -591,10 +630,10 @@ $(function() {
       });
     }
   }
-  
+
   // Función para calcular cambio
-  function calcularCambio(total, recibido){
-    if(recibido < total){
+  function calcularCambio(total, recibido) {
+    if (recibido < total) {
       $('#infoCambio').hide();
       return;
     }
@@ -603,30 +642,30 @@ $(function() {
     $('#montoRecibido').text(formatear(recibido));
     $('#infoCambio').slideDown();
   }
-  
+
   // Función para mostrar factura en sidebar (optimizada para carga inmediata)
   // Hacerla global para poder llamarla desde onclick
-  window.mostrarFacturaEnSidebar = async function mostrarFacturaEnSidebar(facturaId, infoPago = null){
+  window.mostrarFacturaEnSidebar = async function mostrarFacturaEnSidebar(facturaId, infoPago = null) {
     const facturaCanvas = new bootstrap.Offcanvas(document.getElementById('canvasFactura'));
     const facturaFrame = document.getElementById('facturaFrame');
     const facturaLoading = document.getElementById('facturaLoading');
     const facturaNumero = document.getElementById('facturaNumero');
-    
+
     // Mostrar sidebar INMEDIATAMENTE (antes de cargar el iframe)
     facturaCanvas.show();
-    
+
     // Mostrar loading
     facturaLoading.style.display = 'flex';
-    
+
     // Actualizar número de factura
     facturaNumero.textContent = `#${facturaId}`;
-    
+
     // Si hay información de pago, mostrarla en el header
-    if(infoPago && infoPago.formaPago === 'efectivo' && infoPago.recibido > infoPago.total){
+    if (infoPago && infoPago.formaPago === 'efectivo' && infoPago.recibido > infoPago.total) {
       const cambio = infoPago.recibido - infoPago.total;
       // Puedes agregar un badge o texto adicional aquí si quieres
     }
-    
+
     try {
       const urlFactura = `/api/facturas/${facturaId}/imprimir`;
       const TIMEOUT_MS = 15000; // 15 segundos máximo
@@ -641,39 +680,39 @@ $(function() {
       });
 
       clearTimeout(timeoutId);
-      
-      if(!response.ok){
+
+      if (!response.ok) {
         const errorText = await response.text();
         console.error('Error en respuesta:', errorText);
         throw new Error(`Error ${response.status}: ${response.statusText}`);
       }
-      
+
       const html = await response.text();
-      
-      if(!html || html.length === 0){
+
+      if (!html || html.length === 0) {
         throw new Error('La factura está vacía');
       }
-      
+
       // Crear un blob URL para el iframe
       const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
       const blobUrl = URL.createObjectURL(blob);
-      
+
       console.log('Blob URL creado, cargando en iframe...');
-      
+
       // Cargar en iframe
       facturaFrame.src = blobUrl;
-      
-      function ocultarLoading(){
-        if(facturaLoading) facturaLoading.style.display = 'none';
+
+      function ocultarLoading() {
+        if (facturaLoading) facturaLoading.style.display = 'none';
       }
       facturaFrame.onload = ocultarLoading;
       // Fallback: ocultar loading siempre tras 800ms (por si onload no dispara con blob en algunos navegadores)
       setTimeout(ocultarLoading, 800);
       // Doble fallback a 2s por si hay demora en render del iframe
       setTimeout(ocultarLoading, 2000);
-      
+
       // Manejar errores de carga del iframe
-      facturaFrame.onerror = function(e){
+      facturaFrame.onerror = function (e) {
         console.error('Error en iframe:', e);
         facturaLoading.innerHTML = `
           <div class="text-center text-danger">
@@ -684,8 +723,8 @@ $(function() {
         `;
         URL.revokeObjectURL(blobUrl);
       };
-      
-    } catch(error) {
+
+    } catch (error) {
       console.error('Error al cargar factura:', error);
       const esTimeout = (error && error.name === 'AbortError') || (error.message && error.message.includes('abort'));
       const mensaje = esTimeout
@@ -701,13 +740,13 @@ $(function() {
         </div>
       `;
     }
-    
+
     // Handler para imprimir
-    $('#btnImprimirFactura').off('click').on('click', function(){
-      if(facturaFrame.contentWindow){
+    $('#btnImprimirFactura').off('click').on('click', function () {
+      if (facturaFrame.contentWindow) {
         try {
           facturaFrame.contentWindow.print();
-        } catch(e) {
+        } catch (e) {
           console.error('Error al imprimir:', e);
           Swal.fire({
             icon: 'warning',
@@ -717,10 +756,10 @@ $(function() {
         }
       }
     });
-    
+
     // Cuando se cierra el sidebar, limpiar iframe para liberar memoria
-    $('#canvasFactura').off('hidden.bs.offcanvas').on('hidden.bs.offcanvas', function(){
-      if(facturaFrame.src && facturaFrame.src.startsWith('blob:')){
+    $('#canvasFactura').off('hidden.bs.offcanvas').on('hidden.bs.offcanvas', function () {
+      if (facturaFrame.src && facturaFrame.src.startsWith('blob:')) {
         URL.revokeObjectURL(facturaFrame.src);
       }
       facturaFrame.src = 'about:blank';
@@ -739,30 +778,30 @@ $(function() {
   }
 
   // Ocultar temporalmente el panel lateral (offcanvas) durante modales para evitar bloquear copiar/pegar
-  async function runWithOffcanvasHidden(action){
+  async function runWithOffcanvasHidden(action) {
     const el = document.getElementById('canvasPedido');
     const wasOpen = el && el.classList.contains('show');
-    if(wasOpen){
-      try{ canvas.hide(); }catch(_){/* noop */}
+    if (wasOpen) {
+      try { canvas.hide(); } catch (_) {/* noop */ }
       // esperar a que termine animación
       await new Promise(r => setTimeout(r, 250));
     }
-    try{
+    try {
       const result = await action();
       return result;
     } finally {
-      if(wasOpen){
-        try{ canvas.show(); }catch(_){/* noop */}
+      if (wasOpen) {
+        try { canvas.show(); } catch (_) {/* noop */ }
       }
     }
   }
 
-  function buildPedidoResumenHtml(){
+  function buildPedidoResumenHtml() {
     let total = 0;
-    const rows = (items||[]).map(it => {
-      const cantidad = Number(it.cantidad||0);
-      const precio = Number((it.precio_unitario!=null?it.precio_unitario:it.precio)||0);
-      const subtotal = Number(it.subtotal!=null?it.subtotal:(cantidad*precio));
+    const rows = (items || []).map(it => {
+      const cantidad = Number(it.cantidad || 0);
+      const precio = Number((it.precio_unitario != null ? it.precio_unitario : it.precio) || 0);
+      const subtotal = Number(it.subtotal != null ? it.subtotal : (cantidad * precio));
       total += subtotal;
       const nombre = it.producto_nombre || it.nombre || '';
       return `<tr><td>${nombre}</td><td class="text-end">${cantidad}</td><td class="text-end">$${subtotal.toLocaleString('es-CO')}</td></tr>`;
@@ -778,30 +817,30 @@ $(function() {
   }
 
   // -- Helpers de cliente: búsqueda por nombre con default "Consumidor final" --
-  async function getOrCreateConsumidorFinal(){
+  async function getOrCreateConsumidorFinal() {
     // Buscar por nombre
-    try{
+    try {
       const r = await fetch('/api/clientes/buscar?q=consumidor%20final');
       const list = await r.json();
-      const cf = list.find(c => (c.nombre||'').toLowerCase() === 'consumidor final');
-      if(cf) return cf;
-    }catch(_){/* noop */}
+      const cf = list.find(c => (c.nombre || '').toLowerCase() === 'consumidor final');
+      if (cf) return cf;
+    } catch (_) {/* noop */ }
     // Crear si no existe
-    try{
-      const r = await fetch('/api/clientes', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ nombre: 'Consumidor final' }) });
-      if(r.ok){ const cf = await r.json(); return { id: cf.id, nombre: 'Consumidor final' }; }
-    }catch(_){/* noop */}
+    try {
+      const r = await fetch('/api/clientes', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ nombre: 'Consumidor final' }) });
+      if (r.ok) { const cf = await r.json(); return { id: cf.id, nombre: 'Consumidor final' }; }
+    } catch (_) {/* noop */ }
     // Último recurso: retornar marcador para evitar bloqueo
     return { id: null, nombre: 'Consumidor final' };
   }
 
-  async function buscarClientesPorNombre(q){
+  async function buscarClientesPorNombre(q) {
     const resp = await fetch(`/api/clientes/buscar?q=${encodeURIComponent(q)}`);
-    if(!resp.ok) return [];
+    if (!resp.ok) return [];
     return await resp.json();
   }
 
-  async function seleccionarClienteConBusqueda(){
+  async function seleccionarClienteConBusqueda() {
     const defaultCliente = await getOrCreateConsumidorFinal();
     let seleccionado = defaultCliente;
     // Bucle para permitir crear cliente y luego usarlo
@@ -809,7 +848,7 @@ $(function() {
     // Tras crear, retornamos el nuevo cliente directamente
     // Diseño con buscador y lista, y default Consumidor final
     /* eslint no-constant-condition: 0 */
-    while(true){
+    while (true) {
       const result = await Swal.fire({
         title: 'Seleccionar cliente',
         html: `
@@ -831,7 +870,7 @@ $(function() {
           const $list = document.getElementById('resultadosClientesMesa');
           // Permitir copiar/pegar sin interferencia de atajos globales
           const allowClipboard = (el) => {
-            ['keydown','keyup','keypress','paste','copy','cut','contextmenu'].forEach(evt => {
+            ['keydown', 'keyup', 'keypress', 'paste', 'copy', 'cut', 'contextmenu'].forEach(evt => {
               el.addEventListener(evt, (e) => {
                 e.stopPropagation(); // no afectar por manejadores globales
               });
@@ -843,14 +882,14 @@ $(function() {
           const li = document.createElement('a');
           li.href = '#'; li.className = 'list-group-item list-group-item-action active';
           li.textContent = `${seleccionado.nombre} (predeterminado)`;
-          li.onclick = (e)=>{ e.preventDefault(); marcarSeleccion(li, seleccionado); };
+          li.onclick = (e) => { e.preventDefault(); marcarSeleccion(li, seleccionado); };
           $list.appendChild(li);
 
           // Toggle resumen
           const btnRes = document.getElementById('btnToggleResumen');
           const contRes = document.getElementById('contenedorResumen');
-          if(btnRes && contRes){
-            btnRes.addEventListener('click', ()=>{
+          if (btnRes && contRes) {
+            btnRes.addEventListener('click', () => {
               const visible = contRes.style.display !== 'none';
               contRes.style.display = visible ? 'none' : 'block';
               btnRes.classList.toggle('active', !visible);
@@ -859,18 +898,18 @@ $(function() {
           }
 
           let to;
-          function marcarSeleccion(el, cliente){
+          function marcarSeleccion(el, cliente) {
             seleccionado = cliente;
-            document.querySelectorAll('#resultadosClientesMesa .list-group-item').forEach(x=>x.classList.remove('active'));
+            document.querySelectorAll('#resultadosClientesMesa .list-group-item').forEach(x => x.classList.remove('active'));
             el.classList.add('active');
             document.getElementById('cfNombre').textContent = cliente.nombre;
           }
-          async function doSearch(){
-            const q = ($input.value||'').trim();
-            if(q.length < 2){ return; }
+          async function doSearch() {
+            const q = ($input.value || '').trim();
+            if (q.length < 2) { return; }
             const res = await buscarClientesPorNombre(q);
             $list.innerHTML = '';
-            if(res.length === 0){
+            if (res.length === 0) {
               const empty = document.createElement('div');
               empty.className = 'list-group-item text-muted';
               empty.textContent = 'Sin resultados';
@@ -880,16 +919,16 @@ $(function() {
             res.forEach(c => {
               const a = document.createElement('a');
               a.href = '#'; a.className = 'list-group-item list-group-item-action';
-              a.innerHTML = `<div><strong>${c.nombre}</strong></div><div class="small text-muted">${c.telefono||''} ${c.direccion? '• '+c.direccion:''}</div>`;
-              a.onclick = (e)=>{ e.preventDefault(); marcarSeleccion(a, c); };
+              a.innerHTML = `<div><strong>${c.nombre}</strong></div><div class="small text-muted">${c.telefono || ''} ${c.direccion ? '• ' + c.direccion : ''}</div>`;
+              a.onclick = (e) => { e.preventDefault(); marcarSeleccion(a, c); };
               $list.appendChild(a);
             });
           }
-          $input.addEventListener('input', ()=>{ clearTimeout(to); to = setTimeout(doSearch, 250); });
+          $input.addEventListener('input', () => { clearTimeout(to); to = setTimeout(doSearch, 250); });
         }
       });
 
-      if(result.isDenied){
+      if (result.isDenied) {
         // Crear cliente nuevo
         const nuevo = await Swal.fire({
           title: 'Nuevo cliente',
@@ -913,10 +952,10 @@ $(function() {
           confirmButtonText: 'Guardar',
           didOpen: () => {
             // Permitir copiar/pegar en todos los inputs del modal
-            ['nuevoCliNombre','nuevoCliTel','nuevoCliDir'].forEach(id => {
+            ['nuevoCliNombre', 'nuevoCliTel', 'nuevoCliDir'].forEach(id => {
               const el = document.getElementById(id);
-              if(!el) return;
-              ['keydown','keyup','keypress','paste','copy','cut','contextmenu'].forEach(evt => {
+              if (!el) return;
+              ['keydown', 'keyup', 'keypress', 'paste', 'copy', 'cut', 'contextmenu'].forEach(evt => {
                 el.addEventListener(evt, (e) => {
                   e.stopPropagation();
                 });
@@ -924,30 +963,30 @@ $(function() {
             });
           },
           preConfirm: () => {
-            const nombre = (document.getElementById('nuevoCliNombre').value||'').trim();
-            const telefono = (document.getElementById('nuevoCliTel').value||'').trim();
-            const direccion = (document.getElementById('nuevoCliDir').value||'').trim();
-            if(!nombre){
+            const nombre = (document.getElementById('nuevoCliNombre').value || '').trim();
+            const telefono = (document.getElementById('nuevoCliTel').value || '').trim();
+            const direccion = (document.getElementById('nuevoCliDir').value || '').trim();
+            if (!nombre) {
               Swal.showValidationMessage('El nombre es requerido');
               return false;
             }
             return { nombre, telefono, direccion };
           }
         });
-        if(nuevo.isConfirmed){
+        if (nuevo.isConfirmed) {
           const body = nuevo.value;
-          try{
-            const resp = await fetch('/api/clientes', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) });
-            if(!resp.ok){
+          try {
+            const resp = await fetch('/api/clientes', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+            if (!resp.ok) {
               const e = await resp.json();
               throw new Error(e.error || 'Error al crear cliente');
             }
             const data = await resp.json();
             const creado = { id: data.id, nombre: body.nombre, telefono: body.telefono, direccion: body.direccion };
-            await Swal.fire({ icon:'success', title:'Cliente creado' });
+            await Swal.fire({ icon: 'success', title: 'Cliente creado' });
             return creado;
-          }catch(err){
-            await Swal.fire({ icon:'error', title: err.message||'Error al crear cliente' });
+          } catch (err) {
+            await Swal.fire({ icon: 'error', title: err.message || 'Error al crear cliente' });
             continue; // volver al selector
           }
         } else {
@@ -955,7 +994,7 @@ $(function() {
         }
       }
 
-      if(result.isConfirmed){
+      if (result.isConfirmed) {
         return seleccionado;
       }
       // Cancelado
@@ -965,56 +1004,56 @@ $(function() {
 
   // Clicks en tarjetas de mesa
   let currentMesaEstado = null;
-  $('#gridMesas').on('click', '.btnAbrirPedido', function(){
+  $('#gridMesas').on('click', '.btnAbrirPedido', function () {
     const card = $(this).closest('.card');
     const mesaId = card.data('mesa-id');
-    const titulo = card.find('.card-title').text().replace('Mesa ','');
+    const titulo = card.find('.card-title').text().replace('Mesa ', '');
     currentMesaEstado = card.data('mesa-estado') || 'libre';
     abrirPedido(mesaId, titulo);
   });
 
   // Liberar mesa desde tarjeta
-  $('#gridMesas').on('click', '.btnLiberarMesa', async function(){
+  $('#gridMesas').on('click', '.btnLiberarMesa', async function () {
     const card = $(this).closest('.card');
     const mesaId = card.data('mesa-id');
     const mesaNum = card.find('.card-title').text().replace('Mesa ', '');
-    const ok = await Swal.fire({ title:`Liberar mesa ${mesaNum}?`, text:'Solo si no tiene items activos', icon:'warning', showCancelButton:true, confirmButtonText:'Sí, liberar' });
-    if(!ok.isConfirmed) return;
-    try{
-      const r = await fetch(`/api/mesas/${mesaId}/liberar`, { method:'PUT' });
+    const ok = await Swal.fire({ title: `Liberar mesa ${mesaNum}?`, text: 'Solo si no tiene items activos', icon: 'warning', showCancelButton: true, confirmButtonText: 'Sí, liberar' });
+    if (!ok.isConfirmed) return;
+    try {
+      const r = await fetch(`/api/mesas/${mesaId}/liberar`, { method: 'PUT' });
       const data = await r.json();
-      if(!r.ok) throw new Error(data.error||'No se pudo liberar');
-      Swal.fire({ icon:'success', title:'Mesa liberada' }).then(()=> location.reload());
-    }catch(err){
-      Swal.fire({ icon:'error', title: err.message });
+      if (!r.ok) throw new Error(data.error || 'No se pudo liberar');
+      Swal.fire({ icon: 'success', title: 'Mesa liberada' }).then(() => location.reload());
+    } catch (err) {
+      Swal.fire({ icon: 'error', title: err.message });
     }
   });
 
   // Liberar desde header del offcanvas
-  $('#btnLiberarMesaHeader').on('click', async function(){
-    const ok = await Swal.fire({ title:`Liberar mesa ${$('#pedidoMesa').text()}?`, text:'Solo si no tiene items activos', icon:'warning', showCancelButton:true, confirmButtonText:'Sí, liberar' });
-    if(!ok.isConfirmed) return;
-    try{
-      const r = await fetch(`/api/mesas/${pedidoActual.mesa_id}/liberar`, { method:'PUT' });
+  $('#btnLiberarMesaHeader').on('click', async function () {
+    const ok = await Swal.fire({ title: `Liberar mesa ${$('#pedidoMesa').text()}?`, text: 'Solo si no tiene items activos', icon: 'warning', showCancelButton: true, confirmButtonText: 'Sí, liberar' });
+    if (!ok.isConfirmed) return;
+    try {
+      const r = await fetch(`/api/mesas/${pedidoActual.mesa_id}/liberar`, { method: 'PUT' });
       const data = await r.json();
-      if(!r.ok) throw new Error(data.error||'No se pudo liberar');
-      Swal.fire({ icon:'success', title:'Mesa liberada' }).then(()=> location.reload());
-    }catch(err){
-      Swal.fire({ icon:'error', title: err.message });
+      if (!r.ok) throw new Error(data.error || 'No se pudo liberar');
+      Swal.fire({ icon: 'success', title: 'Mesa liberada' }).then(() => location.reload());
+    } catch (err) {
+      Swal.fire({ icon: 'error', title: err.message });
     }
   });
 
   // Ver pedido: reutiliza abrirPedido (recupera si existe, o crea si no)
-  $('#gridMesas').on('click', '.btnVerPedido', function(){
+  $('#gridMesas').on('click', '.btnVerPedido', function () {
     const card = $(this).closest('.card');
     const mesaId = card.data('mesa-id');
-    const titulo = card.find('.card-title').text().replace('Mesa ','');
+    const titulo = card.find('.card-title').text().replace('Mesa ', '');
     currentMesaEstado = card.data('mesa-estado') || 'libre';
     abrirPedido(mesaId, titulo);
   });
 
   // Editar mesa (número y descripción)
-  $('#gridMesas').on('click', '.btnEditarMesa', async function(){
+  $('#gridMesas').on('click', '.btnEditarMesa', async function () {
     const card = $(this).closest('.card');
     const mesaId = card.data('mesa-id');
     const numeroActual = $(this).data('mesa-numero');
@@ -1051,14 +1090,14 @@ $(function() {
   });
 
   // Crear nueva mesa (rápida) - descripción obligatoria
-  $('#btnNuevaMesa').on('click', async function(){
-    const { value: numero } = await Swal.fire({ title:'Número de mesa', input:'text', showCancelButton:true, inputValidator: v => !v?.trim() ? 'El número es obligatorio' : null });
-    if(!numero) return;
-    const { value: descripcion } = await Swal.fire({ title:'Descripción (ubicación o nombre)', input:'text', showCancelButton:true, inputValidator: v => !v?.trim() ? 'La descripción es obligatoria (ej: Terraza, Interior)' : null });
-    if(!descripcion) return;
-    const resp = await fetch('/api/mesas/crear', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ numero, descripcion: descripcion.trim() }) });
-    if(!resp.ok){ const err = await resp.json(); return Swal.fire({icon:'error', title: err.error||'Error'}); }
-    Swal.fire({icon:'success', title:'Mesa creada'}).then(()=> location.reload());
+  $('#btnNuevaMesa').on('click', async function () {
+    const { value: numero } = await Swal.fire({ title: 'Número de mesa', input: 'text', showCancelButton: true, inputValidator: v => !v?.trim() ? 'El número es obligatorio' : null });
+    if (!numero) return;
+    const { value: descripcion } = await Swal.fire({ title: 'Descripción (ubicación o nombre)', input: 'text', showCancelButton: true, inputValidator: v => !v?.trim() ? 'La descripción es obligatoria (ej: Terraza, Interior)' : null });
+    if (!descripcion) return;
+    const resp = await fetch('/api/mesas/crear', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ numero, descripcion: descripcion.trim() }) });
+    if (!resp.ok) { const err = await resp.json(); return Swal.fire({ icon: 'error', title: err.error || 'Error' }); }
+    Swal.fire({ icon: 'success', title: 'Mesa creada' }).then(() => location.reload());
   });
 });
 
