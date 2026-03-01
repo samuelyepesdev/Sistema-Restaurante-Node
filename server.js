@@ -35,7 +35,7 @@ app.set('views', path.join(__dirname, 'views'));
 app.use(cookieParser());
 
 // Aumentar el límite de tamaño del cuerpo de la petición
-app.use(express.json({limit: '50mb'}));
+app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
 // Middleware de autenticación y tenant (requeridos antes de optionalAuth y planes)
@@ -55,6 +55,9 @@ app.use(async (req, res, next) => {
     }
     next();
 });
+// Pre-computa variables del navbar (evita lógica en EJS que el IDE puede romper)
+const navbarLocals = require('./middleware/navbarLocals');
+app.use(navbarLocals);
 
 // Configuración de archivos estáticos
 app.use('/static', express.static(path.join(__dirname, 'public')));
@@ -190,9 +193,9 @@ app.use((req, res, next) => {
 // Manejo de errores generales
 app.use((err, req, res, next) => {
     console.error('Error en la aplicación:', err);
-    
+
     if (req.xhr || (req.headers.accept && req.headers.accept.indexOf('json') > -1)) {
-        res.status(500).json({ 
+        res.status(500).json({
             error: 'Error interno del servidor',
             message: process.env.NODE_ENV === 'development' ? err.message : 'Error interno'
         });
@@ -215,7 +218,7 @@ async function startServer() {
         const connection = await db.getConnection();
         connection.release();
         console.log('Conexión exitosa a la base de datos');
-        
+
         // Iniciar el servidor solo si la conexión a la base de datos es exitosa
         const server = app.listen(PORT, '0.0.0.0', () => {
             console.log(`Servidor corriendo en http://localhost:${PORT} (LAN habilitada)`);

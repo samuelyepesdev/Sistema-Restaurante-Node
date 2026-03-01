@@ -1,0 +1,3 @@
+# Excluir archivos EJS del formateo automático
+# (el formateador rompe los bloques <% %> al indentarlos)
+views/**/*.ejs
