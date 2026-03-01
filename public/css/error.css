@@ -1,0 +1,41 @@
+/* ========================================
+   error.css — extraído de error.ejs
+   ======================================== */
+
+body {
+            background-color: #f8f9fa;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .error-container {
+            text-align: center;
+            padding: 2rem;
+            max-width: 600px;
+        }
+        .error-icon {
+            font-size: 5rem;
+            color: #dc3545;
+            margin-bottom: 1rem;
+        }
+        .error-title {
+            font-size: 2rem;
+            color: #343a40;
+            margin-bottom: 1rem;
+        }
+        .error-message {
+            font-size: 1.1rem;
+            color: #6c757d;
+            margin-bottom: 1rem;
+        }
+        .error-details {
+            background-color: #f1f3f5;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            margin-bottom: 2rem;
+            text-align: left;
+            font-family: monospace;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }

@@ -1,0 +1,17 @@
+/* ========================================
+   analitica.css — extraído de analitica.ejs
+   ======================================== */
+
+body { background: linear-gradient(180deg, #f0f4f8 0%, #e2e8f0 100%); min-height: 100vh; }
+        .analitica-header { background: linear-gradient(135deg, #4f46e5 0%, #6366f1 100%); color: #fff; border-radius: 16px; padding: 1.5rem 2rem; margin-bottom: 1.5rem; box-shadow: 0 4px 20px rgba(79,70,229,0.3); }
+        .card-analitica { border: none; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.06); margin-bottom: 1.5rem; }
+        .card-analitica .card-header { background: #fff; border-bottom: 2px solid #e2e8f0; font-weight: 600; padding: 1rem 1.25rem; border-radius: 16px 16px 0 0; }
+        .nav-tabs .nav-link { border: none; color: #64748b; font-weight: 500; padding: 0.75rem 1.25rem; }
+        .nav-tabs .nav-link.active { color: #4f46e5; border-bottom: 3px solid #4f46e5; background: transparent; }
+        .kpi-box { background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%); border-radius: 12px; padding: 1.25rem; text-align: center; }
+        .kpi-box .valor { font-size: 1.75rem; font-weight: 700; color: #1e293b; }
+        .kpi-box .label { font-size: 0.85rem; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 0.25rem; }
+        .prediccion-destacado { background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%); border: 1px solid #a7f3d0; border-radius: 12px; padding: 1.5rem; }
+        .prediccion-destacado .valor { color: #047857; font-size: 2rem; font-weight: 700; }
+        .rango-variacion { background: #fef3c7; border-radius: 8px; padding: 0.75rem 1rem; font-size: 0.9rem; }
+        .table-meses thead th { background: #f8fafc; font-weight: 600; color: #475569; }

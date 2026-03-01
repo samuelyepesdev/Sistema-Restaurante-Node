@@ -1,0 +1,209 @@
+/* ========================================
+   ventas.css — extraído de ventas.ejs
+   ======================================== */
+
+body {
+            background-color: #f8f9fa;
+        }
+        .navbar {
+            background-color: #2c3e50;
+            box-shadow: 0 2px 4px rgba(0,0,0,.1);
+        }
+        .navbar-brand {
+            color: white !important;
+            font-weight: bold;
+        }
+        .card {
+            border: none;
+            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.05);
+            margin-bottom: 1.5rem;
+        }
+        .card-header {
+            background-color: #fff;
+            border-bottom: 2px solid #f8f9fa;
+            font-weight: 600;
+        }
+        .search-box {
+            max-width: 300px;
+        }
+        .table th {
+            border-top: none;
+        }
+        .tfoot-desktop {
+            border-top: 2px solid #dee2e6;
+        }
+        .tfoot-desktop tr:last-child td {
+            border-bottom: none;
+        }
+        /* En PC mostramos cards de totales; ocultamos el tfoot de la tabla */
+        @media (min-width: 992px) {
+            .tfoot-desktop {
+                display: none !important;
+            }
+        }
+        .resumen-cards-desktop .card-total {
+            border: none;
+            border-radius: 0.5rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            transition: box-shadow 0.2s ease;
+        }
+        .resumen-cards-desktop .card-total:hover {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        }
+        .resumen-cards-desktop .card-total .card-body {
+            padding: 1rem 1.25rem;
+        }
+        .resumen-cards-desktop .card-total .total-label {
+            font-size: 0.875rem;
+            color: #6c757d;
+            font-weight: 600;
+        }
+        .resumen-cards-desktop .card-total .total-value {
+            font-size: 1.35rem;
+            font-weight: 700;
+        }
+        .resumen-cards-desktop .card-total.card-general .total-value {
+            color: #0d6efd;
+        }
+        .action-buttons .btn {
+            padding: 0.25rem 0.5rem;
+        }
+        .date-filter {
+            max-width: 200px;
+        }
+        .table-container {
+            max-height: calc(100vh - 300px);
+            overflow-y: auto;
+        }
+        /* Estilo para las alertas personalizadas */
+        .custom-alert {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+            min-width: 300px;
+            padding: 15px 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            animation: slideIn 0.3s ease-out;
+        }
+        .custom-alert.success {
+            background-color: #d4edda;
+            border-left: 4px solid #28a745;
+            color: #155724;
+        }
+        .custom-alert.error {
+            background-color: #f8d7da;
+            border-left: 4px solid #dc3545;
+            color: #721c24;
+        }
+        .custom-alert.warning {
+            background-color: #fff3cd;
+            border-left: 4px solid #ffc107;
+            color: #856404;
+        }
+        @keyframes slideIn {
+            from { transform: translateX(100%); }
+            to { transform: translateX(0); }
+        }
+        @media (max-width: 991px) {
+            .card-header .row .col-md-3 {
+                flex: 0 0 100%;
+                max-width: 100%;
+            }
+            .card-body .table-container {
+                max-height: none;
+            }
+            .table thead {
+                display: none;
+            }
+            .table tbody tr {
+                display: block;
+                margin-bottom: 1rem;
+                padding: 1rem;
+                background: #fff;
+                border-radius: 12px;
+                box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+                border: 1px solid #e9ecef;
+            }
+            .table tbody td {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 0.4rem 0;
+                border-top: none;
+                gap: 0.5rem;
+            }
+            .table tbody td::before {
+                content: attr(data-label);
+                font-weight: 600;
+                color: #495057;
+                font-size: 0.875rem;
+                flex-shrink: 0;
+            }
+            .table tbody td[data-label="Acciones"] {
+                padding-top: 0.75rem;
+                margin-top: 0.25rem;
+                border-top: 1px solid #e9ecef;
+                justify-content: center;
+            }
+            .table tbody td[data-label="Acciones"]::before {
+                display: none;
+            }
+            .table tbody td .d-flex {
+                justify-content: center;
+                margin-left: 0;
+                flex-wrap: wrap;
+                gap: 0.5rem;
+            }
+            .table tbody td .btn {
+                padding: 0.4rem 0.75rem;
+                min-width: 2.5rem;
+            }
+            .table .tfoot-desktop {
+                display: none !important;
+            }
+            .card .row.g-3 .col-md-4 {
+                flex: 0 0 100%;
+                max-width: 100%;
+            }
+            .card:not(.no-card-dark) {
+                background-color: #e2e8f0;
+                border-color: #cbd5e0;
+                box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            }
+            .card .card-body {
+                padding: 1rem;
+            }
+        }
+        @media (min-width: 992px) {
+            .resumen-totales {
+                display: none !important;
+            }
+        }
+        /* Resumen totales: una fila por total en móvil (sin partir "Total Transferencia"), alineado en tablet */
+        .resumen-totales .resumen-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.65rem 0;
+            border-bottom: 1px solid rgba(0,0,0,0.1);
+            gap: 0.75rem;
+        }
+        .resumen-totales .resumen-item:last-child {
+            border-bottom-width: 2px;
+            border-bottom-color: rgba(0,0,0,0.2);
+        }
+        .resumen-totales .resumen-item .resumen-label {
+            white-space: nowrap;
+            font-weight: 600;
+            color: #495057;
+        }
+        .resumen-totales .resumen-item .resumen-value {
+            font-weight: 700;
+            text-align: right;
+            flex-shrink: 0;
+        }
