@@ -22,12 +22,12 @@ class FormManager {
             resetFields: config.resetFields || [],
             ...config
         };
-        
+
         this.modal = null;
         this.form = null;
         this.isEditMode = false;
         this.currentId = null;
-        
+
         this.init();
     }
 
@@ -43,7 +43,7 @@ class FormManager {
 
         this.modal = new bootstrap.Modal(modalElement);
         this.form = document.getElementById(this.config.formId);
-        
+
         if (!this.form) {
             console.error(`Form element not found: ${this.config.formId}`);
             return;
@@ -75,7 +75,7 @@ class FormManager {
         this.form.reset();
         this.isEditMode = false;
         this.currentId = null;
-        
+
         if (this.config.titleElementId) {
             const titleElement = document.getElementById(this.config.titleElementId);
             if (titleElement) {
@@ -107,7 +107,7 @@ class FormManager {
     async showEdit(id) {
         this.isEditMode = true;
         this.currentId = id;
-        
+
         if (this.config.titleElementId) {
             const titleElement = document.getElementById(this.config.titleElementId);
             if (titleElement) {
@@ -131,8 +131,23 @@ class FormManager {
             return;
         }
 
-        if (this.config.onSubmit) {
-            await this.config.onSubmit(this.getFormData(), this.isEditMode, this.currentId, this);
+        const submitButton = document.getElementById(this.config.submitButtonId);
+        const originalHtml = submitButton ? submitButton.innerHTML : null;
+
+        if (submitButton) {
+            submitButton.disabled = true;
+            submitButton.innerHTML = '<span class="spinner-border spinner-border-sm me-1" style="width:.85em;height:.85em;border-width:2px;" role="status"></span>Guardando...';
+        }
+
+        try {
+            if (this.config.onSubmit) {
+                await this.config.onSubmit(this.getFormData(), this.isEditMode, this.currentId, this);
+            }
+        } finally {
+            if (submitButton && document.body.contains(submitButton)) {
+                submitButton.disabled = false;
+                if (originalHtml !== null) submitButton.innerHTML = originalHtml;
+            }
         }
     }
 

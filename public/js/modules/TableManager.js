@@ -34,23 +34,36 @@ class TableManager {
         if (!this.tableBody) return;
 
         // Delegate edit/delete actions
-        this.tableBody.addEventListener('click', (e) => {
+        this.tableBody.addEventListener('click', async (e) => {
             const button = e.target.closest('button[data-action]');
             if (!button) return;
 
             const action = button.getAttribute('data-action');
-            const id = button.getAttribute('data-id') || 
-                      button.getAttribute('data-cliente-id') || 
-                      button.getAttribute('data-producto-id');
+            const id = button.getAttribute('data-id') ||
+                button.getAttribute('data-cliente-id') ||
+                button.getAttribute('data-producto-id');
 
             if (!id) return;
 
-            if (action === 'editar' && this.config.onEdit) {
-                this.config.onEdit(id);
-            } else if (action === 'eliminar' && this.config.onDelete) {
-                this.config.onDelete(id);
-            } else if (action === 'costeo' && this.config.onCosteo) {
-                this.config.onCosteo(id);
+            // Bloquear botón durante la acción para evitar doble click
+            const originalHtml = button.innerHTML;
+            button.disabled = true;
+            button.innerHTML = '<span class="spinner-border spinner-border-sm" style="width:.8em;height:.8em;border-width:2px;" role="status"></span>';
+
+            try {
+                if (action === 'editar' && this.config.onEdit) {
+                    await this.config.onEdit(id);
+                } else if (action === 'eliminar' && this.config.onDelete) {
+                    await this.config.onDelete(id);
+                } else if (action === 'costeo' && this.config.onCosteo) {
+                    await this.config.onCosteo(id);
+                }
+            } finally {
+                // Restaurar si el botón sigue en el DOM
+                if (document.body.contains(button)) {
+                    button.disabled = false;
+                    button.innerHTML = originalHtml;
+                }
             }
         });
     }
@@ -61,7 +74,7 @@ class TableManager {
      */
     filterRows(matchFunction) {
         if (!this.tableBody) return;
-        
+
         const rows = this.tableBody.querySelectorAll('tr');
         rows.forEach(row => {
             const matches = matchFunction(row);
@@ -74,7 +87,7 @@ class TableManager {
      */
     clearFilters() {
         if (!this.tableBody) return;
-        
+
         const rows = this.tableBody.querySelectorAll('tr');
         rows.forEach(row => {
             row.style.display = '';
