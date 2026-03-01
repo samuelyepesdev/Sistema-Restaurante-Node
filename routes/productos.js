@@ -22,7 +22,7 @@ router.get('/', async (req, res) => {
         const recetas = await RecetaService.list(tenantId).catch(() => []);
         const recetasPorProducto = {};
         (recetas || []).forEach(r => { recetasPorProducto[r.producto_id] = r; });
-        res.render('productos', { 
+        res.render('productos', {
             productos: productos || [],
             categorias: categorias || [],
             recetasPorProducto: recetasPorProducto || {},
@@ -32,7 +32,7 @@ router.get('/', async (req, res) => {
         });
     } catch (error) {
         console.error('Error al obtener productos:', error);
-        res.status(500).render('error', { 
+        res.status(500).render('error', {
             error: {
                 message: 'Error al obtener productos',
                 stack: error.stack
@@ -138,7 +138,7 @@ router.put('/:id', async (req, res) => {
     }
 });
 
-// DELETE /productos/:id - Delete product (del tenant)
+// DELETE /productos/:id
 router.delete('/:id', async (req, res) => {
     try {
         const tenantId = req.tenant?.id;
@@ -150,17 +150,18 @@ router.delete('/:id', async (req, res) => {
         if (error.message === 'Producto no encontrado') {
             return res.status(404).json({ error: error.message });
         }
-        res.status(500).json({ error: 'Error al eliminar producto' });
+        // Incluye mensajes de FK o cualquier error del servicio
+        res.status(500).json({ error: error.message || 'Error al eliminar producto' });
     }
 });
 
 // GET /productos/plantilla - Download Excel template (plan Pro: plantillas + permiso plantillas.ver)
 router.get('/plantilla', requirePermission('plantillas.ver'), requirePlanFeature('plantillas'), async (req, res) => {
     try {
-        try { 
-            ExcelJS = ExcelJS || require('exceljs'); 
-        } catch (e) { 
-            return res.status(500).send('Instale exceljs para generar la plantilla'); 
+        try {
+            ExcelJS = ExcelJS || require('exceljs');
+        } catch (e) {
+            return res.status(500).send('Instale exceljs para generar la plantilla');
         }
 
         const wb = new ExcelJS.Workbook();
@@ -193,46 +194,46 @@ router.get('/plantilla', requirePermission('plantillas.ver'), requirePlanFeature
         table.addRow({ codigo: 'P003', nombre: 'Bandeja Paisa', categoria: 'Comidas', precio_unidad: 25000 });
 
         // Validations
-        table.dataValidations.add('A2:A1048576', { 
-            type: 'textLength', 
-            operator: 'greaterThan', 
-            formulae: [0], 
-            allowBlank: false, 
-            showErrorMessage: true, 
-            errorTitle: 'Código requerido', 
-            error: 'Ingrese un código' 
+        table.dataValidations.add('A2:A1048576', {
+            type: 'textLength',
+            operator: 'greaterThan',
+            formulae: [0],
+            allowBlank: false,
+            showErrorMessage: true,
+            errorTitle: 'Código requerido',
+            error: 'Ingrese un código'
         });
-        table.dataValidations.add('B2:B1048576', { 
-            type: 'textLength', 
-            operator: 'greaterThan', 
-            formulae: [0], 
-            allowBlank: false, 
-            showErrorMessage: true, 
-            errorTitle: 'Nombre requerido', 
-            error: 'Ingrese el nombre' 
+        table.dataValidations.add('B2:B1048576', {
+            type: 'textLength',
+            operator: 'greaterThan',
+            formulae: [0],
+            allowBlank: false,
+            showErrorMessage: true,
+            errorTitle: 'Nombre requerido',
+            error: 'Ingrese el nombre'
         });
-        table.dataValidations.add('C2:C1048576', { 
-            type: 'textLength', 
-            operator: 'greaterThan', 
-            formulae: [0], 
-            allowBlank: false, 
-            showErrorMessage: true, 
-            errorTitle: 'Categoría requerida', 
-            error: 'Ingrese una categoría' 
+        table.dataValidations.add('C2:C1048576', {
+            type: 'textLength',
+            operator: 'greaterThan',
+            formulae: [0],
+            allowBlank: false,
+            showErrorMessage: true,
+            errorTitle: 'Categoría requerida',
+            error: 'Ingrese una categoría'
         });
-        table.dataValidations.add('D2:D1048576', { 
-            type: 'decimal', 
-            operator: 'greaterThanOrEqual', 
-            formulae: [0], 
-            allowBlank: true, 
-            showErrorMessage: true, 
-            errorTitle: 'Precio inválido', 
-            error: 'Debe ser número ≥ 0 (use punto decimal)' 
+        table.dataValidations.add('D2:D1048576', {
+            type: 'decimal',
+            operator: 'greaterThanOrEqual',
+            formulae: [0],
+            allowBlank: true,
+            showErrorMessage: true,
+            errorTitle: 'Precio inválido',
+            error: 'Debe ser número ≥ 0 (use punto decimal)'
         });
 
-        res.setHeader('Content-Type','application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-        res.setHeader('Content-Disposition','attachment; filename="plantilla_productos.xlsx"');
-        await wb.xlsx.write(res); 
+        res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        res.setHeader('Content-Disposition', 'attachment; filename="plantilla_productos.xlsx"');
+        await wb.xlsx.write(res);
         res.end();
     } catch (error) {
         console.error('Error al generar plantilla:', error);
@@ -242,18 +243,18 @@ router.get('/plantilla', requirePermission('plantillas.ver'), requirePlanFeature
 
 // POST /productos/importar - Import products from Excel
 const multer = require('multer');
-const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 5*1024*1024 } });
+const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 5 * 1024 * 1024 } });
 
 router.post('/importar', requirePermission('plantillas.ver'), requirePlanFeature('plantillas'), upload.single('archivo'), async (req, res) => {
     try {
         if (!req.file) {
             return res.status(400).json({ error: 'Archivo requerido' });
         }
-        
-        try { 
-            ExcelJS = ExcelJS || require('exceljs'); 
-        } catch (e) { 
-            return res.status(500).json({ error: 'Instale exceljs para importar' }); 
+
+        try {
+            ExcelJS = ExcelJS || require('exceljs');
+        } catch (e) {
+            return res.status(500).json({ error: 'Instale exceljs para importar' });
         }
 
         const wb = new ExcelJS.Workbook();
@@ -263,20 +264,20 @@ router.post('/importar', requirePermission('plantillas.ver'), requirePlanFeature
             return res.status(400).json({ error: 'Hoja Productos no encontrada' });
         }
 
-        const header = ['codigo','nombre','categoria','precio_unidad'];
+        const header = ['codigo', 'nombre', 'categoria', 'precio_unidad'];
         const rows = [];
         ws.eachRow((row, idx) => {
             if (idx === 1) return; // Skip header
-            const r = header.reduce((acc, key, i) => { 
-                acc[key] = row.getCell(i+1).value || ''; 
-                return acc; 
+            const r = header.reduce((acc, key, i) => {
+                acc[key] = row.getCell(i + 1).value || '';
+                return acc;
             }, {});
             if (!r.codigo || !r.nombre || !r.categoria) return;
             rows.push({
                 codigo: String(r.codigo).trim(),
                 nombre: String(r.nombre).trim(),
                 categoria: String(r.categoria).trim(),
-                precio_unidad: Number(r.precio_unidad||0)
+                precio_unidad: Number(r.precio_unidad || 0)
             });
         });
 

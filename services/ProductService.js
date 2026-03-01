@@ -162,7 +162,7 @@ class ProductService {
 
         const result = await ProductRepository.delete(id, tenantId);
         if (result.affectedRows === 0) {
-            throw new Error('No se pudo eliminar el producto');
+            throw new Error('No se pudo desactivar el producto');
         }
 
         return { message: 'Producto eliminado exitosamente' };

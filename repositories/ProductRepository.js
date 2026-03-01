@@ -16,7 +16,7 @@ class ProductRepository {
             SELECT p.*, c.nombre as categoria_nombre 
             FROM productos p 
             LEFT JOIN categorias c ON p.categoria_id = c.id 
-            WHERE p.tenant_id = ?
+            WHERE p.tenant_id = ? AND p.activo = 1
             ORDER BY p.nombre
         `, [tenantId]);
         return productos;
@@ -32,7 +32,7 @@ class ProductRepository {
             SELECT p.*, c.nombre as categoria_nombre 
             FROM productos p 
             LEFT JOIN categorias c ON p.categoria_id = c.id 
-            WHERE p.id = ? AND p.tenant_id = ?
+            WHERE p.id = ? AND p.tenant_id = ? AND p.activo = 1
         `, [id, tenantId]);
         return productos[0] || null;
     }
@@ -49,7 +49,7 @@ class ProductRepository {
             SELECT p.*, c.nombre AS categoria_nombre
             FROM productos p
             LEFT JOIN categorias c ON p.categoria_id = c.id
-            WHERE p.tenant_id = ? AND (p.nombre LIKE ? OR p.codigo LIKE ?)
+            WHERE p.tenant_id = ? AND p.activo = 1 AND (p.nombre LIKE ? OR p.codigo LIKE ?)
             ORDER BY p.nombre
             LIMIT ?
         `, [tenantId, searchTerm, searchTerm, limit]);
@@ -110,7 +110,10 @@ class ProductRepository {
      * @returns {Promise<Object>} Delete result
      */
     static async delete(id, tenantId) {
-        const result = await db.query('DELETE FROM productos WHERE id = ? AND tenant_id = ?', [id, tenantId]);
+        const [result] = await db.query(
+            'UPDATE productos SET activo = 0 WHERE id = ? AND tenant_id = ?',
+            [id, tenantId]
+        );
         return result;
     }
 
