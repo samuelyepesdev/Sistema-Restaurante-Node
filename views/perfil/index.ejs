@@ -166,6 +166,30 @@
                                                     "Limpiar".</span>
                                             </div>
                                         </div>
+
+                                        <!-- Tarjetas Dashboard Principales -->
+                                        <div class="col-md-6">
+                                            <label class="form-label d-block">Tarjetas Dashboard (Primario)</label>
+                                            <div class="d-flex align-items-center">
+                                                <input type="color" class="form-control form-control-color me-2"
+                                                    id="colorCardPrimary" title="Elegir color"
+                                                    value="<%= colores.cardPrimary || '#1e3a5f' %>">
+                                                <span class="small text-muted">Color base para tarjetas de ingresos y
+                                                    métricas globales.</span>
+                                            </div>
+                                        </div>
+
+                                        <!-- Tarjetas Dashboard Secundarias -->
+                                        <div class="col-md-6">
+                                            <label class="form-label d-block">Tarjetas Dashboard (Secundario)</label>
+                                            <div class="d-flex align-items-center">
+                                                <input type="color" class="form-control form-control-color me-2"
+                                                    id="colorCardSecondary" title="Elegir color"
+                                                    value="<%= colores.cardSecondary || '#0f766e' %>">
+                                                <span class="small text-muted">Color para tarjetas de cantidades y
+                                                    números de operaciones.</span>
+                                            </div>
+                                        </div>
                                     </div>
 
                                     <div class="d-flex justify-content-end mt-5">
@@ -199,7 +223,9 @@
                         navbar: document.getElementById('colorNavbar').value,
                         navbarText: document.getElementById('colorNavbarText').value,
                         primary: document.getElementById('colorPrimary').value,
-                        secondary: document.getElementById('colorSecondary').value
+                        secondary: document.getElementById('colorSecondary').value,
+                        cardPrimary: document.getElementById('colorCardPrimary').value,
+                        cardSecondary: document.getElementById('colorCardSecondary').value
                     })
                 };
 

@@ -55,6 +55,9 @@ module.exports = function navbarLocals(req, res, next) {
             let bgEnd = '#0f172a';
             let textColor = '#ffffff';
 
+            let cardPrimary = '';
+            let cardSecondary = '';
+
             if (tenant && tenant.config) {
                 const cfg = typeof tenant.config === 'string' ? JSON.parse(tenant.config) : tenant.config;
                 if (cfg.colores) {
@@ -66,6 +69,8 @@ module.exports = function navbarLocals(req, res, next) {
                     if (cfg.colores.navbarText) {
                         textColor = cfg.colores.navbarText;
                     }
+                    if (cfg.colores.cardPrimary) cardPrimary = cfg.colores.cardPrimary;
+                    if (cfg.colores.cardSecondary) cardSecondary = cfg.colores.cardSecondary;
                 }
             }
 
@@ -80,6 +85,8 @@ module.exports = function navbarLocals(req, res, next) {
                 bgStart,
                 bgEnd,
                 textColor,
+                cardPrimary,
+                cardSecondary,
                 can,
                 hasMas,
             };

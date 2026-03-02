@@ -58,6 +58,26 @@
             <%
         }
 
+        %><% if (typeof nav !=='undefined') {
+            %><% if (nav.cardPrimary) {
+                %>.stat-card.c-primary {
+                    background: <%=nav.cardPrimary %> !important;
+                }
+
+                <%
+            }
+
+            %><% if (nav.cardSecondary) {
+                %>.stat-card.c-teal {
+                    background: <%=nav.cardSecondary %> !important;
+                }
+
+                <%
+            }
+
+            %><%
+        }
+
         %>
     </style>
     <% } %>
