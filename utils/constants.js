@@ -18,34 +18,34 @@ const PERMISSIONS = {
     PRODUCTOS_EDITAR: 'productos.editar',
     PRODUCTOS_ELIMINAR: 'productos.eliminar',
     PRODUCTOS_IMPORTAR: 'productos.importar',
-    
+
     // Clients
     CLIENTES_VER: 'clientes.ver',
     CLIENTES_CREAR: 'clientes.crear',
     CLIENTES_EDITAR: 'clientes.editar',
     CLIENTES_ELIMINAR: 'clientes.eliminar',
-    
+
     // Tables
     MESAS_VER: 'mesas.ver',
     MESAS_GESTIONAR: 'mesas.gestionar',
     MESAS_EDITAR: 'mesas.editar',
-    
+
     // Kitchen
     COCINA_VER: 'cocina.ver',
     COCINA_GESTIONAR: 'cocina.gestionar',
-    
+
     // Invoices
     FACTURAS_CREAR: 'facturas.crear',
     FACTURAS_VER: 'facturas.ver',
-    
+
     // Sales
     VENTAS_VER: 'ventas.ver',
     VENTAS_EXPORTAR: 'ventas.exportar',
-    
+
     // Configuration
     CONFIGURACION_VER: 'configuracion.ver',
     CONFIGURACION_EDITAR: 'configuracion.editar',
-    
+
     // Costeo (deshabilitado en UI; se usa inventario + recetas)
     COSTEO_VER: 'costeo.ver',
     COSTEO_EDITAR: 'costeo.editar',
@@ -57,10 +57,14 @@ const PERMISSIONS = {
     RECETAS_EDITAR: 'recetas.editar',
     // Plantillas Excel (descargas, exportaciones)
     PLANTILLAS_VER: 'plantillas.ver',
-    
+
     // Users
     USUARIOS_VER: 'usuarios.ver',
-    USUARIOS_GESTIONAR: 'usuarios.gestionar'
+    USUARIOS_GESTIONAR: 'usuarios.gestionar',
+
+    // Perfil del Negocio
+    PERFIL_VER: 'perfil.ver',
+    PERFIL_EDITAR: 'perfil.editar'
 };
 
 // Secciones para agrupar permisos en el panel (clave = título, valor = prefijo o permisos)
@@ -79,7 +83,8 @@ const PERMISSION_SECTIONS = {
     Plantillas: ['plantillas.ver'],
     Eventos: ['eventos.ver', 'eventos.crear', 'eventos.editar', 'eventos.eliminar', 'ventas_evento.realizar'],
     Analítica: ['analitica.ver'],
-    Predicción: ['prediccion.ver']
+    Predicción: ['prediccion.ver'],
+    Perfil: ['perfil.ver', 'perfil.editar']
 };
 
 // Table states
