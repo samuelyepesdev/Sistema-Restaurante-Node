@@ -160,9 +160,21 @@
                                                         <% }); %>
                                                 </select>
                                             </div>
+                                            <div class="col-md-6">
+                                                <label class="form-label">Color Corporativo</label>
+                                                <div class="d-flex align-items-center gap-3">
+                                                    <input type="color" id="editConfigColorGeneral"
+                                                        class="form-control form-control-color"
+                                                        style="width: 50px; height: 50px;"
+                                                        value="<%= (selectedTenant.config && selectedTenant.config.colors && selectedTenant.config.colors.primary) ? selectedTenant.config.colors.primary : '#6366f1' %>">
+                                                    <span class="small text-muted">Este color aparecerá en el menú del
+                                                        restaurante.</span>
+                                                </div>
+                                            </div>
                                             <div class="col-12 text-end">
-                                                <button type="submit" class="btn btn-primary px-4 shadow-sm">Guardar
-                                                    Cambios</button>
+                                                <button type="submit" class="btn btn-primary px-5 shadow-sm fw-bold">
+                                                    <i class="bi bi-save me-2"></i>Guardar Cambios General
+                                                </button>
                                             </div>
                                         </div>
                                     </form>
@@ -400,13 +412,24 @@
                                         <label class="form-label">Ciudad</label>
                                         <input name="ciudad" class="form-control">
                                     </div>
-                                    <div class="col-12">
+                                    <div class="col-md-6">
                                         <label class="form-label">Tipo de Negocio</label>
                                         <select name="config[tipo_negocio]" class="form-select">
                                             <option value="restaurante">🍴 Restaurante</option>
                                             <option value="comidas_rapidas">🍔 Comidas Rápidas</option>
                                             <option value="panaderia">🥯 Panadería / Repostería</option>
+                                            <option value="pasteleria">🍰 Pastelería Profesional</option>
                                         </select>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">Color Corporativo</label>
+                                        <div class="d-flex align-items-center gap-2">
+                                            <input type="color" name="config[colors][primary]"
+                                                class="form-control form-control-color"
+                                                style="width: 45px; height: 38px; padding: 2px;" value="#6366f1">
+                                            <span class="small text-muted">Este color se usará para el Navbar y
+                                                botones.</span>
+                                        </div>
                                     </div>
                                     <input type="hidden" name="plan_id" value="1">
                                     <hr>
@@ -567,15 +590,17 @@
 
                     // Si es general, incluir config actualizada
                     if (type === 'general') {
-                        const color = colorInput ? colorInput.value : '#6366f1';
+                        const colorInputGeneral = document.getElementById('editConfigColorGeneral');
+                        const colorValue = colorInputGeneral ? colorInputGeneral.value : '#6366f1';
+
                         data.config = JSON.stringify({
-                            colors: { primary: color },
+                            colors: { primary: colorValue },
                             tipo_negocio: data.tipo_negocio
                         });
                     }
 
                     try {
-                        const resp = await fetch(`/admin/tenants/${tenantId}`, {
+                        const resp = await fetch('/admin/tenants/' + tenantId, {
                             method: 'PUT',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify(data)
