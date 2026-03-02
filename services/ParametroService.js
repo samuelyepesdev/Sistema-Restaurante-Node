@@ -51,8 +51,10 @@ class ParametroService {
         return { message: 'Parámetro eliminado' };
     }
 
-    static async getByTemaId(temaId, tenantId) {
-        return ParametroRepository.getParametrosByTemaId(temaId, tenantId);
+    static async getByTemaName(temaName, tenantId) {
+        const tema = await TemaRepository.findByName(temaName, tenantId);
+        if (!tema) return [];
+        return ParametroRepository.getParametrosByTemaId(tema.id, tenantId);
     }
 }
 

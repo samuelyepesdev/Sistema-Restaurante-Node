@@ -37,8 +37,31 @@ class TenantService {
             'INSERT INTO tenants (nombre, slug, config, activo, plan_id) VALUES (?, ?, ?, ?, ?)',
             [nombre, slug, JSON.stringify(config), activo ? 1 : 0, planId]
         );
-        return { id: result.insertId };
+        const tenantId = result.insertId;
+
+        // Seed datos iniciales (Ej: Tipos de Documento)
+        try {
+            await this.seedInitialData(tenantId);
+        } catch (e) {
+            console.error(`Error al seedear datos iniciales para tenant ${tenantId}:`, e.message);
+        }
+
+        return { id: tenantId };
     }
+
+    static async seedInitialData(tenantId) {
+        const TemaRepository = require('../repositories/TemaRepository');
+        const ParametroRepository = require('../repositories/ParametroRepository');
+
+        // 1. TIPO_DOCUMENTO
+        const temaId = await TemaRepository.create(tenantId, { name: 'TIPO_DOCUMENTO', status: 1 });
+        const docs = ['CC', 'NIT', 'CE', 'PA', 'TI', 'PEP'];
+        for (const name of docs) {
+            const pid = await ParametroRepository.create(tenantId, { name, status: 1 });
+            await TemaRepository.addParametroToTema(temaId, pid);
+        }
+    }
+
 
     static async updateTenant(id, { nombre, config, activo, plan_id }) {
         const payload = [];

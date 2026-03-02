@@ -7,21 +7,28 @@
 const express = require('express');
 const router = express.Router();
 const ClienteService = require('../services/ClienteService');
+const ParametroService = require('../services/ParametroService');
 
 // GET /clientes - Show clients page (solo del tenant)
 router.get('/', async (req, res) => {
     try {
         const tenantId = req.tenant?.id;
         if (!tenantId) return res.status(403).render('error', { error: { message: 'Contexto de tenant no disponible' } });
-        const clientes = await ClienteService.getAll(tenantId);
-        res.render('clientes', { 
+
+        const [clientes, tiposDocumento] = await Promise.all([
+            ClienteService.getAll(tenantId),
+            ParametroService.getByTemaName('TIPO_DOCUMENTO', tenantId)
+        ]);
+
+        res.render('clientes', {
             clientes: clientes || [],
+            tiposDocumento: tiposDocumento || [],
             user: req.user,
             tenant: req.tenant
         });
     } catch (error) {
         console.error('Error al obtener clientes:', error);
-        res.status(500).render('error', { 
+        res.status(500).render('error', {
             error: {
                 message: 'Error al obtener clientes',
                 stack: error.stack
