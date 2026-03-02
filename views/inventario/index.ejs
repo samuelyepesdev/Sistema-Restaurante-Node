@@ -13,7 +13,8 @@
 </head>
 
 <body>
-    <%- include('../partials/navbar', { user: typeof user !=='undefined' ? user : null, tenant: typeof tenant !=='undefined' ? tenant : null, allowedByPlan: typeof allowedByPlan !=='undefined' ? allowedByPlan : {} }) %>
+    <%- include('../partials/navbar', { user: typeof user !=='undefined' ? user : null, tenant: typeof tenant
+        !=='undefined' ? tenant : null, allowedByPlan: typeof allowedByPlan !=='undefined' ? allowedByPlan : {} }) %>
 
         <div class="container-fluid py-4">
             <div
@@ -37,109 +38,115 @@
                 </div>
             </div>
 
-            <div class="row mb-4">
+            <div class="row g-4 mb-4">
                 <div class="col-md-4">
-                    <div class="card">
-                        <div class="card-body py-3">
-                            <div class="text-muted small">Total insumos</div>
-                            <div class="fs-4 fw-bold">
-                                <%= resumen.total_insumos !=null ? resumen.total_insumos : 0 %>
-                            </div>
+                    <div class="kpi-card">
+                        <div class="kpi-label">Total insumos</div>
+                        <div class="kpi-value">
+                            <%= resumen.total_insumos !=null ? resumen.total_insumos : 0 %>
                         </div>
                     </div>
                 </div>
                 <div class="col-md-4">
-                    <div class="card">
-                        <div class="card-body py-3">
-                            <div class="text-muted small">Con stock</div>
-                            <div class="fs-4 fw-bold">
-                                <%= resumen.con_stock !=null ? resumen.con_stock : 0 %>
-                            </div>
+                    <div class="kpi-card kpi-success">
+                        <div class="kpi-label">Con stock</div>
+                        <div class="kpi-value">
+                            <%= resumen.con_stock !=null ? resumen.con_stock : 0 %>
                         </div>
                     </div>
                 </div>
                 <div class="col-md-4">
-                    <div class="card">
-                        <div class="card-body py-3">
-                            <div class="text-muted small">Valor inventario</div>
-                            <div class="fs-4 fw-bold text-success">$<%= (resumen.valor_total !=null ? Number(resumen.valor_total).toLocaleString('es-CO', { minimumFractionDigits: 2 }) : '0,00' ) %>
-                            </div>
+                    <div class="kpi-card kpi-warning">
+                        <div class="kpi-label">Valor inventario</div>
+                        <div class="kpi-value text-success">$<%= (resumen.valor_total !=null ? Number(resumen.valor_total).toLocaleString('es-CO', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) : '0' ) %>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <div class="card">
+            <div class="card card-table">
                 <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
-                    <span><i class="bi bi-list-ul me-2"></i>Insumos y stock</span>
+                    <span class="fw-bold text-slate-700"><i class="bi bi-list-ul me-2"></i>Insumos y stock</span>
                     <div class="d-flex gap-2">
-                        <button type="button" class="btn btn-sm btn-outline-warning" id="btnListaMercado"
-                            title="Ver insumos bajo stock o cerca del mínimo para hacer el mercado">
+                        <button type="button" class="btn btn-sm btn-outline-warning rounded-pill px-3"
+                            id="btnListaMercado" title="Ver insumos bajo stock o cerca del mínimo">
                             <i class="bi bi-cart-check"></i> Lista de mercado
                         </button>
                         <% if (user && user.permisos && user.permisos.includes('inventario.editar')) { %>
-                            <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal"
-                                data-bs-target="#modalNuevoInsumo">
+                            <button type="button" class="btn btn-sm btn-primary rounded-pill px-3"
+                                data-bs-toggle="modal" data-bs-target="#modalNuevoInsumo">
                                 <i class="bi bi-plus"></i> Nuevo insumo
                             </button>
                             <% } %>
                     </div>
                 </div>
-                <div class="card-body">
+                <div class="card-body p-0">
                     <!-- Vista tabla (desktop y tablets) -->
                     <div class="table-responsive d-none d-md-block">
-                        <table class="table table-hover mb-0" id="tablaInsumos">
-                            <thead class="table-light">
+                        <table class="table mb-0" id="tablaInsumos">
+                            <thead>
                                 <tr>
-                                    <th>Código</th>
+                                    <th class="ps-4">Código</th>
                                     <th>Nombre</th>
-                                    <th>Unidad base</th>
+                                    <th>Unidad</th>
                                     <th class="text-end">Stock actual</th>
                                     <th class="text-end">Stock mín.</th>
                                     <th class="text-end">Costo prom.</th>
                                     <% if (user && user.permisos && user.permisos.includes('inventario.editar')) { %>
-                                        <th class="text-center">Movimientos</th>
+                                        <th class="text-center pe-4">Acciones</th>
                                         <% } %>
                                 </tr>
                             </thead>
                             <tbody id="tbodyInsumos">
                                 <% (insumos || []).forEach(function(i) { %>
-                                    <tr
-                                        class="fila-insumo <%= (Number(i.stock_actual) <= Number(i.stock_minimo)) ? 'stock-bajo' : '' %>">
-                                        <td data-field="codigo"><code><%= i.codigo %></code></td>
-                                        <td data-field="nombre">
-                                            <%= i.nombre %>
-                                        </td>
-                                        <td>
-                                            <%= i.unidad_base || 'g' %>
-                                        </td>
-                                        <td class="text-end">
-                                            <%= Number(i.stock_actual).toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 4 }) %>
-                                        </td>
-                                        <td class="text-end">
-                                            <%= Number(i.stock_minimo).toLocaleString('es-CO', { minimumFractionDigits: 2 }) %>
-                                        </td>
-                                        <td class="text-end">
-                                            <%= i.costo_promedio !=null ? '$' + Number(i.costo_promedio).toLocaleString('es-CO', { minimumFractionDigits: 2 }) : '-' %>
-                                        </td>
-                                        <% if (user && user.permisos && user.permisos.includes('inventario.editar')) { %>
-                                            <td class="text-center">
-                                                <button type="button" class="btn btn-sm btn-outline-success"
-                                                    onclick="abrirEntrada(<%= i.id %>, '<%= i.nombre.replace(/'/g, " \\'") %>')" title="Entrada">E</button>
-                                                <button type="button" class="btn btn-sm btn-outline-danger"
-                                                    onclick="abrirSalida(<%= i.id %>, '<%= i.nombre.replace(/'/g, " \\'") %>', <%= i.stock_actual %>)" title="Salida">S</button>
-                                                <button type="button" class="btn btn-sm btn-outline-secondary"
-                                                    onclick="abrirAjuste(<%= i.id %>, '<%= i.nombre.replace(/'/g, " \\'") %>')" title="Ajuste">A</button>
+                                    <% const bajoStock=(Number(i.stock_actual) <=Number(i.stock_minimo)); %>
+                                        <tr class="fila-insumo <%= bajoStock ? 'stock-bajo' : '' %>">
+                                            <td class="ps-4" data-field="codigo"><code><%= i.codigo %></code></td>
+                                            <td data-field="nombre">
+                                                <div class="d-flex align-items-center gap-2">
+                                                    <%= i.nombre %>
+                                                        <% if (bajoStock) { %>
+                                                            <span class="badge-bajo-stock">BAJO STOCK</span>
+                                                            <% } %>
+                                                </div>
                                             </td>
-                                            <% } %>
-                                    </tr>
-                                    <% }); %>
-                                        <% if (!insumos || insumos.length===0) { %>
-                                            <tr>
-                                                <td colspan="7" class="text-center text-muted py-4">No hay insumos. Crea
-                                                    uno desde Costeo o desde aquí (Nuevo insumo).</td>
-                                            </tr>
-                                            <% } %>
+                                            <td><span class="badge bg-light text-secondary border-0">
+                                                    <%= i.unidad_base || 'g' %>
+                                                </span></td>
+                                            <td class="text-end fw-bold">
+                                                <%= Number(i.stock_actual).toLocaleString('es-CO', { minimumFractionDigits: 0, maximumFractionDigits: 2 }) %>
+                                            </td>
+                                            <td class="text-end text-muted">
+                                                <%= Number(i.stock_minimo).toLocaleString('es-CO', { minimumFractionDigits: 0 }) %>
+                                            </td>
+                                            <td class="text-end">
+                                                <%= i.costo_promedio !=null ? '$' + Number(i.costo_promedio).toLocaleString('es-CO', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) : '-' %>
+                                            </td>
+                                            <% if (user && user.permisos && user.permisos.includes('inventario.editar'))
+                                                { %>
+                                                <td class="text-center pe-4">
+                                                    <div class="btn-action-group">
+                                                        <button type="button" class="btn-icon btn-icon-e"
+                                                            onclick="abrirEntrada(<%= i.id %>, '<%= i.nombre.replace(/'/g, "\\'") %>')" title="Entrada"><i
+                                                                class="bi bi-arrow-down-left"></i></button>
+                                                        <button type="button" class="btn-icon btn-icon-s"
+                                                            onclick="abrirSalida(<%= i.id %>, '<%= i.nombre.replace(/'/g, "\\'") %>', <%= i.stock_actual %>)" title="Salida"><i
+                                                                    class="bi bi-arrow-up-right"></i></button>
+                                                        <button type="button" class="btn-icon btn-icon-a"
+                                                            onclick="abrirAjuste(<%= i.id %>, '<%= i.nombre.replace(/'/g, "\\'") %>')" title="Ajuste"><i
+                                                                class="bi bi-sliders"></i></button>
+                                                    </div>
+                                                </td>
+                                                <% } %>
+                                        </tr>
+                                        <% }); %>
+                                            <% if (!insumos || insumos.length===0) { %>
+                                                <tr>
+                                                    <td colspan="7" class="text-center text-muted py-4">No hay insumos.
+                                                        Crea
+                                                        uno desde Costeo o desde aquí (Nuevo insumo).</td>
+                                                </tr>
+                                                <% } %>
                             </tbody>
                         </table>
                     </div>
@@ -173,11 +180,11 @@
                                     <% if (user && user.permisos && user.permisos.includes('inventario.editar')) { %>
                                         <div class="btn-group btn-group-sm ms-2" role="group">
                                             <button type="button" class="btn btn-outline-success"
-                                                onclick="abrirEntrada(<%= i.id %>, '<%= i.nombre.replace(/'/g, " \\'") %>')">E</button>
+                                                onclick="abrirEntrada(<%= i.id %>, '<%= i.nombre.replace(/'/g, "\\'") %>')">E</button>
                                             <button type="button" class="btn btn-outline-danger"
-                                                onclick="abrirSalida(<%= i.id %>, '<%= i.nombre.replace(/'/g, " \\'") %>', <%= i.stock_actual %>)">S</button>
+                                                onclick="abrirSalida(<%= i.id %>, '<%= i.nombre.replace(/'/g, "\\'") %>', <%= i.stock_actual %>)">S</button>
                                             <button type="button" class="btn btn-outline-secondary"
-                                                onclick="abrirAjuste(<%= i.id %>, '<%= i.nombre.replace(/'/g, " \\'") %>')">A</button>
+                                                onclick="abrirAjuste(<%= i.id %>, '<%= i.nombre.replace(/'/g, "\\'") %>')">A</button>
                                         </div>
                                         <% } %>
                                 </div>
