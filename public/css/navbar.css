@@ -3,8 +3,15 @@
    Usado por: views/partials/navbar.ejs
    ============================================================ */
 
+:root {
+    --n-primary: #6366f1;
+    --n-primary-dark: #4f46e5;
+    --n-bg-start: #1e3a5f;
+    --n-bg-end: #0f172a;
+}
+
 .navbar {
-    background: linear-gradient(135deg, #1e3a5f, #0f172a) !important;
+    background: linear-gradient(135deg, var(--n-bg-start), var(--n-bg-end)) !important;
     box-shadow: 0 2px 12px rgba(0, 0, 0, .2);
     min-height: 56px;
     padding: .4rem 1rem;
@@ -26,7 +33,7 @@
 .n-icon {
     width: 29px;
     height: 29px;
-    background: linear-gradient(135deg, #6366f1, #4f46e5);
+    background: linear-gradient(135deg, var(--n-primary), var(--n-primary-dark));
     border-radius: 7px;
     display: flex;
     align-items: center;

@@ -3,7 +3,9 @@ const db = require('../config/database');
 class TenantService {
     static async getAllTenants() {
         const [rows] = await db.query(`
-            SELECT t.id, t.nombre, t.slug, t.activo, t.config, t.plan_id, t.created_at, p.nombre AS plan_nombre, p.slug AS plan_slug
+            SELECT t.id, t.nombre, t.slug, t.activo, t.config, t.plan_id, t.created_at, 
+                   t.nit, t.direccion, t.telefono, t.ciudad, t.regimen_fiscal,
+                   p.nombre AS plan_nombre, p.slug AS plan_slug
             FROM tenants t
             LEFT JOIN planes p ON t.plan_id = p.id
             ORDER BY t.created_at DESC
@@ -22,20 +24,37 @@ class TenantService {
                 plan_id: row.plan_id,
                 plan_nombre: row.plan_nombre,
                 plan_slug: row.plan_slug,
+                nit: row.nit,
+                direccion: row.direccion,
+                telefono: row.telefono,
+                ciudad: row.ciudad,
+                regimen_fiscal: row.regimen_fiscal,
                 created_at: row.created_at
             };
         });
     }
 
-    static async createTenant({ nombre, slug, config = {}, activo = true, plan_id = 1 }) {
+    static async createTenant(data) {
+        const { nombre, slug, config = {}, activo = true, plan_id = 1 } = data;
         const [existing] = await db.query('SELECT id FROM tenants WHERE slug = ?', [slug]);
         if (existing.length > 0) {
             throw new Error('El slug ya existe');
         }
         const planId = plan_id != null && plan_id !== '' ? parseInt(plan_id, 10) : 1;
         const [result] = await db.query(
-            'INSERT INTO tenants (nombre, slug, config, activo, plan_id) VALUES (?, ?, ?, ?, ?)',
-            [nombre, slug, JSON.stringify(config), activo ? 1 : 0, planId]
+            'INSERT INTO tenants (nombre, slug, config, activo, plan_id, nit, direccion, telefono, ciudad, regimen_fiscal) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+            [
+                nombre,
+                slug,
+                JSON.stringify(config),
+                activo ? 1 : 0,
+                planId,
+                data.nit || null,
+                data.direccion || null,
+                data.telefono || null,
+                data.ciudad || null,
+                data.regimen_fiscal || 'No responsable de IVA'
+            ]
         );
         const tenantId = result.insertId;
 
@@ -63,41 +82,39 @@ class TenantService {
     }
 
 
-    static async updateTenant(id, { nombre, config, activo, plan_id }) {
+    static async updateTenant(id, data) {
         const payload = [];
         const parts = [];
-        if (nombre) {
-            parts.push('nombre = ?');
-            payload.push(nombre);
-        }
-        if (config !== undefined && config !== null) {
+
+        const fields = ['nombre', 'activo', 'plan_id', 'nit', 'direccion', 'telefono', 'ciudad', 'regimen_fiscal'];
+        fields.forEach(f => {
+            if (data[f] !== undefined) {
+                parts.push(`${f} = ?`);
+                payload.push(f === 'activo' ? (data[f] ? 1 : 0) : data[f]);
+            }
+        });
+
+        if (data.config !== undefined && data.config !== null) {
             parts.push('config = ?');
-            const configStr = typeof config === 'string' ? config : JSON.stringify(config);
+            const configStr = typeof data.config === 'string' ? data.config : JSON.stringify(data.config);
             payload.push(configStr);
         }
-        if (activo !== undefined) {
-            parts.push('activo = ?');
-            payload.push(activo ? 1 : 0);
-        }
-        if (plan_id !== undefined && plan_id !== null && plan_id !== '') {
-            parts.push('plan_id = ?');
-            payload.push(parseInt(plan_id, 10));
-        }
+
         if (parts.length === 0) {
             return { affectedRows: 0 };
         }
+
+        const query = `UPDATE tenants SET ${parts.join(', ')} WHERE id = ?`;
         payload.push(id);
-        const [result] = await db.query(
-            `UPDATE tenants SET ${parts.join(', ')} WHERE id = ?`,
-            payload
-        );
+        const [result] = await db.query(query, payload);
         return result;
     }
 
     static async setTenantConfig(id, config) {
+        const configStr = typeof config === 'string' ? config : JSON.stringify(config || {});
         const [result] = await db.query(
             'UPDATE tenants SET config = ? WHERE id = ?',
-            [JSON.stringify(config || {}), id]
+            [configStr, id]
         );
         return result;
     }

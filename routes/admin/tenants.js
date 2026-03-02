@@ -39,12 +39,15 @@ router.get('/', async (req, res) => {
 
 router.post('/', async (req, res) => {
     try {
-        const { nombre, slug, config, plan_id, admin_username, admin_password, admin_email, admin_nombre_completo } = req.body;
+        const { nombre, slug, config, plan_id, admin_username, admin_password, admin_email, admin_nombre_completo, nit, direccion, telefono, ciudad, regimen_fiscal } = req.body;
         if (!nombre || !slug || !admin_username || !admin_password) {
             return res.status(400).send('Faltan nombre del restaurante, slug, usuario admin o contraseña.');
         }
         const configObj = typeof config === 'string' ? JSON.parse(config || '{}') : (config || {});
-        const tenant = await TenantService.createTenant({ nombre, slug, config: configObj, plan_id: plan_id || 1 });
+        const tenant = await TenantService.createTenant({
+            nombre, slug, config: configObj, plan_id: plan_id || 1,
+            nit, direccion, telefono, ciudad, regimen_fiscal
+        });
         const tenantId = tenant.id;
         const tipoNegocio = configObj.tipo_negocio || 'restaurante';
         await CategoryService.seedDefaultCategories(tenantId, tipoNegocio);
@@ -70,12 +73,13 @@ router.post('/', async (req, res) => {
 
 router.put('/:id', async (req, res) => {
     try {
-        const { nombre, activo, config, plan_id } = req.body;
+        const { nombre, activo, config, plan_id, nit, direccion, telefono, ciudad, regimen_fiscal } = req.body;
         const activoBool = activo === 'true' || activo === true || activo === 1 || activo === '1';
         const update = {
             nombre,
             activo: activoBool,
-            config: JSON.parse(config || '{}')
+            config: typeof config === 'string' ? JSON.parse(config || '{}') : (config || {}),
+            nit, direccion, telefono, ciudad, regimen_fiscal
         };
         const planChanged = plan_id !== undefined && plan_id !== null && plan_id !== '';
         if (planChanged) update.plan_id = plan_id;

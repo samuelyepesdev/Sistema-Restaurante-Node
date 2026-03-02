@@ -1,0 +1,286 @@
+/* admin-tenants-modern.css — Premium UI for Superadmin Tenants management */
+
+:root {
+    --primary: #0f172a;
+    --accent: #3b82f6;
+    --accent-dark: #2563eb;
+    --success: #10b981;
+    --warning: #f59e0b;
+    --danger: #ef4444;
+    --bg-main: #f8fafc;
+    --card-border: #e2e8f0;
+    --sidebar-w: 320px;
+}
+
+body {
+    background-color: var(--bg-main);
+    color: #1e293b;
+    font-family: 'Inter', -apple-system, sans-serif;
+}
+
+.admin-layout {
+    display: flex;
+    min-height: calc(100vh - 70px);
+}
+
+/* Sidebar List */
+.tenants-sidebar {
+    width: var(--sidebar-w);
+    background: #fff;
+    border-right: 1px solid var(--card-border);
+    display: flex;
+    flex-direction: column;
+    height: calc(100vh - 70px);
+    position: sticky;
+    top: 70px;
+}
+
+.sidebar-header {
+    padding: 1.25rem;
+    border-bottom: 1px solid var(--card-border);
+}
+
+.search-tenants {
+    position: relative;
+}
+
+.search-tenants i {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #94a3b8;
+}
+
+.search-tenants input {
+    padding-left: 35px;
+    border-radius: 10px;
+    background: #f1f5f9;
+    border: 1px solid transparent;
+}
+
+.search-tenants input:focus {
+    background: #fff;
+    border-color: var(--accent);
+}
+
+.tenants-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 0.75rem;
+}
+
+.tenant-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 1rem;
+    border-radius: 12px;
+    text-decoration: none !important;
+    color: inherit;
+    transition: all 0.2s;
+    margin-bottom: 8px;
+    border: 1px solid transparent;
+}
+
+.tenant-item:hover {
+    background: #f1f5f9;
+}
+
+.tenant-item.active {
+    background: #eff6ff;
+    border-color: #bfdbfe;
+}
+
+.tenant-avatar {
+    width: 44px;
+    height: 44px;
+    border-radius: 10px;
+    background: var(--primary);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 1.1rem;
+    flex-shrink: 0;
+}
+
+.tenant-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.tenant-name {
+    font-weight: 600;
+    font-size: 0.9rem;
+    margin-bottom: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.tenant-meta {
+    font-size: 0.75rem;
+    color: #64748b;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.status-indicator {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+}
+
+/* Detail Area */
+.tenant-detail-container {
+    flex: 1;
+    padding: 2rem;
+    overflow-y: auto;
+}
+
+.detail-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+}
+
+.detail-title h2 {
+    font-weight: 800;
+    font-size: 1.75rem;
+    margin: 0;
+}
+
+.detail-title .badge {
+    vertical-align: middle;
+    font-size: 0.75rem;
+    padding: 0.4em 0.8em;
+}
+
+/* Tabs */
+.nav-tabs-premium {
+    border-bottom: 1px solid var(--card-border);
+    margin-bottom: 2rem;
+    gap: 1.5rem;
+}
+
+.nav-tabs-premium .nav-link {
+    border: none;
+    padding: 0.75rem 0;
+    font-weight: 600;
+    color: #64748b;
+    position: relative;
+    background: transparent !important;
+}
+
+.nav-tabs-premium .nav-link:after {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    left: 0;
+    width: 0;
+    height: 3px;
+    background: var(--accent);
+    transition: width 0.3s;
+}
+
+.nav-tabs-premium .nav-link.active {
+    color: var(--primary);
+}
+
+.nav-tabs-premium .nav-link.active:after {
+    width: 100%;
+}
+
+/* Cards & Forms */
+.glass-card {
+    background: #fff;
+    border-radius: 20px;
+    border: 1px solid var(--card-border);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+    padding: 1.75rem;
+    margin-bottom: 2rem;
+}
+
+.form-label {
+    font-weight: 600;
+    font-size: 0.85rem;
+    color: #475569;
+}
+
+.form-control,
+.form-select {
+    border-radius: 12px;
+    padding: 0.6rem 0.9rem;
+    border-color: #e2e8f0;
+    font-size: 0.9rem;
+}
+
+.form-control:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+}
+
+/* Appearance Section */
+.color-preview-box {
+    width: 100%;
+    height: 120px;
+    border-radius: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-weight: 700;
+    margin-bottom: 1rem;
+    transition: background 0.3s;
+}
+
+/* Users Table */
+.modern-table {
+    width: 100%;
+}
+
+.modern-table th {
+    background: #f8fafc;
+    border-top: none;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #64748b;
+}
+
+.user-row:hover {
+    background: #f1f5f9;
+}
+
+.btn-icon {
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    transition: all 0.2s;
+}
+
+/* Empty State */
+.empty-state {
+    text-align: center;
+    padding: 5rem 2rem;
+}
+
+.empty-state i {
+    font-size: 4rem;
+    color: #cbd5e1;
+    margin-bottom: 1.5rem;
+}
+
+@media (max-width: 991px) {
+    .tenants-sidebar {
+        display: none;
+    }
+}
