@@ -287,4 +287,40 @@ body {
     .tenants-sidebar {
         display: none;
     }
+
+    .detail-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1.5rem;
+    }
+
+    .detail-header .d-flex {
+        flex-wrap: wrap;
+        gap: 0.5rem !important;
+    }
+
+    .detail-title h2 {
+        font-size: 1.5rem;
+        width: 100%;
+    }
+
+    .nav-tabs-premium {
+        display: flex;
+        flex-wrap: wrap;
+        width: 100%;
+    }
+
+    .nav-tabs-premium .nav-item {
+        flex: 1 1 auto;
+        text-align: center;
+    }
+
+    .nav-tabs-premium .nav-link {
+        width: 100%;
+        padding: 0.5rem;
+    }
+
+    .tenant-detail-container {
+        padding: 1rem;
+    }
 }
