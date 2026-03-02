@@ -284,8 +284,21 @@ body {
 }
 
 @media (max-width: 991px) {
+    .admin-layout {
+        flex-direction: column;
+    }
+
     .tenants-sidebar {
-        display: none;
+        width: 100%;
+        height: auto;
+        position: static;
+        border-right: none;
+        border-bottom: 1px solid var(--card-border);
+        display: flex;
+    }
+
+    .tenants-list {
+        max-height: 250px;
     }
 
     .detail-header {
