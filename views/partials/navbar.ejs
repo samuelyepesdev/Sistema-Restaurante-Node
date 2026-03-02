@@ -3,11 +3,62 @@
     <style>
         :root {
             --n-primary: <%=nav.primaryColor %>;
-            /* Oscurecer un poco el color primario para el gradiente del icono */
+            --bs-primary: <%=nav.primaryColor %>;
             --n-primary-dark: <%=nav.primaryColor %>;
             --n-bg-start: <%=nav.bgStart %>;
             --n-bg-end: <%=nav.bgEnd %>;
+            --n-text-color: <%=nav.textColor || '#ffffff' %>;
         }
+
+        .navbar {
+            background: linear-gradient(135deg, var(--n-bg-start) 0%, var(--n-bg-end) 100%) !important;
+        }
+
+        .navbar .nav-link,
+        .navbar .navbar-brand,
+        .navbar .n-plan,
+        .navbar .n-user {
+            color: var(--n-text-color) !important;
+        }
+
+        .navbar .nav-link:hover {
+            color: var(--n-text-color) !important;
+            opacity: 0.8;
+        }
+
+        .btn-primary {
+            background-color: var(--bs-primary) !important;
+            border-color: var(--bs-primary) !important;
+        }
+
+        .btn-outline-primary {
+            color: var(--bs-primary) !important;
+            border-color: var(--bs-primary) !important;
+        }
+
+        .btn-outline-primary:hover {
+            background-color: var(--bs-primary) !important;
+            color: #fff !important;
+        }
+
+        .text-primary {
+            color: var(--bs-primary) !important;
+        }
+
+        .bg-primary {
+            background-color: var(--bs-primary) !important;
+        }
+
+        <% if (typeof tenant !=='undefined' && tenant && tenant.config && tenant.config.colores && tenant.config.colores.secondary) {
+            %>.btn-secondary {
+                background-color: <%=tenant.config.colores.secondary %> !important;
+                border-color: <%=tenant.config.colores.secondary %> !important;
+            }
+
+            <%
+        }
+
+        %>
     </style>
     <% } %>
 
@@ -261,10 +312,16 @@
                                             <li>
                                                 <hr class="dropdown-divider">
                                             </li>
-                                            <li><a class="dropdown-item" href="/auth/cambiar-password"><i
-                                                        class="bi bi-key text-muted"></i>Cambiar contraseña</a></li>
-                                            <li><a class="dropdown-item text-danger" href="/auth/logout"><i
-                                                        class="bi bi-box-arrow-right"></i>Cerrar sesión</a></li>
+                                            <% if (nav.can && nav.can.perfil) { %>
+                                                <li><a class="dropdown-item" href="/perfil"><i
+                                                            class="bi bi-shop text-muted"></i>Perfil del Negocio</a>
+                                                </li>
+                                                <% } %>
+                                                    <li><a class="dropdown-item" href="/auth/cambiar-password"><i
+                                                                class="bi bi-key text-muted"></i>Cambiar contraseña</a>
+                                                    </li>
+                                                    <li><a class="dropdown-item text-danger" href="/auth/logout"><i
+                                                                class="bi bi-box-arrow-right"></i>Cerrar sesión</a></li>
                                         </ul>
                                     </li>
                                     <% } else { %>
