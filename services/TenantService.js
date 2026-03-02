@@ -167,6 +167,13 @@ class TenantService {
             SELECT COUNT(*) AS cantidad FROM tenants
             WHERE created_at >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)
         `);
+        const [historicoRows] = await db.query(`
+            SELECT DATE_FORMAT(created_at, '%Y-%m') AS mes, COUNT(*) AS cantidad
+            FROM tenants
+            WHERE created_at >= DATE_SUB(CURDATE(), INTERVAL 6 MONTH)
+            GROUP BY mes
+            ORDER BY mes ASC
+        `);
         const r = resumen[0] || {};
         const toNum = (val) => (val === undefined || val === null) ? 0 : (typeof val === 'bigint' ? Number(val) : parseFloat(val) || 0);
         const rowVal = (row) => (row && typeof row === 'object') ? toNum(Object.values(row)[0]) : 0;
@@ -181,7 +188,8 @@ class TenantService {
             totalProductos: parseInt(rowVal(productosRows?.[0]) || 0, 10),
             totalClientes: parseInt(rowVal(clientesRows?.[0]) || 0, 10),
             totalMesas: parseInt(rowVal(mesasRows?.[0]) || 0, 10),
-            restaurantesUltimos30Dias: parseInt(rowVal(recientesRow?.[0]) || 0, 10)
+            restaurantesUltimos30Dias: parseInt(rowVal(recientesRow?.[0]) || 0, 10),
+            historicoRegistro: historicoRows || []
         };
     }
 
