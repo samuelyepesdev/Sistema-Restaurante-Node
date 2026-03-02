@@ -3,27 +3,30 @@
  */
 
 document.addEventListener('DOMContentLoaded', function () {
-    // 1. Gráfico de Crecimiento (Líneas)
-    const ctxCrecimiento = document.getElementById('chartCrecimiento');
-    if (ctxCrecimiento && chartData && chartData.historico) {
-        const labels = chartData.historico.map(h => h.mes);
-        const values = chartData.historico.map(h => h.cantidad);
+    // Gráfico de Ventas del Mes (Diarias)
+    function createLineChart(ctx, dataArray, label, colorHex) {
+        if (!ctx || !dataArray) return;
+        const labels = dataArray.map(v => {
+            const date = new Date(v.fecha + 'T12:00:00');
+            return date.toLocaleDateString('es-ES', { day: '2-digit', month: 'short' });
+        });
+        const values = dataArray.map(v => v.total);
 
-        new Chart(ctxCrecimiento, {
+        new Chart(ctx, {
             type: 'line',
             data: {
                 labels: labels,
                 datasets: [{
-                    label: 'Nuevos Restaurantes',
+                    label: label,
                     data: values,
-                    borderColor: '#4e73df',
-                    backgroundColor: 'rgba(78, 115, 223, 0.05)',
-                    pointRadius: 3,
-                    pointBackgroundColor: '#4e73df',
-                    pointBorderColor: '#4e73df',
-                    pointHoverRadius: 5,
-                    pointHoverBackgroundColor: '#4e73df',
-                    pointHoverBorderColor: '#4e73df',
+                    borderColor: colorHex,
+                    backgroundColor: `rgba(${hexToRgb(colorHex)}, 0.1)`,
+                    pointRadius: 4,
+                    pointBackgroundColor: colorHex,
+                    pointBorderColor: '#fff',
+                    pointHoverRadius: 6,
+                    pointHoverBackgroundColor: colorHex, // simple hover
+                    pointHoverBorderColor: '#fff',
                     pointHitRadius: 10,
                     pointBorderWidth: 2,
                     fill: true,
@@ -33,64 +36,73 @@ document.addEventListener('DOMContentLoaded', function () {
             options: {
                 maintainAspectRatio: false,
                 plugins: {
-                    legend: { display: false }
-                },
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        ticks: { stepSize: 1 }
-                    }
-                }
-            }
-        });
-    }
-
-    // 2. Gráfico de Planes (Dona)
-    const ctxPlanes = document.getElementById('chartPlanes');
-    if (ctxPlanes && chartData && chartData.porPlan) {
-        const labels = chartData.porPlan.map(p => p.plan_nombre);
-        const values = chartData.porPlan.map(p => p.cantidad);
-
-        // Colores premium
-        const colors = [
-            '#4e73df', '#1cc88a', '#36b9cc', '#f6c23e', '#e74a3b',
-            '#858796', '#5a5c69', '#6610f2', '#6f42c1', '#e83e8c'
-        ];
-
-        new Chart(ctxPlanes, {
-            type: 'doughnut',
-            data: {
-                labels: labels,
-                datasets: [{
-                    data: values,
-                    backgroundColor: colors.slice(0, labels.length),
-                    hoverBackgroundColor: colors.map(c => c + 'CC').slice(0, labels.length),
-                    hoverBorderColor: "rgba(234, 236, 244, 1)",
-                }]
-            },
-            options: {
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        position: 'bottom',
-                        labels: {
-                            usePointStyle: true,
-                            padding: 20
-                        }
-                    },
+                    legend: { display: false },
                     tooltip: {
                         backgroundColor: "rgb(255,255,255)",
                         bodyColor: "#858796",
+                        titleColor: "#6e707e",
                         borderColor: '#dddfeb',
                         borderWidth: 1,
                         xPadding: 15,
                         yPadding: 15,
                         displayColors: false,
                         caretPadding: 10,
+                        callbacks: {
+                            label: function (context) {
+                                return new Intl.NumberFormat('es-CO', {
+                                    style: 'currency',
+                                    currency: 'COP',
+                                    minimumFractionDigits: 0
+                                }).format(context.parsed.y);
+                            }
+                        }
                     }
                 },
-                cutout: '70%',
+                scales: {
+                    x: {
+                        grid: {
+                            display: false,
+                            drawBorder: false
+                        }
+                    },
+                    y: {
+                        beginAtZero: true,
+                        grid: {
+                            color: "rgb(234, 236, 244)",
+                            zeroLineColor: "rgb(234, 236, 244)",
+                            drawBorder: false,
+                            borderDash: [2],
+                            zeroLineBorderDash: [2]
+                        },
+                        ticks: {
+                            padding: 10,
+                            callback: function (value) {
+                                return new Intl.NumberFormat('es-CO', {
+                                    style: 'currency',
+                                    currency: 'COP',
+                                    maximumFractionDigits: 0
+                                }).format(value);
+                            }
+                        }
+                    }
+                }
             }
         });
+    }
+
+    // Helper for rgba
+    function hexToRgb(hex) {
+        var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+        return result ?
+            parseInt(result[1], 16) + ', ' + parseInt(result[2], 16) + ', ' + parseInt(result[3], 16) :
+            '28, 200, 138';
+    }
+
+    if (typeof chartData !== 'undefined') {
+        const ctxVentas = document.getElementById('chartVentasMes');
+        createLineChart(ctxVentas, chartData.ventasDiarias, 'Ventas Diarias ($)', '#1cc88a');
+
+        const ctxVentasAnt = document.getElementById('chartVentasMesAnterior');
+        createLineChart(ctxVentasAnt, chartData.ventasDiariasAnt, 'Ventas Diarias Ant. ($)', '#858796');
     }
 });
