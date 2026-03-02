@@ -193,6 +193,23 @@
                                         </button>
                                     </div>
                                 </div>
+
+                                <div class="glass-card mt-4 border border-danger-subtle bg-danger-subtle bg-opacity-10">
+                                    <div class="d-flex align-items-center justify-content-between">
+                                        <div>
+                                            <h6 class="mb-1 fw-bold text-danger"><i
+                                                    class="bi bi-exclamation-triangle-fill me-2"></i>Zona de Peligro
+                                            </h6>
+                                            <p class="text-danger small mb-0 opacity-75">Eliminar este restaurante
+                                                permanentemente (Atención: esto borrará TODO: pedidos, usuarios,
+                                                usuarios, y configuraciones).</p>
+                                        </div>
+                                        <button class="btn btn-danger btn-sm px-3"
+                                            onclick="confirmDeleteTenant(<%= selectedTenant.id %>, '<%= selectedTenant.nombre %>')">
+                                            <i class="bi bi-trash3-fill me-2"></i>Eliminar Restaurante
+                                        </button>
+                                    </div>
+                                </div>
                             </div>
 
                             <!-- Tab Fiscal -->
@@ -638,6 +655,50 @@
                         body: JSON.stringify({ activo })
                     });
                     if (resp.ok) window.location.reload();
+                }
+
+                async function confirmDeleteTenant(id, name) {
+                    if (id == 1) {
+                        return Swal.fire('Acción Denedaga', 'No se permite eliminar el restaurante principal.', 'error');
+                    }
+                    const result = await Swal.fire({
+                        title: '¿Estás completamente seguro?',
+                        html: `Esta acción es <b>irreversible</b>.<br>Se borrarán todos los menús, ventas, usuarios y mesas de <b>${name}</b>.<br><br>Escribe el nombre del restaurante para confirmar:`,
+                        input: 'text',
+                        icon: 'error',
+                        inputPlaceholder: name,
+                        showCancelButton: true,
+                        confirmButtonText: 'Sí, eliminar restaurante',
+                        confirmButtonColor: '#dc3545',
+                        cancelButtonText: 'Cancelar',
+                        inputValidator: (value) => {
+                            if (value.trim().toLowerCase() !== name.trim().toLowerCase()) {
+                                return 'El nombre no coincide. Operación cancelada.';
+                            }
+                        }
+                    });
+
+                    if (result.isConfirmed) {
+                        Swal.fire({
+                            title: 'Eliminando Restaurante...',
+                            text: 'Por favor no cierres esta ventana',
+                            allowOutsideClick: false,
+                            didOpen: () => Swal.showLoading()
+                        });
+                        try {
+                            const resp = await fetch(`/admin/tenants/${id}`, { method: 'DELETE' });
+                            const data = await resp.json();
+                            if (resp.ok && data.success) {
+                                Swal.fire('Eliminado', data.message, 'success').then(() => {
+                                    window.location.href = '/admin/tenants';
+                                });
+                            } else {
+                                Swal.fire('Error', data.message || 'No se pudo eliminar el restaurante', 'error');
+                            }
+                        } catch (e) {
+                            Swal.fire('Error', 'Fallo de conexión al eliminar', 'error');
+                        }
+                    }
                 }
 
                 // Usuarios y Roles

@@ -127,6 +127,47 @@ class TenantService {
         return result;
     }
 
+    static async deleteTenant(id) {
+        const connection = await db.getConnection();
+        try {
+            await connection.beginTransaction();
+
+            // Disable FK checks to allow bulk deletion regardless of dependencies
+            await connection.query('SET FOREIGN_KEY_CHECKS = 0');
+
+            // Delete non-tenant_id dependencies first
+            await connection.query('DELETE FROM user_permisos WHERE user_id IN (SELECT id FROM usuarios WHERE tenant_id = ?)', [id]);
+            await connection.query('DELETE FROM detalle_factura WHERE factura_id IN (SELECT id FROM facturas WHERE tenant_id = ?)', [id]);
+            await connection.query('DELETE FROM producto_parametro WHERE producto_id IN (SELECT id FROM productos WHERE tenant_id = ?)', [id]);
+            await connection.query('DELETE FROM receta_ingredientes WHERE receta_id IN (SELECT id FROM recetas WHERE tenant_id = ?)', [id]);
+            await connection.query('DELETE FROM tema_parametro WHERE tema_id IN (SELECT id FROM temas WHERE tenant_id = ?)', [id]);
+
+            // Delete all data associated with the tenant
+            const tables = [
+                'tenant_audit', 'tenant_addons', 'pedido_items', 'pedidos', 'movimientos_inventario',
+                'facturas', 'recetas', 'productos', 'categorias', 'insumos', 'eventos', 'costos_fijos',
+                'configuracion_costeo', 'configuracion_impresion', 'mesas', 'clientes', 'usuarios',
+                'parametros', 'temas'
+            ];
+
+            for (const table of tables) {
+                await connection.query(`DELETE FROM ${table} WHERE tenant_id = ?`, [id]);
+            }
+
+            // Finally, delete the tenant itself
+            await connection.query('DELETE FROM tenants WHERE id = ?', [id]);
+
+            await connection.query('SET FOREIGN_KEY_CHECKS = 1');
+            await connection.commit();
+        } catch (error) {
+            await connection.query('SET FOREIGN_KEY_CHECKS = 1'); // Ensure it's re-enabled
+            await connection.rollback();
+            throw error;
+        } finally {
+            connection.release();
+        }
+    }
+
     /**
      * Estadísticas para el dashboard del superadministrador.
      * @returns {Promise<{ totalRestaurantes, restaurantesActivos, restaurantesInactivos, porPlan: Array<{ plan_nombre, plan_slug, cantidad }>, totalUsuarios }>}

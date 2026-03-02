@@ -218,6 +218,24 @@ router.post('/:id/status', async (req, res) => {
     }
 });
 
+router.delete('/:id', async (req, res) => {
+    try {
+        if (req.params.id == 1) { // No permitimos borrar el tenant principal para evitar desastres
+            return res.status(403).json({ success: false, message: 'No se puede eliminar el restaurante principal.' });
+        }
+        await TenantService.deleteTenant(req.params.id);
+
+        // Log auditing globally against a null tenant or super tenant?
+        // Wait, the tenant vanishes, so logging against it fails if FK tenant_id is on tenant_audit.
+        // That's why we deleted tenant_audit for this tenant_id in the service!
+
+        res.status(200).json({ success: true, message: 'Restaurante eliminado permanentemente.' });
+    } catch (error) {
+        console.error('Error al eliminar tenant:', error);
+        res.status(500).json({ success: false, message: error.message || 'Error al eliminar restaurante.' });
+    }
+});
+
 // POST /admin/tenants/:id/seed-categorias - Crear categorías por defecto según tipo de negocio
 router.post('/:id/seed-categorias', async (req, res) => {
     try {
