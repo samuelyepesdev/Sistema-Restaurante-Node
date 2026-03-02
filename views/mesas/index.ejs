@@ -19,7 +19,7 @@
                 <h4 class="mb-0 fw-semibold"><i class="bi bi-grid me-2"></i>Mesas</h4>
                 <div class="d-flex flex-wrap gap-2">
                     <button id="btnCrearMasivas" class="btn btn-success">
-                        <i class="bi bi-plus-circle me-1"></i>Crear Múltiples Mesas
+                        <i class="bi bi-plus-circle me-1"></i>Crear Mï¿½ltiples Mesas
                     </button>
                     <button id="btnNuevaMesa" class="btn btn-primary">
                         <i class="bi bi-plus-lg me-1"></i>Nueva Mesa
@@ -312,12 +312,12 @@
 
                         <!-- Panel de Efectivo (oculto inicialmente) -->
                         <div id="panelEfectivo" style="display: none;">
-                            <h6 class="mb-3"><i class="bi bi-cash-stack me-2"></i>Seleccione Denominación o Ingrese
+                            <h6 class="mb-3"><i class="bi bi-cash-stack me-2"></i>Seleccione DenominaciÃ³n o Ingrese
                                 Monto</h6>
 
                             <!-- Denominaciones -->
                             <div id="denominacionesContainer" class="row g-2 mb-3">
-                                <!-- Se llenará dinámicamente -->
+                                <!-- Se llenar dinÃ¡micamente -->
                             </div>
 
                             <!-- Campo manual -->
@@ -332,7 +332,7 @@
                                 </button>
                             </div>
 
-                            <!-- Información de cambio -->
+                            <!-- InformaciÃ³n de cambio -->
                             <div id="infoCambio" class="alert alert-info mt-3" style="display: none;">
                                 <div class="d-flex justify-content-between align-items-center">
                                     <div>
@@ -351,7 +351,7 @@
                         <div id="panelTransferencia" style="display: none;">
                             <div class="alert alert-info">
                                 <i class="bi bi-info-circle me-2"></i>
-                                Se generará la factura con forma de pago: <strong>Transferencia</strong>
+                                Se generarÃ¡ la factura con forma de pago: <strong>Transferencia</strong>
                             </div>
                         </div>
                     </div>
@@ -365,13 +365,13 @@
             </div>
         </div>
 
-        <!-- Modal para crear múltiples mesas -->
+        <!-- Modal para crear mÃºltiples mesas -->
         <div class="modal fade" id="modalCrearMasivas" tabindex="-1">
             <div class="modal-dialog">
                 <div class="modal-content">
                     <div class="modal-header">
                         <h5 class="modal-title">
-                            <i class="bi bi-plus-circle me-2"></i>Crear Múltiples Mesas
+                            <i class="bi bi-plus-circle me-2"></i>Crear MÃºltiples Mesas
                         </h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                     </div>
@@ -381,14 +381,14 @@
                                 <label for="cantidadMesas" class="form-label">Cantidad de Mesas</label>
                                 <input type="number" class="form-control" id="cantidadMesas" min="1" max="100"
                                     value="10" required>
-                                <small class="text-muted">Se crearán mesas continuamente desde el siguiente número
+                                <small class="text-muted">Se crearÃ¡n mesas continuamente desde el siguiente nÃºmero
                                     disponible</small>
                             </div>
                             <div class="mb-3">
                                 <label for="prefijoMesas" class="form-label">Prefijo (Opcional)</label>
                                 <input type="text" class="form-control" id="prefijoMesas" placeholder="Ej: M, Mesa, T">
-                                <small class="text-muted">Si se especifica, las mesas continuarán desde el siguiente
-                                    número con ese prefijo</small>
+                                <small class="text-muted">Si se especifica, las mesas continuarÃ¡n desde el siguiente
+                                    nÃºmero con ese prefijo</small>
                             </div>
                         </form>
                     </div>
@@ -407,7 +407,7 @@
         <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
         <script src="/js/mesas.js"></script>
         <script>
-            // Handle crear múltiples mesas
+            // Handle crear mÃºltiples mesas
             $(document).ready(function () {
                 const modalCrearMasivas = new bootstrap.Modal(document.getElementById('modalCrearMasivas'));
 
@@ -458,7 +458,7 @@
                             message += `\nDesde: ${data.desde}`;
                         }
                         if (data.errores > 0) {
-                            message += `\n?? ${data.errores} mesas no se pudieron crear (ya existían)`;
+                            message += `\n?? ${data.errores} mesas no se pudieron crear (ya existï¿½an)`;
                         }
 
                         await Swal.fire({
