@@ -33,7 +33,7 @@ router.get('/', async (req, res) => {
         });
     } catch (error) {
         console.error('Error al listar tenants:', error);
-        res.status(500).render('error', { error });
+        res.status(500).render('errors/internal', { error });
     }
 });
 

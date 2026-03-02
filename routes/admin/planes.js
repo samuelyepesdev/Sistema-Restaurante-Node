@@ -46,7 +46,7 @@ router.get('/', async (req, res) => {
         res.render('admin/planes', { user: req.user, plans, tenants, addons, serverData });
     } catch (error) {
         console.error('Error al cargar planes:', error);
-        res.status(500).render('error', { error });
+        res.status(500).render('errors/internal', { error });
     }
 });
 

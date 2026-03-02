@@ -6,19 +6,29 @@
 
 const express = require('express');
 const router = express.Router();
-const ClienteService = require('../services/ClienteService');
+const ClienteService = require('../../services/ClienteService');
+const ParametroService = require('../../services/ParametroService');
 
-// GET /clientes - Show clients page
+// GET /clientes - Show clients page (solo del tenant)
 router.get('/', async (req, res) => {
     try {
-        const clientes = await ClienteService.getAll();
-        res.render('clientes', { 
+        const tenantId = req.tenant?.id;
+        if (!tenantId) return res.status(403).render('errors/internal', { error: { message: 'Contexto de tenant no disponible' } });
+
+        const [clientes, tiposDocumento] = await Promise.all([
+            ClienteService.getAll(tenantId),
+            ParametroService.getByTemaName('TIPO_DOCUMENTO', tenantId)
+        ]);
+
+        res.render('clientes/index', {
             clientes: clientes || [],
-            user: req.user
+            tiposDocumento: tiposDocumento || [],
+            user: req.user,
+            tenant: req.tenant
         });
     } catch (error) {
         console.error('Error al obtener clientes:', error);
-        res.status(500).render('errors/internal', { 
+        res.status(500).render('errors/internal', {
             error: {
                 message: 'Error al obtener clientes',
                 stack: error.stack
@@ -27,11 +37,13 @@ router.get('/', async (req, res) => {
     }
 });
 
-// GET /clientes/buscar - Search clients
+// GET /clientes/buscar - Search clients (del tenant)
 router.get('/buscar', async (req, res) => {
     try {
+        const tenantId = req.tenant?.id;
+        if (!tenantId) return res.status(403).json({ error: 'Contexto de tenant no disponible' });
         const query = req.query.q || '';
-        const clientes = await ClienteService.search(query);
+        const clientes = await ClienteService.search(query, tenantId);
         res.json(clientes);
     } catch (error) {
         console.error('Error al buscar clientes:', error);
@@ -39,10 +51,12 @@ router.get('/buscar', async (req, res) => {
     }
 });
 
-// GET /clientes/:id - Get client by ID
+// GET /clientes/:id - Get client by ID (del tenant)
 router.get('/:id', async (req, res) => {
     try {
-        const cliente = await ClienteService.getById(parseInt(req.params.id));
+        const tenantId = req.tenant?.id;
+        if (!tenantId) return res.status(403).json({ error: 'Contexto de tenant no disponible' });
+        const cliente = await ClienteService.getById(parseInt(req.params.id), tenantId);
         res.json(cliente);
     } catch (error) {
         console.error('Error al obtener cliente:', error);
@@ -53,10 +67,12 @@ router.get('/:id', async (req, res) => {
     }
 });
 
-// POST /clientes - Create new client
+// POST /clientes - Create new client (del tenant)
 router.post('/', async (req, res) => {
     try {
-        const result = await ClienteService.create(req.body);
+        const tenantId = req.tenant?.id;
+        if (!tenantId) return res.status(403).json({ error: 'Contexto de tenant no disponible' });
+        const result = await ClienteService.create(tenantId, req.body);
         res.status(201).json(result);
     } catch (error) {
         console.error('Error al crear cliente:', error);
@@ -67,10 +83,12 @@ router.post('/', async (req, res) => {
     }
 });
 
-// PUT /clientes/:id - Update client
+// PUT /clientes/:id - Update client (del tenant)
 router.put('/:id', async (req, res) => {
     try {
-        const result = await ClienteService.update(parseInt(req.params.id), req.body);
+        const tenantId = req.tenant?.id;
+        if (!tenantId) return res.status(403).json({ error: 'Contexto de tenant no disponible' });
+        const result = await ClienteService.update(parseInt(req.params.id), tenantId, req.body);
         res.json(result);
     } catch (error) {
         console.error('Error al actualizar cliente:', error);
@@ -82,10 +100,12 @@ router.put('/:id', async (req, res) => {
     }
 });
 
-// DELETE /clientes/:id - Delete client
+// DELETE /clientes/:id - Delete client (del tenant)
 router.delete('/:id', async (req, res) => {
     try {
-        const result = await ClienteService.delete(parseInt(req.params.id));
+        const tenantId = req.tenant?.id;
+        if (!tenantId) return res.status(403).json({ error: 'Contexto de tenant no disponible' });
+        const result = await ClienteService.delete(parseInt(req.params.id), tenantId);
         res.json(result);
     } catch (error) {
         console.error('Error al eliminar cliente:', error);

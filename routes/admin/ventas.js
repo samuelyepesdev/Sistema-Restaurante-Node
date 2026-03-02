@@ -40,7 +40,7 @@ router.get('/', async (req, res) => {
         });
     } catch (error) {
         console.error('Error al cargar ventas admin:', error);
-        res.status(500).render('error', { error });
+        res.status(500).render('errors/internal', { error });
     }
 });
 
