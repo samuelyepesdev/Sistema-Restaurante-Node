@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Perfil del Negocio</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+</head>
+
+<body class="bg-light">
+    <%- include('../partials/navbar', { user: user, tenant: tenant }) %>
+
+        <div class="container mt-4 mb-5">
+            <h2 class="mb-4"><i class="bi bi-shop me-2"></i>Perfil del Negocio</h2>
+
+            <div class="row g-4">
+                <!-- Columna Resumen General -->
+                <div class="col-lg-5">
+                    <div class="card shadow-sm border-0 h-100">
+                        <div class="card-header bg-white border-0 pt-4 pb-0">
+                            <h5 class="card-title mb-0"><i class="bi bi-bar-chart-fill text-primary me-2"></i>Resumen
+                                General</h5>
+                        </div>
+                        <div class="card-body">
+                            <ul class="list-group list-group-flush mb-4">
+                                <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                                    <span><i class="bi bi-building me-2 text-muted"></i>Nombre del Negocio</span>
+                                    <span class="fw-bold">
+                                        <%= tenant.nombre %>
+                                    </span>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                                    <span><i class="bi bi-geo-alt me-2 text-muted"></i>Dirección</span>
+                                    <span>
+                                        <%= tenant.direccion || 'No especificada' %>
+                                    </span>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                                    <span><i class="bi bi-telephone me-2 text-muted"></i>Teléfono</span>
+                                    <span>
+                                        <%= tenant.telefono || 'No especificado' %>
+                                    </span>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                                    <span><i class="bi bi-file-earmark-text me-2 text-muted"></i>NIT</span>
+                                    <span>
+                                        <%= tenant.nit || 'No especificado' %>
+                                    </span>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                                    <span><i class="bi bi-layers text-muted me-2"></i>Plan Actual</span>
+                                    <span class="badge bg-primary rounded-pill">
+                                        <%= tenant.plan ? tenant.plan.nombre : (tenant.plan_nombre || 'Desconocido' ) %>
+                                    </span>
+                                </li>
+                            </ul>
+
+                            <div class="row g-3">
+                                <div class="col-6">
+                                    <div class="p-3 border rounded text-center bg-light">
+                                        <h3 class="mb-1 text-primary">
+                                            <%= stats.ventasMesCantidad || 0 %>
+                                        </h3>
+                                        <span class="text-muted small">Ventas (Mes)</span>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="p-3 border rounded text-center bg-light">
+                                        <h3 class="mb-1 text-primary">
+                                            <%= stats.totalMesas || 0 %>
+                                        </h3>
+                                        <span class="text-muted small">Mesas Activas</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Columna Personalización -->
+                <div class="col-lg-7">
+                    <div class="card shadow-sm border-0 h-100">
+                        <div class="card-header bg-white border-0 pt-4 pb-0">
+                            <h5 class="card-title mb-0"><i
+                                    class="bi bi-palette-fill text-primary me-2"></i>Personalización y Datos</h5>
+                        </div>
+                        <div class="card-body">
+                            <form id="perfilForm">
+                                <h6 class="mb-3 text-muted">Datos de Información</h6>
+
+                                <div class="mb-3">
+                                    <label for="nombre" class="form-label">Nombre Comercial</label>
+                                    <input type="text" class="form-control" id="nombre" name="nombre"
+                                        value="<%= tenant.nombre %>" required>
+                                </div>
+
+                                <div class="row mb-4">
+                                    <div class="col-md-6 mb-3 mb-md-0">
+                                        <label for="direccion" class="form-label">Dirección / Sucursal</label>
+                                        <input type="text" class="form-control" id="direccion" name="direccion"
+                                            value="<%= tenant.direccion || '' %>">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="telefono" class="form-label">Teléfono de Contacto</label>
+                                        <input type="text" class="form-control" id="telefono" name="telefono"
+                                            value="<%= tenant.telefono || '' %>">
+                                    </div>
+                                </div>
+
+                                <hr class="my-4">
+
+                                <h6 class="mb-3 text-muted">Paleta de Colores (Apariencia)</h6>
+                                <p class="small text-muted mb-4">Selecciona los colores para personalizar la barra de
+                                    navegación y los botones principales del sistema de tu negocio.</p>
+
+                                <!-- Plantillas Predefinidas -->
+                                <div class="mb-4">
+                                    <label class="form-label d-block text-muted small fw-bold">Plantillas
+                                        Rápidas</label>
+                                    <div class="d-flex gap-2 flex-wrap">
+                                        <button type="button" class="btn btn-sm btn-outline-secondary"
+                                            onclick="setTemplate('#1e3a5f', '#ffffff', '#6366f1', '#6c757d', '#1e3a5f', '#0f766e')">Moderno
+                                            (Defecto)</button>
+                                        <button type="button" class="btn btn-sm" style="background:#ffb6b9; color:#fff;"
+                                            onclick="setTemplate('#fdf6e3', '#333333', '#ffb6b9', '#fae3d9', '#bbded6', '#8ac6d1')">Pastel
+                                            Dulce</button>
+                                        <button type="button" class="btn btn-sm" style="background:#e74c3c; color:#fff;"
+                                            onclick="setTemplate('#2c3e50', '#ecf0f1', '#e74c3c', '#95a5a6', '#34495e', '#16a085')">Rojo
+                                            Oscuro</button>
+                                        <button type="button" class="btn btn-sm" style="background:#22c55e; color:#fff;"
+                                            onclick="setTemplate('#14532d', '#ffffff', '#22c55e', '#a8a29e', '#166534', '#15803d')">Bosque</button>
+                                        <button type="button" class="btn btn-sm"
+                                            style="background:#f5ce42; color:#1a1a1a;"
+                                            onclick="setTemplate('#1a1a1a', '#f5ce42', '#f5ce42', '#333333', '#2a2a2a', '#3f3f3f')">Lujo</button>
+                                    </div>
+                                </div>
+
+                                <% const cfg=typeof tenant.config==='string' ? JSON.parse(tenant.config) :
+                                    (tenant.config || {}); const colores=cfg.colores || {}; %>
+
+                                    <div class="row g-4">
+                                        <!-- Navbar Background -->
+                                        <div class="col-md-6">
+                                            <label class="form-label d-block">Barra Superior (Fondo)</label>
+                                            <div class="d-flex align-items-center">
+                                                <input type="color" class="form-control form-control-color me-2"
+                                                    id="colorNavbar" title="Elegir color"
+                                                    value="<%= colores.navbar || '#1e3a5f' %>">
+                                                <span class="small text-muted">El fondo del menú donde tienes las
+                                                    distintas páginas.</span>
+                                            </div>
+                                        </div>
+
+                                        <!-- Navbar Text -->
+                                        <div class="col-md-6">
+                                            <label class="form-label d-block">Barra Superior (Texto)</label>
+                                            <div class="d-flex align-items-center">
+                                                <input type="color" class="form-control form-control-color me-2"
+                                                    id="colorNavbarText" title="Elegir color"
+                                                    value="<%= colores.navbarText || '#ffffff' %>">
+                                                <span class="small text-muted">El color de las letras del menú superior
+                                                    para asegurar contraste.</span>
+                                            </div>
+                                        </div>
+
+                                        <!-- Botones Principales -->
+                                        <div class="col-md-6">
+                                            <label class="form-label d-block">Botones Principales (Links)</label>
+                                            <div class="d-flex align-items-center">
+                                                <input type="color" class="form-control form-control-color me-2"
+                                                    id="colorPrimary" title="Elegir color"
+                                                    value="<%= colores.primary || '#6366f1' %>">
+                                                <span class="small text-muted">Color para el botón de "Guardar", links
+                                                    activos y destaques.</span>
+                                            </div>
+                                        </div>
+
+                                        <!-- Botones Secundarios -->
+                                        <div class="col-md-6">
+                                            <label class="form-label d-block">Botones Secundarios</label>
+                                            <div class="d-flex align-items-center">
+                                                <input type="color" class="form-control form-control-color me-2"
+                                                    id="colorSecondary" title="Elegir color"
+                                                    value="<%= colores.secondary || '#6c757d' %>">
+                                                <span class="small text-muted">Color para botones como "Cancelar" o
+                                                    "Limpiar".</span>
+                                            </div>
+                                        </div>
+
+                                        <!-- Tarjetas Dashboard Principales -->
+                                        <div class="col-md-6">
+                                            <label class="form-label d-block">Tarjetas Dashboard (Primario)</label>
+                                            <div class="d-flex align-items-center">
+                                                <input type="color" class="form-control form-control-color me-2"
+                                                    id="colorCardPrimary" title="Elegir color"
+                                                    value="<%= colores.cardPrimary || '#1e3a5f' %>">
+                                                <span class="small text-muted">Color base para tarjetas de ingresos y
+                                                    métricas globales.</span>
+                                            </div>
+                                        </div>
+
+                                        <!-- Tarjetas Dashboard Secundarias -->
+                                        <div class="col-md-6">
+                                            <label class="form-label d-block">Tarjetas Dashboard (Secundario)</label>
+                                            <div class="d-flex align-items-center">
+                                                <input type="color" class="form-control form-control-color me-2"
+                                                    id="colorCardSecondary" title="Elegir color"
+                                                    value="<%= colores.cardSecondary || '#0f766e' %>">
+                                                <span class="small text-muted">Color para tarjetas de cantidades y
+                                                    números de operaciones.</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="d-flex justify-content-end mt-5">
+                                        <button type="submit" class="btn btn-primary px-4 py-2" id="btnGuardar">
+                                            <i class="bi bi-save me-2"></i>Guardar Cambios
+                                        </button>
+                                    </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+        <script>
+            function setTemplate(nav, text, pri, sec, cPri, cSec) {
+                document.getElementById('colorNavbar').value = nav;
+                document.getElementById('colorNavbarText').value = text;
+                document.getElementById('colorPrimary').value = pri;
+                document.getElementById('colorSecondary').value = sec;
+                document.getElementById('colorCardPrimary').value = cPri;
+                document.getElementById('colorCardSecondary').value = cSec;
+            }
+
+            document.getElementById('perfilForm').addEventListener('submit', async function (e) {
+                e.preventDefault();
+
+                const btn = document.getElementById('btnGuardar');
+                const originalText = btn.innerHTML;
+                btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Guardando...';
+                btn.disabled = true;
+
+                const data = {
+                    nombre: document.getElementById('nombre').value,
+                    direccion: document.getElementById('direccion').value,
+                    telefono: document.getElementById('telefono').value,
+                    colores: JSON.stringify({
+                        navbar: document.getElementById('colorNavbar').value,
+                        navbarText: document.getElementById('colorNavbarText').value,
+                        primary: document.getElementById('colorPrimary').value,
+                        secondary: document.getElementById('colorSecondary').value,
+                        cardPrimary: document.getElementById('colorCardPrimary').value,
+                        cardSecondary: document.getElementById('colorCardSecondary').value
+                    })
+                };
+
+                try {
+                    const response = await fetch('/perfil/actualizar', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(data)
+                    });
+
+                    const result = await response.json();
+
+                    if (result.success) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: '¡Actualizado!',
+                            text: result.message,
+                            timer: 2500,
+                            showConfirmButton: false
+                        }).then(() => {
+                            window.location.reload(); // Recargar para aplicar colores en CSS
+                        });
+                    } else {
+                        throw new Error(result.message || 'Error al guardar');
+                    }
+                } catch (error) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: error.message
+                    });
+                } finally {
+                    btn.innerHTML = originalText;
+                    btn.disabled = false;
+                }
+            });
+        </script>
+</body>
+
+</html>

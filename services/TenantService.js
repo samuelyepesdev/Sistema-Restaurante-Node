@@ -174,6 +174,70 @@ class TenantService {
             GROUP BY mes
             ORDER BY mes ASC
         `);
+
+        // Ventas del mes actuales diarias
+        const hoyColombia = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Bogota' });
+        const parts = hoyColombia.split('-');
+        const mesInicioStr = `${parts[0]}-${parts[1]}-01`;
+
+        const [ventasDiaRows] = await db.query(`
+            SELECT DATE(CONVERT_TZ(fecha, '+00:00', '-05:00')) AS fecha, SUM(total) as total
+            FROM facturas
+            WHERE DATE(CONVERT_TZ(fecha, '+00:00', '-05:00')) BETWEEN ? AND ?
+            GROUP BY fecha
+            ORDER BY fecha ASC
+        `, [mesInicioStr, hoyColombia]);
+
+        const ventasPorFecha = {};
+        ventasDiaRows.forEach(r => {
+            const f = (r.fecha instanceof Date) ? r.fecha.toISOString().split('T')[0] : String(r.fecha || '').substring(0, 10);
+            ventasPorFecha[f] = parseFloat(r.total || 0);
+        });
+
+        const ventasDiariasMes = [];
+        const diaHoy = parseInt(parts[2], 10);
+        for (let i = 1; i <= diaHoy; i++) {
+            const fechaStr = `${parts[0]}-${parts[1]}-${String(i).padStart(2, '0')}`;
+            ventasDiariasMes.push({
+                fecha: fechaStr,
+                total: ventasPorFecha[fechaStr] || 0
+            });
+        }
+
+        // Ventas del mes anterior diarias
+        let mesAnteriorY = parseInt(parts[0], 10);
+        let mesAnteriorM = parseInt(parts[1], 10) - 1;
+        if (mesAnteriorM === 0) {
+            mesAnteriorM = 12;
+            mesAnteriorY -= 1;
+        }
+        const mesAnteriorInicioStr = `${mesAnteriorY}-${String(mesAnteriorM).padStart(2, '0')}-01`;
+        const diasEnMesAnterior = new Date(mesAnteriorY, mesAnteriorM, 0).getDate();
+        const mesAnteriorFinStr = `${mesAnteriorY}-${String(mesAnteriorM).padStart(2, '0')}-${String(diasEnMesAnterior).padStart(2, '0')}`;
+
+        const [ventasDiaAntRows] = await db.query(`
+            SELECT DATE(CONVERT_TZ(fecha, '+00:00', '-05:00')) AS fecha, SUM(total) as total
+            FROM facturas
+            WHERE DATE(CONVERT_TZ(fecha, '+00:00', '-05:00')) BETWEEN ? AND ?
+            GROUP BY fecha
+            ORDER BY fecha ASC
+        `, [mesAnteriorInicioStr, mesAnteriorFinStr]);
+
+        const ventasPorFechaAnt = {};
+        ventasDiaAntRows.forEach(r => {
+            const f = (r.fecha instanceof Date) ? r.fecha.toISOString().split('T')[0] : String(r.fecha || '').substring(0, 10);
+            ventasPorFechaAnt[f] = parseFloat(r.total || 0);
+        });
+
+        const ventasDiariasMesAnterior = [];
+        for (let i = 1; i <= diasEnMesAnterior; i++) {
+            const fechaStr = `${mesAnteriorY}-${String(mesAnteriorM).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
+            ventasDiariasMesAnterior.push({
+                fecha: fechaStr,
+                total: ventasPorFechaAnt[fechaStr] || 0
+            });
+        }
+
         const r = resumen[0] || {};
         const toNum = (val) => (val === undefined || val === null) ? 0 : (typeof val === 'bigint' ? Number(val) : parseFloat(val) || 0);
         const rowVal = (row) => (row && typeof row === 'object') ? toNum(Object.values(row)[0]) : 0;
@@ -189,7 +253,9 @@ class TenantService {
             totalClientes: parseInt(rowVal(clientesRows?.[0]) || 0, 10),
             totalMesas: parseInt(rowVal(mesasRows?.[0]) || 0, 10),
             restaurantesUltimos30Dias: parseInt(rowVal(recientesRow?.[0]) || 0, 10),
-            historicoRegistro: historicoRows || []
+            historicoRegistro: historicoRows || [],
+            ventasDiariasMes,
+            ventasDiariasMesAnterior
         };
     }
 

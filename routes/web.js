@@ -28,6 +28,7 @@ const adminDashboardRoutes = require('./admin/dashboard');
 const eventosRoutes = require('./tenant/eventos');
 const inventarioRoutes = require('./tenant/inventario');
 const recetasRoutes = require('./tenant/recetas');
+const perfilRoutes = require('./tenant/perfil');
 
 // --- RUTAS PÚBLICAS ---
 router.use('/auth', authRoutes);
@@ -57,6 +58,7 @@ router.get('/', optionalAuth, (req, res) => {
 // --- RUTAS DE TENANT (RESTAURANTE) ---
 
 router.use('/productos', requireAuthWithTenant, requirePlanFeature('productos'), productosRoutes);
+router.use('/perfil', requireAuthWithTenant, perfilRoutes);
 router.use('/clientes', requireAuthWithTenant, requirePlanFeature('clientes'), clientesRoutes);
 router.use('/facturas', requireAuthWithTenant, requirePlanFeature('ventas'), facturasRoutes);
 router.use('/mesas', requireAuthWithTenant, requirePlanFeature('mesas'), mesasRoutes);

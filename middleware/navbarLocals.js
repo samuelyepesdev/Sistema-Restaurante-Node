@@ -42,19 +42,35 @@ module.exports = function navbarLocals(req, res, next) {
                 eventos: hp('eventos.ver') && cs('eventos'),
                 analitica: hp('analitica.ver') && cs('analitica'),
                 configuracion: hp('configuracion.ver') && cs('configuracion'),
+                perfil: hp('perfil.ver') && cs('dashboard'), // using dashboard or no feature limit? let's stick to true or cs('dashboard')
             };
+
+            // Fix for perfil plan access
+            can.perfil = hp('perfil.ver');
 
             const hasMas = can.recetas || can.eventos || can.analitica;
 
             let primaryColor = '#6366f1';
             let bgStart = '#1e3a5f';
             let bgEnd = '#0f172a';
+            let textColor = '#ffffff';
+
+            let cardPrimary = '';
+            let cardSecondary = '';
 
             if (tenant && tenant.config) {
                 const cfg = typeof tenant.config === 'string' ? JSON.parse(tenant.config) : tenant.config;
-                if (cfg.colors && cfg.colors.primary) {
-                    primaryColor = cfg.colors.primary;
-                    // Opcional: Podrías derivar bgStart y bgEnd del color primario si quisieras un cambio total
+                if (cfg.colores) {
+                    if (cfg.colores.primary) primaryColor = cfg.colores.primary;
+                    if (cfg.colores.navbar) {
+                        bgStart = cfg.colores.navbar;
+                        bgEnd = cfg.colores.navbar;
+                    }
+                    if (cfg.colores.navbarText) {
+                        textColor = cfg.colores.navbarText;
+                    }
+                    if (cfg.colores.cardPrimary) cardPrimary = cfg.colores.cardPrimary;
+                    if (cfg.colores.cardSecondary) cardSecondary = cfg.colores.cardSecondary;
                 }
             }
 
@@ -68,6 +84,9 @@ module.exports = function navbarLocals(req, res, next) {
                 primaryColor,
                 bgStart,
                 bgEnd,
+                textColor,
+                cardPrimary,
+                cardSecondary,
                 can,
                 hasMas,
             };

@@ -48,6 +48,8 @@ async function loadStats(filters = {}) {
         updateStatsCards({
             ventasHoyTotal: 0,
             ventasHoyCantidad: 0,
+            ventasMesTotal: 0,
+            ventasMesCantidad: 0,
             totalSales: 0,
             totalInvoices: 0,
             avgInvoice: 0,
@@ -73,15 +75,18 @@ function updateStatsCards(stats) {
     // Ventas de hoy (arriba)
     $('#ventasHoyTotal').text(formatCurrency(stats.ventasHoyTotal != null ? stats.ventasHoyTotal : 0));
     $('#ventasHoyCantidad').text(stats.ventasHoyCantidad != null ? stats.ventasHoyCantidad : 0);
+    // Ventas del mes
+    $('#ventasMesTotal').text(formatCurrency(stats.ventasMesTotal != null ? stats.ventasMesTotal : 0));
+    $('#ventasMesCantidad').text(stats.ventasMesCantidad != null ? stats.ventasMesCantidad : 0);
     // Totales del período (abajo)
     $('#totalSales').text(formatCurrency(stats.totalSales));
     $('#totalInvoices').text(stats.totalInvoices);
-    
-    const avgInvoice = stats.totalInvoices > 0 
-        ? stats.totalSales / stats.totalInvoices 
+
+    const avgInvoice = stats.totalInvoices > 0
+        ? stats.totalSales / stats.totalInvoices
         : 0;
     $('#avgInvoice').text(formatCurrency(avgInvoice));
-    
+
     if (stats.topProducts && $('#uniqueProducts').length) $('#uniqueProducts').text(stats.topProducts.length);
     // Eventos del mes = cantidad del mes que muestra el calendario (al cargar = mes actual)
     const eventosDelMes = (stats.eventosCalendario || []).length;
@@ -107,7 +112,7 @@ function updateCharts(stats) {
  */
 function updateDailySalesChart(data) {
     const ctx = document.getElementById('dailySalesChart').getContext('2d');
-    
+
     if (dailySalesChart) {
         dailySalesChart.destroy();
     }
@@ -137,7 +142,7 @@ function updateDailySalesChart(data) {
                 },
                 tooltip: {
                     callbacks: {
-                        label: function(context) {
+                        label: function (context) {
                             return 'Ventas: ' + formatCurrency(context.parsed.y);
                         }
                     }
@@ -147,7 +152,7 @@ function updateDailySalesChart(data) {
                 y: {
                     beginAtZero: true,
                     ticks: {
-                        callback: function(value) {
+                        callback: function (value) {
                             return formatCurrency(value);
                         }
                     }
@@ -193,7 +198,7 @@ function updateVentasEnEventosChart(data) {
                 legend: { display: false },
                 tooltip: {
                     callbacks: {
-                        label: function(context) {
+                        label: function (context) {
                             return 'Ventas: ' + formatCurrency(context.parsed.x);
                         }
                     }
@@ -369,7 +374,7 @@ function updateMiniCalendarioEventos(eventosCalendario, year, month) {
  */
 function updateSalesByCategoryChart(data) {
     const ctx = document.getElementById('salesByCategoryChart').getContext('2d');
-    
+
     if (salesByCategoryChart) {
         salesByCategoryChart.destroy();
     }
@@ -395,7 +400,7 @@ function updateSalesByCategoryChart(data) {
                 },
                 tooltip: {
                     callbacks: {
-                        label: function(context) {
+                        label: function (context) {
                             return 'Ventas: ' + formatCurrency(context.parsed.y);
                         }
                     }
@@ -405,7 +410,7 @@ function updateSalesByCategoryChart(data) {
                 y: {
                     beginAtZero: true,
                     ticks: {
-                        callback: function(value) {
+                        callback: function (value) {
                             return formatCurrency(value);
                         }
                     }
@@ -420,7 +425,7 @@ function updateSalesByCategoryChart(data) {
  */
 function updateTopProductsChart(data) {
     const ctx = document.getElementById('topProductsChart').getContext('2d');
-    
+
     if (topProductsChart) {
         topProductsChart.destroy();
     }
@@ -450,7 +455,7 @@ function updateTopProductsChart(data) {
                 },
                 tooltip: {
                     callbacks: {
-                        label: function(context) {
+                        label: function (context) {
                             return 'Ventas: ' + formatCurrency(context.parsed.x);
                         }
                     }
@@ -460,7 +465,7 @@ function updateTopProductsChart(data) {
                 x: {
                     beginAtZero: true,
                     ticks: {
-                        callback: function(value) {
+                        callback: function (value) {
                             return formatCurrency(value);
                         }
                     }
@@ -528,11 +533,11 @@ function updateTopProductsByCategoryTable(data) {
 function applyFilters() {
     const desde = $('#filtroDesde').val();
     const hasta = $('#filtroHasta').val();
-    
+
     const filters = {};
     if (desde) filters.desde = desde;
     if (hasta) filters.hasta = hasta;
-    
+
     loadStats(filters);
 }
 
@@ -549,16 +554,16 @@ function clearFilters() {
  * Cards clicables: ir a Ventas/Eventos o mostrar modal con detalle
  */
 function initStatsCardClicks() {
-    $(document).on('click', '.stat-card.clickable[data-action="go-ventas"]', function() {
+    $(document).on('click', '.stat-card.clickable[data-action="go-ventas"]', function () {
         window.location.href = '/ventas';
     });
-    $(document).on('click', '.stat-card.clickable[data-action="go-eventos"]', function() {
+    $(document).on('click', '.stat-card.clickable[data-action="go-eventos"]', function () {
         window.location.href = '/eventos';
     });
-    $(document).on('click', '.stat-card.clickable[data-action="go-inventario"]', function() {
+    $(document).on('click', '.stat-card.clickable[data-action="go-inventario"]', function () {
         window.location.href = '/inventario';
     });
-    $(document).on('click', '.stat-card.clickable[data-action="modal-promedio"]', function() {
+    $(document).on('click', '.stat-card.clickable[data-action="modal-promedio"]', function () {
         if (!lastStats) return;
         var total = lastStats.totalSales != null ? lastStats.totalSales : 0;
         var cant = lastStats.totalInvoices != null ? lastStats.totalInvoices : 0;
@@ -570,7 +575,7 @@ function initStatsCardClicks() {
         var modalEl = document.getElementById('modalDetallePromedio');
         if (modalEl) bootstrap.Modal.getOrCreateInstance(modalEl).show();
     });
-    $(document).on('click', '.stat-card.clickable[data-action="modal-ventas-eventos"]', function() {
+    $(document).on('click', '.stat-card.clickable[data-action="modal-ventas-eventos"]', function () {
         if (!lastStats) return;
         var total = lastStats.ventas_eventos_total != null ? lastStats.ventas_eventos_total : 0;
         var cant = lastStats.ventas_eventos_cantidad != null ? lastStats.ventas_eventos_cantidad : 0;
@@ -582,21 +587,21 @@ function initStatsCardClicks() {
 }
 
 // Initialize on page load
-$(document).ready(function() {
+$(document).ready(function () {
     // Set default date range (last 30 days)
     const hasta = new Date();
     const desde = new Date();
     desde.setDate(desde.getDate() - 30);
-    
+
     $('#filtroDesde').val(desde.toISOString().split('T')[0]);
     $('#filtroHasta').val(hasta.toISOString().split('T')[0]);
-    
+
     // Load initial stats
     loadStats({
         desde: desde.toISOString().split('T')[0],
         hasta: hasta.toISOString().split('T')[0]
     });
-    
+
     // Event handlers
     $('#aplicarFiltros').on('click', applyFilters);
     $('#limpiarFiltros').on('click', clearFilters);

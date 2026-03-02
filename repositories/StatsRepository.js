@@ -56,6 +56,30 @@ class StatsRepository {
     }
 
     /**
+     * Ventas del mes (total en $ y cantidad de facturas).
+     * @param {number} tenantId - Tenant ID
+     * @returns {Promise<{ total: number, cantidad: number }>}
+     */
+    static async getVentasMes(tenantId) {
+        const hoy = getFechaColombia();
+        // Separamos para obtener YYYY-MM
+        const parts = hoy.split('-');
+        const yyyyMm = `${parts[0]}-${parts[1]}`;
+        const mesInicioStr = `${yyyyMm}-01`;
+
+        const [rows] = await db.query(
+            `SELECT COALESCE(SUM(total), 0) AS total, COUNT(*) AS cantidad
+             FROM facturas WHERE tenant_id = ? AND DATE(CONVERT_TZ(fecha, '+00:00', '-05:00')) BETWEEN ? AND ?`,
+            [tenantId, mesInicioStr, hoy] // Hasta hoy, o podríamos usar LAST_DAY pero hoy es seguro porque es el máximo que hay facturado en el mes actual
+        );
+        const r = rows[0] || {};
+        return {
+            total: parseFloat(r.total || 0),
+            cantidad: parseInt(r.cantidad || 0)
+        };
+    }
+
+    /**
      * Get total number of invoices
      * @param {number} tenantId - Tenant ID
      * @param {Object} filters - Date filters (optional)

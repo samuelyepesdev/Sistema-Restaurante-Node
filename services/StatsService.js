@@ -31,6 +31,7 @@ class StatsService {
 
         const [
             ventasHoy,
+            ventasMes,
             totalSales,
             totalInvoices,
             topProducts,
@@ -43,6 +44,7 @@ class StatsService {
             eventosCalendario
         ] = await Promise.all([
             StatsRepository.getVentasHoy(tenantId),
+            StatsRepository.getVentasMes(tenantId),
             StatsRepository.getTotalSales(tenantId, filters),
             StatsRepository.getTotalInvoices(tenantId, filters),
             StatsRepository.getTopProducts(tenantId, 10, filters),
@@ -68,6 +70,8 @@ class StatsService {
         return {
             ventasHoyTotal: ventasHoy.total,
             ventasHoyCantidad: ventasHoy.cantidad,
+            ventasMesTotal: ventasMes.total,
+            ventasMesCantidad: ventasMes.cantidad,
             totalSales,
             totalInvoices,
             topProducts,
