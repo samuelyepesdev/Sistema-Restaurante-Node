@@ -1,0 +1,792 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Costeo de Platos</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+        <link rel="stylesheet" href="/css/costeo.css">
+</head>
+<body>
+    <%- include('../partials/navbar', { user: typeof user !== 'undefined' ? user : null, tenant: typeof tenant !== 'undefined' ? tenant : null }) %>
+
+    <div class="container mt-4">
+        <% if (typeof showTenantSelector !== 'undefined' && showTenantSelector && tenants && tenants.length) { %>
+        <div class="card">
+            <div class="card-header"><i class="bi bi-calculator me-2"></i>Costeo de Platos</div>
+            <div class="card-body">
+                <p class="text-muted">Seleccioná el restaurante para gestionar costeo (insumos, recetas, temas y parámetros).</p>
+                <ul class="list-group list-group-flush">
+                    <% tenants.forEach(function(t) { %>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <span><%= t.nombre %></span>
+                        <a href="/costeo?tenant_id=<%= t.id %>" class="btn btn-sm btn-primary">Entrar</a>
+                    </li>
+                    <% }); %>
+                </ul>
+            </div>
+        </div>
+        <% } else { %>
+        <div class="card">
+            <div class="card-header">
+                <div class="d-flex flex-column flex-md-row justify-content-between align-items-stretch align-items-md-center gap-2 gap-md-3 w-100">
+                    <div class="fw-semibold"><i class="bi bi-calculator me-2"></i>Costeo de Platos<% if (typeof tenant !== 'undefined' && tenant) { %> — <%= tenant.nombre %><% } %></div>
+                    <ul class="nav nav-tabs card-header-tabs flex-nowrap overflow-auto" id="costeoTab" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="insumos-tab" data-bs-toggle="tab" data-bs-target="#insumos" type="button">Insumos</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="recetas-tab" data-bs-toggle="tab" data-bs-target="#recetas" type="button">Recetas</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="alertas-tab" data-bs-toggle="tab" data-bs-target="#alertas" type="button">Alertas</button>
+                    </li>
+                    <% if (typeof costeoPlantillaReposteria === 'undefined' || !costeoPlantillaReposteria) { %>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="config-tab" data-bs-toggle="tab" data-bs-target="#config" type="button">Configuración</button>
+                    </li>
+                    <% } %>
+                </ul>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="tab-content" id="costeoTabContent">
+                    <!-- Tab Insumos -->
+                    <div class="tab-pane fade show active" id="insumos" role="tabpanel">
+                        <div class="d-flex flex-wrap gap-2 align-items-center mb-3">
+                            <input type="text" class="form-control form-control-sm" id="filtroInsumoQ" placeholder="Buscar por código o nombre..." style="max-width: 220px;">
+                            <select class="form-select form-select-sm" id="filtroInsumoUnidad" style="max-width: 120px;">
+                                <option value="">Todas las unidades</option>
+                            </select>
+                            <button type="button" class="btn btn-sm btn-outline-secondary" id="btnFiltrarInsumos">Filtrar</button>
+                            <% if (user && user.permisos && user.permisos.includes('costeo.editar')) { %>
+                            <% if (typeof allowedByPlan !== 'undefined' && allowedByPlan && allowedByPlan.plantillas && user.permisos.includes('plantillas.ver')) { %>
+                            <a href="/costeo/api/insumos/plantilla<%= (typeof tenant !== 'undefined' && tenant && tenant.id) ? '?tenant_id=' + tenant.id : '' %>" class="btn btn-sm btn-outline-success" download="plantilla_insumos.xlsx" id="linkPlantillaInsumos">
+                                <i class="bi bi-file-earmark-excel me-1"></i>Descargar plantilla
+                            </a>
+                            <button type="button" class="btn btn-sm btn-outline-primary" id="btnCargarExcelInsumos">
+                                <i class="bi bi-upload me-1"></i>Cargar Excel
+                            </button>
+                            <input type="file" accept=".xlsx,.xls" id="inputCargarExcelInsumos" class="d-none">
+                            <% } %>
+                            <button type="button" class="btn btn-primary btn-sm ms-auto" id="btnNuevoInsumo">
+                                <i class="bi bi-plus-lg me-1"></i>Nuevo Insumo
+                            </button>
+                            <% } %>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-hover" id="tablaInsumos">
+                                <thead><tr><th>Código</th><th>Nombre</th><th>Presentación</th><th>Precio compra</th><th></th></tr></thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Tab Recetas -->
+                    <div class="tab-pane fade" id="recetas" role="tabpanel">
+                        <div class="d-flex flex-wrap gap-2 align-items-center mb-3">
+                            <input type="text" class="form-control form-control-sm" id="filtroRecetaQ" placeholder="Buscar por nombre de producto o receta..." style="max-width: 280px;">
+                            <button type="button" class="btn btn-sm btn-outline-secondary" id="btnFiltrarRecetas">Filtrar</button>
+                            <% if (user && user.permisos && user.permisos.includes('costeo.editar')) { %>
+                            <% if (typeof costeoPlantillaReposteria !== 'undefined' && costeoPlantillaReposteria) { %>
+                            <button type="button" class="btn btn-primary btn-sm ms-auto" id="btnNuevaReceta"><i class="bi bi-plus-lg me-1"></i>Nueva Receta (Calculadora)</button>
+                            <% } else { %>
+                            <button type="button" class="btn btn-primary btn-sm ms-auto" data-bs-toggle="modal" data-bs-target="#recetaNuevaModal" id="btnNuevaReceta"><i class="bi bi-plus-lg me-1"></i>Nueva Receta</button>
+                            <% } %>
+                            <% } %>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-hover" id="tablaRecetas">
+                                <thead><tr><th>Producto</th><th>Receta</th><th>Porciones</th><th>Precio venta</th><th></th></tr></thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
+                        <div id="costeoRecetaPanel" class="costeo-resumen mt-3 d-none">
+                            <h6 class="mb-3"><i class="bi bi-graph-up me-1"></i>Resumen de costeo (por porción)</h6>
+
+                            <div class="mb-3">
+                                <span class="small fw-bold text-secondary d-block mb-2">1. Costeo técnico</span>
+                                <div class="row small mb-1">
+                                    <div class="col-md-4">Costo materia prima: <strong id="costeoDirecto">-</strong></div>
+                                    <div class="col-md-4">Merma / indirecto (<span id="costeoMermaPct">-</span>%): <strong id="costeoIndirecto">-</strong></div>
+                                    <div class="col-md-4">CVU (costo total porción): <strong id="costeoTotal">-</strong></div>
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <span class="small fw-bold text-secondary d-block mb-2">2. Precio y rentabilidad</span>
+                                <div class="row small mb-1">
+                                    <div class="col-md-3">Precio venta actual: <strong id="costeoPrecioActual">-</strong></div>
+                                    <div class="col-md-3">Utilidad bruta: <strong id="costeoUtilidadBruta">-</strong></div>
+                                    <div class="col-md-3">Margen real (sobre venta): <strong id="costeoMargen">-</strong></div>
+                                    <div class="col-md-3">Markup (sobre costo): <strong id="costeoMarkup">-</strong></div>
+                                </div>
+                                <div class="row small mb-1">
+                                    <div class="col-md-4">Margen objetivo: <strong id="costeoMargenObjetivo">-</strong></div>
+                                    <div class="col-md-4">Precio sugerido: <strong id="costeoPrecioSug">-</strong></div>
+                                    <div class="col-md-4"><span class="text-muted">Fórmula: Precio = CVU ÷ (1 − margen)</span></div>
+                                </div>
+                            </div>
+
+                            <div class="mb-2">
+                                <span class="small fw-bold text-secondary d-block mb-2">3. Análisis financiero</span>
+                                <div class="row small mb-1">
+                                    <div class="col-md-4">Total costos fijos (mes): <strong id="costeoTotalFijos">-</strong></div>
+                                    <div class="col-md-4">Margen contribución (porción): <strong id="costeoMargenContrib">-</strong></div>
+                                    <div class="col-md-4">Punto de equilibrio: <strong id="costeoPuntoEquilibrio">-</strong> porciones/mes</div>
+                                </div>
+                                <p class="mt-1 mb-0 small text-muted">PE = Costos fijos ÷ Margen contribución. Cuántas porciones vender para cubrir gastos fijos.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Tab Alertas -->
+                    <div class="tab-pane fade" id="alertas" role="tabpanel">
+                        <p class="text-muted small mb-3">Productos con margen bajo, precio bajo costo o sin receta asociada.</p>
+                        <div id="alertasLoading" class="text-center py-4">
+                            <div class="spinner-border text-primary"></div>
+                            <p class="mt-2 mb-0 small text-muted">Cargando alertas...</p>
+                        </div>
+                        <div id="alertasContent" class="d-none">
+                            <div class="card mb-3 border-warning">
+                                <div class="card-header bg-warning bg-opacity-25">
+                                    <i class="bi bi-exclamation-triangle me-2"></i>Margen bajo (por debajo del mínimo configurado)
+                                </div>
+                                <div class="card-body p-0">
+                                    <div class="table-responsive">
+                                        <table class="table table-sm table-hover mb-0">
+                                            <thead><tr><th>Producto</th><th>Código</th><th class="text-end">Precio</th><th class="text-end">Costo/porción</th><th class="text-end">Margen %</th></tr></thead>
+                                            <tbody id="alertasMargenBajo"></tbody>
+                                        </table>
+                                    </div>
+                                    <div id="alertasMargenBajoVacio" class="p-3 text-muted small d-none">No hay productos con margen bajo.</div>
+                                </div>
+                            </div>
+                            <div class="card mb-3 border-danger">
+                                <div class="card-header bg-danger bg-opacity-25">
+                                    <i class="bi bi-currency-dollar me-2"></i>Precio bajo costo
+                                </div>
+                                <div class="card-body p-0">
+                                    <div class="table-responsive">
+                                        <table class="table table-sm table-hover mb-0">
+                                            <thead><tr><th>Producto</th><th>Código</th><th class="text-end">Precio</th><th class="text-end">Costo/porción</th></tr></thead>
+                                            <tbody id="alertasPrecioBajo"></tbody>
+                                        </table>
+                                    </div>
+                                    <div id="alertasPrecioBajoVacio" class="p-3 text-muted small d-none">No hay productos con precio bajo costo.</div>
+                                </div>
+                            </div>
+                            <div class="card border-secondary">
+                                <div class="card-header bg-secondary bg-opacity-25">
+                                    <i class="bi bi-link-45deg me-2"></i>Productos sin receta
+                                </div>
+                                <div class="card-body p-0">
+                                    <div class="table-responsive">
+                                        <table class="table table-sm table-hover mb-0">
+                                            <thead><tr><th>Producto</th><th>Código</th><th></th></tr></thead>
+                                            <tbody id="alertasSinReceta"></tbody>
+                                        </table>
+                                    </div>
+                                    <div id="alertasSinRecetaVacio" class="p-3 text-muted small d-none">Todos los productos tienen receta asociada.</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <% if (typeof costeoPlantillaReposteria === 'undefined' || !costeoPlantillaReposteria) { %>
+                    <!-- Tab Configuración (solo restaurante/comidas rápidas; pastelería/panadería usa la calculadora por receta) -->
+                    <div class="tab-pane fade" id="config" role="tabpanel">
+                        <div class="card bg-light border-0 mb-4">
+                            <div class="card-header py-2">
+                                <button class="btn btn-link btn-sm text-decoration-none p-0 fw-bold" type="button" data-bs-toggle="collapse" data-bs-target="#comoFuncionaCosteo">
+                                    <i class="bi bi-question-circle me-1"></i> ¿Cómo funciona el costeo?
+                                </button>
+                            </div>
+                            <div class="collapse show" id="comoFuncionaCosteo">
+                                <div class="card-body small text-muted">
+                                    <p class="mb-2"><strong>1. Insumos</strong> — Precio de compra y presentación (tamaño en que comprás: ej. 450 ml, 1 kg). El costo unitario se calcula: precio ÷ presentación en base (g, ml, UND).</p>
+                                    <p class="mb-2"><strong>2. Recetas</strong> — Porciones e ingredientes (insumo + cantidad + unidad). Costo por ingrediente = costo unitario × cantidad usada (convertida a la misma base).</p>
+                                    <p class="mb-2"><strong>3. CVU (costo variable unitario)</strong> — Costo materia prima por porción + costos indirectos (merma % o costos fijos repartidos en las unidades estimadas al mes).</p>
+                                    <p class="mb-2"><strong>4. Precio sugerido (margen sobre venta)</strong> — Precio = CVU ÷ (1 − margen). Ej: CVU $10, margen 65% → precio = 10 ÷ 0,35 = $28,57. El margen es sobre el precio final, no sobre el costo.</p>
+                                    <p class="mb-2"><strong>5. Utilidad y márgenes</strong> — Utilidad bruta = Precio − CVU. Margen real % = (Utilidad ÷ Precio)×100. Markup % = (Utilidad ÷ CVU)×100.</p>
+                                    <p class="mb-2"><strong>6. Punto de equilibrio</strong> — En cada receta: porciones de ese plato para cubrir costos fijos. En Configuración (resumen del negocio): ventas totales en $ considerando todos los productos.</p>
+                                    <p class="mb-0"><strong>7. Alertas</strong> — Productos con margen real por debajo del mínimo o precio bajo costo aparecen en la pestaña Alertas.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <form id="formConfigCosteo">
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label class="form-label">Método de costos indirectos</label>
+                                    <select class="form-select" name="metodo_indirectos" id="configMetodo">
+                                        <option value="porcentaje">Porcentaje sobre costo materia prima (merma/variación)</option>
+                                        <option value="costo_fijo">Costos fijos repartidos en unidades vendidas</option>
+                                        <option value="factor">Factor de carga (multiplicador para precio)</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="row mb-3" id="rowPorcentaje">
+                                <div class="col-md-4">
+                                    <label class="form-label">Merma / variación (%)</label>
+                                    <input type="number" class="form-control" name="porcentaje_indirectos" id="configPorcentaje" step="0.01" min="0" placeholder="10">
+                                    <small class="text-muted">Sobre costo materia prima. Ej: 10</small>
+                                </div>
+                            </div>
+                            <div class="row mb-3 d-none" id="rowCostoFijo">
+                                <div class="col-12">
+                                    <label class="form-label fw-bold">Estructura de costos fijos</label>
+                                    <p class="small text-muted mb-2">Arriendo, personal, internet, etc. Solo se suman los activos. Costo fijo por porción = Total costos fijos ÷ Unidades estimadas al mes.</p>
+                                    <div class="table-responsive mb-2">
+                                        <table class="table table-sm table-hover" id="tablaCostosFijos">
+                                            <thead class="table-light"><tr><th>Nombre</th><th class="text-end">Monto mensual</th><th>Activo</th><th width="100"></th></tr></thead>
+                                            <tbody id="costosFijosBody"></tbody>
+                                        </table>
+                                    </div>
+                                    <p class="small mb-2"><strong>Total costos fijos activos:</strong> <span id="costosFijosTotal">0</span></p>
+                                    <% if (user && user.permisos && user.permisos.includes('costeo.editar')) { %>
+                                    <button type="button" class="btn btn-outline-primary btn-sm" id="btnNuevoCostoFijo"><i class="bi bi-plus-lg me-1"></i>Agregar costo fijo</button>
+                                    <% } %>
+                                </div>
+                                <div class="col-md-4 mt-3">
+                                    <label class="form-label">Unidades estimadas al mes (porciones/platos)</label>
+                                    <input type="number" class="form-control" name="platos_estimados_mes" id="configPlatosMes" min="1" placeholder="500" title="Total de porciones o platos que esperas vender al mes (mix de todos los productos)">
+                                    <small class="text-muted">Total de porciones o platos que estimas vender al mes. El costo fijo se reparte entre estas unidades.</small>
+                                </div>
+                            </div>
+                            <div class="row mb-3 d-none" id="rowFactor">
+                                <div class="col-md-4">
+                                    <label class="form-label">Factor de carga</label>
+                                    <input type="number" class="form-control" name="factor_carga" id="configFactor" step="0.01" min="1" placeholder="2.5">
+                                    <small class="text-muted">Precio sugerido = Costo directo × factor. Ej: 2.5</small>
+                                </div>
+                            </div>
+                            <div class="row mb-3">
+                                <div class="col-md-4">
+                                    <label class="form-label">Margen de ganancia esperado (%)</label>
+                                    <input type="number" class="form-control" name="margen_objetivo_default" id="configMargen" step="0.01" min="0" max="100" placeholder="65">
+                                    <small class="text-muted">Precio = Costo total ÷ (1 − Margen). Ej: 65</small>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">Margen mínimo para alerta (%)</label>
+                                    <input type="number" class="form-control" name="margen_minimo_alerta" id="configMargenMinimoAlerta" step="0.01" min="0" max="100" placeholder="30">
+                                    <small class="text-muted">Productos por debajo aparecen en Alertas</small>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">Ganancia neta deseada ($/mes)</label>
+                                    <input type="number" class="form-control" name="ganancia_neta_deseada_mensual" id="configGananciaDeseada" step="0.01" min="0" placeholder="0">
+                                    <small class="text-muted">Meta de utilidad mensual para calcular ventas necesarias</small>
+                                </div>
+                            </div>
+                            <% if (user && user.permisos && user.permisos.includes('costeo.editar')) { %>
+                            <button type="submit" form="formConfigCosteo" class="btn btn-primary"><i class="bi bi-save me-1"></i>Guardar configuración</button>
+                            <% } %>
+                        </form>
+
+                        <div class="card mt-4 border-primary">
+                            <div class="card-header bg-primary bg-opacity-10">
+                                <i class="bi bi-calculator me-2"></i>Punto de equilibrio del negocio
+                            </div>
+                            <div class="card-body">
+                                <p class="small text-muted mb-3">Considera todos los productos con receta. Ventas de equilibrio = costos fijos ÷ margen de contribución %. Con ganancia deseada: ventas necesarias para cubrir fijos y alcanzar esa utilidad.</p>
+                                <div id="resumenFinancieroLoading" class="text-center py-3 d-none">
+                                    <div class="spinner-border spinner-border-sm text-primary"></div>
+                                    <span class="ms-2 small">Cargando...</span>
+                                </div>
+                                <div id="resumenFinancieroContent" class="d-none">
+                                    <div class="row small mb-3">
+                                        <div class="col-md-3">Total costos fijos (mes): <strong id="resumenTotalFijos">-</strong></div>
+                                        <div class="col-md-3">Margen contrib. % (portafolio): <strong id="resumenMCPct">-</strong></div>
+                                        <div class="col-md-3">Ventas para equilibrio: <strong id="resumenVentasEquilibrio">-</strong></div>
+                                        <div class="col-md-3">Ventas para meta (con ganancia): <strong id="resumenVentasMeta">-</strong></div>
+                                    </div>
+                                    <p class="small text-muted mb-2" id="resumenNotaMix"></p>
+                                    <div class="table-responsive">
+                                        <table class="table table-sm">
+                                            <thead class="table-light"><tr><th>Producto</th><th class="text-end">Precio</th><th class="text-end">CVU</th><th class="text-end">MC porción</th><th class="text-end">MC %</th></tr></thead>
+                                            <tbody id="resumenProductosBody"></tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                                <div id="resumenFinancieroVacio" class="text-muted small py-2 d-none">No hay productos con receta para calcular el resumen.</div>
+                            </div>
+                        </div>
+
+                        <!-- Modal Costo fijo -->
+                        <div class="modal fade" id="modalCostoFijo" tabindex="-1">
+                            <div class="modal-dialog">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title" id="modalCostoFijoTitle">Nuevo costo fijo</h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <input type="hidden" id="costoFijoId">
+                                        <div class="mb-2">
+                                            <label class="form-label">Nombre</label>
+                                            <input type="text" class="form-control" id="costoFijoNombre" placeholder="Ej: Arriendo, Mesero, Internet" required>
+                                        </div>
+                                        <div class="mb-2">
+                                            <label class="form-label">Monto mensual ($)</label>
+                                            <input type="number" class="form-control" id="costoFijoMonto" step="0.01" min="0" value="0">
+                                        </div>
+                                        <div class="form-check">
+                                            <input type="checkbox" class="form-check-input" id="costoFijoActivo" checked>
+                                            <label class="form-check-label" for="costoFijoActivo">Activo (se incluye en el total)</label>
+                                        </div>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                                        <button type="button" class="btn btn-primary" id="btnGuardarCostoFijo">Guardar</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <% } %>
+                </div>
+            </div>
+        </div>
+        <% } %>
+    </div>
+
+    <!-- Modal Insumo -->
+    <div class="modal fade" id="insumoModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="insumoModalTitle">Nuevo Insumo</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="insumoId">
+                    <div class="mb-2">
+                        <label class="form-label">Código</label>
+                        <input type="text" class="form-control" id="insumoCodigo" required>
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label">Nombre</label>
+                        <input type="text" class="form-control" id="insumoNombre" required>
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label">Presentación</label>
+                        <small class="text-muted d-block mb-1">Tamaño en que comprás el producto (ej: aceite 450 ml, arroz 1 kg, huevos 12 unidades)</small>
+                        <div class="d-flex gap-2 align-items-center flex-wrap">
+                            <input type="number" class="form-control" id="insumoCantidadCompra" step="0.0001" min="0.0001" value="1" placeholder="Ej: 450" style="max-width: 140px;" title="Cantidad según la presentación">
+                            <select class="form-select" id="insumoUnidad" style="max-width: 100px;" title="Unidad de la presentación">
+                                <option value="UND">UND</option>
+                                <option value="kg">kg</option>
+                                <option value="g">g</option>
+                                <option value="L">L</option>
+                                <option value="ml">ml</option>
+                                <option value="lb">lb</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label">Precio de compra</label>
+                        <input type="number" class="form-control" id="insumoPrecioCompra" step="0.01" min="0" value="0" title="Precio que pagás por esa presentación">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" id="btnGuardarInsumo">Guardar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Nueva Receta -->
+    <div class="modal fade" id="recetaNuevaModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Nueva Receta</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-2">
+                        <label class="form-label">Producto</label>
+                        <select class="form-select" id="recetaProductoId" required>
+                            <option value="">Seleccione producto</option>
+                            <% (productos || []).forEach(function(p) { %>
+                            <option value="<%= p.id %>"><%= p.codigo %> - <%= p.nombre %></option>
+                            <% }); %>
+                        </select>
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label">Nombre de la receta</label>
+                        <input type="text" class="form-control" id="recetaNombreNueva" required>
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label">Porciones</label>
+                        <input type="number" class="form-control" id="recetaPorcionesNueva" step="0.01" min="0.01" value="1">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" id="btnCrearReceta">Crear</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Editar Receta (ingredientes) -->
+    <div class="modal fade" id="recetaEditarModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="recetaEditarTitle">Editar Receta</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="recetaId">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Nombre receta</label>
+                            <input type="text" class="form-control" id="recetaNombre">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Porciones</label>
+                            <input type="number" class="form-control" id="recetaPorciones" step="0.01" min="0.01">
+                        </div>
+                    </div>
+                    <h6 class="mt-3">Ingredientes</h6>
+                    <div class="table-responsive">
+                        <table class="table table-sm ingredientes-table" id="tablaIngredientes">
+                            <thead><tr><th>Insumo</th><th>Cantidad</th><th>Unidad</th><th></th></tr></thead>
+                            <tbody id="ingredientesBody"></tbody>
+                        </table>
+                    </div>
+                    <div id="ingredienteAgregarEstandar" class="d-flex align-items-center gap-2 mt-2 flex-wrap">
+                        <select class="form-select form-select-sm" id="ingredienteInsumo" style="max-width: 220px;" title="Elegí el insumo; la unidad se ajusta: peso → g, líquido → ml, unidad → UND"></select>
+                        <input type="number" class="form-control form-control-sm" id="ingredienteCantidad" placeholder="Cantidad" step="0.001" style="max-width: 100px;">
+                        <select class="form-select form-select-sm" id="ingredienteUnidad" style="max-width: 90px;" title="Peso en g, líquido en ml, unidades en UND. Se define según el insumo elegido.">
+                            <option value="g">g</option>
+                            <option value="ml">ml</option>
+                            <option value="UND">UND</option>
+                        </select>
+                        <button type="button" class="btn btn-outline-primary btn-sm" id="btnAgregarIngrediente"><i class="bi bi-plus"></i> Agregar</button>
+                    </div>
+                    <% if (typeof costeoPlantillaReposteria !== 'undefined' && costeoPlantillaReposteria) { %>
+                    <div id="ingredienteAgregarReposteria" class="mt-2 d-none">
+                        <div class="small text-muted mb-2">Ingresar en tazas/cucharadas (se convierte a gramos para el costeo)</div>
+                        <div class="d-flex align-items-center gap-2 flex-wrap">
+                            <select class="form-select form-select-sm" id="ingredienteInsumoRep" style="max-width: 220px;"></select>
+                            <input type="text" class="form-control form-control-sm" id="ingredienteCantidadRep" placeholder="Ej: 2, 1/2, 1 1/2" style="max-width: 110px;" title="Número o fracción (ej. 1 1/2)">
+                            <select class="form-select form-select-sm" id="ingredienteUnidadEntrada" style="max-width: 90px;">
+                                <option value="g">g</option>
+                                <option value="kg">kg</option>
+                                <option value="ml">ml</option>
+                                <option value="L">L</option>
+                                <option value="cup">taza</option>
+                                <option value="tbsp">cda</option>
+                                <option value="tsp">cdta</option>
+                                <option value="oz">oz</option>
+                                <option value="lb">lb</option>
+                                <option value="UND">UND</option>
+                            </select>
+                            <select class="form-select form-select-sm" id="ingredienteTipoRep" style="max-width: 140px;" title="Tipo para convertir taza/cda a gramos">
+                                <option value="flour">Harina</option>
+                                <option value="sugar">Azúcar</option>
+                                <option value="brown-sugar">Azúcar morena</option>
+                                <option value="powdered-sugar">Azúcar glass</option>
+                                <option value="butter">Mantequilla</option>
+                                <option value="milk">Leche</option>
+                                <option value="water">Agua</option>
+                                <option value="oil">Aceite</option>
+                                <option value="cocoa">Cacao</option>
+                                <option value="salt">Sal</option>
+                                <option value="eggs">Huevos</option>
+                                <option value="cream">Crema</option>
+                                <option value="honey">Miel</option>
+                                <option value="custom-solid">Otro sólido</option>
+                                <option value="custom-liquid">Otro líquido</option>
+                            </select>
+                            <span class="small" id="ingredienteConvertidoRep"></span>
+                            <button type="button" class="btn btn-outline-primary btn-sm" id="btnAgregarIngredienteRep"><i class="bi bi-plus"></i> Agregar</button>
+                        </div>
+                    </div>
+                    <% } %>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                    <button type="button" class="btn btn-primary" id="btnGuardarReceta">Guardar receta</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <% if (typeof costeoPlantillaReposteria !== 'undefined' && costeoPlantillaReposteria) { %>
+    <!-- Modal Calculadora de precios - Repostería (pastelería/panadería) -->
+    <div class="modal fade" id="modalCalculadoraReposteria" tabindex="-1" aria-labelledby="modalCalculadoraReposteriaLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalCalculadoraReposteriaLabel"><i class="bi bi-calculator me-2"></i>Calculadora de precios</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="calcRecetaId" value="">
+
+                    <!-- Datos básicos -->
+                    <div class="calc-seccion">
+                        <div class="calc-seccion-titulo"><i class="bi bi-pencil-square"></i> Datos de la receta</div>
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <label class="form-label">Producto</label>
+                                <select class="form-select" id="calcProductoId">
+                                    <option value="">Seleccione producto</option>
+                                    <% (productos || []).forEach(function(p) { %>
+                                    <option value="<%= p.id %>"><%= p.codigo %> - <%= p.nombre %></option>
+                                    <% }); %>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Nombre de la receta</label>
+                                <input type="text" class="form-control" id="calcNombreReceta" placeholder="Ej: Torta de chocolate">
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label">Porciones</label>
+                                <input type="number" class="form-control" id="calcPorciones" step="0.01" min="0.01" value="1">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 1. Ingredientes -->
+                    <div class="calc-seccion">
+                        <div class="calc-seccion-titulo"><i class="bi bi-list-ul"></i> 1. Ingredientes</div>
+                        <div class="table-responsive mb-2">
+                            <table class="table table-sm table-hover align-middle" id="calcTablaIngredientes">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Ingrediente</th>
+                                        <th>Cantidad</th>
+                                        <th>Unidad</th>
+                                        <th class="text-end">Costo</th>
+                                        <th width="40"></th>
+                                    </tr>
+                                </thead>
+                                <tbody id="calcIngredientesBody"></tbody>
+                            </table>
+                        </div>
+                        <div class="d-flex flex-wrap align-items-end gap-2">
+                            <select class="form-select form-select-sm" id="calcInsumo" style="max-width: 220px;"></select>
+                            <input type="text" class="form-control form-control-sm" id="calcCantidad" placeholder="Ej: 2, 1/2" style="max-width: 100px;">
+                            <select class="form-select form-select-sm" id="calcUnidad" style="max-width: 90px;">
+                                <option value="g">g</option>
+                                <option value="kg">kg</option>
+                                <option value="ml">ml</option>
+                                <option value="L">L</option>
+                                <option value="cup">taza</option>
+                                <option value="tbsp">cda</option>
+                                <option value="tsp">cdta</option>
+                                <option value="oz">oz</option>
+                                <option value="lb">lb</option>
+                                <option value="UND">UND</option>
+                            </select>
+                            <select class="form-select form-select-sm" id="calcTipoIngrediente" style="max-width: 130px;">
+                                <option value="flour">Harina</option>
+                                <option value="sugar">Azúcar</option>
+                                <option value="butter">Mantequilla</option>
+                                <option value="milk">Leche</option>
+                                <option value="water">Agua</option>
+                                <option value="oil">Aceite</option>
+                                <option value="eggs">Huevos</option>
+                                <option value="custom-solid">Otro sólido</option>
+                                <option value="custom-liquid">Otro líquido</option>
+                            </select>
+                            <button type="button" class="btn btn-primary btn-sm" id="calcBtnAgregarIng"><i class="bi bi-plus-lg me-1"></i>Agregar</button>
+                        </div>
+                    </div>
+
+                    <!-- 2. Costos adicionales -->
+                    <div class="calc-seccion">
+                        <div class="calc-seccion-titulo"><i class="bi bi-wallet2"></i> 2. Costos adicionales</div>
+                        <button class="calc-ayuda-btn mb-3" type="button" data-bs-toggle="collapse" data-bs-target="#collapseAyudaCostos" aria-expanded="false">
+                            <span><i class="bi bi-info-circle me-1"></i> Cómo calcular cada costo</span>
+                            <i class="bi bi-chevron-down"></i>
+                        </button>
+                        <div class="collapse" id="collapseAyudaCostos">
+                            <div class="calc-ayuda-body">
+                                <p class="mb-2">Incluye los gastos que a veces se olvidan: tu tiempo, servicios, empaque y envío.</p>
+                                <p class="mb-1"><strong>Horas de trabajo:</strong> Preparación + horneado + decoración + limpieza.</p>
+                                <p class="mb-1"><strong>Valor por hora:</strong> En Colombia suele ser $8.000–$15.000/h. Sugerencia: $10.000/h.</p>
+                                <p class="mb-1"><strong>Desgaste:</strong> Se calcula solo (2% de ingredientes).</p>
+                                <p class="mb-1"><strong>Servicios:</strong> Luz/gas del horno. Ej: horno 1 h ≈ $2.000–3.000.</p>
+                                <p class="mb-1"><strong>Empaque:</strong> Caja, moño, etiqueta, bolsa.</p>
+                                <p class="mb-0"><strong>Envío:</strong> Gasolina si entregas tú, o costo de mensajería.</p>
+                            </div>
+                        </div>
+                        <div class="calc-costos-grid">
+                            <div class="calc-costo-item">
+                                <label><i class="bi bi-clock"></i> Horas de trabajo</label>
+                                <input type="number" class="form-control form-control-sm" id="calcHorasTrabajo" step="0.25" min="0" value="0" placeholder="0">
+                                <div class="texto-ayuda">Preparación + horneado + decoración</div>
+                            </div>
+                            <div class="calc-costo-item">
+                                <label><i class="bi bi-currency-dollar"></i> Valor por hora ($)</label>
+                                <input type="number" class="form-control form-control-sm" id="calcValorHora" step="500" min="0" value="10000" placeholder="10000">
+                                <div class="texto-ayuda">Sugerencia: $10.000 en Colombia</div>
+                            </div>
+                            <div class="calc-costo-item readonly">
+                                <label><i class="bi bi-tools"></i> Desgaste (2%)</label>
+                                <input type="number" class="form-control form-control-sm" id="calcDesgaste" step="0.01" min="0" value="0" readonly>
+                                <div class="texto-ayuda">Automático sobre ingredientes</div>
+                            </div>
+                            <div class="calc-costo-item">
+                                <label><i class="bi bi-lightning"></i> Servicios (luz/gas)</label>
+                                <input type="number" class="form-control form-control-sm" id="calcServicios" step="100" min="0" value="0" placeholder="0">
+                                <div class="texto-ayuda">Ver guía arriba</div>
+                            </div>
+                            <div class="calc-costo-item">
+                                <label><i class="bi bi-box-seam"></i> Empaque ($)</label>
+                                <input type="number" class="form-control form-control-sm" id="calcEmpaque" step="100" min="0" value="0" placeholder="0">
+                                <div class="texto-ayuda">Caja, moño, etiqueta</div>
+                            </div>
+                            <div class="calc-costo-item">
+                                <label><i class="bi bi-truck"></i> Envío ($)</label>
+                                <input type="number" class="form-control form-control-sm" id="calcEnvio" step="100" min="0" value="0" placeholder="0">
+                                <div class="texto-ayuda">Si aplica para el cliente</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 3. Resumen -->
+                    <div class="calc-seccion">
+                        <div class="calc-seccion-titulo"><i class="bi bi-pie-chart"></i> 3. Resumen de costos</div>
+                        <div class="calc-resumen-grid">
+                            <div class="calc-resumen-item"><div class="titulo">Ingredientes</div><div class="valor" id="calcResumenIngredientes">$0</div></div>
+                            <div class="calc-resumen-item"><div class="titulo">Mano de obra</div><div class="valor" id="calcResumenManoObra">$0</div></div>
+                            <div class="calc-resumen-item"><div class="titulo">Desgaste</div><div class="valor" id="calcResumenDesgaste">$0</div></div>
+                            <div class="calc-resumen-item"><div class="titulo">Otros</div><div class="valor" id="calcResumenOtros">$0</div></div>
+                            <div class="calc-resumen-item total"><div class="titulo">Costo total</div><div class="valor" id="calcResumenTotal">$0</div></div>
+                        </div>
+                    </div>
+
+                    <!-- 4. Margen -->
+                    <div class="calc-seccion">
+                        <div class="calc-seccion-titulo"><i class="bi bi-graph-up"></i> 4. Margen de ganancia</div>
+                        <div class="calc-margen-guia">
+                            <span>30–50% Básico</span>
+                            <span>50–80% Estándar</span>
+                            <span>80–100% Premium</span>
+                            <span>100%+ Lujo</span>
+                        </div>
+                        <div class="d-flex align-items-center gap-3 mb-3">
+                            <label class="form-label mb-0 fw-semibold">Porcentaje:</label>
+                            <input type="range" class="form-range flex-grow-1" id="calcMargenPct" min="0" max="150" value="50" step="5" style="max-width: 300px;">
+                            <span class="fw-bold" id="calcMargenPctVal">50</span>%
+                        </div>
+                        <div class="row g-2 small">
+                            <div class="col-md-3"><span class="text-muted">Costo/porción</span> <strong id="calcCostoPorcion">$0</strong></div>
+                            <div class="col-md-3"><span class="text-muted">Precio/porción</span> <strong id="calcPrecioPorcion">$0</strong></div>
+                            <div class="col-md-3"><span class="text-muted">Ganancia/porción</span> <strong id="calcGananciaPorcion">$0</strong></div>
+                            <div class="col-md-3"><span class="text-muted">Margen</span> <strong id="calcMargenVentas">0%</strong></div>
+                        </div>
+                    </div>
+
+                    <!-- 5. Resultados -->
+                    <div class="calc-seccion">
+                        <div class="calc-seccion-titulo"><i class="bi bi-currency-dollar"></i> 5. Resultados finales</div>
+                        <div class="calc-resultados">
+                            <div class="calc-resultado-precio">
+                                <div class="text-muted small mb-1">Precio de venta total</div>
+                                <div class="valor" id="calcPrecioVentaTotal">$0</div>
+                            </div>
+                            <div class="calc-resultado-ganancia">
+                                <div class="text-muted small mb-1">Ganancia neta</div>
+                                <div class="valor" id="calcGananciaNeta">$0</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Convertidor -->
+                    <div class="calc-seccion">
+                        <button class="calc-ayuda-btn w-100" type="button" data-bs-toggle="collapse" data-bs-target="#collapseConvertidor">
+                            <span><i class="bi bi-arrow-left-right me-1"></i> Convertidor de medidas (tazas → gramos)</span>
+                            <i class="bi bi-chevron-down"></i>
+                        </button>
+                        <div class="collapse" id="collapseConvertidor">
+                            <div class="pt-3">
+                                <div class="row g-2 align-items-end">
+                                    <div class="col-md-2"><label class="form-label small">Cantidad</label><input type="text" class="form-control form-control-sm" id="convCantidad" placeholder="2 1/2 o 2.5"></div>
+                                    <div class="col-md-2"><label class="form-label small">Medida</label><select class="form-select form-select-sm" id="convMedida"><option value="cup">Taza</option><option value="tbsp">Cda</option><option value="tsp">Cdta</option><option value="g">g</option><option value="ml">ml</option></select></div>
+                                    <div class="col-md-2"><label class="form-label small">Ingrediente</label><select class="form-select form-select-sm" id="convTipo"><option value="flour">Harina</option><option value="sugar">Azúcar</option><option value="butter">Mantequilla</option><option value="milk">Leche</option><option value="custom-solid">Otro</option></select></div>
+                                    <div class="col-auto"><button type="button" class="btn btn-sm btn-outline-primary" id="convCalcular">Calcular</button></div>
+                                    <div class="col"><span class="small text-muted">Resultado:</span> <strong id="convResultado">0 g / 0 ml</strong></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer border-top">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                    <button type="button" class="btn btn-primary" id="calcBtnGuardar"><i class="bi bi-save me-1"></i> Guardar receta</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <% } %>
+
+    <!-- Modal Tema -->
+    <div class="modal fade" id="temaModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="temaModalTitle">Nuevo Tema</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="temaId">
+                    <div class="mb-2">
+                        <label class="form-label">Nombre</label>
+                        <input type="text" class="form-control" id="temaNombre" placeholder="ej: Unidades de masa, Alimentos">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" id="btnGuardarTema">Guardar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Parámetro -->
+    <div class="modal fade" id="parametroModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="parametroModalTitle">Nuevo Parámetro</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="parametroId">
+                    <div class="mb-2">
+                        <label class="form-label">Nombre</label>
+                        <input type="text" class="form-control" id="parametroNombre" placeholder="ej: kg, bebidas, comidas">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" id="btnGuardarParametro">Guardar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        window.USER_PERMISOS = <%- typeof user !== 'undefined' && user && user.permisos ? JSON.stringify(user.permisos) : '[]' %>;
+        window.USER_ROL = <%- typeof user !== 'undefined' && user && user.rol ? JSON.stringify(user.rol) : '""' %>;
+        window.COSTEO_TENANT_ID = <%= typeof tenant !== 'undefined' && tenant && tenant.id ? tenant.id : 'null' %>;
+        window.COSTEO_SHOW_TENANT_SELECTOR = <%= typeof showTenantSelector !== 'undefined' && showTenantSelector ? 'true' : 'false' %>;
+        window.COSTEO_PLANTILLA_REPOSTERIA = <%= typeof costeoPlantillaReposteria !== 'undefined' && costeoPlantillaReposteria ? 'true' : 'false' %>;
+    </script>
+    <script src="/js/costeo.js"></script>
+    <% if (typeof costeoPlantillaReposteria !== 'undefined' && costeoPlantillaReposteria) { %>
+    <script src="/js/costeo-reposteria.js"></script>
+    <% } %>
+</body>
+</html>

@@ -3,7 +3,9 @@ const db = require('../config/database');
 class TenantService {
     static async getAllTenants() {
         const [rows] = await db.query(`
-            SELECT t.id, t.nombre, t.slug, t.activo, t.config, t.plan_id, t.created_at, p.nombre AS plan_nombre, p.slug AS plan_slug
+            SELECT t.id, t.nombre, t.slug, t.activo, t.config, t.plan_id, t.created_at, 
+                   t.nit, t.direccion, t.telefono, t.ciudad, t.regimen_fiscal,
+                   p.nombre AS plan_nombre, p.slug AS plan_slug
             FROM tenants t
             LEFT JOIN planes p ON t.plan_id = p.id
             ORDER BY t.created_at DESC
@@ -22,59 +24,97 @@ class TenantService {
                 plan_id: row.plan_id,
                 plan_nombre: row.plan_nombre,
                 plan_slug: row.plan_slug,
+                nit: row.nit,
+                direccion: row.direccion,
+                telefono: row.telefono,
+                ciudad: row.ciudad,
+                regimen_fiscal: row.regimen_fiscal,
                 created_at: row.created_at
             };
         });
     }
 
-    static async createTenant({ nombre, slug, config = {}, activo = true, plan_id = 1 }) {
+    static async createTenant(data) {
+        const { nombre, slug, config = {}, activo = true, plan_id = 1 } = data;
         const [existing] = await db.query('SELECT id FROM tenants WHERE slug = ?', [slug]);
         if (existing.length > 0) {
             throw new Error('El slug ya existe');
         }
         const planId = plan_id != null && plan_id !== '' ? parseInt(plan_id, 10) : 1;
         const [result] = await db.query(
-            'INSERT INTO tenants (nombre, slug, config, activo, plan_id) VALUES (?, ?, ?, ?, ?)',
-            [nombre, slug, JSON.stringify(config), activo ? 1 : 0, planId]
+            'INSERT INTO tenants (nombre, slug, config, activo, plan_id, nit, direccion, telefono, ciudad, regimen_fiscal) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+            [
+                nombre,
+                slug,
+                JSON.stringify(config),
+                activo ? 1 : 0,
+                planId,
+                data.nit || null,
+                data.direccion || null,
+                data.telefono || null,
+                data.ciudad || null,
+                data.regimen_fiscal || 'No responsable de IVA'
+            ]
         );
-        return { id: result.insertId };
+        const tenantId = result.insertId;
+
+        // Seed datos iniciales (Ej: Tipos de Documento)
+        try {
+            await this.seedInitialData(tenantId);
+        } catch (e) {
+            console.error(`Error al seedear datos iniciales para tenant ${tenantId}:`, e.message);
+        }
+
+        return { id: tenantId };
     }
 
-    static async updateTenant(id, { nombre, config, activo, plan_id }) {
+    static async seedInitialData(tenantId) {
+        const TemaRepository = require('../repositories/TemaRepository');
+        const ParametroRepository = require('../repositories/ParametroRepository');
+
+        // 1. TIPO_DOCUMENTO
+        const temaId = await TemaRepository.create(tenantId, { name: 'TIPO_DOCUMENTO', status: 1 });
+        const docs = ['CC', 'NIT', 'CE', 'PA', 'TI', 'PEP'];
+        for (const name of docs) {
+            const pid = await ParametroRepository.create(tenantId, { name, status: 1 });
+            await TemaRepository.addParametroToTema(temaId, pid);
+        }
+    }
+
+
+    static async updateTenant(id, data) {
         const payload = [];
         const parts = [];
-        if (nombre) {
-            parts.push('nombre = ?');
-            payload.push(nombre);
-        }
-        if (config !== undefined && config !== null) {
+
+        const fields = ['nombre', 'activo', 'plan_id', 'nit', 'direccion', 'telefono', 'ciudad', 'regimen_fiscal'];
+        fields.forEach(f => {
+            if (data[f] !== undefined) {
+                parts.push(`${f} = ?`);
+                payload.push(f === 'activo' ? (data[f] ? 1 : 0) : data[f]);
+            }
+        });
+
+        if (data.config !== undefined && data.config !== null) {
             parts.push('config = ?');
-            const configStr = typeof config === 'string' ? config : JSON.stringify(config);
+            const configStr = typeof data.config === 'string' ? data.config : JSON.stringify(data.config);
             payload.push(configStr);
         }
-        if (activo !== undefined) {
-            parts.push('activo = ?');
-            payload.push(activo ? 1 : 0);
-        }
-        if (plan_id !== undefined && plan_id !== null && plan_id !== '') {
-            parts.push('plan_id = ?');
-            payload.push(parseInt(plan_id, 10));
-        }
+
         if (parts.length === 0) {
             return { affectedRows: 0 };
         }
+
+        const query = `UPDATE tenants SET ${parts.join(', ')} WHERE id = ?`;
         payload.push(id);
-        const [result] = await db.query(
-            `UPDATE tenants SET ${parts.join(', ')} WHERE id = ?`,
-            payload
-        );
+        const [result] = await db.query(query, payload);
         return result;
     }
 
     static async setTenantConfig(id, config) {
+        const configStr = typeof config === 'string' ? config : JSON.stringify(config || {});
         const [result] = await db.query(
             'UPDATE tenants SET config = ? WHERE id = ?',
-            [JSON.stringify(config || {}), id]
+            [configStr, id]
         );
         return result;
     }
@@ -127,6 +167,13 @@ class TenantService {
             SELECT COUNT(*) AS cantidad FROM tenants
             WHERE created_at >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)
         `);
+        const [historicoRows] = await db.query(`
+            SELECT DATE_FORMAT(created_at, '%Y-%m') AS mes, COUNT(*) AS cantidad
+            FROM tenants
+            WHERE created_at >= DATE_SUB(CURDATE(), INTERVAL 6 MONTH)
+            GROUP BY mes
+            ORDER BY mes ASC
+        `);
         const r = resumen[0] || {};
         const toNum = (val) => (val === undefined || val === null) ? 0 : (typeof val === 'bigint' ? Number(val) : parseFloat(val) || 0);
         const rowVal = (row) => (row && typeof row === 'object') ? toNum(Object.values(row)[0]) : 0;
@@ -141,7 +188,8 @@ class TenantService {
             totalProductos: parseInt(rowVal(productosRows?.[0]) || 0, 10),
             totalClientes: parseInt(rowVal(clientesRows?.[0]) || 0, 10),
             totalMesas: parseInt(rowVal(mesasRows?.[0]) || 0, 10),
-            restaurantesUltimos30Dias: parseInt(rowVal(recientesRow?.[0]) || 0, 10)
+            restaurantesUltimos30Dias: parseInt(rowVal(recientesRow?.[0]) || 0, 10),
+            historicoRegistro: historicoRows || []
         };
     }
 

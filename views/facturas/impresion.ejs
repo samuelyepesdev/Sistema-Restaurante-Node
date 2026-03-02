@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Factura #<%= typeof factura.numero !=='undefined' && factura.numero !=null ? factura.numero : factura.id %>
+    </title>
+    <link rel="stylesheet" href="/css/factura.css">
+</head>
+
+<body>
+
+
+    <div class="factura">
+        <% if (config.logo_src) { %>
+            <img src="<%= config.logo_src %>" alt="Logo" class="logo mb-3">
+            <% } %>
+
+                <div class="text-center mb-3">
+                    <h2 style="margin: 0; text-transform: uppercase; letter-spacing: 1px;">
+                        <%= tenant.nombre || config.nombre_negocio %>
+                    </h2>
+
+                    <% if (tenant.regimen_fiscal) { %>
+                        <div class="small fw-bold">
+                            <%= tenant.regimen_fiscal %>
+                        </div>
+                        <% } %>
+
+                            <div class="small">
+                                <% if (tenant.nit || config.nit) { %>
+                                    <span>NIT: <%= tenant.nit || config.nit %></span><br>
+                                    <% } %>
+                                        <% if (tenant.direccion || config.direccion) { %>
+                                            <span>
+                                                <%= tenant.direccion || config.direccion %>
+                                            </span>
+                                            <% if (tenant.ciudad) { %> - <%= tenant.ciudad %>
+                                                    <% } %>
+                                                        <br>
+                                                        <% } %>
+                                                            <% if (tenant.telefono || config.telefono) { %>
+                                                                <span>Tel: <%= tenant.telefono || config.telefono %>
+                                                                        </span>
+                                                                <% } %>
+                            </div>
+                </div>
+
+                <div class="divider"></div>
+
+                <div class="mb-3">
+                    <div>Factura #: <%= typeof factura.numero !=='undefined' && factura.numero !=null ? factura.numero :
+                            factura.id %>
+                    </div>
+                    <div>Fecha: <span id="fechaFactura" data-fecha-iso="<%= factura.fechaISO || '' %>">
+                            <%= factura.fechaISO ? '' : (factura.fecha ? new Date(factura.fecha).toLocaleString('es-CO',
+                                { timeZone: 'America/Bogota' , dateStyle: 'short' , timeStyle: 'medium' }) : '' ) %>
+                        </span></div>
+                </div>
+
+                <div class="mb-3">
+                    <div><strong>Cliente:</strong>
+                        <%= factura.cliente_nombre %>
+                    </div>
+                    <% if (factura.direccion) { %>
+                        <div><strong>Dirección:</strong>
+                            <%= factura.direccion %>
+                        </div>
+                        <% } %>
+                            <% if (factura.telefono) { %>
+                                <div><strong>Teléfono:</strong>
+                                    <%= factura.telefono %>
+                                </div>
+                                <% } %>
+                </div>
+
+                <div class="divider"></div>
+
+                <div class="productos-lista">
+                    <% detalles.forEach(function(item) { %>
+                        <div class="producto-item">
+                            <div class="producto-nombre">
+                                <%= item.producto_nombre %>
+                                    <% if (item.descuento_porcentaje !=null && Number(item.descuento_porcentaje)> 0) {
+                                        %>
+                                        <span class="producto-descuento-tag"> (descuento <%=
+                                                Number(item.descuento_porcentaje).toFixed(0) %>% aplicado)</span>
+                                        <% } %>
+                            </div>
+                            <div class="producto-detalles">
+                                <div class="producto-cantidad">
+                                    <%= Number(item.cantidad).toLocaleString('es-CO', { minimumFractionDigits: 0,
+                                        maximumFractionDigits: 0 }) %>
+                                        <%= item.unidad_medida %>
+                                </div>
+                                <div class="producto-precio">
+                                    $<%= Number(item.precio_unitario).toLocaleString('es-CO') %> c/u
+                                </div>
+                                <div class="producto-total">
+                                    $<%= Number(item.subtotal).toLocaleString('es-CO') %>
+                                </div>
+                            </div>
+                        </div>
+                        <% }); %>
+                            <% if (factura.propina !=null && Number(factura.propina)> 0) { %>
+                                <div class="producto-item" style="border-bottom: none;">
+                                    <div class="producto-detalles">
+                                        <span class="producto-nombre">Propina</span>
+                                        <span>$<%= Number(factura.propina).toLocaleString('es-CO') %></span>
+                                    </div>
+                                </div>
+                                <% } %>
+                                    <div class="total-final">
+                                        Total: $<%= Number(factura.total).toLocaleString('es-CO') %>
+                                    </div>
+                </div>
+
+                <div class="divider"></div>
+
+                <div class="text-center small">
+                    <div><strong>Forma de Pago:</strong>
+                        <%= factura.forma_pago.charAt(0).toUpperCase() + factura.forma_pago.slice(1) %>
+                    </div>
+                    <% if (config.qr_src) { %>
+                        <div class="mt-3 mb-3">
+                            <img src="<%= config.qr_src %>" alt="QR para transferencia" style="max-width: 150px;">
+                        </div>
+                        <% } %>
+                            <div class="mt-2">
+                                <%= config.pie_pagina || '¡Gracias por su compra!' %>
+                            </div>
+                </div>
+    </div>
+    <script>
+        (function () {
+            var s = document.getElementById('fechaFactura');
+            if (s && s.getAttribute('data-fecha-iso')) {
+                var d = new Date(s.getAttribute('data-fecha-iso'));
+                if (!isNaN(d.getTime())) s.textContent = d.toLocaleString('es-CO', { timeZone: 'America/Bogota', dateStyle: 'short', timeStyle: 'medium' });
+            }
+        })();
+    </script>
+</body>
+
+</html>

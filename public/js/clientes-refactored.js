@@ -58,6 +58,9 @@ class ClientManager {
      */
     async handleSubmit(data, isEdit, id) {
         const clientData = {
+            tipo_documento: data.tipo_documento || document.getElementById('tipo_documento').value,
+            numero_documento: data.numero_documento || document.getElementById('numero_documento').value,
+            email: data.email || document.getElementById('email').value,
             nombre: data.nombre || document.getElementById('nombre').value,
             direccion: data.direccion || document.getElementById('direccion').value,
             telefono: (data.telefono || document.getElementById('telefono').value || '').replace(/\D/g, '')
@@ -83,7 +86,7 @@ class ClientManager {
             } else {
                 await ApiClient.post('/api/clientes', clientData);
             }
-            
+
             this.formManager.hide();
             Utils.reload();
         } catch (error) {
@@ -98,6 +101,9 @@ class ClientManager {
         try {
             const cliente = await ApiClient.get(`/api/clientes/${id}`);
             document.getElementById('clienteId').value = cliente.id;
+            document.getElementById('tipo_documento').value = cliente.tipo_documento || 'CC';
+            document.getElementById('numero_documento').value = cliente.numero_documento || '';
+            document.getElementById('email').value = cliente.email || '';
             document.getElementById('nombre').value = cliente.nombre;
             document.getElementById('direccion').value = cliente.direccion || '';
             document.getElementById('telefono').value = cliente.telefono || '';

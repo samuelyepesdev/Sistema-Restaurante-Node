@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inventario</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <link rel="stylesheet" href="/css/inventario.css">
+
+</head>
+
+<body>
+    <%- include('../partials/navbar', { user: typeof user !=='undefined' ? user : null, tenant: typeof tenant
+        !=='undefined' ? tenant : null, allowedByPlan: typeof allowedByPlan !=='undefined' ? allowedByPlan : {} }) %>
+
+        <div class="container-fluid py-4">
+            <div
+                class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3 mb-4">
+                <div>
+                    <h1 class="h4 mb-1"><i class="bi bi-boxes me-2"></i>Inventario</h1>
+                    <div class="text-muted small">Control de insumos, stock y valorización.</div>
+                </div>
+                <div class="d-flex flex-column flex-sm-row align-items-stretch align-items-sm-center gap-2">
+                    <div class="search-box">
+                        <div class="input-group input-group-sm">
+                            <span class="input-group-text"><i class="bi bi-search"></i></span>
+                            <input type="text" id="buscarInsumo" class="form-control"
+                                placeholder="Buscar por código o nombre">
+                        </div>
+                    </div>
+                    <div class="d-flex gap-2 justify-content-end">
+                        <span class="badge bg-secondary">Insumos: <%= (insumos || []).length %></span>
+                        <span class="badge bg-success">Valor total: $<%= (resumen.valor_total !=null ? Number(resumen.valor_total).toLocaleString('es-CO', { minimumFractionDigits: 2 }) : '0,00' ) %></span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row g-4 mb-4">
+                <div class="col-md-4">
+                    <div class="kpi-card">
+                        <div class="kpi-label">Total insumos</div>
+                        <div class="kpi-value">
+                            <%= resumen.total_insumos !=null ? resumen.total_insumos : 0 %>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="kpi-card kpi-success">
+                        <div class="kpi-label">Con stock</div>
+                        <div class="kpi-value">
+                            <%= resumen.con_stock !=null ? resumen.con_stock : 0 %>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="kpi-card kpi-warning">
+                        <div class="kpi-label">Valor inventario</div>
+                        <div class="kpi-value text-success">$<%= (resumen.valor_total !=null ? Number(resumen.valor_total).toLocaleString('es-CO', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) : '0' ) %>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card card-table">
+                <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+                    <span class="fw-bold text-slate-700"><i class="bi bi-list-ul me-2"></i>Insumos y stock</span>
+                    <div class="d-flex gap-2">
+                        <button type="button" class="btn btn-sm btn-outline-warning rounded-pill px-3"
+                            id="btnListaMercado" title="Ver insumos bajo stock o cerca del mínimo">
+                            <i class="bi bi-cart-check"></i> Lista de mercado
+                        </button>
+                        <% if (user && user.permisos && user.permisos.includes('inventario.editar')) { %>
+                            <button type="button" class="btn btn-sm btn-primary rounded-pill px-3"
+                                data-bs-toggle="modal" data-bs-target="#modalNuevoInsumo">
+                                <i class="bi bi-plus"></i> Nuevo insumo
+                            </button>
+                            <% } %>
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    <!-- Vista tabla (desktop y tablets) -->
+                    <div class="table-responsive d-none d-md-block">
+                        <table class="table mb-0" id="tablaInsumos">
+                            <thead>
+                                <tr>
+                                    <th class="ps-4">Código</th>
+                                    <th>Nombre</th>
+                                    <th>Unidad</th>
+                                    <th class="text-end">Stock actual</th>
+                                    <th class="text-end">Stock mín.</th>
+                                    <th class="text-end">Costo prom.</th>
+                                    <% if (user && user.permisos && user.permisos.includes('inventario.editar')) { %>
+                                        <th class="text-center pe-4">Acciones</th>
+                                        <% } %>
+                                </tr>
+                            </thead>
+                            <tbody id="tbodyInsumos">
+                                <% (insumos || []).forEach(function(i) { %>
+                                    <% const bajoStock=(Number(i.stock_actual) <=Number(i.stock_minimo)); %>
+                                        <tr class="fila-insumo <%= bajoStock ? 'stock-bajo' : '' %>">
+                                            <td class="ps-4" data-field="codigo"><code><%= i.codigo %></code></td>
+                                            <td data-field="nombre">
+                                                <div class="d-flex align-items-center gap-2">
+                                                    <%= i.nombre %>
+                                                        <% if (bajoStock) { %>
+                                                            <span class="badge-bajo-stock">BAJO STOCK</span>
+                                                            <% } %>
+                                                </div>
+                                            </td>
+                                            <td><span class="badge bg-light text-secondary border-0">
+                                                    <%= i.unidad_base || 'g' %>
+                                                </span></td>
+                                            <td class="text-end fw-bold">
+                                                <%= Number(i.stock_actual).toLocaleString('es-CO', { minimumFractionDigits: 0, maximumFractionDigits: 2 }) %>
+                                            </td>
+                                            <td class="text-end text-muted">
+                                                <%= Number(i.stock_minimo).toLocaleString('es-CO', { minimumFractionDigits: 0 }) %>
+                                            </td>
+                                            <td class="text-end">
+                                                <%= i.costo_promedio !=null ? '$' + Number(i.costo_promedio).toLocaleString('es-CO', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) : '-' %>
+                                            </td>
+                                            <% if (user && user.permisos && user.permisos.includes('inventario.editar'))
+                                                { %>
+                                                <td class="text-center pe-4">
+                                                    <div class="btn-action-group">
+                                                        <button type="button" class="btn-icon btn-icon-e"
+                                                            onclick="abrirEntrada(<%= i.id %>, '<%= i.nombre.replace(/'/g, "\\'") %>')" title="Entrada"><i
+                                                                class="bi bi-arrow-down-left"></i></button>
+                                                        <button type="button" class="btn-icon btn-icon-s"
+                                                            onclick="abrirSalida(<%= i.id %>, '<%= i.nombre.replace(/'/g, "\\'") %>', <%= i.stock_actual %>)" title="Salida"><i
+                                                                    class="bi bi-arrow-up-right"></i></button>
+                                                        <button type="button" class="btn-icon btn-icon-a"
+                                                            onclick="abrirAjuste(<%= i.id %>, '<%= i.nombre.replace(/'/g, "\\'") %>')" title="Ajuste"><i
+                                                                class="bi bi-sliders"></i></button>
+                                                    </div>
+                                                </td>
+                                                <% } %>
+                                        </tr>
+                                        <% }); %>
+                                            <% if (!insumos || insumos.length===0) { %>
+                                                <tr>
+                                                    <td colspan="7" class="text-center text-muted py-4">No hay insumos.
+                                                        Crea
+                                                        uno desde Costeo o desde aquí (Nuevo insumo).</td>
+                                                </tr>
+                                                <% } %>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Vista tarjetas (móvil) -->
+                    <div class="d-block d-md-none" id="listaInsumosMobile">
+                        <% (insumos || []).forEach(function(i) { %>
+                            <div class="inventario-card insumo-card <%= (Number(i.stock_actual) <= Number(i.stock_minimo)) ? 'stock-bajo' : '' %>"
+                                data-codigo="<%= i.codigo %>" data-nombre="<%= i.nombre %>">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <div class="titulo">
+                                            <%= i.nombre %>
+                                        </div>
+                                        <div class="codigo text-muted">Cod: <code><%= i.codigo %></code></div>
+                                    </div>
+                                    <div class="text-end">
+                                        <div class="small text-muted">Stock</div>
+                                        <div class="fw-semibold">
+                                            <%= Number(i.stock_actual).toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 4 }) %> <span class="text-muted">
+                                                    <%= i.unidad_base || 'g' %>
+                                                </span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="d-flex justify-content-between align-items-center mt-2">
+                                    <div class="d-flex flex-wrap gap-1">
+                                        <span class="badge bg-light text-dark border">Mín: <%= Number(i.stock_minimo).toLocaleString('es-CO', { minimumFractionDigits: 2 }) %></span>
+                                        <span class="badge bg-light text-dark border">Costo prom: <%= i.costo_promedio !=null ? '$' + Number(i.costo_promedio).toLocaleString('es-CO', { minimumFractionDigits: 2 }) : '-' %></span>
+                                    </div>
+                                    <% if (user && user.permisos && user.permisos.includes('inventario.editar')) { %>
+                                        <div class="btn-group btn-group-sm ms-2" role="group">
+                                            <button type="button" class="btn btn-outline-success"
+                                                onclick="abrirEntrada(<%= i.id %>, '<%= i.nombre.replace(/'/g, "\\'") %>')">E</button>
+                                            <button type="button" class="btn btn-outline-danger"
+                                                onclick="abrirSalida(<%= i.id %>, '<%= i.nombre.replace(/'/g, "\\'") %>', <%= i.stock_actual %>)">S</button>
+                                            <button type="button" class="btn btn-outline-secondary"
+                                                onclick="abrirAjuste(<%= i.id %>, '<%= i.nombre.replace(/'/g, "\\'") %>')">A</button>
+                                        </div>
+                                        <% } %>
+                                </div>
+                            </div>
+                            <% }); %>
+                                <% if (!insumos || insumos.length===0) { %>
+                                    <div class="text-center text-muted py-4">No hay insumos. Crea uno desde el botón
+                                        «Nuevo insumo».</div>
+                                    <% } %>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal Nuevo Insumo -->
+        <div class="modal fade" id="modalNuevoInsumo" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Nuevo insumo</h5><button type="button" class="btn-close"
+                            data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="mb-2"><label class="form-label">Código</label><input type="text"
+                                class="form-control" id="nuevoCodigo" required></div>
+                        <div class="mb-2"><label class="form-label">Nombre</label><input type="text"
+                                class="form-control" id="nuevoNombre" required></div>
+                        <div class="row">
+                            <div class="col-6"><label class="form-label">Unidad compra</label><input type="text"
+                                    class="form-control" id="nuevoUnidadCompra" value="UND"></div>
+                            <div class="col-6"><label class="form-label">Unidad base</label><select class="form-select"
+                                    id="nuevoUnidadBase">
+                                    <option value="g">g</option>
+                                    <option value="ml">ml</option>
+                                    <option value="UND">UND</option>
+                                </select></div>
+                        </div>
+                        <div class="row mt-2">
+                            <div class="col-6"><label class="form-label">Cant. compra</label><input type="number"
+                                    step="0.01" class="form-control" id="nuevoCantidadCompra" value="1"></div>
+                            <div class="col-6"><label class="form-label">Precio compra</label><input type="number"
+                                    step="0.01" class="form-control" id="nuevoPrecioCompra" value="0"></div>
+                        </div>
+                        <div class="mt-2"><label class="form-label">Stock mínimo</label><input type="number"
+                                step="0.0001" class="form-control" id="nuevoStockMinimo" value="0"></div>
+                    </div>
+                    <div class="modal-footer"><button type="button" class="btn btn-secondary"
+                            data-bs-dismiss="modal">Cerrar</button><button type="button" class="btn btn-primary"
+                            id="btnCrearInsumo">Crear</button></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal Entrada -->
+        <div class="modal fade" id="modalEntrada" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">Entrada - <span id="entradaInsumoNombre"></span></div>
+                    <div class="modal-body"><input type="hidden" id="entradaInsumoId"><label
+                            class="form-label">Cantidad</label><input type="number" step="0.0001" class="form-control"
+                            id="entradaCantidad"><label class="form-label mt-2">Costo unitario (opcional)</label><input
+                            type="number" step="0.01" class="form-control" id="entradaCosto"><label
+                            class="form-label mt-2">Referencia</label><input type="text" class="form-control"
+                            id="entradaRef" placeholder="Ej: Compra #1"></div>
+                    <div class="modal-footer"><button type="button" class="btn btn-secondary"
+                            data-bs-dismiss="modal">Cerrar</button><button type="button" class="btn btn-success"
+                            id="btnConfirmarEntrada">Registrar entrada</button></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal Salida -->
+        <div class="modal fade" id="modalSalida" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">Salida - <span id="salidaInsumoNombre"></span></div>
+                    <div class="modal-body"><input type="hidden" id="salidaInsumoId">
+                        <p class="small text-muted">Disponible: <span id="salidaDisponible">0</span></p><label
+                            class="form-label">Cantidad</label><input type="number" step="0.0001" class="form-control"
+                            id="salidaCantidad"><label class="form-label mt-2">Referencia</label><input type="text"
+                            class="form-control" id="salidaRef">
+                    </div>
+                    <div class="modal-footer"><button type="button" class="btn btn-secondary"
+                            data-bs-dismiss="modal">Cerrar</button><button type="button" class="btn btn-danger"
+                            id="btnConfirmarSalida">Registrar salida</button></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal Ajuste -->
+        <div class="modal fade" id="modalAjuste" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">Ajuste - <span id="ajusteInsumoNombre"></span></div>
+                    <div class="modal-body"><input type="hidden" id="ajusteInsumoId"><label class="form-label">Cantidad
+                            (+ suma, - resta)</label><input type="number" step="0.0001" class="form-control"
+                            id="ajusteCantidad"><label class="form-label mt-2">Referencia</label><input type="text"
+                            class="form-control" id="ajusteRef" value="Ajuste manual"></div>
+                    <div class="modal-footer"><button type="button" class="btn btn-secondary"
+                            data-bs-dismiss="modal">Cerrar</button><button type="button" class="btn btn-primary"
+                            id="btnConfirmarAjuste">Aplicar ajuste</button></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal Lista de mercado -->
+        <div class="modal fade" id="modalListaMercado" tabindex="-1">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title"><i class="bi bi-cart-check me-2"></i>Lista de mercado</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p class="text-muted small mb-2">Insumos bajo stock o cerca del mínimo para reponer.</p>
+                        <div class="form-check mb-3">
+                            <input class="form-check-input" type="checkbox" id="listaMercadoIncluirCerca">
+                            <label class="form-check-label" for="listaMercadoIncluirCerca">Incluir insumos cerca del
+                                mínimo (hasta 120% del mínimo)</label>
+                        </div>
+                        <div id="listaMercadoContenido">
+                            <ul class="list-group list-group-flush" id="listaMercadoItems"></ul>
+                            <p class="text-muted small mt-2 mb-0" id="listaMercadoVacio" style="display:none;">No hay
+                                insumos bajo stock.</p>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline-secondary" id="btnListaMercadoCopiar"
+                            title="Copiar lista al portapapeles"><i class="bi bi-clipboard"></i> Copiar lista</button>
+                        <button type="button" class="btn btn-outline-primary" id="btnListaMercadoImprimir"
+                            title="Imprimir lista"><i class="bi bi-printer"></i> Imprimir</button>
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+        <script src="/js/ui-utils.js"></script>
+        <script>
+            const base = '/inventario';
+            function abrirEntrada(id, nombre) { document.getElementById('entradaInsumoId').value = id; document.getElementById('entradaInsumoNombre').textContent = nombre; document.getElementById('entradaCantidad').value = ''; document.getElementById('entradaCosto').value = ''; document.getElementById('entradaRef').value = ''; new bootstrap.Modal(document.getElementById('modalEntrada')).show(); }
+            function abrirSalida(id, nombre, disp) { document.getElementById('salidaInsumoId').value = id; document.getElementById('salidaInsumoNombre').textContent = nombre; document.getElementById('salidaDisponible').textContent = disp; document.getElementById('salidaCantidad').value = ''; document.getElementById('salidaRef').value = ''; new bootstrap.Modal(document.getElementById('modalSalida')).show(); }
+            function abrirAjuste(id, nombre) { document.getElementById('ajusteInsumoId').value = id; document.getElementById('ajusteInsumoNombre').textContent = nombre; document.getElementById('ajusteCantidad').value = ''; document.getElementById('ajusteRef').value = 'Ajuste manual'; new bootstrap.Modal(document.getElementById('modalAjuste')).show(); }
+            document.getElementById('btnCrearInsumo').addEventListener('click', async () => {
+                const fCodigo = document.getElementById('nuevoCodigo');
+                const fNombre = document.getElementById('nuevoNombre');
+                const payload = {
+                    codigo: fCodigo.value.trim(),
+                    nombre: fNombre.value.trim(),
+                    unidad_compra: document.getElementById('nuevoUnidadCompra').value || 'UND',
+                    unidad_base: document.getElementById('nuevoUnidadBase').value,
+                    cantidad_compra: parseFloat(document.getElementById('nuevoCantidadCompra').value) || 1,
+                    precio_compra: parseFloat(document.getElementById('nuevoPrecioCompra').value) || 0,
+                    stock_minimo: parseFloat(document.getElementById('nuevoStockMinimo').value) || 0
+                };
+                let valid = true;
+                [fCodigo, fNombre].forEach(f => {
+                    if (!f.value.trim()) { f.classList.add('is-invalid'); valid = false; }
+                    else f.classList.remove('is-invalid');
+                });
+                if (!valid) return;
+                const btn = document.getElementById('btnCrearInsumo');
+                setLoading(btn, true);
+                try {
+                    const r = await fetch(base + '/api/insumos', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload), credentials: 'same-origin' });
+                    if (r.ok) {
+                        bootstrap.Modal.getOrCreateInstance(document.getElementById('modalNuevoInsumo')).hide();
+                        await Swal.fire({ icon: 'success', title: 'Insumo creado', timer: 1200, showConfirmButton: false });
+                        location.reload();
+                    } else {
+                        const e = await r.json();
+                        Swal.fire({ icon: 'error', title: 'Error', text: e.error || 'No se pudo crear el insumo' });
+                    }
+                } catch (err) {
+                    Swal.fire({ icon: 'error', title: 'Error de conexión', text: err.message });
+                } finally {
+                    setLoading(btn, false);
+                }
+            });
+            document.getElementById('btnConfirmarEntrada').addEventListener('click', async () => {
+                const id = document.getElementById('entradaInsumoId').value;
+                const cantidad = parseFloat(document.getElementById('entradaCantidad').value);
+                const costo = document.getElementById('entradaCosto').value;
+                const ref = document.getElementById('entradaRef').value;
+                const fCant = document.getElementById('entradaCantidad');
+                if (!cantidad || cantidad <= 0) {
+                    fCant.classList.add('is-invalid');
+                    Swal.fire({ icon: 'warning', title: 'Cantidad inválida', text: 'Ingresa una cantidad mayor a 0', timer: 1800, showConfirmButton: false });
+                    return;
+                }
+                fCant.classList.remove('is-invalid');
+                const btn = document.getElementById('btnConfirmarEntrada');
+                setLoading(btn, true);
+                try {
+                    const r = await fetch(base + '/api/movimientos/entrada', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ insumo_id: id, cantidad, costo_unitario: costo ? parseFloat(costo) : null, referencia: ref || null }), credentials: 'same-origin' });
+                    if (r.ok) {
+                        bootstrap.Modal.getOrCreateInstance(document.getElementById('modalEntrada')).hide();
+                        await Swal.fire({ icon: 'success', title: 'Entrada registrada', timer: 1200, showConfirmButton: false });
+                        location.reload();
+                    } else {
+                        const e = await r.json();
+                        Swal.fire({ icon: 'error', title: 'Error', text: e.error || 'No se pudo registrar' });
+                    }
+                } catch (err) {
+                    Swal.fire({ icon: 'error', title: 'Error', text: err.message });
+                } finally {
+                    setLoading(btn, false);
+                }
+            });
+            document.getElementById('btnConfirmarSalida').addEventListener('click', async () => {
+                const id = document.getElementById('salidaInsumoId').value;
+                const cantidad = parseFloat(document.getElementById('salidaCantidad').value);
+                const ref = document.getElementById('salidaRef').value;
+                const fCant = document.getElementById('salidaCantidad');
+                if (!cantidad || cantidad <= 0) {
+                    fCant.classList.add('is-invalid');
+                    Swal.fire({ icon: 'warning', title: 'Cantidad inválida', text: 'Ingresa una cantidad mayor a 0', timer: 1800, showConfirmButton: false });
+                    return;
+                }
+                fCant.classList.remove('is-invalid');
+                const btn = document.getElementById('btnConfirmarSalida');
+                setLoading(btn, true);
+                try {
+                    const r = await fetch(base + '/api/movimientos/salida', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ insumo_id: id, cantidad, referencia: ref || null }), credentials: 'same-origin' });
+                    if (r.ok) {
+                        bootstrap.Modal.getOrCreateInstance(document.getElementById('modalSalida')).hide();
+                        await Swal.fire({ icon: 'success', title: 'Salida registrada', timer: 1200, showConfirmButton: false });
+                        location.reload();
+                    } else {
+                        const e = await r.json();
+                        Swal.fire({ icon: 'error', title: 'Error', text: e.error || 'No se pudo registrar' });
+                    }
+                } catch (err) {
+                    Swal.fire({ icon: 'error', title: 'Error', text: err.message });
+                } finally {
+                    setLoading(btn, false);
+                }
+            });
+            document.getElementById('btnConfirmarAjuste').addEventListener('click', async () => {
+                const id = document.getElementById('ajusteInsumoId').value;
+                const cantidad = parseFloat(document.getElementById('ajusteCantidad').value);
+                const ref = document.getElementById('ajusteRef').value;
+                const fCant = document.getElementById('ajusteCantidad');
+                if (!cantidad || cantidad === 0 || isNaN(cantidad)) {
+                    fCant.classList.add('is-invalid');
+                    Swal.fire({ icon: 'warning', title: 'Cantidad requerida', text: 'Ingresa un valor positivo (suma) o negativo (resta)', timer: 2000, showConfirmButton: false });
+                    return;
+                }
+                fCant.classList.remove('is-invalid');
+                const btn = document.getElementById('btnConfirmarAjuste');
+                setLoading(btn, true);
+                try {
+                    const r = await fetch(base + '/api/movimientos/ajuste', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ insumo_id: id, cantidad, referencia: ref || 'Ajuste manual' }), credentials: 'same-origin' });
+                    if (r.ok) {
+                        bootstrap.Modal.getOrCreateInstance(document.getElementById('modalAjuste')).hide();
+                        await Swal.fire({ icon: 'success', title: 'Ajuste aplicado', timer: 1200, showConfirmButton: false });
+                        location.reload();
+                    } else {
+                        const e = await r.json();
+                        Swal.fire({ icon: 'error', title: 'Error', text: e.error || 'No se pudo aplicar' });
+                    }
+                } catch (err) {
+                    Swal.fire({ icon: 'error', title: 'Error', text: err.message });
+                } finally {
+                    setLoading(btn, false);
+                }
+            });
+
+            // Búsqueda rápida por código/nombre (tabla + tarjetas)
+            (function () {
+                const input = document.getElementById('buscarInsumo');
+                if (!input) return;
+                input.addEventListener('input', () => {
+                    const term = input.value.trim().toLowerCase();
+                    // Tabla
+                    document.querySelectorAll('#tbodyInsumos .fila-insumo').forEach(row => {
+                        const codigo = (row.querySelector('[data-field=\"codigo\"]')?.innerText || '').toLowerCase();
+                        const nombre = (row.querySelector('[data-field=\"nombre\"]')?.innerText || '').toLowerCase();
+                        const match = !term || codigo.includes(term) || nombre.includes(term);
+                        row.style.display = match ? '' : 'none';
+                    });
+                    // Tarjetas
+                    document.querySelectorAll('#listaInsumosMobile .insumo-card').forEach(card => {
+                        const codigo = (card.getAttribute('data-codigo') || '').toLowerCase();
+                        const nombre = (card.getAttribute('data-nombre') || '').toLowerCase();
+                        const match = !term || codigo.includes(term) || nombre.includes(term);
+                        card.style.display = match ? '' : 'none';
+                    });
+                });
+            })();
+
+            // Lista de mercado: cargar, copiar e imprimir
+            (function () {
+                let listaMercadoActual = [];
+                const modal = document.getElementById('modalListaMercado');
+                const ul = document.getElementById('listaMercadoItems');
+                const vacio = document.getElementById('listaMercadoVacio');
+                const incluirCerca = document.getElementById('listaMercadoIncluirCerca');
+
+                function formatoNum(n) { return Number(n).toLocaleString('es-CO', { minimumFractionDigits: 0, maximumFractionDigits: 2 }); }
+                function renderLista(lista) {
+                    listaMercadoActual = lista || [];
+                    ul.innerHTML = '';
+                    if (!listaMercadoActual.length) {
+                        vacio.style.display = 'block';
+                        return;
+                    }
+                    vacio.style.display = 'none';
+                    listaMercadoActual.forEach(function (it) {
+                        const li = document.createElement('li');
+                        li.className = 'list-group-item d-flex justify-content-between align-items-center' + (it.bajo ? ' list-group-item-warning' : '');
+                        li.innerHTML = '<span>' + (it.nombre || it.codigo) + '</span><span class="badge bg-secondary">' + formatoNum(it.stock_actual) + ' / ' + formatoNum(it.stock_minimo) + ' ' + (it.unidad_base || '') + '</span>';
+                        ul.appendChild(li);
+                    });
+                }
+                async function cargarListaMercado() {
+                    const incluir = incluirCerca && incluirCerca.checked;
+                    const r = await fetch(base + '/api/lista-mercado?incluir_cerca=' + (incluir ? '1' : '0'), { credentials: 'same-origin' });
+                    if (!r.ok) { renderLista([]); return; }
+                    const data = await r.json();
+                    renderLista(data.lista || []);
+                }
+                document.getElementById('btnListaMercado').addEventListener('click', function () {
+                    incluirCerca.checked = false;
+                    cargarListaMercado();
+                    new bootstrap.Modal(modal).show();
+                });
+                if (incluirCerca) incluirCerca.addEventListener('change', cargarListaMercado);
+                document.getElementById('btnListaMercadoCopiar').addEventListener('click', function () {
+                    const lineas = listaMercadoActual.map(function (it) {
+                        return (it.nombre || it.codigo) + ' - ' + formatoNum(it.stock_actual) + ' / ' + formatoNum(it.stock_minimo) + ' ' + (it.unidad_base || '');
+                    });
+                    const texto = 'Lista de mercado\n' + (new Date().toLocaleDateString('es-CO')) + '\n\n' + (lineas.length ? lineas.join('\n') : 'Nada por reponer.');
+                    navigator.clipboard.writeText(texto).then(function () {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Listado copiado',
+                            text: 'La lista de mercado se copió al portapapeles. Puedes pegarla donde la necesites.',
+                            timer: 2500,
+                            timerProgressBar: true,
+                            showConfirmButton: false,
+                            toast: false
+                        });
+                    }).catch(function () {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'No se pudo copiar',
+                            text: 'Comprueba que el navegador permita acceder al portapapeles.'
+                        });
+                    });
+                });
+                document.getElementById('btnListaMercadoImprimir').addEventListener('click', function () {
+                    const lineas = listaMercadoActual.map(function (it) {
+                        return (it.nombre || it.codigo) + ' — ' + formatoNum(it.stock_actual) + ' / ' + formatoNum(it.stock_minimo) + ' ' + (it.unidad_base || '');
+                    });
+                    const titulo = 'Lista de mercado - ' + (new Date().toLocaleDateString('es-CO'));
+                    const html = '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>' + titulo + '</title><style>body{font-family:sans-serif;padding:1rem;} h1{font-size:1.25rem;} ul{list-style:none;padding:0;} li{padding:0.25rem 0;border-bottom:1px solid #eee;}</style></head><body><h1>' + titulo + '</h1><ul><li>' + (lineas.length ? lineas.join('</li><li>') : 'Nada por reponer.') + '</li></ul></body></html>';
+                    const w = window.open('', '_blank');
+                    w.document.write(html);
+                    w.document.close();
+                    w.print();
+                    w.close();
+                });
+            })();
+        </script>
+</body>
+
+</html>

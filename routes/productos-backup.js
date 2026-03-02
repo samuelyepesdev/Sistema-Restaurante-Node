@@ -20,7 +20,7 @@ router.get('/', async (req, res) => {
         });
     } catch (error) {
         console.error('Error al obtener productos:', error);
-        res.status(500).render('error', { 
+        res.status(500).render('errors/internal', { 
             error: {
                 message: 'Error al obtener productos',
                 stack: error.stack

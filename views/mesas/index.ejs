@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mesas</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="/css/mesas.css">
+</head>
+
+<body>
+    <%- include('../partials/navbar', { user: typeof user !=='undefined' ? user : null, tenant: typeof tenant !=='undefined' ? tenant : null }) %>
+
+        <div class="container">
+            <div
+                class="d-flex flex-column flex-md-row justify-content-between align-items-stretch align-items-md-center gap-3 mb-3">
+                <h4 class="mb-0 fw-semibold"><i class="bi bi-grid me-2"></i>Mesas</h4>
+                <div class="d-flex flex-wrap gap-2">
+                    <button id="btnCrearMasivas" class="btn btn-success">
+                        <i class="bi bi-plus-circle me-1"></i>Crear Múltiples Mesas
+                    </button>
+                    <button id="btnNuevaMesa" class="btn btn-primary">
+                        <i class="bi bi-plus-lg me-1"></i>Nueva Mesa
+                    </button>
+                </div>
+            </div>
+
+            <div class="row" id="gridMesas">
+                <% mesas.forEach(m=> { %>
+                    <div class="col-6 col-md-4 col-lg-3 mb-3">
+                        <div class="card mesa-card <%= m.estado %>" data-mesa-id="<%= m.id %>"
+                            data-mesa-estado="<%= m.estado %>">
+                            <div class="card-body p-3">
+                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <div class="mesa-num">Mesa <span class="text-primary">
+                                            <%= m.numero %>
+                                        </span></div>
+                                    <span class="mesa-estado-pill pill-<%= m.estado %>">
+                                        <% if (m.estado==='libre' ) { %><i class="bi bi-circle-fill"
+                                                style="font-size:.5rem;"></i>Libre
+                                            <% } else if (m.estado==='ocupada' ) { %><i class="bi bi-circle-fill"
+                                                    style="font-size:.5rem;"></i>Ocupada
+                                                <% } else { %><i class="bi bi-circle-fill"
+                                                        style="font-size:.5rem;"></i>Reservada<% } %>
+                                    </span>
+                                </div>
+                                <div class="mesa-desc mb-3">
+                                    <%= m.descripcion || '' %>
+                                </div>
+                                <div class="d-grid gap-2">
+                                    <% if (m.estado==='libre' ) { %>
+                                        <button class="btn btn-success btn-cta btnAbrirPedido">
+                                            <i class="bi bi-plus-circle me-1"></i>Abrir pedido
+                                        </button>
+                                        <% } else { %>
+                                            <button class="btn btn-warning btn-cta btnAbrirPedido">
+                                                <i class="bi bi-pencil-square me-1"></i>Editar pedido
+                                            </button>
+                                            <% } %>
+                                                <div class="d-flex gap-1">
+                                                    <button
+                                                        class="btn btn-outline-secondary btn-sec flex-fill btnVerPedido"
+                                                        title="Ver pedido">
+                                                        <i class="bi bi-list-ul me-1"></i>Ver
+                                                    </button>
+                                                    <% if (m.estado !=='libre' ) { %>
+                                                        <button
+                                                            class="btn btn-outline-secondary btn-sec flex-fill btnLiberarMesa"
+                                                            title="Liberar mesa">
+                                                            <i class="bi bi-unlock me-1"></i>Liberar
+                                                        </button>
+                                                        <% } %>
+                                                            <% if (user && user.permisos && user.permisos.includes('mesas.editar')) { %>
+                                                                <button
+                                                                    class="btn btn-outline-secondary btn-sec btnEditarMesa"
+                                                                    data-mesa-numero="<%= m.numero %>"
+                                                                    data-mesa-descripcion="<%= (m.descripcion || '') %>"
+                                                                    title="Editar mesa">
+                                                                    <i class="bi bi-pencil"></i>
+                                                                </button>
+                                                                <% } %>
+                                                </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <% }) %>
+            </div>
+        </div>
+
+        <!-- Offcanvas Factura -->
+        <div class="offcanvas offcanvas-end" tabindex="-1" id="canvasFactura" style="width: 650px; max-width: 90vw;">
+            <div class="offcanvas-header">
+                <h5 class="offcanvas-title">
+                    <i class="bi bi-receipt-cutoff me-2"></i>Factura <span id="facturaNumero"></span>
+                </h5>
+                <div class="d-flex align-items-center gap-2">
+                    <button type="button" class="btn btn-sm btn-outline-light" id="btnImprimirFactura"
+                        title="Imprimir factura">
+                        <i class="bi bi-printer me-1"></i>Imprimir
+                    </button>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas"></button>
+                </div>
+            </div>
+            <div class="offcanvas-body p-0 position-relative">
+                <div id="facturaLoading" class="d-flex align-items-center justify-content-center"
+                    style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(255,255,255,0.9); z-index: 10;">
+                    <div class="text-center">
+                        <div class="spinner-border text-primary mb-2" role="status">
+                            <span class="visually-hidden">Cargando...</span>
+                        </div>
+                        <div>Cargando factura...</div>
+                    </div>
+                </div>
+                <iframe id="facturaFrame" style="width: 100%; height: 100%; border: none; min-height: 600px;"></iframe>
+            </div>
+        </div>
+
+        <!-- Offcanvas Pedido -->
+        <div class="offcanvas offcanvas-end" tabindex="-1" id="canvasPedido" style="width: 420px">
+            <div class="offcanvas-header">
+                <h5 class="offcanvas-title">Pedido mesa <span id="pedidoMesa"></span></h5>
+                <div class="d-flex align-items-center gap-2">
+                    <button type="button" id="btnMoverMesaHeader" class="btn btn-outline-secondary btn-sm"
+                        data-bs-toggle="tooltip" title="Mover a otra mesa">
+                        <i class="bi bi-arrow-left-right"></i>
+                    </button>
+                    <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
+                </div>
+            </div>
+            <div class="offcanvas-body d-flex flex-column">
+                <div class="mb-2">
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="bi bi-search"></i></span>
+                        <input id="buscarProductoMesa" class="form-control" placeholder="Buscar producto...">
+                    </div>
+                    <div id="resultadosProductoMesa" class="list-group"></div>
+                </div>
+                <div class="d-flex justify-content-end mb-2">
+                    <button id="btnLiberarMesaHeader" class="btn btn-outline-secondary btn-sm"><i
+                            class="bi bi-unlock"></i> Liberar mesa</button>
+                </div>
+                <div class="table-responsive flex-grow-1">
+                    <table class="table table-sm table-pedido-mesas align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Producto</th>
+                                <th class="text-center">Cant</th>
+                                <th class="text-end">P. unit.</th>
+                                <th class="text-end">Subtotal</th>
+                                <th class="text-center" style="width: 100px;">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbodyItems"></tbody>
+                    </table>
+                </div>
+                <div class="mt-auto">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <strong>Total:</strong>
+                        <span id="totalPedido" class="fw-bold">$0</span>
+                    </div>
+                    <div id="propinaLinea"
+                        class="d-flex justify-content-between align-items-center mb-2 small text-muted d-none">
+                        <span>Propina:</span>
+                        <span id="propinaMonto">$0</span>
+                    </div>
+                    <div class="row g-2 mb-2">
+                        <div class="col-6">
+                            <button type="button" id="btnAplicarDescuentoMesa" class="btn btn-outline-primary w-100"><i
+                                    class="bi bi-percent me-1"></i>Aplicar descuento</button>
+                        </div>
+                        <div class="col-6">
+                            <button type="button" id="btnPropinaMesa" class="btn btn-outline-success w-100"><i
+                                    class="bi bi-cash-stack me-1"></i>Propina</button>
+                        </div>
+                    </div>
+                    <div class="d-grid gap-2">
+                        <button id="btnMoverMesa" class="btn btn-outline-secondary"><i
+                                class="bi bi-arrow-left-right me-1"></i>Mover a mesa</button>
+                        <button id="btnEnviarCocina" class="btn btn-warning"><i class="bi bi-send me-1"></i>Enviar a
+                            cocina</button>
+                        <button id="btnFacturarPedido" class="btn btn-success"><i
+                                class="bi bi-cash-coin me-1"></i>Facturar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal Aplicar descuento: paso 1 = elegir producto, paso 2 = elegir % (solo esta venta en mesas) -->
+        <div class="modal fade" id="descuentoModalMesa" tabindex="-1">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="descuentoModalMesaTitulo"><i class="bi bi-percent me-2"></i>Aplicar
+                            descuento</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                    </div>
+                    <div class="modal-body">
+                        <!-- Paso 1: Seleccionar producto -->
+                        <div id="descuentoMesaPaso1">
+                            <p class="mb-3">Seleccione el producto al cual desea aplicar el descuento en esta venta:</p>
+                            <div id="descuentoMesaListaProductos" class="list-group list-group-flush"
+                                style="max-height: 280px; overflow-y: auto;"></div>
+                        </div>
+                        <!-- Paso 2: Elegir porcentaje -->
+                        <div id="descuentoMesaPaso2" style="display: none;">
+                            <p class="text-muted small mb-2" id="descuentoModalProductoMesa">Producto</p>
+                            <p class="small text-info mb-3"><i class="bi bi-info-circle me-1"></i>El descuento es solo
+                                para esta venta.</p>
+                            <p class="mb-3">Elija el porcentaje de descuento:</p>
+                            <div class="d-flex flex-wrap gap-2 justify-content-center">
+                                <button type="button" class="btn btn-outline-primary btn-descuento-mesa"
+                                    data-pct="5">5%</button>
+                                <button type="button" class="btn btn-outline-primary btn-descuento-mesa"
+                                    data-pct="10">10%</button>
+                                <button type="button" class="btn btn-outline-primary btn-descuento-mesa"
+                                    data-pct="15">15%</button>
+                                <button type="button" class="btn btn-outline-primary btn-descuento-mesa"
+                                    data-pct="20">20%</button>
+                                <button type="button" class="btn btn-outline-primary btn-descuento-mesa"
+                                    data-pct="30">30%</button>
+                            </div>
+                            <div class="mt-3 text-center">
+                                <button type="button" class="btn btn-sm btn-outline-secondary"
+                                    id="quitarDescuentoMesaBtn">Quitar descuento</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal Propina -->
+        <div class="modal fade" id="propinaModalMesa" tabindex="-1">
+            <div class="modal-dialog modal-dialog-centered modal-sm">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title"><i class="bi bi-cash-stack me-2"></i>Propina</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p class="small text-muted mb-2">Monto que deja el cliente como propina (se suma al total):</p>
+                        <div class="mb-3">
+                            <label class="form-label">Monto ($)</label>
+                            <input type="number" id="propinaInputMesa" class="form-control" min="0" step="100"
+                                placeholder="0" value="0">
+                        </div>
+                        <div class="d-flex flex-wrap gap-2 justify-content-center mb-2">
+                            <button type="button" class="btn btn-outline-secondary btn-propina-rapida"
+                                data-val="1000">$1.000</button>
+                            <button type="button" class="btn btn-outline-secondary btn-propina-rapida"
+                                data-val="2000">$2.000</button>
+                            <button type="button" class="btn btn-outline-secondary btn-propina-rapida"
+                                data-val="5000">$5.000</button>
+                            <button type="button" class="btn btn-outline-secondary btn-propina-rapida"
+                                data-val="10000">$10.000</button>
+                        </div>
+                        <div class="d-flex gap-2">
+                            <button type="button" class="btn btn-outline-secondary flex-grow-1"
+                                id="quitarPropinaMesaBtn">Quitar propina</button>
+                            <button type="button" class="btn btn-success flex-grow-1"
+                                id="aplicarPropinaMesaBtn">Aplicar</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal de Pago para Facturar -->
+        <div class="modal fade" id="modalPago" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header bg-primary text-white">
+                        <h5 class="modal-title">
+                            <i class="bi bi-cash-coin me-2"></i>Seleccionar Forma de Pago
+                        </h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="text-center mb-4">
+                            <h4 class="mb-1">Total a Pagar</h4>
+                            <h2 class="text-primary fw-bold" id="modalTotalPago">$0.00</h2>
+                        </div>
+
+                        <div class="row g-3 mb-4">
+                            <!-- Card Efectivo -->
+                            <div class="col-md-6">
+                                <div class="card h-100 border-2 payment-card" data-payment-type="efectivo"
+                                    style="cursor: pointer; transition: all 0.3s;">
+                                    <div class="card-body text-center p-4">
+                                        <i class="bi bi-cash-stack display-4 text-success mb-3"></i>
+                                        <h5 class="card-title">Efectivo</h5>
+                                        <p class="text-muted small mb-0">Pago en efectivo</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Card Transferencia -->
+                            <div class="col-md-6">
+                                <div class="card h-100 border-2 payment-card" data-payment-type="transferencia"
+                                    style="cursor: pointer; transition: all 0.3s;">
+                                    <div class="card-body text-center p-4">
+                                        <i class="bi bi-credit-card display-4 text-primary mb-3"></i>
+                                        <h5 class="card-title">Transferencia</h5>
+                                        <p class="text-muted small mb-0">Pago por transferencia</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Panel de Efectivo (oculto inicialmente) -->
+                        <div id="panelEfectivo" style="display: none;">
+                            <h6 class="mb-3"><i class="bi bi-cash-stack me-2"></i>Seleccione Denominación o Ingrese
+                                Monto</h6>
+
+                            <!-- Denominaciones -->
+                            <div id="denominacionesContainer" class="row g-2 mb-3">
+                                <!-- Se llenará dinámicamente -->
+                            </div>
+
+                            <!-- Campo manual -->
+                            <div class="input-group input-group-lg">
+                                <span class="input-group-text">
+                                    <i class="bi bi-keyboard"></i>
+                                </span>
+                                <input type="number" id="montoManual" class="form-control"
+                                    placeholder="Ingrese el monto recibido..." step="100" min="0">
+                                <button class="btn btn-success" id="btnUsarMontoManual">
+                                    <i class="bi bi-check-lg"></i> Usar
+                                </button>
+                            </div>
+
+                            <!-- Información de cambio -->
+                            <div id="infoCambio" class="alert alert-info mt-3" style="display: none;">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <strong>Cambio:</strong>
+                                        <span id="montoCambio" class="fs-4 ms-2">$0.00</span>
+                                    </div>
+                                    <div>
+                                        <strong>Recibido:</strong>
+                                        <span id="montoRecibido" class="ms-2">$0.00</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Panel de Transferencia (oculto inicialmente) -->
+                        <div id="panelTransferencia" style="display: none;">
+                            <div class="alert alert-info">
+                                <i class="bi bi-info-circle me-2"></i>
+                                Se generará la factura con forma de pago: <strong>Transferencia</strong>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="button" class="btn btn-success" id="btnConfirmarPago" disabled>
+                            <i class="bi bi-check-lg me-2"></i>Confirmar Pago
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal para crear múltiples mesas -->
+        <div class="modal fade" id="modalCrearMasivas" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">
+                            <i class="bi bi-plus-circle me-2"></i>Crear Múltiples Mesas
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="formCrearMasivas">
+                            <div class="mb-3">
+                                <label for="cantidadMesas" class="form-label">Cantidad de Mesas</label>
+                                <input type="number" class="form-control" id="cantidadMesas" min="1" max="100"
+                                    value="10" required>
+                                <small class="text-muted">Se crearán mesas continuamente desde el siguiente número
+                                    disponible</small>
+                            </div>
+                            <div class="mb-3">
+                                <label for="prefijoMesas" class="form-label">Prefijo (Opcional)</label>
+                                <input type="text" class="form-control" id="prefijoMesas" placeholder="Ej: M, Mesa, T">
+                                <small class="text-muted">Si se especifica, las mesas continuarán desde el siguiente
+                                    número con ese prefijo</small>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="button" class="btn btn-success" id="btnConfirmarCrearMasivas">
+                            <i class="bi bi-check-lg me-1"></i>Crear Mesas
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+        <script src="/js/mesas.js"></script>
+        <script>
+            // Handle crear múltiples mesas
+            $(document).ready(function () {
+                const modalCrearMasivas = new bootstrap.Modal(document.getElementById('modalCrearMasivas'));
+
+                $('#btnCrearMasivas').on('click', function () {
+                    $('#formCrearMasivas')[0].reset();
+                    $('#cantidadMesas').val(10);
+                    modalCrearMasivas.show();
+                });
+
+                $('#btnConfirmarCrearMasivas').on('click', async function () {
+                    const cantidad = parseInt($('#cantidadMesas').val());
+                    const prefijo = $('#prefijoMesas').val().trim();
+
+                    if (!cantidad || cantidad < 1 || cantidad > 100) {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error',
+                            text: 'La cantidad debe estar entre 1 y 100'
+                        });
+                        return;
+                    }
+
+                    $(this).prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-1"></span>Creando...');
+
+                    try {
+                        // Get token from localStorage or cookie
+                        const token = localStorage.getItem('auth_token') || '';
+
+                        const response = await fetch('/api/mesas/crear-masivas', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Authorization': `Bearer ${token}`
+                            },
+                            body: JSON.stringify({ cantidad, prefijo: prefijo || null })
+                        });
+
+                        const data = await response.json();
+
+                        if (!response.ok) {
+                            throw new Error(data.error || 'Error al crear mesas');
+                        }
+
+                        modalCrearMasivas.hide();
+
+                        let message = `? Se crearon ${data.creadas} mesas exitosamente`;
+                        if (data.desde) {
+                            message += `\nDesde: ${data.desde}`;
+                        }
+                        if (data.errores > 0) {
+                            message += `\n?? ${data.errores} mesas no se pudieron crear (ya existían)`;
+                        }
+
+                        await Swal.fire({
+                            icon: 'success',
+                            title: 'Mesas Creadas',
+                            text: message,
+                            timer: 3000
+                        });
+
+                        // Reload page to show new mesas
+                        window.location.reload();
+
+                    } catch (error) {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error',
+                            text: error.message
+                        });
+                    } finally {
+                        $(this).prop('disabled', false).html('<i class="bi bi-check-lg me-1"></i>Crear Mesas');
+                    }
+                });
+            });
+        </script>
+</body>
+
+</html>

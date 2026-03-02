@@ -33,18 +33,21 @@ router.get('/', async (req, res) => {
         });
     } catch (error) {
         console.error('Error al listar tenants:', error);
-        res.status(500).render('error', { error });
+        res.status(500).render('errors/internal', { error });
     }
 });
 
 router.post('/', async (req, res) => {
     try {
-        const { nombre, slug, config, plan_id, admin_username, admin_password, admin_email, admin_nombre_completo } = req.body;
+        const { nombre, slug, config, plan_id, admin_username, admin_password, admin_email, admin_nombre_completo, nit, direccion, telefono, ciudad, regimen_fiscal } = req.body;
         if (!nombre || !slug || !admin_username || !admin_password) {
             return res.status(400).send('Faltan nombre del restaurante, slug, usuario admin o contraseña.');
         }
         const configObj = typeof config === 'string' ? JSON.parse(config || '{}') : (config || {});
-        const tenant = await TenantService.createTenant({ nombre, slug, config: configObj, plan_id: plan_id || 1 });
+        const tenant = await TenantService.createTenant({
+            nombre, slug, config: configObj, plan_id: plan_id || 1,
+            nit, direccion, telefono, ciudad, regimen_fiscal
+        });
         const tenantId = tenant.id;
         const tipoNegocio = configObj.tipo_negocio || 'restaurante';
         await CategoryService.seedDefaultCategories(tenantId, tipoNegocio);
@@ -70,13 +73,28 @@ router.post('/', async (req, res) => {
 
 router.put('/:id', async (req, res) => {
     try {
-        const { nombre, activo, config, plan_id } = req.body;
-        const activoBool = activo === 'true' || activo === true || activo === 1 || activo === '1';
-        const update = {
-            nombre,
-            activo: activoBool,
-            config: JSON.parse(config || '{}')
-        };
+        const update = {};
+
+        // Campos de texto simples
+        const textFields = ['nombre', 'nit', 'direccion', 'telefono', 'ciudad', 'regimen_fiscal'];
+        textFields.forEach(f => {
+            if (req.body[f] !== undefined) {
+                update[f] = req.body[f];
+            }
+        });
+
+        // Estado activo
+        if (req.body.activo !== undefined && req.body.activo !== null && req.body.activo !== '') {
+            update.activo = req.body.activo === 'true' || req.body.activo === true || req.body.activo === 1 || req.body.activo === '1';
+        }
+
+        // Configuración JSON
+        if (req.body.config !== undefined && req.body.config !== null) {
+            update.config = typeof req.body.config === 'string' ? JSON.parse(req.body.config) : req.body.config;
+        }
+
+        // Plan de suscripción
+        const { plan_id } = req.body;
         const planChanged = plan_id !== undefined && plan_id !== null && plan_id !== '';
         if (planChanged) update.plan_id = plan_id;
         await TenantService.updateTenant(req.params.id, update);
@@ -87,7 +105,7 @@ router.put('/:id', async (req, res) => {
             tenantId: req.params.id,
             userId: req.user?.id || null,
             accion: 'actualizar_config',
-            detalles: `Activo=${activo}${planChanged ? ` Plan=${plan_id}` : ''}`
+            detalles: `Activo=${req.body.activo}${planChanged ? ` Plan=${plan_id}` : ''}`
         });
         if (planChanged) {
             res.status(200).json({ planUpdated: true });

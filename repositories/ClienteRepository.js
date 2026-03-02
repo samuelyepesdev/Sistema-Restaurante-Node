@@ -36,10 +36,10 @@ class ClienteRepository {
         const searchTerm = `%${query}%`;
         const [clientes] = await db.query(`
             SELECT * FROM clientes 
-            WHERE tenant_id = ? AND (nombre LIKE ? OR telefono LIKE ?)
+            WHERE tenant_id = ? AND (nombre LIKE ? OR telefono LIKE ? OR numero_documento LIKE ? OR email LIKE ?)
             ORDER BY nombre
             LIMIT ?
-        `, [tenantId, searchTerm, searchTerm, limit]);
+        `, [tenantId, searchTerm, searchTerm, searchTerm, searchTerm, limit]);
         return clientes;
     }
 
@@ -52,10 +52,10 @@ class ClienteRepository {
      * @returns {Promise<Object>} Created client with insertId
      */
     static async create(tenantId, clientData) {
-        const { nombre, direccion, telefono } = clientData;
+        const { nombre, direccion, telefono, tipo_documento, numero_documento, email } = clientData;
         const [result] = await db.query(
-            'INSERT INTO clientes (tenant_id, nombre, direccion, telefono) VALUES (?, ?, ?, ?)',
-            [tenantId, nombre, direccion || null, telefono || null]
+            'INSERT INTO clientes (tenant_id, nombre, direccion, telefono, tipo_documento, numero_documento, email) VALUES (?, ?, ?, ?, ?, ?, ?)',
+            [tenantId, nombre, direccion || null, telefono || null, tipo_documento || 'CC', numero_documento || null, email || null]
         );
         return result;
     }
@@ -67,10 +67,10 @@ class ClienteRepository {
      * @returns {Promise<Object>} Update result
      */
     static async update(id, tenantId, clientData) {
-        const { nombre, direccion, telefono } = clientData;
+        const { nombre, direccion, telefono, tipo_documento, numero_documento, email } = clientData;
         const result = await db.query(
-            'UPDATE clientes SET nombre = ?, direccion = ?, telefono = ? WHERE id = ? AND tenant_id = ?',
-            [nombre, direccion || null, telefono || null, id, tenantId]
+            'UPDATE clientes SET nombre = ?, direccion = ?, telefono = ?, tipo_documento = ?, numero_documento = ?, email = ? WHERE id = ? AND tenant_id = ?',
+            [nombre, direccion || null, telefono || null, tipo_documento || 'CC', numero_documento || null, email || null, id, tenantId]
         );
         return result;
     }

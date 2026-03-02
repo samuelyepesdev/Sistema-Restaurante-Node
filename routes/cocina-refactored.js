@@ -18,7 +18,7 @@ router.get('/', async (req, res) => {
         });
     } catch (error) {
         console.error('Error al cargar cocina:', error);
-        res.status(500).render('error', { 
+        res.status(500).render('errors/internal', { 
             error: { message: 'Error al cargar cocina', stack: error.stack } 
         });
     }

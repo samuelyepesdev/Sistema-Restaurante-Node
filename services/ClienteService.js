@@ -51,7 +51,7 @@ class ClienteService {
      * @throws {Error} If validation fails
      */
     static async create(tenantId, clientData) {
-        const { nombre, direccion, telefono } = clientData;
+        const { nombre, direccion, telefono, tipo_documento, numero_documento, email } = clientData;
 
         if (!nombre || nombre.trim().length === 0) {
             throw new Error('El nombre es requerido');
@@ -65,7 +65,10 @@ class ClienteService {
         const result = await ClienteRepository.create(tenantId, {
             nombre: nombre.trim(),
             direccion: direccion?.trim() || null,
-            telefono: telefonoStr
+            telefono: telefonoStr,
+            tipo_documento: tipo_documento || 'CC',
+            numero_documento: numero_documento || null,
+            email: email || null
         });
 
         return {
@@ -83,7 +86,7 @@ class ClienteService {
      * @throws {Error} If client not found or validation fails
      */
     static async update(id, tenantId, clientData) {
-        const { nombre, direccion, telefono } = clientData;
+        const { nombre, direccion, telefono, tipo_documento, numero_documento, email } = clientData;
 
         if (!nombre || nombre.trim().length === 0) {
             throw new Error('El nombre es requerido');
@@ -102,7 +105,10 @@ class ClienteService {
         const result = await ClienteRepository.update(id, tenantId, {
             nombre: nombre.trim(),
             direccion: direccion?.trim() || null,
-            telefono: telefonoStr
+            telefono: telefonoStr,
+            tipo_documento: tipo_documento || 'CC',
+            numero_documento: numero_documento || null,
+            email: email || null
         });
 
         if (result.affectedRows === 0) {

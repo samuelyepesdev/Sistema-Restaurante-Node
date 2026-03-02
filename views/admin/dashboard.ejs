@@ -1,193 +1,260 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard - Superadministrador</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
-        <link rel="stylesheet" href="/css/admin-dashboard.css">
+    <link rel="stylesheet" href="/css/admin-dashboard.css">
 </head>
+
 <body>
-<%- include('../partials/navbar', { user, tenant: null, currentAdminPage: 'dashboard' }) %>
+    <%- include('../partials/navbar', { user, tenant: null, currentAdminPage: 'dashboard' }) %>
 
-<div class="container-fluid py-4">
-    <div class="dashboard-header d-flex flex-wrap align-items-center justify-content-between gap-3">
-        <div>
-            <h1><i class="bi bi-speedometer2 me-2"></i>Dashboard</h1>
-            <p class="mb-0">Resumen general del sistema y los restaurantes.</p>
-        </div>
-    </div>
+        <div class="container-fluid py-4">
+            <div class="dashboard-header d-flex flex-wrap align-items-center justify-content-between gap-3">
+                <div>
+                    <h1><i class="bi bi-speedometer2 me-2"></i>Dashboard</h1>
+                    <p class="mb-0">Resumen general del sistema y los restaurantes.</p>
+                </div>
+            </div>
 
-    <div class="row g-4 mb-4">
-        <div class="col-sm-6 col-lg-3">
-            <div class="card stat-card">
-                <div class="card-body">
-                    <div class="d-flex align-items-start justify-content-between">
-                        <div>
-                            <div class="stat-value"><%= stats.totalRestaurantes %></div>
-                            <div class="stat-label">Total restaurantes</div>
+            <div class="row g-4 mb-4">
+                <div class="col-sm-6 col-lg-3">
+                    <div class="card stat-card">
+                        <div class="card-body">
+                            <div class="d-flex align-items-start justify-content-between">
+                                <div>
+                                    <div class="stat-value">
+                                        <%= stats.totalRestaurantes %>
+                                    </div>
+                                    <div class="stat-label">Total restaurantes</div>
+                                </div>
+                                <div class="stat-icon bg-primary bg-opacity-10 text-primary">
+                                    <i class="bi bi-building"></i>
+                                </div>
+                            </div>
                         </div>
-                        <div class="stat-icon bg-primary bg-opacity-10 text-primary">
-                            <i class="bi bi-building"></i>
+                    </div>
+                </div>
+                <div class="col-sm-6 col-lg-3">
+                    <div class="card stat-card">
+                        <div class="card-body">
+                            <div class="d-flex align-items-start justify-content-between">
+                                <div>
+                                    <div class="stat-value text-success">
+                                        <%= stats.restaurantesActivos %>
+                                    </div>
+                                    <div class="stat-label">Restaurantes activos</div>
+                                </div>
+                                <div class="stat-icon bg-success bg-opacity-10 text-success">
+                                    <i class="bi bi-check-circle"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-sm-6 col-lg-3">
+                    <div class="card stat-card">
+                        <div class="card-body">
+                            <div class="d-flex align-items-start justify-content-between">
+                                <div>
+                                    <div class="stat-value text-secondary">
+                                        <%= stats.restaurantesInactivos %>
+                                    </div>
+                                    <div class="stat-label">Restaurantes desactivados</div>
+                                </div>
+                                <div class="stat-icon bg-secondary bg-opacity-10 text-secondary">
+                                    <i class="bi bi-pause-circle"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-sm-6 col-lg-3">
+                    <div class="card stat-card">
+                        <div class="card-body">
+                            <div class="d-flex align-items-start justify-content-between">
+                                <div>
+                                    <div class="stat-value text-info">
+                                        <%= stats.totalUsuarios %>
+                                    </div>
+                                    <div class="stat-label">Usuarios en restaurantes</div>
+                                </div>
+                                <div class="stat-icon bg-info bg-opacity-10 text-info">
+                                    <i class="bi bi-people"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section-title mt-4"><i class="bi bi-bar-chart-line"></i> Estadísticas de uso (todos los
+                restaurantes)</div>
+            <div class="row g-4 mb-4">
+                <div class="col-6 col-md-4 col-lg-2">
+                    <div class="card stat-card">
+                        <div class="card-body py-3">
+                            <div class="stat-value" style="font-size: 1.5rem;">
+                                <%= typeof stats.totalFacturas !=='undefined' ? stats.totalFacturas : 0 %>
+                            </div>
+                            <div class="stat-label">Ventas (facturas)</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-6 col-md-4 col-lg-2">
+                    <div class="card stat-card">
+                        <div class="card-body py-3">
+                            <div class="stat-value text-success" style="font-size: 1.25rem;">$<%=
+                                    (Number(stats.totalVentasMonto) || 0).toLocaleString('es-CO', {
+                                    maximumFractionDigits: 0 }) %>
+                            </div>
+                            <div class="stat-label">Monto total vendido</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-6 col-md-4 col-lg-2">
+                    <div class="card stat-card">
+                        <div class="card-body py-3">
+                            <div class="stat-value" style="font-size: 1.5rem;">
+                                <%= typeof stats.totalProductos !=='undefined' ? stats.totalProductos : 0 %>
+                            </div>
+                            <div class="stat-label">Productos</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-6 col-md-4 col-lg-2">
+                    <div class="card stat-card">
+                        <div class="card-body py-3">
+                            <div class="stat-value" style="font-size: 1.5rem;">
+                                <%= typeof stats.totalClientes !=='undefined' ? stats.totalClientes : 0 %>
+                            </div>
+                            <div class="stat-label">Clientes</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-6 col-md-4 col-lg-2">
+                    <div class="card stat-card">
+                        <div class="card-body py-3">
+                            <div class="stat-value" style="font-size: 1.5rem;">
+                                <%= typeof stats.totalMesas !=='undefined' ? stats.totalMesas : 0 %>
+                            </div>
+                            <div class="stat-label">Mesas</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-6 col-md-4 col-lg-2">
+                    <div class="card stat-card">
+                        <div class="card-body py-3">
+                            <div class="stat-value text-primary" style="font-size: 1.5rem;">
+                                <%= typeof stats.restaurantesUltimos30Dias !=='undefined' ?
+                                    stats.restaurantesUltimos30Dias : 0 %>
+                            </div>
+                            <div class="stat-label">Restaurantes (últimos 30 días)</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row g-4 mb-4">
+                <div class="col-lg-8">
+                    <div class="card h-100">
+                        <div class="card-header bg-white">
+                            <i class="bi bi-graph-up me-2"></i>Crecimiento de registros (últimos 6 meses)
+                        </div>
+                        <div class="card-body">
+                            <div style="height: 300px;">
+                                <canvas id="chartCrecimiento"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-4">
+                    <div class="card h-100">
+                        <div class="card-header bg-white">
+                            <i class="bi bi-pie-chart me-2"></i>Distribución por Plan
+                        </div>
+                        <div class="card-body d-flex align-items-center justify-content-center">
+                            <div style="max-height: 300px; width: 100%;">
+                                <canvas id="chartPlanes"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row g-4">
+                <div class="col-lg-6">
+                    <div class="card card-planes h-100">
+                        <div class="card-header">
+                            <i class="bi bi-layers me-2"></i>Detalle de restaurantes por plan
+                        </div>
+                        <div class="list-group list-group-flush">
+                            <% if (stats.porPlan && stats.porPlan.length) { %>
+                                <% stats.porPlan.forEach(function(item) { %>
+                                    <div class="list-plan-item">
+                                        <span>
+                                            <%= item.plan_nombre %>
+                                        </span>
+                                        <span class="badge bg-primary rounded-pill">
+                                            <%= item.cantidad %>
+                                        </span>
+                                    </div>
+                                    <% }); %>
+                                        <% } else { %>
+                                            <div class="list-plan-item text-muted">No hay datos de planes.</div>
+                                            <% } %>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-6">
+                    <div class="card card-planes h-100">
+                        <div class="card-header">
+                            <i class="bi bi-link-45deg me-2"></i>Accesos rápidos
+                        </div>
+                        <div class="card-body">
+                            <div class="d-flex flex-column gap-1">
+                                <a href="/admin/tenants" class="quick-link">
+                                    <i class="bi bi-building"></i>
+                                    <span>Gestionar restaurantes</span>
+                                </a>
+                                <a href="/admin/planes" class="quick-link">
+                                    <i class="bi bi-layers"></i>
+                                    <span>Planes de suscripción</span>
+                                </a>
+                                <a href="/admin/permisos" class="quick-link">
+                                    <i class="bi bi-shield-lock"></i>
+                                    <span>Permisos por usuario</span>
+                                </a>
+                                <a href="/admin/sistema" class="quick-link">
+                                    <i class="bi bi-gear-wide-connected"></i>
+                                    <span>Sistema (temas y parámetros)</span>
+                                </a>
+                                <a href="/admin/ventas" class="quick-link">
+                                    <i class="bi bi-trash"></i>
+                                    <span>Eliminar ventas</span>
+                                </a>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-        <div class="col-sm-6 col-lg-3">
-            <div class="card stat-card">
-                <div class="card-body">
-                    <div class="d-flex align-items-start justify-content-between">
-                        <div>
-                            <div class="stat-value text-success"><%= stats.restaurantesActivos %></div>
-                            <div class="stat-label">Restaurantes activos</div>
-                        </div>
-                        <div class="stat-icon bg-success bg-opacity-10 text-success">
-                            <i class="bi bi-check-circle"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-sm-6 col-lg-3">
-            <div class="card stat-card">
-                <div class="card-body">
-                    <div class="d-flex align-items-start justify-content-between">
-                        <div>
-                            <div class="stat-value text-secondary"><%= stats.restaurantesInactivos %></div>
-                            <div class="stat-label">Restaurantes desactivados</div>
-                        </div>
-                        <div class="stat-icon bg-secondary bg-opacity-10 text-secondary">
-                            <i class="bi bi-pause-circle"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-sm-6 col-lg-3">
-            <div class="card stat-card">
-                <div class="card-body">
-                    <div class="d-flex align-items-start justify-content-between">
-                        <div>
-                            <div class="stat-value text-info"><%= stats.totalUsuarios %></div>
-                            <div class="stat-label">Usuarios en restaurantes</div>
-                        </div>
-                        <div class="stat-icon bg-info bg-opacity-10 text-info">
-                            <i class="bi bi-people"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
 
-    <div class="section-title mt-4"><i class="bi bi-bar-chart-line"></i> Estadísticas de uso (todos los restaurantes)</div>
-    <div class="row g-4 mb-4">
-        <div class="col-6 col-md-4 col-lg-2">
-            <div class="card stat-card">
-                <div class="card-body py-3">
-                    <div class="stat-value" style="font-size: 1.5rem;"><%= typeof stats.totalFacturas !== 'undefined' ? stats.totalFacturas : 0 %></div>
-                    <div class="stat-label">Ventas (facturas)</div>
-                </div>
-            </div>
-        </div>
-        <div class="col-6 col-md-4 col-lg-2">
-            <div class="card stat-card">
-                <div class="card-body py-3">
-                    <div class="stat-value text-success" style="font-size: 1.25rem;">$<%= (Number(stats.totalVentasMonto) || 0).toLocaleString('es-CO', { maximumFractionDigits: 0 }) %></div>
-                    <div class="stat-label">Monto total vendido</div>
-                </div>
-            </div>
-        </div>
-        <div class="col-6 col-md-4 col-lg-2">
-            <div class="card stat-card">
-                <div class="card-body py-3">
-                    <div class="stat-value" style="font-size: 1.5rem;"><%= typeof stats.totalProductos !== 'undefined' ? stats.totalProductos : 0 %></div>
-                    <div class="stat-label">Productos</div>
-                </div>
-            </div>
-        </div>
-        <div class="col-6 col-md-4 col-lg-2">
-            <div class="card stat-card">
-                <div class="card-body py-3">
-                    <div class="stat-value" style="font-size: 1.5rem;"><%= typeof stats.totalClientes !== 'undefined' ? stats.totalClientes : 0 %></div>
-                    <div class="stat-label">Clientes</div>
-                </div>
-            </div>
-        </div>
-        <div class="col-6 col-md-4 col-lg-2">
-            <div class="card stat-card">
-                <div class="card-body py-3">
-                    <div class="stat-value" style="font-size: 1.5rem;"><%= typeof stats.totalMesas !== 'undefined' ? stats.totalMesas : 0 %></div>
-                    <div class="stat-label">Mesas</div>
-                </div>
-            </div>
-        </div>
-        <div class="col-6 col-md-4 col-lg-2">
-            <div class="card stat-card">
-                <div class="card-body py-3">
-                    <div class="stat-value text-primary" style="font-size: 1.5rem;"><%= typeof stats.restaurantesUltimos30Dias !== 'undefined' ? stats.restaurantesUltimos30Dias : 0 %></div>
-                    <div class="stat-label">Restaurantes (últimos 30 días)</div>
-                </div>
-            </div>
-        </div>
-    </div>
+        <!-- Datos para los gráficos (Safe inject) -->
+        <script>
+            const chartData = {
+                historico: <% - JSON.stringify(stats.historicoRegistro || []) %>,
+                porPlan: <% - JSON.stringify(stats.porPlan || []) %>
+    };
+        </script>
 
-    <div class="row g-4">
-        <div class="col-lg-6">
-            <div class="card card-planes">
-                <div class="card-header">
-                    <i class="bi bi-layers me-2"></i>Restaurantes por plan
-                </div>
-                <div class="list-group list-group-flush">
-                    <% if (stats.porPlan && stats.porPlan.length) { %>
-                        <% stats.porPlan.forEach(function(item) { %>
-                        <div class="list-plan-item">
-                            <span><%= item.plan_nombre %></span>
-                            <span class="badge bg-primary rounded-pill"><%= item.cantidad %></span>
-                        </div>
-                        <% }); %>
-                    <% } else { %>
-                        <div class="list-plan-item text-muted">No hay datos de planes.</div>
-                    <% } %>
-                </div>
-            </div>
-        </div>
-        <div class="col-lg-6">
-            <div class="card card-planes">
-                <div class="card-header">
-                    <i class="bi bi-link-45deg me-2"></i>Accesos rápidos
-                </div>
-                <div class="card-body">
-                    <div class="d-flex flex-column gap-1">
-                        <a href="/admin/tenants" class="quick-link">
-                            <i class="bi bi-building"></i>
-                            <span>Gestionar restaurantes</span>
-                        </a>
-                        <a href="/admin/planes" class="quick-link">
-                            <i class="bi bi-layers"></i>
-                            <span>Planes de suscripción</span>
-                        </a>
-                        <a href="/admin/permisos" class="quick-link">
-                            <i class="bi bi-shield-lock"></i>
-                            <span>Permisos por usuario</span>
-                        </a>
-                        <a href="/admin/sistema" class="quick-link">
-                            <i class="bi bi-gear-wide-connected"></i>
-                            <span>Sistema (temas y parámetros)</span>
-                        </a>
-                        <a href="/admin/ventas" class="quick-link">
-                            <i class="bi bi-trash"></i>
-                            <span>Eliminar ventas</span>
-                        </a>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+        <script src="/js/admin/dashboard.js"></script>
 </body>
+
 </html>

@@ -46,6 +46,18 @@ module.exports = function navbarLocals(req, res, next) {
 
             const hasMas = can.recetas || can.eventos || can.analitica;
 
+            let primaryColor = '#6366f1';
+            let bgStart = '#1e3a5f';
+            let bgEnd = '#0f172a';
+
+            if (tenant && tenant.config) {
+                const cfg = typeof tenant.config === 'string' ? JSON.parse(tenant.config) : tenant.config;
+                if (cfg.colors && cfg.colors.primary) {
+                    primaryColor = cfg.colors.primary;
+                    // Opcional: Podrías derivar bgStart y bgEnd del color primario si quisieras un cambio total
+                }
+            }
+
             return {
                 isSuperadmin,
                 brandHref: isSuperadmin ? '/admin/dashboard' : '/',
@@ -53,6 +65,9 @@ module.exports = function navbarLocals(req, res, next) {
                 tenantNombre: tenant ? tenant.nombre : 'Sistema',
                 userInitial,
                 userFirstName,
+                primaryColor,
+                bgStart,
+                bgEnd,
                 can,
                 hasMas,
             };

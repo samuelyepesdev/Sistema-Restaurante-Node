@@ -41,7 +41,7 @@ async function renderSistemaPage(req, res) {
         });
     } catch (error) {
         console.error('Error al cargar Sistema:', error);
-        res.status(500).render('error', { error: { message: error.message } });
+        res.status(500).render('errors/internal', { error: { message: error.message } });
     }
 }
 

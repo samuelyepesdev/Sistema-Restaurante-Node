@@ -74,101 +74,9 @@ app.use((req, res, next) => {
     next();
 });
 
-// Rutas de app: superadmin solo puede ver /admin/tenants y /costeo; el resto requiere tenant
-const requireAuthWithTenant = [requireAuth, restrictSuperadminToAdmin, attachTenantContext];
-
-// Rutas de autenticación (públicas)
-const authRoutes = require('./routes/auth');
-app.use('/auth', authRoutes);
-
-// Rutas protegidas
-const productosRoutes = require('./routes/productos');
-const clientesRoutes = require('./routes/clientes');
-const facturasRoutes = require('./routes/facturas');
-const mesasRoutes = require('./routes/mesas');
-const cocinaRoutes = require('./routes/cocina');
-const configuracionRoutes = require('./routes/configuracion');
-const ventasRoutes = require('./routes/ventas');
-const dashboardRoutes = require('./routes/dashboard');
-const costeoRoutes = require('./routes/costeo');
-const analiticaRoutes = require('./routes/analitica');
-const adminTenantsRoutes = require('./routes/admin/tenants');
-const adminSistemaRoutes = require('./routes/admin/sistema');
-const adminPlanesRoutes = require('./routes/admin/planes');
-const adminPermisosRoutes = require('./routes/admin/permisos');
-const adminVentasRoutes = require('./routes/admin/ventas');
-const adminDashboardRoutes = require('./routes/admin/dashboard');
-const eventosRoutes = require('./routes/eventos');
-const inventarioRoutes = require('./routes/inventario');
-const recetasRoutes = require('./routes/recetas');
-
-// Ruta principal - redirige según autenticación y rol
-app.get('/', optionalAuth, (req, res) => {
-    if (req.user) {
-        const rol = String((req.user.rol || '')).toLowerCase();
-        if (rol === 'superadmin') {
-            res.redirect('/admin/dashboard');
-        } else if (rol === 'admin') {
-            res.redirect('/dashboard');
-        } else if (rol === 'mesero') {
-            res.redirect('/mesas');
-        } else if (rol === 'cocinero') {
-            res.redirect('/cocina');
-        } else if (rol === 'cajero') {
-            res.redirect('/ventas');
-        } else {
-            res.redirect('/mesas');
-        }
-    } else {
-        res.redirect('/auth/login');
-    }
-});
-
-// GET /facturas/facturar - Pantalla realizar venta (POS), opcional evento_id (registrada antes del use de facturas)
-app.get('/facturas/facturar', requireAuthWithTenant, requirePlanFeature('ventas'), async (req, res) => {
-    try {
-        const tenantId = req.tenant?.id;
-        if (!tenantId) return res.status(403).render('error', { error: { message: 'Contexto de tenant no disponible' } });
-        const EventoService = require('./services/EventoService');
-        let eventoFiltro = null;
-        if (req.query.evento_id) {
-            const ev = await EventoService.getById(req.query.evento_id, tenantId);
-            if (ev) eventoFiltro = { id: ev.id, nombre: ev.nombre };
-        }
-        res.render('index', { user: req.user, tenant: req.tenant, eventoFiltro: eventoFiltro || null });
-    } catch (error) {
-        console.error('Error al cargar pantalla de facturación:', error);
-        res.status(500).render('error', { error, user: req.user });
-    }
-});
-
-// Proteger rutas: auth + tenant + plan que incluya el módulo
-app.use('/productos', requireAuthWithTenant, requirePlanFeature('productos'), productosRoutes);
-app.use('/api/productos', requireAuthWithTenant, requirePlanFeature('productos'), productosRoutes);
-app.use('/clientes', requireAuthWithTenant, requirePlanFeature('clientes'), clientesRoutes);
-app.use('/api/clientes', requireAuthWithTenant, requirePlanFeature('clientes'), clientesRoutes);
-app.use('/facturas', requireAuthWithTenant, requirePlanFeature('ventas'), facturasRoutes);
-app.use('/api/facturas', requireAuthWithTenant, requirePlanFeature('ventas'), facturasRoutes);
-app.use('/mesas', requireAuthWithTenant, requirePlanFeature('mesas'), mesasRoutes);
-app.use('/api/mesas', requireAuthWithTenant, requirePlanFeature('mesas'), mesasRoutes);
-app.use('/cocina', requireAuthWithTenant, requirePlanFeature('cocina'), cocinaRoutes);
-app.use('/api/cocina', requireAuthWithTenant, requirePlanFeature('cocina'), cocinaRoutes);
-app.use('/configuracion', requireAuthWithTenant, requirePlanFeature('configuracion'), configuracionRoutes);
-app.use('/ventas', requireAuthWithTenant, requirePlanFeature('ventas'), ventasRoutes);
-app.use('/eventos', requireAuthWithTenant, requirePlanFeature('eventos'), eventosRoutes);
-app.use('/inventario', requireAuthWithTenant, requirePlanFeature('inventario'), inventarioRoutes);
-app.use('/recetas', requireAuthWithTenant, requirePlanFeature('recetas'), recetasRoutes);
-app.use('/dashboard', requireAuthWithTenant, requirePlanFeature('dashboard'), dashboardRoutes);
-app.use('/api/dashboard', requireAuthWithTenant, requirePlanFeature('dashboard'), dashboardRoutes);
-app.use('/costeo', requireAuth, restrictSuperadminToAdmin, costeoTenantContext, requirePlanFeature('costeo'), costeoRoutes);
-app.use('/analitica', requireAuthWithTenant, requirePlanFeature('analitica'), analiticaRoutes);
-// Superadmin: solo requireAuth (no tenant); el panel solo permite rol superadmin
-app.use('/admin/dashboard', requireAuth, adminDashboardRoutes);
-app.use('/admin/tenants', requireAuth, adminTenantsRoutes);
-app.use('/admin/sistema', requireAuth, adminSistemaRoutes);
-app.use('/admin/planes', requireAuth, adminPlanesRoutes);
-app.use('/admin/permisos', requireAuth, adminPermisosRoutes);
-app.use('/admin/ventas', requireAuth, adminVentasRoutes);
+// Rutas de app: centralizadas en routes/web.js
+const webRoutes = require('./routes/web');
+app.use('/', webRoutes);
 
 // Favicon: servir logo.png como icono de pestaña (el navegador pide /favicon.ico)
 const faviconPath = path.join(__dirname, 'public', 'logo.png');
@@ -186,7 +94,7 @@ app.use((req, res, next) => {
     if (req.xhr || (req.headers.accept && req.headers.accept.indexOf('json') > -1)) {
         res.status(404).json({ error: 'Ruta no encontrada' });
     } else {
-        res.status(404).render('404');
+        res.status(404).render('errors/404');
     }
 });
 
@@ -200,7 +108,7 @@ app.use((err, req, res, next) => {
             message: process.env.NODE_ENV === 'development' ? err.message : 'Error interno'
         });
     } else {
-        res.status(500).render('error', {
+        res.status(500).render('errors/internal', {
             error: {
                 message: 'Error interno del servidor',
                 stack: process.env.NODE_ENV === 'development' ? err.stack : ''

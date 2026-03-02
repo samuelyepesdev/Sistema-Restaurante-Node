@@ -27,7 +27,7 @@ router.get('/', async (req, res) => {
         });
     } catch (error) {
         console.error('Error al cargar dashboard superadmin:', error);
-        res.status(500).render('error', { error });
+        res.status(500).render('errors/internal', { error });
     }
 });
 
