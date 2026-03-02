@@ -41,7 +41,7 @@
     flex-shrink: 0;
 }
 
-.nav-link {
+.navbar .nav-link {
     font-size: .82rem;
     font-weight: 600;
     color: rgba(255, 255, 255, .75) !important;
@@ -53,13 +53,13 @@
     gap: .3rem;
 }
 
-.nav-link:hover,
-.nav-link.active {
+.navbar .nav-link:hover,
+.navbar .nav-link.active {
     color: #fff !important;
     background: rgba(255, 255, 255, .1);
 }
 
-.nav-link i {
+.navbar .nav-link i {
     font-size: .9rem;
 }
 
@@ -173,7 +173,7 @@
         display: none;
     }
 
-    .nav-link {
+    .navbar .nav-link {
         padding: .5rem .75rem !important;
     }
 }
