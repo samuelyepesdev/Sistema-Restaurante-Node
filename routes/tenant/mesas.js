@@ -603,6 +603,93 @@ router.put('/pedidos/:pedidoId/mover', async (req, res) => {
     }
 });
 
+// POST /mesas/pedidos/:pedidoId/mover-items - Mover productos específicos a otra mesa
+router.post('/pedidos/:pedidoId/mover-items', async (req, res) => {
+    const tenantId = req.tenant?.id;
+    if (!tenantId) return res.status(403).json({ error: 'Contexto de tenant no disponible' });
+
+    const pedidoOrigenId = req.params.pedidoId;
+    const { itemIds, mesa_destino_id } = req.body || {};
+
+    if (!Array.isArray(itemIds) || itemIds.length === 0) return res.status(400).json({ error: 'Seleccione al menos un producto' });
+    if (!mesa_destino_id) return res.status(400).json({ error: 'Mesa destino requerida' });
+
+    try {
+        const connection = await db.getConnection();
+        try {
+            await connection.beginTransaction();
+
+            // 1. Verificar pedido origen
+            const [pedidos] = await connection.query('SELECT * FROM pedidos WHERE id = ? AND tenant_id = ? FOR UPDATE', [pedidoOrigenId, tenantId]);
+            if (pedidos.length === 0) throw new Error('Pedido origen no encontrado');
+            const pedidoOrigen = pedidos[0];
+
+            // 2. Verificar mesa destino (debe ser del mismo tenant)
+            const [mesaDest] = await connection.query('SELECT id, numero FROM mesas WHERE id = ? AND tenant_id = ?', [mesa_destino_id, tenantId]);
+            if (mesaDest.length === 0) throw new Error('Mesa destino no encontrada');
+
+            // 3. Buscar o crear pedido en mesa destino
+            let [pedidoDest] = await connection.query(
+                `SELECT * FROM pedidos WHERE mesa_id = ? AND estado NOT IN ('cerrado','cancelado') LIMIT 1`,
+                [mesa_destino_id]
+            );
+
+            let pedidoDestinoId;
+            if (pedidoDest.length > 0) {
+                pedidoDestinoId = pedidoDest[0].id;
+            } else {
+                // Crear nuevo pedido en la mesa destino
+                const [insert] = await connection.query(
+                    `INSERT INTO pedidos (tenant_id, mesa_id, cliente_id, estado, total) VALUES (?, ?, ?, 'abierto', 0)`,
+                    [tenantId, mesa_destino_id, pedidoOrigen.cliente_id]
+                );
+                pedidoDestinoId = insert.insertId;
+            }
+
+            // 4. Mover items seleccionados
+            // Solo mover si pertenecen al pedido origen
+            await connection.query(
+                `UPDATE pedido_items SET pedido_id = ? WHERE id IN (?) AND pedido_id = ?`,
+                [pedidoDestinoId, itemIds, pedidoOrigenId]
+            );
+
+            // 5. Actualizar estados de mesas
+            // Si el pedido origen se quedó sin items activos, cancelarlo
+            const [restantes] = await connection.query(
+                `SELECT COUNT(*) as cnt FROM pedido_items WHERE pedido_id = ? AND estado <> 'cancelado'`,
+                [pedidoOrigenId]
+            );
+
+            if ((restantes[0]?.cnt || 0) === 0) {
+                await connection.query(`UPDATE pedidos SET estado = 'cancelado' WHERE id = ?`, [pedidoOrigenId]);
+
+                // Verificar si la mesa origen quedó realmente libre (sin otros pedidos abiertos)
+                const [abiertosOrigen] = await connection.query(
+                    `SELECT COUNT(*) as cnt FROM pedidos WHERE mesa_id = ? AND estado NOT IN ('cerrado','cancelado')`,
+                    [pedidoOrigen.mesa_id]
+                );
+                if ((abiertosOrigen[0]?.cnt || 0) === 0) {
+                    await connection.query('UPDATE mesas SET estado = "libre" WHERE id = ?', [pedidoOrigen.mesa_id]);
+                }
+            }
+
+            // Asegurar que la mesa destino esté ocupada
+            await connection.query('UPDATE mesas SET estado = "ocupada" WHERE id = ?', [mesa_destino_id]);
+
+            await connection.commit();
+            connection.release();
+            res.json({ success: true, message: 'Productos movidos exitosamente' });
+        } catch (error) {
+            await connection.rollback();
+            connection.release();
+            throw error;
+        }
+    } catch (error) {
+        console.error('Error al mover productos:', error);
+        res.status(400).json({ error: error.message || 'Error al mover productos' });
+    }
+});
+
 // PUT /mesas/:mesaId/liberar - Libera mesa del tenant si no tiene items activos
 router.put('/:mesaId/liberar', async (req, res) => {
     const tenantId = req.tenant?.id;

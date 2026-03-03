@@ -295,38 +295,143 @@ $(function () {
     }
   });
 
-  // Mover pedido a otra mesa (handler compartido)
+  // Mover pedido a otra mesa (wizard: todo o productos específicos)
   async function handleMoverMesa() {
+    if (!pedidoActual || items.length === 0) {
+      return Swal.fire({ icon: 'warning', title: 'No hay productos para mover' });
+    }
+
     try {
-      // Obtener mesas disponibles
-      const resp = await fetch('/api/mesas/listar');
-      const mesas = await resp.json();
-      const libres = mesas.filter(m => Number(m.pedidos_abiertos || 0) === 0 && Number(m.id) !== Number(pedidoActual.mesa_id));
-      if (libres.length === 0) {
-        return Swal.fire({ icon: 'info', title: 'No hay mesas libres' });
+      // 1. Preguntar qué desea realizar
+      const result = await Swal.fire({
+        title: 'Mover Pedido',
+        text: '¿Qué desea realizar?',
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonText: '<i class="bi bi-grid-fill me-2"></i>Mover toda la mesa',
+        denyButtonText: '<i class="bi bi-check-square me-2"></i>Elegir productos',
+        showDenyButton: true,
+        cancelButtonText: 'Cancelar',
+        customClass: {
+          confirmButton: 'btn btn-primary',
+          denyButton: 'btn btn-info',
+          cancelButton: 'btn btn-secondary'
+        }
+      });
+
+      if (result.isDismissed) return;
+
+      const esParcial = result.isDenied;
+      let itemIdsParaMover = [];
+
+      // 2. Si eligió productos específicos, mostrar lista de selección
+      if (esParcial) {
+        let htmlItems = '<div class="list-group text-start shadow-sm" style="max-height: 350px; overflow-y: auto;">';
+        items.forEach(it => {
+          htmlItems += `
+            <label class="list-group-item list-group-item-action d-flex align-items-center">
+              <input class="form-check-input me-3 item-to-move" type="checkbox" value="${it.id}" style="width: 1.5rem; height: 1.5rem;">
+              <div class="flex-grow-1">
+                <div class="fw-bold">${it.producto_nombre || it.nombre}</div>
+                <div class="small text-muted">Cantidad: ${it.cantidad} — ${formatear(it.subtotal)}</div>
+              </div>
+            </label>`;
+        });
+        htmlItems += '</div>';
+
+        const { value: selected } = await runWithOffcanvasHidden(async () => {
+          return await Swal.fire({
+            title: 'Seleccione productos',
+            html: htmlItems,
+            showCancelButton: true,
+            confirmButtonText: 'Continuar',
+            cancelButtonText: 'Atrás',
+            preConfirm: () => {
+              const checked = Array.from(document.querySelectorAll('.item-to-move:checked')).map(el => el.value);
+              if (checked.length === 0) {
+                Swal.showValidationMessage('Seleccione al menos un producto');
+              }
+              return checked;
+            }
+          });
+        });
+
+        if (!selected) return;
+        itemIdsParaMover = selected;
       }
 
-      const options = libres.reduce((acc, m) => { acc[m.id] = `Mesa ${m.numero}${m.descripcion ? ' - ' + m.descripcion : ''}`; return acc; }, {});
-      const { value: destino } = await runWithOffcanvasHidden(async () => {
-        return await Swal.fire({ title: 'Mover a mesa', input: 'select', inputOptions: options, inputPlaceholder: 'Seleccione mesa destino', showCancelButton: true });
+      // 3. Obtener mesas y seleccionar destino
+      const resp = await fetch('/api/mesas/listar');
+      const todasLasMesas = await resp.json();
+
+      // Si muevo TODO, solo mesas libres. Si es PARCIAL, puede ser cualquier mesa excepto la actual.
+      let mesasDisponibles;
+      if (esParcial) {
+        mesasDisponibles = todasLasMesas.filter(m => Number(m.id) !== Number(pedidoActual.mesa_id));
+      } else {
+        mesasDisponibles = todasLasMesas.filter(m => Number(m.pedidos_abiertos || 0) === 0 && Number(m.id) !== Number(pedidoActual.mesa_id));
+      }
+
+      if (mesasDisponibles.length === 0) {
+        return Swal.fire({ icon: 'info', title: 'No hay mesas disponibles', text: esParcial ? 'No hay otras mesas creadas.' : 'No hay mesas libres para mover todo el pedido.' });
+      }
+
+      const options = mesasDisponibles.reduce((acc, m) => {
+        const estadoLabel = m.estado === 'ocupada' ? ' (Ocupada - Se mezclará)' : '';
+        acc[m.id] = `Mesa ${m.numero}${m.descripcion ? ' - ' + m.descripcion : ''}${estadoLabel}`;
+        return acc;
+      }, {});
+
+      const { value: destinoId } = await runWithOffcanvasHidden(async () => {
+        return await Swal.fire({
+          title: 'Seleccione mesa destino',
+          input: 'select',
+          inputOptions: options,
+          inputPlaceholder: 'Elija la mesa...',
+          showCancelButton: true,
+          confirmButtonText: 'Confirmar Traslado',
+          cancelButtonText: 'Cancelar'
+        });
       });
-      if (!destino) return;
 
-      const r = await fetch(`/api/mesas/pedidos/${pedidoActual.id}/mover`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ mesa_destino_id: Number(destino) }) });
+      if (!destinoId) return;
+
+      // 4. Llamar a la API correspondiente
+      Swal.fire({ title: 'Procesando...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+
+      let endpoint, method, body;
+      if (esParcial) {
+        endpoint = `/api/mesas/pedidos/${pedidoActual.id}/mover-items`;
+        method = 'POST';
+        body = JSON.stringify({ itemIds: itemIdsParaMover, mesa_destino_id: Number(destinoId) });
+      } else {
+        endpoint = `/api/mesas/pedidos/${pedidoActual.id}/mover`;
+        method = 'PUT';
+        body = JSON.stringify({ mesa_destino_id: Number(destinoId) });
+      }
+
+      const r = await fetch(endpoint, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body
+      });
       const data = await r.json();
-      if (!r.ok) throw new Error(data.error || 'No se pudo mover el pedido');
 
-      const mesaOrigenId = pedidoActual.mesa_id;
-      const mesaSel = libres.find(m => m.id === Number(destino));
-      const mesaOrigen = mesas.find(m => m.id === mesaOrigenId);
-      pedidoActual.mesa_id = Number(destino);
-      currentMesaEstado = 'ocupada';
-      if (mesaSel) { $('#pedidoMesa').text(mesaSel.numero); }
+      if (!r.ok) throw new Error(data.error || 'No se pudo realizar el traslado');
+
       await cargarPedido(pedidoActual.id);
-      const msg = mesaOrigen ? `El pedido pasó a la Mesa ${mesaSel?.numero || destino}. La Mesa ${mesaOrigen.numero} quedó libre.` : `Pedido movido a la Mesa ${mesaSel?.numero || destino}.`;
-      Swal.fire({ icon: 'success', title: 'Pedido movido', text: msg });
+      Swal.fire({
+        icon: 'success',
+        title: '¡Completado!',
+        text: esParcial ? 'Productos trasladados correctamente.' : 'Pedido movido exitosamente.',
+        timer: 2000
+      });
+
+      // Recargar mesas en el grid para ver cambios visuales de inmediato
+      if (typeof refreshMesas === 'function') refreshMesas();
+
     } catch (err) {
-      Swal.fire({ icon: 'error', title: err.message });
+      Swal.fire({ icon: 'error', title: 'Error', text: err.message });
     }
   }
 
