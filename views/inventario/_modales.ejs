@@ -1,0 +1,122 @@
+<!-- Modal Nuevo Insumo -->
+<div class="modal fade" id="modalNuevoInsumo" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Nuevo insumo</h5><button type="button" class="btn-close"
+                    data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-2"><label class="form-label">Código</label><input type="text" class="form-control"
+                        id="nuevoCodigo" required></div>
+                <div class="mb-2"><label class="form-label">Nombre</label><input type="text" class="form-control"
+                        id="nuevoNombre" required></div>
+                <div class="row">
+                    <div class="col-6"><label class="form-label">Unidad compra</label><input type="text"
+                            class="form-control" id="nuevoUnidadCompra" value="UND"></div>
+                    <div class="col-6"><label class="form-label">Unidad base</label><select class="form-select"
+                            id="nuevoUnidadBase">
+                            <option value="g">g</option>
+                            <option value="ml">ml</option>
+                            <option value="UND">UND</option>
+                        </select></div>
+                </div>
+                <div class="row mt-2">
+                    <div class="col-6"><label class="form-label">Cant. compra</label><input type="number" step="0.01"
+                            class="form-control" id="nuevoCantidadCompra" value="1"></div>
+                    <div class="col-6"><label class="form-label">Precio compra</label><input type="number" step="0.01"
+                            class="form-control" id="nuevoPrecioCompra" value="0"></div>
+                </div>
+                <div class="mt-2"><label class="form-label">Stock mínimo</label><input type="number" step="0.0001"
+                        class="form-control" id="nuevoStockMinimo" value="0"></div>
+            </div>
+            <div class="modal-footer"><button type="button" class="btn btn-secondary"
+                    data-bs-dismiss="modal">Cerrar</button><button type="button" class="btn btn-primary"
+                    id="btnCrearInsumo">Crear</button></div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Entrada -->
+<div class="modal fade" id="modalEntrada" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">Entrada - <span id="entradaInsumoNombre"></span></div>
+            <div class="modal-body"><input type="hidden" id="entradaInsumoId"><label
+                    class="form-label">Cantidad</label><input type="number" step="0.0001" class="form-control"
+                    id="entradaCantidad"><label class="form-label mt-2">Costo unitario (opcional)</label><input
+                    type="number" step="0.01" class="form-control" id="entradaCosto"><label
+                    class="form-label mt-2">Referencia</label><input type="text" class="form-control" id="entradaRef"
+                    placeholder="Ej: Compra #1"></div>
+            <div class="modal-footer"><button type="button" class="btn btn-secondary"
+                    data-bs-dismiss="modal">Cerrar</button><button type="button" class="btn btn-success"
+                    id="btnConfirmarEntrada">Registrar entrada</button></div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Salida -->
+<div class="modal fade" id="modalSalida" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">Salida - <span id="salidaInsumoNombre"></span></div>
+            <div class="modal-body"><input type="hidden" id="salidaInsumoId">
+                <p class="small text-muted">Disponible: <span id="salidaDisponible">0</span></p><label
+                    class="form-label">Cantidad</label><input type="number" step="0.0001" class="form-control"
+                    id="salidaCantidad"><label class="form-label mt-2">Referencia</label><input type="text"
+                    class="form-control" id="salidaRef">
+            </div>
+            <div class="modal-footer"><button type="button" class="btn btn-secondary"
+                    data-bs-dismiss="modal">Cerrar</button><button type="button" class="btn btn-danger"
+                    id="btnConfirmarSalida">Registrar salida</button></div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Ajuste -->
+<div class="modal fade" id="modalAjuste" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">Ajuste - <span id="ajusteInsumoNombre"></span></div>
+            <div class="modal-body"><input type="hidden" id="ajusteInsumoId"><label class="form-label">Cantidad
+                    (+ suma, - resta)</label><input type="number" step="0.0001" class="form-control"
+                    id="ajusteCantidad"><label class="form-label mt-2">Referencia</label><input type="text"
+                    class="form-control" id="ajusteRef" value="Ajuste manual"></div>
+            <div class="modal-footer"><button type="button" class="btn btn-secondary"
+                    data-bs-dismiss="modal">Cerrar</button><button type="button" class="btn btn-primary"
+                    id="btnConfirmarAjuste">Aplicar ajuste</button></div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Lista de mercado -->
+<div class="modal fade" id="modalListaMercado" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-cart-check me-2"></i>Lista de mercado</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p class="text-muted small mb-2">Insumos bajo stock o cerca del mínimo para reponer.</p>
+                <div class="form-check mb-3">
+                    <input class="form-check-input" type="checkbox" id="listaMercadoIncluirCerca">
+                    <label class="form-check-label" for="listaMercadoIncluirCerca">Incluir insumos cerca del
+                        mínimo (hasta 120% del mínimo)</label>
+                </div>
+                <div id="listaMercadoContenido">
+                    <ul class="list-group list-group-flush" id="listaMercadoItems"></ul>
+                    <p class="text-muted small mt-2 mb-0" id="listaMercadoVacio" style="display:none;">No hay
+                        insumos bajo stock.</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" id="btnListaMercadoCopiar"
+                    title="Copiar lista al portapapeles"><i class="bi bi-clipboard"></i> Copiar lista</button>
+                <button type="button" class="btn btn-outline-primary" id="btnListaMercadoImprimir"
+                    title="Imprimir lista"><i class="bi bi-printer"></i> Imprimir</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+            </div>
+        </div>
+    </div>
+</div>

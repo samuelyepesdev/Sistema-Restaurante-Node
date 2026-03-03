@@ -1,0 +1,118 @@
+<!-- Modal Nuevo Cliente -->
+<div class="modal fade" id="nuevoClienteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="bi bi-person-plus-fill me-2"></i>
+                    Nuevo Cliente
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="formNuevoCliente">
+                    <div class="mb-3">
+                        <label class="form-label">Nombre</label>
+                        <input type="text" class="form-control" id="nombreCliente" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Dirección</label>
+                        <input type="text" class="form-control" id="direccionNuevoCliente">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Teléfono</label>
+                        <input type="text" class="form-control" id="telefonoNuevoCliente">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" id="guardarCliente">
+                    <i class="bi bi-save me-1"></i>
+                    Guardar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Pedidos Guardados -->
+<div class="modal fade" id="pedidosModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Pedidos Guardados</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Cliente</th>
+                                <th>Productos</th>
+                                <th>Total</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="pedidosGuardados">
+                            <!-- Los pedidos se cargarán aquí dinámicamente -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Aplicar descuento (por línea de producto) -->
+<div class="modal fade" id="descuentoModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-percent me-2"></i>Aplicar descuento</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body">
+                <p class="text-muted small mb-2" id="descuentoModalProducto">Producto</p>
+                <p class="small text-info mb-3"><i class="bi bi-info-circle me-1"></i>El descuento es solo para esta
+                    venta. En la siguiente venta el producto tendrá su precio normal.</p>
+                <p class="mb-3">Seleccione el porcentaje de descuento para esta línea:</p>
+                <div class="d-flex flex-wrap gap-2 justify-content-center">
+                    <button type="button" class="btn btn-outline-primary btn-descuento" data-pct="5">5%</button>
+                    <button type="button" class="btn btn-outline-primary btn-descuento" data-pct="10">10%</button>
+                    <button type="button" class="btn btn-outline-primary btn-descuento" data-pct="15">15%</button>
+                    <button type="button" class="btn btn-outline-primary btn-descuento" data-pct="20">20%</button>
+                    <button type="button" class="btn btn-outline-primary btn-descuento" data-pct="30">30%</button>
+                </div>
+                <div class="mt-3 text-center">
+                    <button type="button" class="btn btn-sm btn-outline-secondary" id="quitarDescuentoBtn">Quitar
+                        descuento</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para mostrar factura: en móvil fullscreen y altura controlada para poder cerrar -->
+<div class="modal fade" id="facturaModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-fullscreen-md-down">
+        <div class="modal-content d-flex flex-column h-100">
+            <div class="modal-header py-2 flex-shrink-0">
+                <h5 class="modal-title">Factura</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body p-0 flex-grow-1 overflow-auto" style="min-height: 0;">
+                <iframe id="facturaFrame" class="factura-iframe-mobile"
+                    style="width: 100%; height: 80vh; border: none;"></iframe>
+            </div>
+            <div class="modal-footer flex-shrink-0 py-2">
+                <button type="button" class="btn btn-primary btn-sm"
+                    onclick="document.getElementById('facturaFrame').contentWindow.print()">
+                    <i class="bi bi-printer"></i> Imprimir
+                </button>
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cerrar</button>
+            </div>
+        </div>
+    </div>
+</div>

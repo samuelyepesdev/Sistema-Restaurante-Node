@@ -1,0 +1,102 @@
+<!-- Vista tabla (desktop) -->
+<div class="card d-none d-md-block">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0" id="tablaRecetas">
+                <thead class="table-light">
+                    <tr>
+                        <th>Producto</th>
+                        <th>Nombre receta</th>
+                        <th>Porciones</th>
+                        <th>Ingredientes</th>
+                        <% if (user && user.permisos && user.permisos.includes('recetas.editar')) { %>
+                            <th class="text-center">Acciones</th>
+                            <% } %>
+                    </tr>
+                </thead>
+                <tbody id="tbodyRecetas">
+                    <% (recetas || []).forEach(function(r) { %>
+                        <tr class="fila-receta">
+                            <td data-field="producto">
+                                <%= r.producto_nombre || '-' %> <small class="text-muted">(<%= r.producto_codigo || ''
+                                            %>)</small>
+                            </td>
+                            <td data-field="nombre">
+                                <%= r.nombre_receta %>
+                            </td>
+                            <td><span class="badge bg-light text-dark">
+                                    <%= r.porciones %> porciones
+                                </span></td>
+                            <td><small>
+                                    <%= (r.ingredientes && r.ingredientes.length) ? r.ingredientes.map(i=>
+                                        i.insumo_nombre + ' ' + i.cantidad + (i.unidad || 'g')).join(', ') : '-' %>
+                                </small></td>
+                            <% if (user && user.permisos && user.permisos.includes('recetas.editar')) { %>
+                                <td class="text-center align-middle">
+                                    <div class="d-flex flex-nowrap justify-content-center gap-1">
+                                        <button type="button" class="btn btn-sm btn-outline-primary"
+                                            onclick="editarReceta(<%= r.id %>)">Editar</button>
+                                        <button type="button" class="btn btn-sm btn-outline-danger btn-eliminar-receta"
+                                            data-id="<%= r.id %>"
+                                            data-nombre="<%= typeof r.nombre_receta === 'string' ? r.nombre_receta.replace(/'/g, '\\\'') : '' %>">Eliminar</button>
+                                    </div>
+                                </td>
+                                <% } %>
+                        </tr>
+                        <% }); %>
+                            <% if (!recetas || recetas.length===0) { %>
+                                <tr>
+                                    <td colspan="5" class="text-center text-muted py-4">No hay recetas. Crea una
+                                        vinculada a un producto.</td>
+                                </tr>
+                                <% } %>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Vista tarjetas (móvil) -->
+<div class="d-block d-md-none mt-3" id="listaRecetasMobile">
+    <% (recetas || []).forEach(function(r) { %>
+        <div class="receta-card receta-card-item" data-producto="<%= (r.producto_nombre || '').toLowerCase() %>"
+            data-nombre="<%= (r.nombre_receta || '').toLowerCase() %>">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <div class="titulo">
+                        <%= r.nombre_receta %>
+                    </div>
+                    <div class="producto text-muted"><i class="bi bi-box me-1"></i>
+                        <%= r.producto_nombre || '-' %> <small>(<%= r.producto_codigo || '' %>)</small>
+                    </div>
+                </div>
+                <span class="badge bg-light text-dark"><i class="bi bi-diagram-3 me-1"></i>
+                    <%= r.porciones %> porciones
+                </span>
+            </div>
+            <div class="ingredientes mt-2">
+                <span class="text-muted small d-block mb-1">Ingredientes:</span>
+                <span>
+                    <%= (r.ingredientes && r.ingredientes.length) ? r.ingredientes.map(i=> i.insumo_nombre + ' ' +
+                        i.cantidad + (i.unidad || 'g')).join(', ') : '-' %>
+                </span>
+            </div>
+            <% if (user && user.permisos && user.permisos.includes('recetas.editar')) { %>
+                <div class="mt-2 d-flex gap-2">
+                    <button type="button" class="btn btn-sm btn-outline-primary flex-fill"
+                        onclick="editarReceta(<%= r.id %>)">
+                        <i class="bi bi-pencil"></i> Editar
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-danger flex-fill btn-eliminar-receta"
+                        data-id="<%= r.id %>"
+                        data-nombre="<%= typeof r.nombre_receta === 'string' ? r.nombre_receta.replace(/'/g, '\\\'') : '' %>">
+                        <i class="bi bi-trash"></i> Eliminar
+                    </button>
+                </div>
+                <% } %>
+        </div>
+        <% }); %>
+            <% if (!recetas || recetas.length===0) { %>
+                <div class="text-center text-muted py-4">No hay recetas. Crea una vinculada a un producto.</div>
+                <% } %>
+</div>
