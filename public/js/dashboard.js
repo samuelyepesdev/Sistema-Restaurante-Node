@@ -606,5 +606,46 @@ $(document).ready(function () {
     $('#aplicarFiltros').on('click', applyFilters);
     $('#limpiarFiltros').on('click', clearFilters);
     initStatsCardClicks();
+
+    $('#btnTestReporteMensual').on('click', async function () {
+        const btn = $(this);
+        const originalText = btn.html();
+        btn.html('<i class="spinner-border spinner-border-sm me-2"></i>Generando...').prop('disabled', true);
+
+        try {
+            const resp = await fetch('/api/dashboard/test-reporte-mensual', { method: 'POST' });
+            const data = await resp.json();
+            if (!resp.ok) throw new Error(data.error || 'Error al generar.');
+
+            let htmlMsg = `Reporte generado corectamente y enviado al correo registrado.<br>`;
+            if (data.result && data.result.previewUrl) {
+                htmlMsg += `<a href="${data.result.previewUrl}" target="_blank" class="text-primary text-decoration-underline mt-2 d-inline-block">Ver preview del PDF aquí (Ethereal)</a>`;
+            }
+
+            if (typeof window.showToast === 'function') {
+                window.showToast('Reporte generado correctamente. Revisa la cónsola o el correo.', 'success');
+            } else {
+                alert('Reporte generado correctamente. Revisa la consola o correo.');
+            }
+
+            // If we have access to Sweetalert (used in the project usually)
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Reporte Enviado',
+                    html: htmlMsg
+                });
+            }
+        } catch (e) {
+            console.error(e);
+            if (typeof Swal !== 'undefined') {
+                Swal.fire('Error', e.message, 'error');
+            } else {
+                alert(e.message);
+            }
+        } finally {
+            btn.html(originalText).prop('disabled', false);
+        }
+    });
 });
 

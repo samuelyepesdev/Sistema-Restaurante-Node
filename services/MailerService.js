@@ -1,0 +1,50 @@
+const nodemailer = require('nodemailer');
+
+class MailerService {
+    static async getTransporter() {
+        if (process.env.SMTP_HOST) {
+            return nodemailer.createTransport({
+                host: process.env.SMTP_HOST,
+                port: process.env.SMTP_PORT || 587,
+                secure: process.env.SMTP_SECURE === 'true',
+                auth: {
+                    user: process.env.SMTP_USER,
+                    pass: process.env.SMTP_PASS,
+                },
+            });
+        }
+
+        // Ethereal test account if no real config
+        const testAccount = await nodemailer.createTestAccount();
+        return nodemailer.createTransport({
+            host: "smtp.ethereal.email",
+            port: 587,
+            secure: false, // true for 465, false for other ports
+            auth: {
+                user: testAccount.user, // generated ethereal user
+                pass: testAccount.pass, // generated ethereal password
+            },
+        });
+    }
+
+    static async sendMail({ to, subject, html, attachments }) {
+        const transporter = await this.getTransporter();
+        const info = await transporter.sendMail({
+            from: process.env.SMTP_FROM || '"Sistema Restaurante/Fruver" <no-reply@sistema-restaurante.com>',
+            to,
+            subject,
+            html,
+            attachments
+        });
+
+        if (info.messageId && !process.env.SMTP_HOST) {
+            console.log("-----------------------------------------");
+            console.log("¡CORREO ENVIADO EN MODO PRUEBA (ETHEREAL)!");
+            console.log("URL de vista previa del correo: %s", nodemailer.getTestMessageUrl(info));
+            console.log("-----------------------------------------");
+            return { ok: true, previewUrl: nodemailer.getTestMessageUrl(info) };
+        }
+        return { ok: true };
+    }
+}
+module.exports = MailerService;

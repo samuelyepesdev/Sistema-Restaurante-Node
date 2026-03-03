@@ -75,5 +75,24 @@ router.get('/eventos-calendario', requireRole('admin'), async (req, res) => {
     }
 });
 
+router.post('/test-reporte-mensual', requireRole('admin'), async (req, res) => {
+    try {
+        const tenantId = req.tenant?.id;
+        if (!tenantId) {
+            return res.status(403).json({ error: 'Contexto de tenant no disponible' });
+        }
+        const ReporteMensualService = require('../../services/ReporteMensualService');
+        // Usar testEmail si viene en el body, sino el del usuario actual, sino null
+        const testEmail = req.body.email || req.user.email || null;
+
+        const result = await ReporteMensualService.generarYEnviar(req.tenant, { testMesActual: true, testEmail });
+
+        res.json({ success: true, message: 'Reporte generado y enviado con éxito', result });
+    } catch (error) {
+        console.error('Error al generar reporte mensual de prueba:', error);
+        res.status(500).json({ error: 'Error al generar reporte mensual: ' + error.message });
+    }
+});
+
 module.exports = router;
 
