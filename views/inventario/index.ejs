@@ -109,7 +109,8 @@
                         unidad_base: document.getElementById('nuevoUnidadBase').value,
                         cantidad_compra: parseFloat(document.getElementById('nuevoCantidadCompra').value) || 1,
                         precio_compra: parseFloat(document.getElementById('nuevoPrecioCompra').value) || 0,
-                        stock_minimo: parseFloat(document.getElementById('nuevoStockMinimo').value) || 0
+                        stock_minimo: parseFloat(document.getElementById('nuevoStockMinimo').value) || 0,
+                        stock_inicial: parseFloat(document.getElementById('nuevoStockInicial').value) || 0
                     };
                     let valid = true;
                     [fCodigo, fNombre].forEach(f => {

@@ -101,6 +101,21 @@ router.post('/api/insumos', requirePermission('inventario.editar'), async (req, 
     try {
         const tenantId = getTenantId(req);
         const id = await InsumoService.create(tenantId, req.body);
+
+        if (req.body.stock_inicial && parseFloat(req.body.stock_inicial) > 0) {
+            const stock_inicial = parseFloat(req.body.stock_inicial);
+            const cantidad_compra = parseFloat(req.body.cantidad_compra) || 1;
+            const precio_compra = parseFloat(req.body.precio_compra) || 0;
+            const costo_unitario = (precio_compra / cantidad_compra) || 0;
+
+            await InventarioService.registrarEntrada(tenantId, {
+                insumo_id: id,
+                cantidad: stock_inicial,
+                costo_unitario: costo_unitario,
+                referencia: 'Stock inicial'
+            });
+        }
+
         res.status(201).json({ id });
     } catch (e) {
         res.status(400).json({ error: e.message || 'Error al crear' });

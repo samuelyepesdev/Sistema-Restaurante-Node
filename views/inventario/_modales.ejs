@@ -22,13 +22,17 @@
                         </select></div>
                 </div>
                 <div class="row mt-2">
-                    <div class="col-6"><label class="form-label">Cant. compra</label><input type="number" step="0.01"
+                    <div class="col-6"><label class="form-label" title="Tamaño en el que viene el producto">Presentación (Cant)</label><input type="number" step="0.01"
                             class="form-control" id="nuevoCantidadCompra" value="1"></div>
                     <div class="col-6"><label class="form-label">Precio compra</label><input type="number" step="0.01"
                             class="form-control" id="nuevoPrecioCompra" value="0"></div>
                 </div>
-                <div class="mt-2"><label class="form-label">Stock mínimo</label><input type="number" step="0.0001"
-                        class="form-control" id="nuevoStockMinimo" value="0"></div>
+                <div class="row mt-2">
+                    <div class="col-6"><label class="form-label">Stock mínimo</label><input type="number" step="0.0001"
+                            class="form-control" id="nuevoStockMinimo" value="0"></div>
+                    <div class="col-6"><label class="form-label">Stock inicial</label><input type="number" step="0.0001"
+                            class="form-control" id="nuevoStockInicial" value="0" title="Cantidad disponible actualmente"></div>
+                </div>
             </div>
             <div class="modal-footer"><button type="button" class="btn btn-secondary"
                     data-bs-dismiss="modal">Cerrar</button><button type="button" class="btn btn-primary"
