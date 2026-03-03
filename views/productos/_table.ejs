@@ -1,0 +1,50 @@
+<div class="table-responsive">
+    <table class="table table-hover">
+        <thead class="table-light">
+            <tr>
+                <th>Código</th>
+                <th>Nombre</th>
+                <th>Categoría</th>
+                <th class="text-end">Precio Unitario</th>
+                <th class="text-center">Acciones</th>
+            </tr>
+        </thead>
+        <tbody id="productosTabla">
+            <% const recetasMap=typeof recetasPorProducto !=='undefined' ? recetasPorProducto : {};
+                productos.forEach(function(producto) { const tieneReceta=recetasMap[producto.id]; %>
+                <tr data-categoria-id="<%= producto.categoria_id || '' %>" data-producto-id="<%= producto.id %>">
+                    <td>
+                        <%= producto.codigo %>
+                    </td>
+                    <td>
+                        <%= producto.nombre %>
+                    </td>
+                    <td><span class="badge bg-secondary">
+                            <%= producto.categoria_nombre || 'Sin categoría' %>
+                        </span></td>
+                    <td class="text-end">$<%= (Number(producto.precio_unidad) || 0).toLocaleString('es-CO', {
+                            minimumFractionDigits: 2, maximumFractionDigits: 2 }) %>
+                    </td>
+                    <td class="text-center">
+                        <div class="action-buttons">
+                            <% if (user && user.permisos && user.permisos.includes('costeo.ver') && tieneReceta) { %>
+                                <button class="btn btn-sm btn-outline-info me-1" data-id="<%= producto.id %>"
+                                    data-action="costeo" title="Ver costeo y precio sugerido">
+                                    <i class="bi bi-calculator"></i>
+                                </button>
+                                <% } %>
+                                    <button class="btn btn-sm btn-outline-primary me-1" data-id="<%= producto.id %>"
+                                        data-action="editar">
+                                        <i class="bi bi-pencil"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-danger" data-id="<%= producto.id %>"
+                                        data-action="eliminar">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                        </div>
+                    </td>
+                </tr>
+                <% }); %>
+        </tbody>
+    </table>
+</div>

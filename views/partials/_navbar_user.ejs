@@ -1,0 +1,97 @@
+<ul class="navbar-nav align-items-lg-center gap-1">
+
+    <% if (!nav.isSuperadmin && typeof tenant !=='undefined' && tenant && (tenant.plan || tenant.plan_nombre) && typeof
+        plans !=='undefined' && plans && plans.length) { %>
+        <li class="nav-item dropdown">
+            <span class="n-plan" data-bs-toggle="dropdown" role="button">
+                <i class="bi bi-layers"></i>
+                <%= tenant.plan ? tenant.plan.nombre : (tenant.plan_nombre || 'Plan' ) %>
+            </span>
+            <ul class="dropdown-menu dropdown-menu-end p-3" style="min-width:280px;">
+                <li class="dropdown-header mb-1">Plan: <strong>
+                        <%= tenant.plan ? tenant.plan.nombre : (tenant.plan_nombre || '' ) %>
+                    </strong></li>
+                <li>
+                    <hr class="dropdown-divider">
+                </li>
+                <% for (var _pi=0; _pi < plans.length; _pi++) { var _pl=plans[_pi]; %>
+                    <li class="mb-2">
+                        <div class="card border-0 shadow-sm">
+                            <div class="card-body py-2 px-3">
+                                <strong>
+                                    <%= _pl.nombre %>
+                                </strong>
+                                <% if ((tenant.plan && tenant.plan.id===_pl.id) || (tenant.plan_id==_pl.id)) { %><span
+                                        class="badge bg-success ms-1">Actual</span>
+                                    <% } %>
+                                        <ul class="list-unstyled small mb-0 mt-1 text-muted">
+                                            <% for (var _ci=0; _ci < Math.min((_pl.caracteristicas || []).length, 4);
+                                                _ci++) { %>
+                                                <li><i class="bi bi-check text-success"></i>
+                                                    <%= _pl.caracteristicas[_ci] %>
+                                                </li>
+                                                <% } %>
+                                        </ul>
+                            </div>
+                        </div>
+                    </li>
+                    <% } %>
+            </ul>
+        </li>
+        <% } %>
+
+            <% if (user) { %>
+                <li class="nav-item dropdown">
+                    <button class="n-user" data-bs-toggle="dropdown">
+                        <% const tconfig=(typeof tenant !=='undefined' && tenant && tenant.config) ? (typeof
+                            tenant.config==='string' ? JSON.parse(tenant.config) : tenant.config) : {}; %>
+                            <% if (tconfig.logo) { %>
+                                <div class="n-av bg-transparent">
+                                    <img src="<%= tconfig.logo %>" alt="Logo"
+                                        class="rounded-circle object-fit-cover w-100 h-100">
+                                </div>
+                                <% } else { %>
+                                    <div class="n-av">
+                                        <%= nav.userInitial %>
+                                    </div>
+                                    <% } %>
+                                        <span class="d-none d-md-inline">
+                                            <%= nav.userFirstName %>
+                                        </span>
+                                        <div class="n-dot"></div>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li>
+                            <div class="px-3 py-2">
+                                <div style="font-size:.82rem;color:#1e293b;font-weight:700;">
+                                    <%= user.nombre_completo || user.username %>
+                                </div>
+                                <div style="font-size:.72rem;color:#94a3b8;">
+                                    <%= user.email || '' %>
+                                </div>
+                                <span class="badge mt-1" style="background:#e2e8f0;color:#475569;font-size:.65rem;">
+                                    <%= user.rol %>
+                                </span>
+                            </div>
+                        </li>
+                        <li>
+                            <hr class="dropdown-divider">
+                        </li>
+                        <% if (nav.can && nav.can.perfil) { %>
+                            <li><a class="dropdown-item" href="/perfil"><i class="bi bi-shop text-muted"></i>Perfil del
+                                    Negocio</a>
+                            </li>
+                            <% } %>
+                                <li><a class="dropdown-item" href="/auth/cambiar-password"><i
+                                            class="bi bi-key text-muted"></i>Cambiar contraseña</a>
+                                </li>
+                                <li><a class="dropdown-item text-danger" href="/auth/logout"><i
+                                            class="bi bi-box-arrow-right"></i>Cerrar sesión</a></li>
+                    </ul>
+                </li>
+                <% } else { %>
+                    <li class="nav-item"><a class="nav-link" href="/auth/login"><i
+                                class="bi bi-box-arrow-in-right"></i>Iniciar sesión</a></li>
+                    <% } %>
+
+</ul>

@@ -1,0 +1,68 @@
+<!-- Modal Cliente -->
+<div class="modal fade" id="clienteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="bi bi-person-fill me-2"></i>
+                    <span id="modalTitle">Nuevo Cliente</span>
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="formCliente">
+                    <input type="hidden" id="clienteId">
+                    <div class="row">
+                        <div class="col-4 mb-3">
+                            <label class="form-label">Tipo Doc.</label>
+                            <select class="form-select" id="tipo_documento" name="tipo_documento">
+                                <% if (typeof tiposDocumento !=='undefined' && tiposDocumento.length> 0) { %>
+                                    <% tiposDocumento.forEach(function(tipo) { %>
+                                        <option value="<%= tipo.nombre %>">
+                                            <%= tipo.nombre %>
+                                        </option>
+                                        <% }); %>
+                                            <% } else { %>
+                                                <option value="CC" selected>CC</option>
+                                                <option value="NIT">NIT</option>
+                                                <% } %>
+                            </select>
+                        </div>
+                        <div class="col-8 mb-3">
+                            <label class="form-label">Núm. de Documento (NIT/CC)</label>
+                            <input type="text" class="form-control" id="numero_documento" name="numero_documento"
+                                placeholder="000.000.000-0">
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Email</label>
+                        <input type="email" class="form-control" id="email" name="email"
+                            placeholder="cliente@ejemplo.com">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Nombre / Razón Social</label>
+                        <input type="text" class="form-control" id="nombre" name="nombre" required>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Teléfono</label>
+                            <input type="text" class="form-control" id="telefono" name="telefono" inputmode="numeric"
+                                pattern="[0-9]*" maxlength="15" placeholder="Solo números">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Dirección</label>
+                            <input type="text" class="form-control" id="direccion" name="direccion">
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" id="guardarCliente">
+                    <i class="bi bi-save me-1"></i>
+                    Guardar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>

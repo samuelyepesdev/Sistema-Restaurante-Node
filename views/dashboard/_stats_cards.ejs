@@ -1,0 +1,171 @@
+<!-- Ventas de hoy (estadísticas del día) -->
+<div class="row mb-2">
+    <div class="col-12">
+        <h5 class="text-muted mb-2 small text-uppercase fw-bold">Ventas de hoy</h5>
+    </div>
+    <div class="col-md-6">
+        <div class="card stat-card c-primary text-white clickable" id="cardVentasHoy" data-action="go-ventas"
+            title="Ir a Ventas">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <div class="stat-label">Ventas hoy ($)</div>
+                        <div class="stat-value" id="ventasHoyTotal">$0</div>
+                        <small class="opacity-75" style="font-size: 0.75rem;">Lo llevado en el día</small>
+                    </div>
+                    <i class="bi bi-currency-dollar stat-icon"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card stat-card c-teal text-white clickable" id="cardFacturasHoy" data-action="go-ventas"
+            title="Ir a Ventas">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <div class="stat-label">Facturas hoy</div>
+                        <div class="stat-value" id="ventasHoyCantidad">0</div>
+                        <small class="opacity-75" style="font-size: 0.75rem;">Cantidad en el día</small>
+                    </div>
+                    <i class="bi bi-receipt stat-icon"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Ventas del mes -->
+<div class="row mb-2">
+    <div class="col-12">
+        <h5 class="text-muted mb-2 small text-uppercase fw-bold">Ventas del mes</h5>
+    </div>
+    <div class="col-md-6">
+        <div class="card stat-card c-primary text-white clickable" id="cardVentasMes" data-action="go-ventas"
+            title="Ir a Ventas">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <div class="stat-label">Ventas mes ($)</div>
+                        <div class="stat-value" id="ventasMesTotal">$0</div>
+                        <small class="opacity-75" style="font-size: 0.75rem;">Lo llevado en el mes</small>
+                    </div>
+                    <i class="bi bi-currency-dollar stat-icon"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card stat-card c-teal text-white clickable" id="cardFacturasMes" data-action="go-ventas"
+            title="Ir a Ventas">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <div class="stat-label">Facturas mes</div>
+                        <div class="stat-value" id="ventasMesCantidad">0</div>
+                        <small class="opacity-75" style="font-size: 0.75rem;">Cantidad en el mes</small>
+                    </div>
+                    <i class="bi bi-receipt stat-icon"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Ventas generales (según filtros) -->
+<div class="row" id="statsCards">
+    <div class="col-12 mb-2">
+        <h5 class="text-muted mb-2 small text-uppercase fw-bold">Ventas generales</h5>
+    </div>
+    <div class="col-md-3">
+        <div class="card stat-card c-blue text-white clickable" id="cardTotalVentas" data-action="go-ventas"
+            title="Ir a Ventas">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <div class="stat-label">Total Ventas</div>
+                        <div class="stat-value" id="totalSales">$0.00</div>
+                    </div>
+                    <i class="bi bi-currency-dollar stat-icon"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stat-card c-slate text-white clickable" id="cardTotalFacturas" data-action="go-ventas"
+            title="Ir a Ventas">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <div class="stat-label">Total Facturas</div>
+                        <div class="stat-value" id="totalInvoices">0</div>
+                    </div>
+                    <i class="bi bi-receipt stat-icon"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stat-card c-indigo text-white clickable" id="cardPromedio" data-action="modal-promedio"
+            title="Ver detalle del promedio">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <div class="stat-label">Promedio por Factura</div>
+                        <div class="stat-value" id="avgInvoice">$0.00</div>
+                    </div>
+                    <i class="bi bi-bar-chart stat-icon"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Eventos del mes e insumos bajo stock -->
+<div class="row mb-3">
+    <div class="col-md-4">
+        <div class="card stat-card c-indigo text-white clickable" id="cardEventos" data-action="go-eventos"
+            title="Ir a Eventos">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <div class="stat-label">Eventos del mes</div>
+                        <div class="stat-value" id="eventosCount">0</div>
+                        <small class="opacity-75" style="font-size: 0.7rem;">Del mes actual</small>
+                    </div>
+                    <i class="bi bi-calendar-event stat-icon"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card stat-card c-slate text-white clickable" id="cardVentasEventos"
+            data-action="modal-ventas-eventos" title="Ver detalle de ventas en eventos">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <div class="stat-label">Ventas en eventos</div>
+                        <div class="stat-value" id="ventasEventosTotal">$0.00</div>
+                    </div>
+                    <i class="bi bi-currency-dollar stat-icon"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4" id="wrapCardInsumosBajoStock"
+        style="<%= (typeof allowedByPlan !== 'undefined' && allowedByPlan.inventario) ? '' : 'display:none;' %>">
+        <div class="card stat-card c-danger text-white clickable" id="cardInsumosBajoStock" data-action="go-inventario"
+            title="Ver inventario">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <div class="stat-label">Insumos bajo stock</div>
+                        <div class="stat-value" id="insumosBajoStock">0</div>
+                        <small class="opacity-75" style="font-size: 0.7rem;">Ir a inventario</small>
+                    </div>
+                    <i class="bi bi-exclamation-triangle stat-icon"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

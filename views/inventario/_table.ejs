@@ -1,0 +1,121 @@
+<!-- Vista tabla (desktop y tablets) -->
+<div class="table-responsive d-none d-md-block">
+    <table class="table mb-0" id="tablaInsumos">
+        <thead>
+            <tr>
+                <th class="ps-4">Código</th>
+                <th>Nombre</th>
+                <th>Unidad</th>
+                <th class="text-end">Stock actual</th>
+                <th class="text-end">Stock mín.</th>
+                <th class="text-end">Costo prom.</th>
+                <% if (user && user.permisos && user.permisos.includes('inventario.editar')) { %>
+                    <th class="text-center pe-4">Acciones</th>
+                    <% } %>
+            </tr>
+        </thead>
+        <tbody id="tbodyInsumos">
+            <% (insumos || []).forEach(function(i) { %>
+                <% const bajoStock=(Number(i.stock_actual) <=Number(i.stock_minimo)); %>
+                    <tr class="fila-insumo <%= bajoStock ? 'stock-bajo' : '' %>">
+                        <td class="ps-4" data-field="codigo"><code><%= i.codigo %></code></td>
+                        <td data-field="nombre">
+                            <div class="d-flex align-items-center gap-2">
+                                <%= i.nombre %>
+                                    <% if (bajoStock) { %>
+                                        <span class="badge-bajo-stock">BAJO STOCK</span>
+                                        <% } %>
+                            </div>
+                        </td>
+                        <td><span class="badge bg-light text-secondary border-0">
+                                <%= i.unidad_base || 'g' %>
+                            </span></td>
+                        <td class="text-end fw-bold">
+                            <%= Number(i.stock_actual).toLocaleString('es-CO', { minimumFractionDigits: 0,
+                                maximumFractionDigits: 2 }) %>
+                        </td>
+                        <td class="text-end text-muted">
+                            <%= Number(i.stock_minimo).toLocaleString('es-CO', { minimumFractionDigits: 0 }) %>
+                        </td>
+                        <td class="text-end">
+                            <%= i.costo_promedio !=null ? '$' + Number(i.costo_promedio).toLocaleString('es-CO', {
+                                minimumFractionDigits: 0, maximumFractionDigits: 0 }) : '-' %>
+                        </td>
+                        <% if (user && user.permisos && user.permisos.includes('inventario.editar')) { %>
+                            <td class="text-center pe-4">
+                                <div class="btn-action-group">
+                                    <button type="button" class="btn-icon btn-icon-e"
+                                        onclick="abrirEntrada(<%= i.id %>, '<%= i.nombre.replace(/'/g, " \\'") %>')"
+                                        title="Entrada"><i class="bi bi-arrow-down-left"></i></button>
+                                    <button type="button" class="btn-icon btn-icon-s"
+                                        onclick="abrirSalida(<%= i.id %>, '<%= i.nombre.replace(/'/g, " \\'") %>', <%=
+                                            i.stock_actual %>)" title="Salida"><i
+                                                class="bi bi-arrow-up-right"></i></button>
+                                    <button type="button" class="btn-icon btn-icon-a"
+                                        onclick="abrirAjuste(<%= i.id %>, '<%= i.nombre.replace(/'/g, " \\'") %>')"
+                                        title="Ajuste"><i class="bi bi-sliders"></i></button>
+                                </div>
+                            </td>
+                            <% } %>
+                    </tr>
+                    <% }); %>
+                        <% if (!insumos || insumos.length===0) { %>
+                            <tr>
+                                <td colspan="7" class="text-center text-muted py-4">No hay insumos.
+                                    Crea
+                                    uno desde Costeo o desde aquí (Nuevo insumo).</td>
+                            </tr>
+                            <% } %>
+        </tbody>
+    </table>
+</div>
+
+<!-- Vista tarjetas (móvil) -->
+<div class="d-block d-md-none" id="listaInsumosMobile">
+    <% (insumos || []).forEach(function(i) { %>
+        <div class="inventario-card insumo-card <%= (Number(i.stock_actual) <= Number(i.stock_minimo)) ? 'stock-bajo' : '' %>"
+            data-codigo="<%= i.codigo %>" data-nombre="<%= i.nombre %>">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <div class="titulo">
+                        <%= i.nombre %>
+                    </div>
+                    <div class="codigo text-muted">Cod: <code><%= i.codigo %></code></div>
+                </div>
+                <div class="text-end">
+                    <div class="small text-muted">Stock</div>
+                    <div class="fw-semibold">
+                        <%= Number(i.stock_actual).toLocaleString('es-CO', { minimumFractionDigits: 2,
+                            maximumFractionDigits: 4 }) %> <span class="text-muted">
+                                <%= i.unidad_base || 'g' %>
+                            </span>
+                    </div>
+                </div>
+            </div>
+            <div class="d-flex justify-content-between align-items-center mt-2">
+                <div class="d-flex flex-wrap gap-1">
+                    <span class="badge bg-light text-dark border">Mín: <%=
+                            Number(i.stock_minimo).toLocaleString('es-CO', { minimumFractionDigits: 2 }) %></span>
+                    <span class="badge bg-light text-dark border">Costo prom: <%= i.costo_promedio !=null ? '$' +
+                            Number(i.costo_promedio).toLocaleString('es-CO', { minimumFractionDigits: 2 }) : '-' %>
+                            </span>
+                </div>
+                <% if (user && user.permisos && user.permisos.includes('inventario.editar')) { %>
+                    <div class="btn-group btn-group-sm ms-2" role="group">
+                        <button type="button" class="btn btn-outline-success"
+                            onclick="abrirEntrada(<%= i.id %>, '<%= i.nombre.replace(/'/g, " \\'") %>')">E</button>
+                        <button type="button" class="btn btn-outline-danger"
+                            onclick="abrirSalida(<%= i.id %>, '<%= i.nombre.replace(/'/g, " \\'") %>', <%=
+                                i.stock_actual %>)">S</button>
+                        <button type="button" class="btn btn-outline-secondary"
+                            onclick="abrirAjuste(<%= i.id %>, '<%= i.nombre.replace(/'/g, " \\'") %>')">A</button>
+                    </div>
+                    <% } %>
+            </div>
+        </div>
+        <% }); %>
+            <% if (!insumos || insumos.length===0) { %>
+                <div class="text-center text-muted py-4">No hay insumos. Crea uno desde el botón
+                    «Nuevo insumo».</div>
+                <% } %>
+</div>

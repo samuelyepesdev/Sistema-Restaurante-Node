@@ -1,0 +1,152 @@
+                    <% if (typeof costeoPlantillaReposteria === 'undefined' || !costeoPlantillaReposteria) { %>
+                    <!-- Tab Configuración (solo restaurante/comidas rápidas; pastelería/panadería usa la calculadora por receta) -->
+                    <div class="tab-pane fade" id="config" role="tabpanel">
+                        <div class="card bg-light border-0 mb-4">
+                            <div class="card-header py-2">
+                                <button class="btn btn-link btn-sm text-decoration-none p-0 fw-bold" type="button" data-bs-toggle="collapse" data-bs-target="#comoFuncionaCosteo">
+                                    <i class="bi bi-question-circle me-1"></i> ¿Cómo funciona el costeo?
+                                </button>
+                            </div>
+                            <div class="collapse show" id="comoFuncionaCosteo">
+                                <div class="card-body small text-muted">
+                                    <p class="mb-2"><strong>1. Insumos</strong> — Precio de compra y presentación (tamaño en que comprás: ej. 450 ml, 1 kg). El costo unitario se calcula: precio ÷ presentación en base (g, ml, UND).</p>
+                                    <p class="mb-2"><strong>2. Recetas</strong> — Porciones e ingredientes (insumo + cantidad + unidad). Costo por ingrediente = costo unitario × cantidad usada (convertida a la misma base).</p>
+                                    <p class="mb-2"><strong>3. CVU (costo variable unitario)</strong> — Costo materia prima por porción + costos indirectos (merma % o costos fijos repartidos en las unidades estimadas al mes).</p>
+                                    <p class="mb-2"><strong>4. Precio sugerido (margen sobre venta)</strong> — Precio = CVU ÷ (1 − margen). Ej: CVU $10, margen 65% → precio = 10 ÷ 0,35 = $28,57. El margen es sobre el precio final, no sobre el costo.</p>
+                                    <p class="mb-2"><strong>5. Utilidad y márgenes</strong> — Utilidad bruta = Precio − CVU. Margen real % = (Utilidad ÷ Precio)×100. Markup % = (Utilidad ÷ CVU)×100.</p>
+                                    <p class="mb-2"><strong>6. Punto de equilibrio</strong> — En cada receta: porciones de ese plato para cubrir costos fijos. En Configuración (resumen del negocio): ventas totales en $ considerando todos los productos.</p>
+                                    <p class="mb-0"><strong>7. Alertas</strong> — Productos con margen real por debajo del mínimo o precio bajo costo aparecen en la pestaña Alertas.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <form id="formConfigCosteo">
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label class="form-label">Método de costos indirectos</label>
+                                    <select class="form-select" name="metodo_indirectos" id="configMetodo">
+                                        <option value="porcentaje">Porcentaje sobre costo materia prima (merma/variación)</option>
+                                        <option value="costo_fijo">Costos fijos repartidos en unidades vendidas</option>
+                                        <option value="factor">Factor de carga (multiplicador para precio)</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="row mb-3" id="rowPorcentaje">
+                                <div class="col-md-4">
+                                    <label class="form-label">Merma / variación (%)</label>
+                                    <input type="number" class="form-control" name="porcentaje_indirectos" id="configPorcentaje" step="0.01" min="0" placeholder="10">
+                                    <small class="text-muted">Sobre costo materia prima. Ej: 10</small>
+                                </div>
+                            </div>
+                            <div class="row mb-3 d-none" id="rowCostoFijo">
+                                <div class="col-12">
+                                    <label class="form-label fw-bold">Estructura de costos fijos</label>
+                                    <p class="small text-muted mb-2">Arriendo, personal, internet, etc. Solo se suman los activos. Costo fijo por porción = Total costos fijos ÷ Unidades estimadas al mes.</p>
+                                    <div class="table-responsive mb-2">
+                                        <table class="table table-sm table-hover" id="tablaCostosFijos">
+                                            <thead class="table-light"><tr><th>Nombre</th><th class="text-end">Monto mensual</th><th>Activo</th><th width="100"></th></tr></thead>
+                                            <tbody id="costosFijosBody"></tbody>
+                                        </table>
+                                    </div>
+                                    <p class="small mb-2"><strong>Total costos fijos activos:</strong> <span id="costosFijosTotal">0</span></p>
+                                    <% if (user && user.permisos && user.permisos.includes('costeo.editar')) { %>
+                                    <button type="button" class="btn btn-outline-primary btn-sm" id="btnNuevoCostoFijo"><i class="bi bi-plus-lg me-1"></i>Agregar costo fijo</button>
+                                    <% } %>
+                                </div>
+                                <div class="col-md-4 mt-3">
+                                    <label class="form-label">Unidades estimadas al mes (porciones/platos)</label>
+                                    <input type="number" class="form-control" name="platos_estimados_mes" id="configPlatosMes" min="1" placeholder="500" title="Total de porciones o platos que esperas vender al mes (mix de todos los productos)">
+                                    <small class="text-muted">Total de porciones o platos que estimas vender al mes. El costo fijo se reparte entre estas unidades.</small>
+                                </div>
+                            </div>
+                            <div class="row mb-3 d-none" id="rowFactor">
+                                <div class="col-md-4">
+                                    <label class="form-label">Factor de carga</label>
+                                    <input type="number" class="form-control" name="factor_carga" id="configFactor" step="0.01" min="1" placeholder="2.5">
+                                    <small class="text-muted">Precio sugerido = Costo directo × factor. Ej: 2.5</small>
+                                </div>
+                            </div>
+                            <div class="row mb-3">
+                                <div class="col-md-4">
+                                    <label class="form-label">Margen de ganancia esperado (%)</label>
+                                    <input type="number" class="form-control" name="margen_objetivo_default" id="configMargen" step="0.01" min="0" max="100" placeholder="65">
+                                    <small class="text-muted">Precio = Costo total ÷ (1 − Margen). Ej: 65</small>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">Margen mínimo para alerta (%)</label>
+                                    <input type="number" class="form-control" name="margen_minimo_alerta" id="configMargenMinimoAlerta" step="0.01" min="0" max="100" placeholder="30">
+                                    <small class="text-muted">Productos por debajo aparecen en Alertas</small>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">Ganancia neta deseada ($/mes)</label>
+                                    <input type="number" class="form-control" name="ganancia_neta_deseada_mensual" id="configGananciaDeseada" step="0.01" min="0" placeholder="0">
+                                    <small class="text-muted">Meta de utilidad mensual para calcular ventas necesarias</small>
+                                </div>
+                            </div>
+                            <% if (user && user.permisos && user.permisos.includes('costeo.editar')) { %>
+                            <button type="submit" form="formConfigCosteo" class="btn btn-primary"><i class="bi bi-save me-1"></i>Guardar configuración</button>
+                            <% } %>
+                        </form>
+
+                        <div class="card mt-4 border-primary">
+                            <div class="card-header bg-primary bg-opacity-10">
+                                <i class="bi bi-calculator me-2"></i>Punto de equilibrio del negocio
+                            </div>
+                            <div class="card-body">
+                                <p class="small text-muted mb-3">Considera todos los productos con receta. Ventas de equilibrio = costos fijos ÷ margen de contribución %. Con ganancia deseada: ventas necesarias para cubrir fijos y alcanzar esa utilidad.</p>
+                                <div id="resumenFinancieroLoading" class="text-center py-3 d-none">
+                                    <div class="spinner-border spinner-border-sm text-primary"></div>
+                                    <span class="ms-2 small">Cargando...</span>
+                                </div>
+                                <div id="resumenFinancieroContent" class="d-none">
+                                    <div class="row small mb-3">
+                                        <div class="col-md-3">Total costos fijos (mes): <strong id="resumenTotalFijos">-</strong></div>
+                                        <div class="col-md-3">Margen contrib. % (portafolio): <strong id="resumenMCPct">-</strong></div>
+                                        <div class="col-md-3">Ventas para equilibrio: <strong id="resumenVentasEquilibrio">-</strong></div>
+                                        <div class="col-md-3">Ventas para meta (con ganancia): <strong id="resumenVentasMeta">-</strong></div>
+                                    </div>
+                                    <p class="small text-muted mb-2" id="resumenNotaMix"></p>
+                                    <div class="table-responsive">
+                                        <table class="table table-sm">
+                                            <thead class="table-light"><tr><th>Producto</th><th class="text-end">Precio</th><th class="text-end">CVU</th><th class="text-end">MC porción</th><th class="text-end">MC %</th></tr></thead>
+                                            <tbody id="resumenProductosBody"></tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                                <div id="resumenFinancieroVacio" class="text-muted small py-2 d-none">No hay productos con receta para calcular el resumen.</div>
+                            </div>
+                        </div>
+
+                        <!-- Modal Costo fijo -->
+                        <div class="modal fade" id="modalCostoFijo" tabindex="-1">
+                            <div class="modal-dialog">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title" id="modalCostoFijoTitle">Nuevo costo fijo</h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <input type="hidden" id="costoFijoId">
+                                        <div class="mb-2">
+                                            <label class="form-label">Nombre</label>
+                                            <input type="text" class="form-control" id="costoFijoNombre" placeholder="Ej: Arriendo, Mesero, Internet" required>
+                                        </div>
+                                        <div class="mb-2">
+                                            <label class="form-label">Monto mensual ($)</label>
+                                            <input type="number" class="form-control" id="costoFijoMonto" step="0.01" min="0" value="0">
+                                        </div>
+                                        <div class="form-check">
+                                            <input type="checkbox" class="form-check-input" id="costoFijoActivo" checked>
+                                            <label class="form-check-label" for="costoFijoActivo">Activo (se incluye en el total)</label>
+                                        </div>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                                        <button type="button" class="btn btn-primary" id="btnGuardarCostoFijo">Guardar</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <% } %>
+                </div>

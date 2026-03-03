@@ -1,0 +1,58 @@
+                    <!-- Tab Recetas -->
+                    <div class="tab-pane fade" id="recetas" role="tabpanel">
+                        <div class="d-flex flex-wrap gap-2 align-items-center mb-3">
+                            <input type="text" class="form-control form-control-sm" id="filtroRecetaQ" placeholder="Buscar por nombre de producto o receta..." style="max-width: 280px;">
+                            <button type="button" class="btn btn-sm btn-outline-secondary" id="btnFiltrarRecetas">Filtrar</button>
+                            <% if (user && user.permisos && user.permisos.includes('costeo.editar')) { %>
+                            <% if (typeof costeoPlantillaReposteria !== 'undefined' && costeoPlantillaReposteria) { %>
+                            <button type="button" class="btn btn-primary btn-sm ms-auto" id="btnNuevaReceta"><i class="bi bi-plus-lg me-1"></i>Nueva Receta (Calculadora)</button>
+                            <% } else { %>
+                            <button type="button" class="btn btn-primary btn-sm ms-auto" data-bs-toggle="modal" data-bs-target="#recetaNuevaModal" id="btnNuevaReceta"><i class="bi bi-plus-lg me-1"></i>Nueva Receta</button>
+                            <% } %>
+                            <% } %>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-hover" id="tablaRecetas">
+                                <thead><tr><th>Producto</th><th>Receta</th><th>Porciones</th><th>Precio venta</th><th></th></tr></thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
+                        <div id="costeoRecetaPanel" class="costeo-resumen mt-3 d-none">
+                            <h6 class="mb-3"><i class="bi bi-graph-up me-1"></i>Resumen de costeo (por porción)</h6>
+
+                            <div class="mb-3">
+                                <span class="small fw-bold text-secondary d-block mb-2">1. Costeo técnico</span>
+                                <div class="row small mb-1">
+                                    <div class="col-md-4">Costo materia prima: <strong id="costeoDirecto">-</strong></div>
+                                    <div class="col-md-4">Merma / indirecto (<span id="costeoMermaPct">-</span>%): <strong id="costeoIndirecto">-</strong></div>
+                                    <div class="col-md-4">CVU (costo total porción): <strong id="costeoTotal">-</strong></div>
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <span class="small fw-bold text-secondary d-block mb-2">2. Precio y rentabilidad</span>
+                                <div class="row small mb-1">
+                                    <div class="col-md-3">Precio venta actual: <strong id="costeoPrecioActual">-</strong></div>
+                                    <div class="col-md-3">Utilidad bruta: <strong id="costeoUtilidadBruta">-</strong></div>
+                                    <div class="col-md-3">Margen real (sobre venta): <strong id="costeoMargen">-</strong></div>
+                                    <div class="col-md-3">Markup (sobre costo): <strong id="costeoMarkup">-</strong></div>
+                                </div>
+                                <div class="row small mb-1">
+                                    <div class="col-md-4">Margen objetivo: <strong id="costeoMargenObjetivo">-</strong></div>
+                                    <div class="col-md-4">Precio sugerido: <strong id="costeoPrecioSug">-</strong></div>
+                                    <div class="col-md-4"><span class="text-muted">Fórmula: Precio = CVU ÷ (1 − margen)</span></div>
+                                </div>
+                            </div>
+
+                            <div class="mb-2">
+                                <span class="small fw-bold text-secondary d-block mb-2">3. Análisis financiero</span>
+                                <div class="row small mb-1">
+                                    <div class="col-md-4">Total costos fijos (mes): <strong id="costeoTotalFijos">-</strong></div>
+                                    <div class="col-md-4">Margen contribución (porción): <strong id="costeoMargenContrib">-</strong></div>
+                                    <div class="col-md-4">Punto de equilibrio: <strong id="costeoPuntoEquilibrio">-</strong> porciones/mes</div>
+                                </div>
+                                <p class="mt-1 mb-0 small text-muted">PE = Costos fijos ÷ Margen contribución. Cuántas porciones vender para cubrir gastos fijos.</p>
+                            </div>
+                        </div>
+                    </div>
+

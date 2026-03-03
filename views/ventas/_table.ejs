@@ -1,0 +1,104 @@
+<% const formatoFechaLocal=new Intl.DateTimeFormat('es-CO', { timeZone: 'America/Bogota' , year: 'numeric' ,
+    month: '2-digit' , day: '2-digit' }); const hoyColombiaFormat=formatoFechaLocal.format(new Date()); const
+    ventasHoy=[]; const ventasAnteriores=[]; ventas.forEach(v=> {
+    try {
+    const f = v.fechaISO ? new Date(v.fechaISO) : new Date(v.fecha);
+    if (formatoFechaLocal.format(f) === hoyColombiaFormat) {
+    ventasHoy.push(v);
+    } else {
+    ventasAnteriores.push(v);
+    }
+    } catch (e) {
+    ventasAnteriores.push(v);
+    }
+    });
+
+    // Fragmento reutilizable de tabla
+    const renderTablaVentas = (listaVentas, isHoy) => {
+    %>
+    <div class="table-container mb-4">
+        <% if (isHoy) { %>
+            <h5 class="text-primary mb-3"><i class="bi bi-calendar-event me-2"></i>Ventas de
+                Hoy</h5>
+            <% } else { %>
+                <h5 class="text-secondary mb-3"><i class="bi bi-clock-history me-2"></i>Ventas del Periodo / Historial
+                </h5>
+                <% } %>
+                    <table class="table table-hover">
+                        <thead class="table-light sticky-top">
+                            <tr>
+                                <th>Factura #</th>
+                                <th>Fecha</th>
+                                <th>Cliente</th>
+                                <th>Forma de Pago</th>
+                                <th>Tipo</th>
+                                <th class="text-end">Total</th>
+                                <th class="text-center">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody class="ventasTablaBody">
+                            <% if (listaVentas.length===0) { %>
+                                <tr>
+                                    <td colspan="7" class="text-center text-muted py-4">No
+                                        hay ventas registradas en este bloque.</td>
+                                </tr>
+                                <% } else { %>
+                                    <% listaVentas.forEach(function(venta) { %>
+                                        <tr class="venta-row">
+                                            <td data-label="Factura #">
+                                                <%= typeof venta.numero !=='undefined' && venta.numero !=null ?
+                                                    venta.numero : venta.id %>
+                                            </td>
+                                            <td data-label="Fecha" class="fecha-cell"
+                                                data-fecha-iso="<%= venta.fechaISO || '' %>">
+                                                <span class="fecha-venta-local">
+                                                    <%= venta.fechaISO ? '' : (venta.fecha ? new
+                                                        Date(venta.fecha).toLocaleString('es-CO', {
+                                                        timeZone: 'America/Bogota' , dateStyle: 'short' ,
+                                                        timeStyle: 'medium' }) : '' ) %>
+                                                </span>
+                                            </td>
+                                            <td data-label="Cliente">
+                                                <%= venta.cliente_nombre %>
+                                            </td>
+                                            <td data-label="Forma de pago" class="forma-pago-cell">
+                                                <%= (venta.forma_pago || '' ).charAt(0).toUpperCase() +
+                                                    (venta.forma_pago || '' ).slice(1) %>
+                                            </td>
+                                            <td data-label="Tipo"><span
+                                                    class="badge bg-<%= venta.evento_id ? 'info' : 'secondary' %>">
+                                                    <%= venta.tipo_venta || (venta.evento_id ? 'Evento' : 'Venta diaria'
+                                                        ) %>
+                                                </span></td>
+                                            <td class="text-end total-cell" data-label="Total"
+                                                data-total="<%= venta.total %>">$<%= (Number(venta.total) ||
+                                                    0).toLocaleString('es-CO', { minimumFractionDigits: 2,
+                                                    maximumFractionDigits: 2 }) %>
+                                            </td>
+                                            <td class="text-center" data-label="Acciones">
+                                                <div class="d-flex gap-1 justify-content-center flex-wrap">
+                                                    <button class="btn btn-sm btn-outline-info btn-detalles"
+                                                        data-factura-id="<%= venta.id %>"
+                                                        data-factura-numero="<%= typeof venta.numero !== 'undefined' && venta.numero != null ? venta.numero : venta.id %>"
+                                                        data-bs-toggle="tooltip" data-bs-title="Ver factura">
+                                                        <i class="bi bi-eye"></i> Ver
+                                                    </button>
+                                                    <button class="btn btn-sm btn-outline-primary btn-reimprimir"
+                                                        data-factura-id="<%= venta.id %>"
+                                                        data-factura-numero="<%= typeof venta.numero !== 'undefined' && venta.numero != null ? venta.numero : venta.id %>"
+                                                        data-bs-toggle="tooltip" data-bs-title="Reimprimir factura">
+                                                        <i class="bi bi-printer"></i>
+                                                        Imprimir
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        <% }); %>
+                                            <% } %>
+                        </tbody>
+                    </table>
+    </div>
+    <% }; %>
+
+        <%= renderTablaVentas(ventasHoy, true) %>
+            <%= renderTablaVentas(ventasAnteriores, false) %>
