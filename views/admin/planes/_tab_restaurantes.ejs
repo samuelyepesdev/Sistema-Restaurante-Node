@@ -1,0 +1,88 @@
+<div class="tab-pane fade show active" id="tabR">
+    <p class="text-muted small mb-3">Clic en <strong>Gestionar</strong> para agregar add-ons y cambiar
+        el tamano del negocio.</p>
+    <% if (!tenants || tenants.length===0) { %>
+        <div class="text-center py-5 text-muted">
+            <i class="bi bi-building" style="font-size:2.5rem;opacity:.3;"></i>
+            <p class="mt-2">No hay restaurantes registrados.</p>
+        </div>
+        <% } %>
+            <% if (tenants && tenants.length> 0) { %>
+                <div class="table-responsive">
+                    <table class="table tbl align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th>Restaurante</th>
+                                <th>Plan</th>
+                                <th>Tamaño</th>
+                                <th>Add-ons</th>
+                                <th class="text-end">Total/mes</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% for (var ri=0; ri < tenants.length; ri++) { var t=tenants[ri]; %>
+                                <tr>
+                                    <td>
+                                        <div class="fw-bold">
+                                            <%= t.nombre %>
+                                        </div>
+                                        <small class="text-muted"><code><%= t.slug %></code></small>
+                                    </td>
+                                    <td>
+                                        <% if (t.plan_slug==='basico' ) { %>
+                                            <span class="badge-plan" style="background:#64748b">
+                                                <%= t.plan_nombre %>
+                                            </span>
+                                            <% } else if (t.plan_slug==='pro' ) { %>
+                                                <span class="badge-plan" style="background:#0d6efd">
+                                                    <%= t.plan_nombre %>
+                                                </span>
+                                                <% } else if (t.plan_slug==='premium' ) { %>
+                                                    <span class="badge-plan" style="background:#6366f1">
+                                                        <%= t.plan_nombre %>
+                                                    </span>
+                                                    <% } else { %>
+                                                        <span class="text-muted small">Sin plan</span>
+                                                        <% } %>
+                                    </td>
+                                    <td>
+                                        <span class="badge-tam" id="tb-tam-<%= t.id %>">
+                                            <% if (t.tamano==='grande' ) { %>Grande<% } else if (t.tamano==='mediano' )
+                                                    { %>Mediano<% } else { %>
+                                                        Pequeno<% } %>
+                                        </span>
+                                    </td>
+                                    <td id="tb-chips-<%= t.id %>">
+                                        <% if (t.addons && t.addons.length> 0) { %>
+                                            <% for (var ai=0; ai < t.addons.length; ai++) { %>
+                                                <span class="chip">
+                                                    <%= t.addons[ai].nombre %>
+                                                </span>
+                                                <% } %>
+                                                    <% } else { %>
+                                                        <span class="text-muted"
+                                                            style="font-size:.75rem;">Ninguno</span>
+                                                        <% } %>
+                                    </td>
+                                    <td class="text-end">
+                                        <div class="total-num" id="tb-total-<%= t.id %>">$<%=
+                                                Number(t.precio_total||0).toLocaleString('es-CO') %>
+                                        </div>
+                                        <div class="total-det">Plan <span id="tb-pp-<%= t.id %>">$<%=
+                                                    Number(t.precio_plan||0).toLocaleString('es-CO') %>
+                                            </span> + Addons <span id="tb-pa-<%= t.id %>">$<%=
+                                                    Number(t.precio_addons||0).toLocaleString('es-CO') %></span></div>
+                                    </td>
+                                    <td>
+                                        <button class="btn-gest" onclick="openModal(<%= t.id %>)">
+                                            <i class="bi bi-pencil"></i> Gestionar
+                                        </button>
+                                    </td>
+                                </tr>
+                                <% } %>
+                        </tbody>
+                    </table>
+                </div>
+                <% } %>
+</div>

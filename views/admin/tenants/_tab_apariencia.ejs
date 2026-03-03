@@ -1,0 +1,32 @@
+<div class="tab-pane fade" id="appearance">
+    <div class="glass-card">
+        <div class="row">
+            <div class="col-lg-4">
+                <div class="color-preview-box" id="colorPreview"
+                    style="background: <%= (selectedTenant.config && selectedTenant.config.colors && selectedTenant.config.colors.primary) ? selectedTenant.config.colors.primary : '#6366f1' %>">
+                    Vista Previa
+                </div>
+            </div>
+            <div class="col-lg-8">
+                <label class="form-label">Color de Marca (Botones y Menú)</label>
+                <p class="text-muted small">Este color definirá la identidad visual dentro
+                    del panel del restaurante.</p>
+                <div class="d-flex align-items-center gap-3 mb-4">
+                    <input type="color" id="editConfigColor" class="form-control form-control-color"
+                        style="width: 50px; height: 50px;"
+                        value="<%= (selectedTenant.config && selectedTenant.config.colors && selectedTenant.config.colors.primary) ? selectedTenant.config.colors.primary : '#6366f1' %>">
+                    <div class="d-flex flex-wrap gap-2">
+                        <% ['#0f172a', '#3b82f6' , '#10b981' , '#f59e0b' , '#ef4444' , '#8b5cf6' , '#f43f5e'
+                            ].forEach(c=> { %>
+                            <div class="rounded-circle cursor-pointer border preset-color-dot" data-color="<%= c %>"
+                                style="width:30px; height:30px; background:<%= c %>; cursor:pointer;">
+                            </div>
+                            <% }) %>
+                    </div>
+                </div>
+                <button onclick="saveAppearance(<%= selectedTenant.id %>)" class="btn btn-primary px-4">Guardar
+                    Apariencia</button>
+            </div>
+        </div>
+    </div>
+</div>

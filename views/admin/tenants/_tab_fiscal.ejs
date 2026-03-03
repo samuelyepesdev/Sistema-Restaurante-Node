@@ -1,0 +1,42 @@
+<div class="tab-pane fade" id="fiscal">
+    <div class="glass-card">
+        <form id="form-edit-fiscal" onsubmit="return handleFormSubmit(event, <%= selectedTenant.id %>, 'fiscal')">
+            <div class="row g-4">
+                <div class="col-md-4">
+                    <label class="form-label">NIT / RUT</label>
+                    <input type="text" name="nit" class="form-control" value="<%= selectedTenant.nit || '' %>"
+                        placeholder="000.000.000-0">
+                </div>
+                <div class="col-md-8">
+                    <label class="form-label">Dirección Fiscal</label>
+                    <input type="text" name="direccion" class="form-control"
+                        value="<%= selectedTenant.direccion || '' %>" placeholder="Calle ...">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Ciudad</label>
+                    <input type="text" name="ciudad" class="form-control" value="<%= selectedTenant.ciudad || '' %>">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Teléfono de Contacto</label>
+                    <input type="text" name="telefono" class="form-control"
+                        value="<%= selectedTenant.telefono || '' %>">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Régimen Fiscal</label>
+                    <select name="regimen_fiscal" class="form-select">
+                        <option value="No responsable de IVA" <%=selectedTenant.regimen_fiscal==='No responsable de IVA'
+                            ? 'selected' : '' %>>No responsable de IVA</option>
+                        <option value="Responsable de IVA" <%=selectedTenant.regimen_fiscal==='Responsable de IVA'
+                            ? 'selected' : '' %>>Responsable de IVA</option>
+                        <option value="Régimen Simple" <%=selectedTenant.regimen_fiscal==='Régimen Simple' ? 'selected'
+                            : '' %>>Régimen Simple (RST)</option>
+                    </select>
+                </div>
+                <div class="col-12 text-end">
+                    <button type="submit" class="btn btn-primary px-4">Actualizar Datos
+                        Fiscales</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>

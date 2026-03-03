@@ -1,0 +1,63 @@
+<div class="section-title mt-4"><i class="bi bi-bar-chart-line"></i> Estadísticas de uso (todos los restaurantes)</div>
+<div class="row g-4 mb-4">
+    <div class="col-6 col-md-4 col-lg-2">
+        <div class="card stat-card">
+            <div class="card-body py-3">
+                <div class="stat-value" style="font-size: 1.5rem;">
+                    <%= typeof stats.totalFacturas !=='undefined' ? stats.totalFacturas : 0 %>
+                </div>
+                <div class="stat-label">Ventas (facturas)</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-4 col-lg-2">
+        <div class="card stat-card">
+            <div class="card-body py-3">
+                <div class="stat-value text-success" style="font-size: 1.25rem;">$<%= (Number(stats.totalVentasMonto) ||
+                        0).toLocaleString('es-CO', { maximumFractionDigits: 0 }) %>
+                </div>
+                <div class="stat-label">Monto total vendido</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-4 col-lg-2">
+        <div class="card stat-card">
+            <div class="card-body py-3">
+                <div class="stat-value" style="font-size: 1.5rem;">
+                    <%= typeof stats.totalProductos !=='undefined' ? stats.totalProductos : 0 %>
+                </div>
+                <div class="stat-label">Productos</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-4 col-lg-2">
+        <div class="card stat-card">
+            <div class="card-body py-3">
+                <div class="stat-value" style="font-size: 1.5rem;">
+                    <%= typeof stats.totalClientes !=='undefined' ? stats.totalClientes : 0 %>
+                </div>
+                <div class="stat-label">Clientes</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-4 col-lg-2">
+        <div class="card stat-card">
+            <div class="card-body py-3">
+                <div class="stat-value" style="font-size: 1.5rem;">
+                    <%= typeof stats.totalMesas !=='undefined' ? stats.totalMesas : 0 %>
+                </div>
+                <div class="stat-label">Mesas</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-4 col-lg-2">
+        <div class="card stat-card">
+            <div class="card-body py-3">
+                <div class="stat-value text-primary" style="font-size: 1.5rem;">
+                    <%= typeof stats.restaurantesUltimos30Dias !=='undefined' ? stats.restaurantesUltimos30Dias : 0 %>
+                </div>
+                <div class="stat-label">Restaurantes (últimos 30 días)</div>
+            </div>
+        </div>
+    </div>
+</div>

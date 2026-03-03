@@ -1,201 +1,35 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Permisos - Superadmin</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
-        <link rel="stylesheet" href="/css/admin-permisos.css">
+    <link rel="stylesheet" href="/css/admin-permisos.css">
 </head>
+
 <body>
-<%- include('../partials/navbar', { user, tenant: null, currentAdminPage: 'permisos' }) %>
+    <%- include('../partials/navbar', { user, tenant: null, currentAdminPage: 'permisos' }) %>
 
-<div class="container-fluid py-4">
-    <div class="admin-page-header">
-        <h1><i class="bi bi-shield-lock me-2"></i>Permisos por restaurante y usuario</h1>
-        <p class="mb-0">Elige el restaurante y el usuario. Los permisos marcados son los que tendrá; puedes quitar permisos (ej. Inventario, Recetas) desmarcando y guardando. Los cambios se aplican al instante (recargar página) o al volver a iniciar sesión.</p>
-    </div>
-
-    <div class="row">
-        <div class="col-12">
-            <div class="card selector-card">
-                <div class="card-header"><i class="bi bi-building me-2"></i>Restaurante y usuario</div>
-                <div class="card-body">
-                    <div class="row g-3">
-                        <div class="col-md-4">
-                            <label class="form-label fw-semibold">Restaurante</label>
-                            <select id="selectTenant" class="form-select">
-                                <% (tenants || []).forEach(function(t) { %>
-                                <option value="<%= t.id %>" <%= Number(activeTenantId) === Number(t.id) ? 'selected' : '' %>><%= t.nombre %></option>
-                                <% }); %>
-                            </select>
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label fw-semibold">Usuario</label>
-                            <select id="selectUsuario" class="form-select">
-                                <option value="">-- Seleccione un usuario --</option>
-                                <% (usuarios || []).forEach(function(u) { %>
-                                <option value="<%= u.id %>"><%= (u.nombre_completo || u.username) %> (<%= u.rol_nombre %>)</option>
-                                <% }); %>
-                            </select>
-                        </div>
-                    </div>
-                </div>
+        <div class="container-fluid py-4">
+            <div class="admin-page-header">
+                <h1><i class="bi bi-shield-lock me-2"></i>Permisos por restaurante y usuario</h1>
+                <p class="mb-0">Elige el restaurante y el usuario. Los permisos marcados son los que tendrá; puedes
+                    quitar permisos (ej. Inventario, Recetas) desmarcando y guardando. Los cambios se aplican al
+                    instante (recargar página) o al volver a iniciar sesión.</p>
             </div>
+
+            <!-- Selector de Restaurante y Usuario -->
+            <%- include('permisos/_selector') %>
+
+                <!-- Panel de Permisos -->
+                <%- include('permisos/_panel_permisos') %>
         </div>
-    </div>
 
-    <div id="panelPermisos" class="row" style="display: none;">
-        <div class="col-12">
-            <div class="card selector-card">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <span><i class="bi bi-person-badge me-2"></i>Permisos del usuario</span>
-                    <button type="button" class="btn btn-primary btn-save-user" id="btnGuardarUsuario">Guardar permisos</button>
-                </div>
-                <div class="card-body">
-                    <p class="text-muted small mb-3">Los permisos marcados son los que tendrá el usuario. Si desmarcas alguno (ej. Inventario, Recetas) y guardas, ese usuario ya no tendrá acceso. Al abrir un usuario se muestran sus permisos actuales (del rol o los que ya guardaste).</p>
-                    <div class="permisos-container">
-                        <% (secciones || []).forEach(function(sec) { %>
-                        <div class="card section-card">
-                            <div class="card-header d-flex align-items-center gap-2">
-                                <label class="mb-0 d-flex align-items-center gap-2 cursor-pointer flex-grow-1">
-                                    <input type="checkbox" class="form-check-input section-check" title="Marcar todos los permisos de esta sección">
-                                    <span><%= sec.seccion %></span>
-                                </label>
-                            </div>
-                            <div class="card-body py-2">
-                                <div class="permiso-list">
-                                    <% (sec.permisos || []).forEach(function(p) { %>
-                                    <label class="permiso-item mb-0 cursor-pointer d-block">
-                                        <input type="checkbox" class="form-check-input permiso-check" value="<%= p.id %>" data-permiso-id="<%= p.id %>">
-                                        <span><%= (p.descripcion && p.descripcion.trim()) ? p.descripcion : p.nombre %></span>
-                                    </label>
-                                    <% }); %>
-                                </div>
-                            </div>
-                        </div>
-                        <% }); %>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div id="sinUsuario" class="alert alert-info mt-2" style="display: none;">
-        <i class="bi bi-info-circle me-2"></i>Selecciona un usuario para asignar permisos.
-    </div>
-</div>
-
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-<script>
-(function() {
-    var selectTenant = document.getElementById('selectTenant');
-    var selectUsuario = document.getElementById('selectUsuario');
-    var panelPermisos = document.getElementById('panelPermisos');
-    var sinUsuario = document.getElementById('sinUsuario');
-    var btnGuardar = document.getElementById('btnGuardarUsuario');
-
-    function showPanel(show) {
-        panelPermisos.style.display = show ? 'flex' : 'none';
-        sinUsuario.style.display = show ? 'none' : 'block';
-    }
-
-    function getSelectedUserId() {
-        var v = selectUsuario.value;
-        return v ? parseInt(v, 10) : null;
-    }
-
-    function updateSectionCheckState(card) {
-        var sectionCb = card.querySelector('.section-check');
-        if (!sectionCb) return;
-        var checks = card.querySelectorAll('.permiso-check');
-        var list = Array.from(checks);
-        if (list.length === 0) return;
-        var all = list.every(function(c) { return c.checked; });
-        var none = list.every(function(c) { return !c.checked; });
-        sectionCb.checked = all;
-        sectionCb.indeterminate = !all && !none;
-    }
-
-    function initSectionCheckboxes() {
-        document.querySelectorAll('.section-card').forEach(function(card) {
-            var sectionCb = card.querySelector('.section-check');
-            if (!sectionCb) return;
-            sectionCb.addEventListener('change', function() {
-                var check = this.checked;
-                card.querySelectorAll('.permiso-check').forEach(function(c) { c.checked = check; });
-                sectionCb.indeterminate = false;
-            });
-            card.querySelectorAll('.permiso-check').forEach(function(c) {
-                c.addEventListener('change', function() { updateSectionCheckState(card); });
-            });
-            updateSectionCheckState(card);
-        });
-    }
-
-    selectTenant.addEventListener('change', function() {
-        var tenantId = this.value;
-        window.location.href = '/admin/permisos?tenantId=' + encodeURIComponent(tenantId);
-    });
-
-    var sectionCheckboxesInited = false;
-
-    selectUsuario.addEventListener('change', function() {
-        var userId = getSelectedUserId();
-        if (!userId) {
-            showPanel(false);
-            return;
-        }
-        showPanel(true);
-        if (!sectionCheckboxesInited) {
-            initSectionCheckboxes();
-            sectionCheckboxesInited = true;
-        }
-        fetch('/admin/permisos/usuario/' + userId, { credentials: 'same-origin' })
-            .then(function(r) { return r.json(); })
-            .then(function(data) {
-                var ids = (data.permiso_ids || []).map(function(id) { return parseInt(id, 10); });
-                document.querySelectorAll('.permiso-check').forEach(function(cb) {
-                    cb.checked = ids.indexOf(parseInt(cb.value, 10)) >= 0;
-                });
-                document.querySelectorAll('.section-card').forEach(function(card) { updateSectionCheckState(card); });
-            })
-            .catch(function() {
-                document.querySelectorAll('.permiso-check').forEach(function(cb) { cb.checked = false; });
-                document.querySelectorAll('.section-card').forEach(function(card) { updateSectionCheckState(card); });
-            });
-    });
-
-    btnGuardar.addEventListener('click', function() {
-        var userId = getSelectedUserId();
-        if (!userId) {
-            Swal.fire({ icon: 'warning', title: 'Selecciona un usuario' });
-            return;
-        }
-        var permisoIds = Array.from(document.querySelectorAll('.permiso-check:checked')).map(function(c) { return parseInt(c.value, 10); });
-        fetch('/admin/permisos/usuario/' + userId, {
-            method: 'PUT',
-            credentials: 'same-origin',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ permiso_ids: permisoIds })
-        })
-        .then(function(r) { return r.json().then(function(d) { return { ok: r.ok, data: d }; }); })
-        .then(function(o) {
-            if (o.ok) Swal.fire({ icon: 'success', title: o.data.message || 'Permisos guardados' });
-            else Swal.fire({ icon: 'error', title: o.data.error || 'Error' });
-        })
-        .catch(function() { Swal.fire({ icon: 'error', title: 'Error de conexión' }); });
-    });
-
-    if (getSelectedUserId()) {
-        showPanel(true);
-        selectUsuario.dispatchEvent(new Event('change'));
-    } else {
-        showPanel(false);
-    }
-})();
-</script>
+        <!-- Scripts -->
+        <%- include('permisos/_scripts') %>
 </body>
+
 </html>

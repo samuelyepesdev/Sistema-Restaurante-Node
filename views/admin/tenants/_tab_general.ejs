@@ -1,0 +1,97 @@
+<div class="tab-pane fade show active" id="general">
+    <div class="glass-card">
+        <form id="form-edit-general" onsubmit="return handleFormSubmit(event, <%= selectedTenant.id %>, 'general')">
+            <div class="row g-4">
+                <div class="col-md-6">
+                    <label class="form-label">Nombre Comercial</label>
+                    <input type="text" name="nombre" class="form-control" value="<%= selectedTenant.nombre %>" required>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Correo Electrónico para Reportes</label>
+                    <input type="email" name="email" class="form-control" value="<%= selectedTenant.email || '' %>"
+                        placeholder="correo@ejemplo.com">
+                    <div class="form-text">A este correo llegarán los reportes automáticos
+                        mensuales.</div>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Identificador (Slug)</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-light text-muted">/tienda/</span>
+                        <input type="text" class="form-control bg-light" value="<%= selectedTenant.slug %>" disabled>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Tipo de Negocio</label>
+                    <select name="tipo_negocio" id="editTipoNegocio" class="form-select">
+                        <option value="restaurante" <%=selectedTenant.config &&
+                            selectedTenant.config.tipo_negocio==='restaurante' ? 'selected' : '' %>>🍴 Restaurante
+                            Estándar</option>
+                        <option value="comidas_rapidas" <%=selectedTenant.config &&
+                            selectedTenant.config.tipo_negocio==='comidas_rapidas' ? 'selected' : '' %>>🍔 Comidas
+                            Rápidas</option>
+                        <option value="panaderia" <%=selectedTenant.config &&
+                            selectedTenant.config.tipo_negocio==='panaderia' ? 'selected' : '' %>>🥯 Panadería</option>
+                        <option value="pasteleria" <%=selectedTenant.config &&
+                            selectedTenant.config.tipo_negocio==='pasteleria' ? 'selected' : '' %>>🍰 Pastelería
+                            Profesional</option>
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Plan de Servicio</label>
+                    <select name="plan_id" class="form-select">
+                        <% plans.forEach(p=> { %>
+                            <option value="<%= p.id %>" <%=selectedTenant.plan_id==p.id ? 'selected' : '' %>><%=
+                                    p.nombre %> - <%= p.descripcion %>
+                            </option>
+                            <% }); %>
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Color Corporativo</label>
+                    <div class="d-flex align-items-center gap-3">
+                        <input type="color" id="editConfigColorGeneral" class="form-control form-control-color"
+                            style="width: 50px; height: 50px;"
+                            value="<%= (selectedTenant.config && selectedTenant.config.colors && selectedTenant.config.colors.primary) ? selectedTenant.config.colors.primary : '#6366f1' %>">
+                        <span class="small text-muted">Este color aparecerá en el menú del
+                            restaurante.</span>
+                    </div>
+                </div>
+                <div class="col-12 text-end">
+                    <button type="submit" class="btn btn-primary px-5 shadow-sm fw-bold">
+                        <i class="bi bi-save me-2"></i>Guardar Cambios General
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <div class="glass-card bg-light border-dashed">
+        <div class="d-flex align-items-center justify-content-between">
+            <div>
+                <h6 class="mb-1 fw-bold">Configuración Inicial</h6>
+                <p class="text-muted small mb-0">Carga las categorías y productos sugeridos
+                    según el tipo de negocio.</p>
+            </div>
+            <button class="btn btn-outline-dark btn-sm" id="btnSeedCategorias"
+                data-tenant-id="<%= selectedTenant.id %>">
+                <i class="bi bi-magic me-2"></i>Auto-configurar
+            </button>
+        </div>
+    </div>
+
+    <div class="glass-card mt-4 border border-danger-subtle bg-danger-subtle bg-opacity-10">
+        <div class="d-flex align-items-center justify-content-between">
+            <div>
+                <h6 class="mb-1 fw-bold text-danger"><i class="bi bi-exclamation-triangle-fill me-2"></i>Zona de Peligro
+                </h6>
+                <p class="text-danger small mb-0 opacity-75">Eliminar este restaurante
+                    permanentemente (Atención: esto borrará TODO: pedidos, usuarios,
+                    usuarios, y configuraciones).</p>
+            </div>
+            <button class="btn btn-danger btn-sm px-3"
+                onclick="confirmDeleteTenant(<%= selectedTenant.id %>, '<%= selectedTenant.nombre %>')">
+                <i class="bi bi-trash3-fill me-2"></i>Eliminar Restaurante
+            </button>
+        </div>
+    </div>
+</div>

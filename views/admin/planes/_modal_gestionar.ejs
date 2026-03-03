@@ -1,0 +1,48 @@
+<div class="modal fade" id="modalAddons" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header border-bottom-0 pb-1">
+                <div>
+                    <h5 class="modal-title fw-bold mb-0" id="mTitle">Gestionar</h5>
+                    <small class="text-muted" id="mSlug"></small>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body pt-2">
+                <div class="d-flex align-items-center gap-2 p-2 rounded-3 mb-3"
+                    style="background:#f8fafc;border:1px solid #e2e8f0;">
+                    <span id="mPlanDot"
+                        style="width:10px;height:10px;border-radius:50%;display:inline-block;background:#64748b;"></span>
+                    <span class="fw-bold" id="mPlanNombre">-</span>
+                    <span class="text-muted small ms-1">Plan activo</span>
+                </div>
+                <div class="mb-3">
+                    <div class="section-lbl">Tamaño del negocio</div>
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-outline-secondary btn-sm flex-fill tamano-btn" data-tamano="pequeno"
+                            onclick="selTamano('pequeno')">Pequeño</button>
+                        <button class="btn btn-outline-secondary btn-sm flex-fill tamano-btn" data-tamano="mediano"
+                            onclick="selTamano('mediano')">Mediano</button>
+                        <button class="btn btn-outline-secondary btn-sm flex-fill tamano-btn" data-tamano="grande"
+                            onclick="selTamano('grande')">Grande</button>
+                    </div>
+                </div>
+                <div class="section-lbl mt-3">Add-ons disponibles</div>
+                <div id="mList"></div>
+                <div class="total-box">
+                    <div
+                        style="font-size:.72rem;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.4px;">
+                        Total mensual</div>
+                    <div class="total-amount" id="mTotal">$0</div>
+                    <div style="font-size:.73rem;color:#94a3b8;" id="mBreak"></div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary fw-bold px-4" id="btnGuardar">
+                    <i class="bi bi-floppy me-1"></i>Guardar cambios
+                </button>
+            </div>
+        </div>
+    </div>
+</div>

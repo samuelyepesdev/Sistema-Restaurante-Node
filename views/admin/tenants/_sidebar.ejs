@@ -1,0 +1,47 @@
+<aside class="tenants-sidebar">
+    <div class="sidebar-header">
+        <div class="d-flex align-items-center justify-content-between mb-3">
+            <h5 class="mb-0 fw-800">Locales</h5>
+            <span class="badge bg-primary rounded-pill">
+                <%= tenants.length %>
+            </span>
+        </div>
+        <div class="search-tenants">
+            <i class="bi bi-search"></i>
+            <input type="text" id="searchTenants" class="form-control" placeholder="Buscar sucursal...">
+        </div>
+    </div>
+
+    <div class="tenants-list" id="tenantsList">
+        <% tenants.forEach(t=> { %>
+            <a href="?tenantId=<%= t.id %>" class="tenant-item <%= Number(activeTenantId) === t.id ? 'active' : '' %>"
+                data-name="<%= t.nombre.toLowerCase() %>">
+                <div class="tenant-avatar"
+                    style="background: <%= (t.config && t.config.colors && t.config.colors.primary) ? t.config.colors.primary : '#0f172a' %>">
+                    <%= t.nombre.charAt(0).toUpperCase() %>
+                </div>
+                <div class="tenant-info">
+                    <div class="tenant-name">
+                        <%= t.nombre %>
+                    </div>
+                    <div class="tenant-meta">
+                        <span class="status-indicator bg-<%= t.activo ? 'success' : 'secondary' %>"></span>
+                        <%= t.activo ? 'En línea' : 'Inactivo' %>
+                            <% if (t.plan_nombre) { %>
+                                <span class="ms-1 border-start ps-1">
+                                    <%= t.plan_nombre %>
+                                </span>
+                                <% } %>
+                    </div>
+                </div>
+            </a>
+            <% }) %>
+    </div>
+
+    <div class="p-3 border-top">
+        <button class="btn btn-primary w-100 py-2 fw-semibold" data-bs-toggle="modal"
+            data-bs-target="#modalCreateTenant">
+            <i class="bi bi-plus-lg me-2"></i>Nuevo Local
+        </button>
+    </div>
+</aside>
