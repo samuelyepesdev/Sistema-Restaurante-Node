@@ -140,7 +140,7 @@
 
         if (result.isConfirmed) {
             try {
-                const resp = await fetch(`/admin/tenants/\${id}`, { method: 'DELETE' });
+                const resp = await fetch(`/admin/tenants/${id}`, { method: 'DELETE' });
                 if (resp.ok) {
                     Swal.fire('Eliminado', 'El restaurante ha sido borrado.', 'success')
                         .then(() => window.location.href = '/admin/tenants');
@@ -153,30 +153,75 @@
         }
     }
 
-    async function handleRoleChange(event, userId, tenantId) {
-        event.preventDefault();
-        const formData = new FormData(event.target);
-        const data = Object.fromEntries(formData.entries());
+    async function saveAllRoles(tenantId) {
+        const selects = document.querySelectorAll('.user-role-select');
+        const changes = [];
+
+        selects.forEach(select => {
+            const userId = select.getAttribute('data-user-id');
+            const newRole = select.value;
+            const originalRole = select.getAttribute('data-original-role');
+
+            if (newRole !== originalRole) {
+                changes.push({ userId, rol_nombre: newRole });
+            }
+        });
+
+        if (changes.length === 0) {
+            return Swal.fire({
+                icon: 'info',
+                title: 'No hay cambios',
+                text: 'No has modificado ningún rol.',
+                timer: 1500,
+                showConfirmButton: false
+            });
+        }
 
         try {
-            const resp = await fetch(`/admin/tenants/\${tenantId}/users/\${userId}/role`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(data)
+            Swal.fire({
+                title: 'Guardando cambios...',
+                allowOutsideClick: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
             });
-            if (resp.ok) {
-                Swal.fire({ icon: 'success', title: 'Rol actualizado', timer: 1000, showConfirmButton: false });
+
+            const resp = await fetch(`/admin/tenants/${tenantId}/users/batch-roles`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ changes })
+            });
+
+            const data = await resp.json();
+
+            if (resp.ok && data.success) {
+                Swal.fire({
+                    icon: 'success',
+                    title: '¡Éxito!',
+                    text: data.message,
+                    timer: 1500,
+                    showConfirmButton: false
+                }).then(() => window.location.reload());
             } else {
-                Swal.fire({ icon: 'error', title: 'Error al cambiar rol' });
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: data.error || 'No se pudieron actualizar los roles.'
+                });
             }
         } catch (e) {
-            Swal.fire({ icon: 'error', title: 'Error de red' });
+            console.error('Error:', e);
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: 'Error de red al intentar guardar los cambios.'
+            });
         }
     }
 
     async function toggleUserStatus(userId, tenantId, activo) {
         try {
-            const resp = await fetch(`/admin/tenants/\${tenantId}/users/\${userId}/status`, {
+            const resp = await fetch(`/admin/tenants/${tenantId}/users/${userId}/status`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ activo })
@@ -184,6 +229,52 @@
             if (resp.ok) window.location.reload();
         } catch (e) {
             Swal.fire({ icon: 'error', title: 'Error de red' });
+        }
+    }
+
+    async function deleteUser(userId, username, tenantId) {
+        const result = await Swal.fire({
+            title: '¿Eliminar usuario?',
+            text: `¿Estás seguro de que deseas eliminar permanentemente a "${username}"? Esta acción no se puede deshacer.`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#dc3545',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'Sí, eliminar',
+            cancelButtonText: 'Cancelar'
+        });
+
+        if (result.isConfirmed) {
+            try {
+                const resp = await fetch(`/admin/tenants/${tenantId}/users/${userId}`, {
+                    method: 'DELETE'
+                });
+
+                const data = await resp.json();
+
+                if (resp.ok && data.success) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Eliminado',
+                        text: 'El usuario ha sido eliminado correctamente.',
+                        timer: 1500,
+                        showConfirmButton: false
+                    }).then(() => window.location.reload());
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: data.error || 'No se pudo eliminar el usuario.'
+                    });
+                }
+            } catch (e) {
+                console.error('Error:', e);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'Error de red al intentar eliminar el usuario.'
+                });
+            }
         }
     }
 
@@ -206,7 +297,7 @@
         if (pass1.length < 6) return Swal.fire('Error', 'Mínimo 6 caracteres', 'error');
 
         try {
-            const resp = await fetch(`/admin/tenants/\${tenantId}/users/\${userId}/password`, {
+            const resp = await fetch(`/admin/tenants/${tenantId}/users/${userId}/password`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ password: pass1 })
@@ -238,7 +329,7 @@
             if (result.isConfirmed) {
                 Swal.fire({ title: 'Configurando...', allowOutsideClick: false, didOpen: () => { Swal.showLoading(); } });
                 try {
-                    const resp = await fetch(`/admin/tenants/\${tenantId}/seed-initial`, { method: 'POST' });
+                    const resp = await fetch(`/admin/tenants/${tenantId}/seed-initial`, { method: 'POST' });
                     if (resp.ok) {
                         Swal.fire('¡Listo!', 'El restaurante ha sido configurado.', 'success').then(() => window.location.reload());
                     } else {

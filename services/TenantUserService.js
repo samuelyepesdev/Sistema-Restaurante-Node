@@ -79,6 +79,17 @@ class TenantUserService {
         const password_hash = await bcrypt.hash(newPassword, 10);
         await db.query('UPDATE usuarios SET password_hash = ? WHERE id = ? AND tenant_id = ?', [password_hash, userId, tenantId]);
     }
+
+    static async deleteTenantUser(userId, tenantId) {
+        // We first check if the user belongs to the tenant
+        const [users] = await db.query('SELECT id FROM usuarios WHERE id = ? AND tenant_id = ?', [userId, tenantId]);
+        if (users.length === 0) {
+            throw new Error('Usuario no encontrado en ese restaurante.');
+        }
+
+        const [result] = await db.query('DELETE FROM usuarios WHERE id = ? AND tenant_id = ?', [userId, tenantId]);
+        return result;
+    }
 }
 
 module.exports = TenantUserService;

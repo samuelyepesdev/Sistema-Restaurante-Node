@@ -18,6 +18,29 @@ router.use((req, res, next) => {
     next();
 });
 
+// POST /admin/tenants/:tenantId/users/batch-roles - Actualizar múltiples roles
+router.post('/:tenantId/users/batch-roles', async (req, res) => {
+    console.log('BATCH ROLES HIT:', req.params.tenantId, req.body.changes);
+    try {
+        const { changes } = req.body; // Array de { userId, rol_nombre }
+        if (!Array.isArray(changes)) throw new Error('Formato de cambios inválido');
+
+        for (const change of changes) {
+            await TenantUserService.assignRoles(change.userId, Number(req.params.tenantId), change.rol_nombre);
+            await TenantAuditService.log({
+                tenantId: req.params.tenantId,
+                userId: req.user?.id || null, // Quién hizo el cambio (superadmin)
+                accion: 'asignar_rol_batch',
+                detalles: `usuario_id=${change.userId} rol=${change.rol_nombre}`
+            });
+        }
+        res.status(200).json({ success: true, message: 'Roles actualizados correctamente.' });
+    } catch (error) {
+        console.error('Error en actualización masiva de roles:', error);
+        res.status(400).json({ error: error.message || 'Error al actualizar roles.' });
+    }
+});
+
 router.get('/', async (req, res) => {
     try {
         const tenants = await TenantService.getAllTenants();
@@ -158,6 +181,7 @@ router.patch('/:tenantId/users/:userId/roles', async (req, res) => {
     }
 });
 
+
 router.post('/:tenantId/users/:userId/status', async (req, res) => {
     try {
         const { activo } = req.body;
@@ -197,6 +221,23 @@ router.put('/:tenantId/users/:userId/password', async (req, res) => {
     } catch (error) {
         console.error('Error al cambiar contraseña del usuario:', error);
         res.status(400).json({ error: error.message || 'Error al actualizar la contraseña.' });
+    }
+});
+
+// DELETE /admin/tenants/:tenantId/users/:userId - Eliminar usuario del tenant
+router.delete('/:tenantId/users/:userId', async (req, res) => {
+    try {
+        await TenantUserService.deleteTenantUser(req.params.userId, req.params.tenantId);
+        await TenantAuditService.log({
+            tenantId: req.params.tenantId,
+            userId: req.user?.id || null,
+            accion: 'eliminar_usuario',
+            detalles: `usuario_id=${req.params.userId}`
+        });
+        res.status(200).json({ success: true, message: 'Usuario eliminado permanentemente.' });
+    } catch (error) {
+        console.error('Error al eliminar usuario del tenant:', error);
+        res.status(400).json({ success: false, error: error.message || 'Error al eliminar usuario.' });
     }
 });
 

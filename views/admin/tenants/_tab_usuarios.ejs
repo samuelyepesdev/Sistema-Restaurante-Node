@@ -29,19 +29,14 @@
                                 </div>
                             </td>
                             <td>
-                                <form onsubmit="return handleRoleChange(event, <%= u.id %>, <%= selectedTenant.id %>)"
-                                    class="d-flex gap-2">
-                                    <select name="rol_nombre" class="form-select form-select-sm" style="width: 140px;">
-                                        <option value="admin" <%=u.rol==='admin' ? 'selected' : '' %>>Administrador
-                                        </option>
-                                        <option value="mesero" <%=u.rol==='mesero' ? 'selected' : '' %>>Mesero</option>
-                                        <option value="cajero" <%=u.rol==='cajero' ? 'selected' : '' %>>Cajero</option>
-                                        <option value="cocinero" <%=u.rol==='cocinero' ? 'selected' : '' %>>Cocinero
-                                        </option>
-                                    </select>
-                                    <button type="submit" class="btn btn-icon btn-light"><i
-                                            class="bi bi-check2"></i></button>
-                                </form>
+                                <select class="form-select form-select-sm user-role-select" data-user-id="<%= u.id %>"
+                                    data-original-role="<%= u.rol %>" style="width: 140px;">
+                                    <option value="admin" <%=u.rol==='admin' ? 'selected' : '' %>>Administrador</option>
+                                    <option value="mesero" <%=u.rol==='mesero' ? 'selected' : '' %>>Mesero</option>
+                                    <option value="cajero" <%=u.rol==='cajero' ? 'selected' : '' %>>Cajero</option>
+                                    <option value="cocinero" <%=u.rol==='cocinero' ? 'selected' : '' %>>Cocinero
+                                    </option>
+                                </select>
                             </td>
                             <td>
                                 <span
@@ -65,6 +60,13 @@
                                                     class="bi bi-<%= u.activo ? 'shield-lock' : 'shield-check' %> me-2"></i>
                                                 <%= u.activo ? 'Bloquear Acceso' : 'Desbloquear Acceso' %>
                                             </a></li>
+                                        <li>
+                                            <hr class="dropdown-divider">
+                                        </li>
+                                        <li><a class="dropdown-item text-danger" href="javascript:void(0)"
+                                                onclick="deleteUser(<%= u.id %>, '<%= u.username %>', <%= selectedTenant.id %>)">
+                                                <i class="bi bi-trash me-2"></i>Eliminar Usuario
+                                            </a></li>
                                     </ul>
                                 </div>
                             </td>
@@ -72,6 +74,11 @@
                         <% }) %>
                 </tbody>
             </table>
+        </div>
+        <div class="p-3 border-top d-flex justify-content-end">
+            <button class="btn btn-primary rounded-pill px-4" onclick="saveAllRoles(<%= selectedTenant.id %>)">
+                <i class="bi bi-save me-2"></i>Guardar Cambios de Roles
+            </button>
         </div>
     </div>
 </div>
