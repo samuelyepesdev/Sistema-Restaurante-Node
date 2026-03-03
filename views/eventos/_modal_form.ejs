@@ -1,0 +1,49 @@
+<!-- Modal crear/editar -->
+<div class="modal fade" id="modalEvento" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalEventoTitle"><i class="bi bi-calendar-plus me-2"></i>Nuevo evento</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="eventoId" value="">
+                <div class="mb-3">
+                    <label class="form-label">Nombre</label>
+                    <input type="text" class="form-control" id="eventoNombre" placeholder="Ej: Feria navideña" required>
+                </div>
+                <div class="row g-2">
+                    <div class="col-6">
+                        <label class="form-label">Fecha inicio</label>
+                        <input type="date" class="form-control" id="eventoFechaInicio" required>
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label">Fecha fin</label>
+                        <input type="date" class="form-control" id="eventoFechaFin" required>
+                    </div>
+                </div>
+                <div class="mb-3 mt-2">
+                    <label class="form-label">Descripción (opcional)</label>
+                    <textarea class="form-control" id="eventoDescripcion" rows="2"
+                        placeholder="Descripción del evento"></textarea>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Tipo de evento</label>
+                    <select class="form-select" id="eventoTipo">
+                        <option value="permanente">Permanente (sí cuenta para analítica)</option>
+                        <option value="ocasional">Ocasional (no cuenta para analítica)</option>
+                    </select>
+                </div>
+                <div class="form-check" id="wrapActivo">
+                    <input type="checkbox" class="form-check-input" id="eventoActivo" checked>
+                    <label class="form-check-label" for="eventoActivo">Activo</label>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" id="btnGuardarEvento"><i
+                        class="bi bi-check-lg me-1"></i>Guardar</button>
+            </div>
+        </div>
+    </div>
+</div>
