@@ -6,17 +6,17 @@ class MailerService {
         if (process.env.SMTP_HOST) {
             console.log('--- Usando TRANSPORE SMTP REAL ---');
             return nodemailer.createTransport({
-                host: process.env.SMTP_HOST,
-                port: Number(process.env.SMTP_PORT) || 587,
+                host: process.env.SMTP_HOST || 'smtp.gmail.com',
+                port: Number(process.env.SMTP_PORT) || 465,
                 secure: String(process.env.SMTP_SECURE) === 'true',
                 auth: {
                     user: process.env.SMTP_USER,
                     pass: process.env.SMTP_PASS,
                 },
-                connectionTimeout: 20000, // 20 segundos para conectar
+                connectionTimeout: 20000,
                 greetingTimeout: 15000,
                 socketTimeout: 30000,
-                family: 4, // <-- ESTO FUERZA IPv4 Y EVITA EL ERROR ENETUNREACH
+                family: 4, // <-- ESTO OBLIGA A USAR IPv4 (AHORA TAMBIÉN A NIVEL GLOBAL)
                 tls: {
                     rejectUnauthorized: false
                 }

@@ -1,4 +1,5 @@
 require('dotenv').config();
+require('dns').setDefaultResultOrder('ipv4first'); // FUERZA IPv4 A NIVEL GLOBAL
 const express = require('express');
 const bodyParser = require('body-parser');
 const cookieParser = require('cookie-parser');
