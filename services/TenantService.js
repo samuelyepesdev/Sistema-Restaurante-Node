@@ -36,7 +36,7 @@ class TenantService {
     }
 
     static async createTenant(data) {
-        const { nombre, slug, config = {}, activo = true, plan_id = 1 } = data;
+        const { nombre, email, slug, config = {}, activo = true, plan_id = 1, nit, direccion, telefono, ciudad, regimen_fiscal } = data;
         const [existing] = await db.query('SELECT id FROM tenants WHERE slug = ?', [slug]);
         if (existing.length > 0) {
             throw new Error('El slug ya existe');
@@ -46,16 +46,16 @@ class TenantService {
             'INSERT INTO tenants (nombre, email, slug, config, activo, plan_id, nit, direccion, telefono, ciudad, regimen_fiscal) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
             [
                 nombre,
-                data.email || null,
+                email || null,
                 slug,
                 JSON.stringify(config),
                 activo ? 1 : 0,
                 planId,
-                data.nit || null,
-                data.direccion || null,
-                data.telefono || null,
-                data.ciudad || null,
-                data.regimen_fiscal || 'No responsable de IVA'
+                nit || null,
+                direccion || null,
+                telefono || null,
+                ciudad || null,
+                regimen_fiscal || 'No responsable de IVA'
             ]
         );
         const tenantId = result.insertId;

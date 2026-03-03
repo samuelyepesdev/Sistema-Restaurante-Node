@@ -78,17 +78,21 @@ class ReporteMensualService {
         const subject = `Reporte Mensual - ${tenant.nombre} - ${data.mes}`;
         const bodyContent = `Hola,<br><br>Adjunto enviamos el reporte de resumen de ventas de <strong>${data.mes}</strong> para <strong>${tenant.nombre}</strong>.<br><br>Saludos cordiales,<br>Tu Sistema Ecl-Fruver`;
 
-        const mailResult = await MailerService.sendMail({
-            to,
-            subject,
-            html: bodyContent,
-            attachments: [{
-                filename: `Reporte_${data.mes.replace(/ /g, '_')}_${tenant.nombre.replace(/ /g, '_')}.pdf`,
-                content: pdfBuffer
-            }]
-        });
-
-        return { ...mailResult, emailValido: to };
+        try {
+            const mailResult = await MailerService.sendMail({
+                to,
+                subject,
+                html: bodyContent,
+                attachments: [{
+                    filename: `Reporte_${data.mes.replace(/ /g, '_')}_${tenant.nombre.replace(/ /g, '_')}.pdf`,
+                    content: pdfBuffer
+                }]
+            });
+            return { ...mailResult, emailValido: to };
+        } catch (mailError) {
+            console.error('Error enviando el correo desde ReporteMensual:', mailError);
+            throw mailError;
+        }
     }
 
     /**

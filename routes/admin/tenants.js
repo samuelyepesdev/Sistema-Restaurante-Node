@@ -39,13 +39,13 @@ router.get('/', async (req, res) => {
 
 router.post('/', async (req, res) => {
     try {
-        const { nombre, slug, config, plan_id, admin_username, admin_password, admin_email, admin_nombre_completo, nit, direccion, telefono, ciudad, regimen_fiscal } = req.body;
+        const { nombre, email, slug, config, plan_id, admin_username, admin_password, admin_email, admin_nombre_completo, nit, direccion, telefono, ciudad, regimen_fiscal } = req.body;
         if (!nombre || !slug || !admin_username || !admin_password) {
             return res.status(400).send('Faltan nombre del restaurante, slug, usuario admin o contraseña.');
         }
         const configObj = typeof config === 'string' ? JSON.parse(config || '{}') : (config || {});
         const tenant = await TenantService.createTenant({
-            nombre, slug, config: configObj, plan_id: plan_id || 1,
+            nombre, email, slug, config: configObj, plan_id: plan_id || 1,
             nit, direccion, telefono, ciudad, regimen_fiscal
         });
         const tenantId = tenant.id;
@@ -76,7 +76,7 @@ router.put('/:id', async (req, res) => {
         const update = {};
 
         // Campos de texto simples
-        const textFields = ['nombre', 'nit', 'direccion', 'telefono', 'ciudad', 'regimen_fiscal'];
+        const textFields = ['nombre', 'email', 'nit', 'direccion', 'telefono', 'ciudad', 'regimen_fiscal'];
         textFields.forEach(f => {
             if (req.body[f] !== undefined) {
                 update[f] = req.body[f];
