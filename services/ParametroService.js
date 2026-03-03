@@ -56,6 +56,10 @@ class ParametroService {
         if (!tema) return [];
         return ParametroRepository.getParametrosByTemaId(tema.id, tenantId);
     }
+
+    static async getByTemaId(temaId, tenantId) {
+        return ParametroRepository.getParametrosByTemaId(temaId, tenantId);
+    }
 }
 
 module.exports = ParametroService;
