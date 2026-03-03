@@ -1,0 +1,32 @@
+<div class="row">
+    <div class="col-12">
+        <div class="card selector-card">
+            <div class="card-header"><i class="bi bi-building me-2"></i>Restaurante y usuario</div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <label class="form-label fw-semibold">Restaurante</label>
+                        <select id="selectTenant" class="form-select">
+                            <% (tenants || []).forEach(function(t) { %>
+                                <option value="<%= t.id %>" <%=Number(activeTenantId)===Number(t.id) ? 'selected' : ''
+                                    %>><%= t.nombre %>
+                                </option>
+                                <% }); %>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label fw-semibold">Usuario</label>
+                        <select id="selectUsuario" class="form-select">
+                            <option value="">-- Seleccione un usuario --</option>
+                            <% (usuarios || []).forEach(function(u) { %>
+                                <option value="<%= u.id %>">
+                                    <%= (u.nombre_completo || u.username) %> (<%= u.rol_nombre %>)
+                                </option>
+                                <% }); %>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

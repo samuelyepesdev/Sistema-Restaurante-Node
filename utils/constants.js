@@ -64,7 +64,9 @@ const PERMISSIONS = {
 
     // Perfil del Negocio
     PERFIL_VER: 'perfil.ver',
-    PERFIL_EDITAR: 'perfil.editar'
+    PERFIL_EDITAR: 'perfil.editar',
+    // Reportes
+    REPORTE_MENSUAL_TEST: 'reporte_mensual.test'
 };
 
 // Secciones para agrupar permisos en el panel (clave = título, valor = prefijo o permisos)
@@ -84,7 +86,8 @@ const PERMISSION_SECTIONS = {
     Eventos: ['eventos.ver', 'eventos.crear', 'eventos.editar', 'eventos.eliminar', 'ventas_evento.realizar'],
     Analítica: ['analitica.ver'],
     Predicción: ['prediccion.ver'],
-    Perfil: ['perfil.ver', 'perfil.editar']
+    Perfil: ['perfil.ver', 'perfil.editar'],
+    Reportes: ['reporte_mensual.test']
 };
 
 // Table states

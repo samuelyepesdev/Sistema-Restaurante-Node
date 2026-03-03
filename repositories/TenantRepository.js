@@ -15,7 +15,7 @@ class TenantRepository {
     static async findById(id) {
         if (id == null || id === undefined) return null;
         const [rows] = await db.query(
-            `SELECT t.id, t.nombre, t.slug, t.config, t.activo, t.plan_id, t.created_at, t.updated_at,
+            `SELECT t.id, t.nombre, t.email, t.slug, t.config, t.activo, t.plan_id, t.created_at, t.updated_at,
                     t.nit, t.direccion, t.telefono, t.ciudad, t.regimen_fiscal,
                     p.id AS plan_id_ref, p.nombre AS plan_nombre, p.slug AS plan_slug, p.descripcion AS plan_descripcion, p.caracteristicas AS plan_caracteristicas
              FROM tenants t
@@ -36,7 +36,7 @@ class TenantRepository {
     static async findByIdAndActive(id) {
         if (id == null || id === undefined) return null;
         const [rows] = await db.query(
-            `SELECT t.id, t.nombre, t.slug, t.config, t.activo, t.plan_id, t.created_at, t.updated_at,
+            `SELECT t.id, t.nombre, t.email, t.slug, t.config, t.activo, t.plan_id, t.created_at, t.updated_at,
                     t.nit, t.direccion, t.telefono, t.ciudad, t.regimen_fiscal,
                     p.id AS plan_id_ref, p.nombre AS plan_nombre, p.slug AS plan_slug, p.descripcion AS plan_descripcion, p.caracteristicas AS plan_caracteristicas
              FROM tenants t LEFT JOIN planes p ON t.plan_id = p.id WHERE t.id = ? AND t.activo = TRUE`,
@@ -55,7 +55,7 @@ class TenantRepository {
     static async findBySlug(slug) {
         if (!slug) return null;
         const [rows] = await db.query(
-            `SELECT t.id, t.nombre, t.slug, t.config, t.activo, t.plan_id, t.created_at, t.updated_at,
+            `SELECT t.id, t.nombre, t.email, t.slug, t.config, t.activo, t.plan_id, t.created_at, t.updated_at,
                     t.nit, t.direccion, t.telefono, t.ciudad, t.regimen_fiscal,
                     p.id AS plan_id_ref, p.nombre AS plan_nombre, p.slug AS plan_slug, p.descripcion AS plan_descripcion, p.caracteristicas AS plan_caracteristicas
              FROM tenants t LEFT JOIN planes p ON t.plan_id = p.id WHERE t.slug = ? AND t.activo = TRUE`,
@@ -102,6 +102,7 @@ class TenantRepository {
         return {
             id: row.id,
             nombre: row.nombre,
+            email: row.email,
             slug: row.slug,
             config: config || {},
             activo: Boolean(row.activo),

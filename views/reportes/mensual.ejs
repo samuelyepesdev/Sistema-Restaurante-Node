@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Reporte Mensual</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            border-bottom: 2px solid #28a745;
+            padding-bottom: 20px;
+            margin-bottom: 20px;
+        }
+
+        .header h1 {
+            margin: 0;
+            color: #28a745;
+        }
+
+        .header p {
+            margin: 5px 0 0;
+            font-size: 16px;
+            color: #666;
+        }
+
+        .flex-container {
+            display: flex;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .summary-card {
+            padding: 15px;
+            margin: 10px;
+            background: #f8f9fa;
+            border-left: 4px solid #28a745;
+            border-radius: 4px;
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .summary-card h3 {
+            margin-top: 0;
+            margin-bottom: 10px;
+            font-size: 16px;
+        }
+
+        .summary-card .value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #28a745;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 30px;
+        }
+
+        th,
+        td {
+            border: 1px solid #dee2e6;
+            padding: 10px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #f1f3f5;
+            font-weight: bold;
+        }
+
+        td.right {
+            text-align: right;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="header">
+        <h1>
+            <%= tenant.nombre %>
+        </h1>
+        <p>Reporte de Ventas Mensuales - <%= mes %>
+        </p>
+    </div>
+
+    <div class="flex-container">
+        <div class="summary-card">
+            <h3>Total Ingresos Brutos</h3>
+            <div class="value">
+                <%= formatMoney(totalMes) %>
+            </div>
+        </div>
+        <div class="summary-card">
+            <h3>Total Facturas/Pedidos</h3>
+            <div class="value">
+                <%= facturasMes %>
+            </div>
+        </div>
+    </div>
+
+    <h2>Top 5 Productos más Vendidos</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Producto</th>
+                <th>Categoría</th>
+                <th class="right">Cant. Vendida</th>
+                <th class="right">Total Ventas</th>
+            </tr>
+        </thead>
+        <tbody>
+            <% if (topProductos && topProductos.length> 0) { %>
+                <% topProductos.forEach(p=> { %>
+                    <tr>
+                        <td>
+                            <%= p.nombre %>
+                        </td>
+                        <td>
+                            <%= p.categoria_nombre %>
+                        </td>
+                        <td class="right">
+                            <%= p.total_cantidad %>
+                        </td>
+                        <td class="right">
+                            <%= formatMoney(p.total_ventas) %>
+                        </td>
+                    </tr>
+                    <% }) %>
+                        <% } else { %>
+                            <tr>
+                                <td colspan="4" style="text-align: center;">No hay datos para este mes.</td>
+                            </tr>
+                            <% } %>
+        </tbody>
+    </table>
+
+    <h2>Ventas por Categoría</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Categoría</th>
+                <th class="right">Facturas</th>
+                <th class="right">Total Ventas</th>
+            </tr>
+        </thead>
+        <tbody>
+            <% if (porCategoria && porCategoria.length> 0) { %>
+                <% porCategoria.forEach(c=> { %>
+                    <tr>
+                        <td>
+                            <%= c.categoria_nombre %>
+                        </td>
+                        <td class="right">
+                            <%= c.facturas_count %>
+                        </td>
+                        <td class="right">
+                            <%= formatMoney(c.total_ventas) %>
+                        </td>
+                    </tr>
+                    <% }) %>
+                        <% } else { %>
+                            <tr>
+                                <td colspan="3" style="text-align: center;">No hay datos para este mes.</td>
+                            </tr>
+                            <% } %>
+        </tbody>
+    </table>
+
+    <div style="text-align: center; font-size: 12px; color: #888; margin-top: 40px;">
+        Este reporte fue generado de forma automática.<br>
+        <strong>Sistema Restaurente/Fruver</strong>
+    </div>
+</body>
+
+</html>

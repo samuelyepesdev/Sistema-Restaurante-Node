@@ -1,0 +1,143 @@
+<!-- Modal Crear Restaurante (Diseño Limpio) -->
+<div class="modal fade" id="modalCreateTenant" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <form action="/admin/tenants" method="POST">
+                <div class="modal-header border-0 pb-0">
+                    <h5 class="modal-title fw-bold">Nuevo Establacimiento</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Nombre del Restaurante</label>
+                            <input name="nombre" class="form-control" placeholder="Ej: Pizzería Roma" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Slug de acceso</label>
+                            <input name="slug" class="form-control" placeholder="pizzeria-roma" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">NIT / Documento</label>
+                            <input name="nit" class="form-control" placeholder="NIT o Cédula">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Ciudad</label>
+                            <input name="ciudad" class="form-control">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Correo Electrónico (Reportes)</label>
+                            <input type="email" name="email" class="form-control" placeholder="admin@restaurante.com">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Tipo de Negocio</label>
+                            <select name="config[tipo_negocio]" class="form-select">
+                                <option value="restaurante">🍴 Restaurante</option>
+                                <option value="comidas_rapidas">🍔 Comidas Rápidas</option>
+                                <option value="panaderia">🥯 Panadería / Repostería</option>
+                                <option value="pasteleria">🍰 Pastelería Profesional</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Color Corporativo</label>
+                            <div class="d-flex align-items-center gap-2">
+                                <input type="color" name="config[colors][primary]"
+                                    class="form-control form-control-color"
+                                    style="width: 45px; height: 38px; padding: 2px;" value="#6366f1">
+                                <span class="small text-muted">Este color se usará para el Navbar y
+                                    botones.</span>
+                            </div>
+                        </div>
+                        <input type="hidden" name="plan_id" value="1">
+                        <hr>
+                        <h6 class="fw-bold mt-2">Usuario Administrador del Local</h6>
+                        <div class="col-md-6">
+                            <label class="form-label">Nombre del Administrador</label>
+                            <input name="admin_nombre_completo" class="form-control" placeholder="Nombre completo">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Correo del Administrador</label>
+                            <input name="admin_email" type="email" class="form-control" placeholder="admin@correo.com">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Nombre de Usuario (Login)</label>
+                            <input name="admin_username" class="form-control" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Contraseña inicial</label>
+                            <input name="admin_password" type="password" class="form-control" required minlength="6">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 pt-0">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cerrar</button>
+                    <button type="submit" class="btn btn-primary px-4">Crear Restaurante</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Añadir Usuario -->
+<div class="modal fade" id="modalCreateUser" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <form action="/admin/tenants/<%= selectedTenant ? selectedTenant.id : '' %>/users" method="POST">
+                <div class="modal-header">
+                    <h5 class="modal-title">Añadir Colaborador</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Username</label>
+                        <input name="username" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Contraseña</label>
+                        <input name="password" type="password" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Rol</label>
+                        <select name="rol_nombre" class="form-select">
+                            <option value="mesero">Mesero</option>
+                            <option value="cajero">Cajero</option>
+                            <option value="cocinero">Cocinero</option>
+                            <option value="admin">Administrador</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary">Crear Acceso</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Password Reset -->
+<div class="modal fade" id="modalCambiarPassword" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title fw-bold">Resetear Contraseña</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="modalPasswordUserId">
+                <input type="hidden" id="modalPasswordTenantId">
+                <div class="mb-3">
+                    <label class="form-label">Nueva Clave para <strong id="modalPasswordUsername"></strong></label>
+                    <input type="password" id="modalPasswordNew" class="form-control" placeholder="Nueva contraseña">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Confirmar Clave</label>
+                    <input type="password" id="modalPasswordConfirm" class="form-control">
+                </div>
+            </div>
+            <div class="modal-footer border-0 pt-0">
+                <button type="button" class="btn btn-primary w-100" id="btnGuardarPassword">Aplicar
+                    Cambio</button>
+            </div>
+        </div>
+    </div>
+</div>

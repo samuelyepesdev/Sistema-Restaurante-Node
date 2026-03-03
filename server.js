@@ -134,6 +134,20 @@ async function startServer() {
             console.log('- GET  /', '(Página principal)');
             console.log('- POST /api/facturas', '(Generar factura)');
             console.log('- GET  /api/facturas/:id/imprimir', '(Imprimir factura)');
+
+            // Programar tareas automáticas (Cron Jobs)
+            try {
+                const cron = require('node-cron');
+                const ReporteMensualService = require('./services/ReporteMensualService');
+                // Se ejecuta el primer (1) día de cada mes a las 6:00 AM (0 6 1 * *)
+                cron.schedule('0 6 1 * *', async () => {
+                    console.log('--- CRON: Iniciando envío de reportes mensuales ---');
+                    await ReporteMensualService.procesarCierreMensual();
+                });
+                console.log('--- Cron jobs iniciados exitosamente ---');
+            } catch (cronErr) {
+                console.error('Error iniciando cron jobs:', cronErr.message);
+            }
         });
 
         // Manejar errores del servidor

@@ -1,133 +1,34 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Eliminar ventas - Superadmin</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
-        <link rel="stylesheet" href="/css/admin-ventas.css">
+    <link rel="stylesheet" href="/css/admin-ventas.css">
 </head>
+
 <body>
-<%- include('../partials/navbar', { user, tenant: null, currentAdminPage: 'ventas' }) %>
+    <%- include('../partials/navbar', { user, tenant: null, currentAdminPage: 'ventas' }) %>
 
-<div class="container-fluid py-4">
-    <div class="admin-page-header">
-        <h1><i class="bi bi-trash me-2"></i>Eliminar ventas</h1>
-        <p class="mb-0">Solo superadmin. Selecciona el restaurante y elimina una venta (factura) si es necesario. Esta acción no se puede deshacer.</p>
-    </div>
-
-    <div class="card selector-card">
-        <div class="card-header"><i class="bi bi-building me-2"></i>Restaurante</div>
-        <div class="card-body">
-            <div class="row g-3 align-items-end">
-                <div class="col-md-4">
-                    <label class="form-label fw-semibold">Restaurante</label>
-                    <select id="selectTenant" class="form-select">
-                        <% (tenants || []).forEach(function(t) { %>
-                        <option value="<%= t.id %>" <%= Number(activeTenantId) === Number(t.id) ? 'selected' : '' %>><%= t.nombre %></option>
-                        <% }); %>
-                    </select>
-                </div>
-                <div class="col-md-2">
-                    <button type="button" class="btn btn-primary w-100" id="btnCargar">Ver ventas</button>
-                </div>
+        <div class="container-fluid py-4">
+            <div class="admin-page-header">
+                <h1><i class="bi bi-trash me-2"></i>Eliminar ventas</h1>
+                <p class="mb-0">Solo superadmin. Selecciona el restaurante y elimina una venta (factura) si es
+                    necesario. Esta acción no se puede deshacer.</p>
             </div>
+
+            <!-- Selector de Restaurante -->
+            <%- include('ventas/_selector', { ...locals, tenants, activeTenantId }) %>
+
+                <!-- Tabla de Ventas -->
+                <%- include('ventas/_table', { ...locals, ventas }) %>
         </div>
-    </div>
 
-    <div class="card selector-card">
-        <div class="card-header"><i class="bi bi-list-ul me-2"></i>Ventas del restaurante</div>
-        <div class="card-body p-0">
-            <div class="table-responsive">
-                <table class="table table-hover table-ventas mb-0">
-                    <thead class="table-light">
-                        <tr>
-                            <th>#</th>
-                            <th>Fecha</th>
-                            <th>Cliente</th>
-                            <th>Forma pago</th>
-                            <th>Tipo</th>
-                            <th class="text-end">Total</th>
-                            <th class="text-center">Acción</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tbodyVentas">
-                        <% (ventas || []).forEach(function(v) { %>
-                        <tr data-factura-id="<%= v.id %>">
-                            <td><%= typeof v.numero !== 'undefined' && v.numero != null ? v.numero : v.id %></td>
-                            <td><%= new Date(v.fecha).toLocaleString() %></td>
-                            <td><%= v.cliente_nombre %></td>
-                            <td><%= (v.forma_pago || '').charAt(0).toUpperCase() + (v.forma_pago || '').slice(1) %></td>
-                            <td><span class="badge bg-<%= v.evento_id ? 'info' : 'secondary' %>"><%= v.tipo_venta || (v.evento_id ? 'Evento' : 'Venta diaria') %></span></td>
-                            <td class="text-end">$<%= Number(v.total || 0).toFixed(2) %></td>
-                            <td class="text-center">
-                                <button type="button" class="btn btn-sm btn-outline-danger btn-eliminar-venta" data-id="<%= v.id %>" data-numero="<%= typeof v.numero !== 'undefined' && v.numero != null ? v.numero : v.id %>" data-cliente="<%= (v.cliente_nombre || '').replace(/"/g, '') %>" data-total="<%= v.total %>">
-                                    <i class="bi bi-trash"></i> Eliminar
-                                </button>
-                            </td>
-                        </tr>
-                        <% }); %>
-                    </tbody>
-                </table>
-            </div>
-            <% if (!ventas || ventas.length === 0) { %>
-            <div class="p-4 text-center text-muted">Selecciona un restaurante y pulsa "Ver ventas" para listar las facturas.</div>
-            <% } %>
-        </div>
-    </div>
-</div>
-
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-<script>
-(function() {
-    document.getElementById('selectTenant').addEventListener('change', function() {
-        var id = this.value;
-        window.location.href = '/admin/ventas?tenantId=' + encodeURIComponent(id);
-    });
-    document.getElementById('btnCargar').addEventListener('click', function() {
-        var id = document.getElementById('selectTenant').value;
-        window.location.href = '/admin/ventas?tenantId=' + encodeURIComponent(id);
-    });
-
-    document.getElementById('tbodyVentas').addEventListener('click', function(e) {
-        var btn = e.target.closest('.btn-eliminar-venta');
-        if (!btn) return;
-        var id = btn.getAttribute('data-id');
-        var numero = btn.getAttribute('data-numero') || id;
-        var cliente = btn.getAttribute('data-cliente') || '';
-        var total = btn.getAttribute('data-total') || '0';
-        if (!id) return;
-        Swal.fire({
-            title: '¿Eliminar esta venta?',
-            html: 'Factura #' + numero + '<br>Cliente: ' + cliente + '<br>Total: $' + parseFloat(total).toFixed(2) + '<br><strong>Esta acción no se puede deshacer.</strong>',
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#dc3545',
-            cancelButtonText: 'Cancelar',
-            confirmButtonText: 'Sí, eliminar'
-        }).then(function(result) {
-            if (!result.isConfirmed) return;
-            fetch('/admin/ventas/' + id, {
-                method: 'DELETE',
-                credentials: 'same-origin',
-                headers: { 'Content-Type': 'application/json' }
-            })
-            .then(function(r) { return r.json().then(function(d) { return { ok: r.ok, data: d }; }); })
-            .then(function(o) {
-                if (o.ok) {
-                    Swal.fire({ icon: 'success', title: o.data.message || 'Venta eliminada' });
-                    var row = document.querySelector('tr[data-factura-id="' + id + '"]');
-                    if (row) row.remove();
-                } else {
-                    Swal.fire({ icon: 'error', title: o.data.error || 'Error' });
-                }
-            })
-            .catch(function() { Swal.fire({ icon: 'error', title: 'Error de conexión' }); });
-        });
-    });
-})();
-</script>
+        <!-- Scripts -->
+        <%- include('ventas/_scripts', { ...locals }) %>
 </body>
+
 </html>

@@ -1,0 +1,20 @@
+<div class="card selector-card">
+    <div class="card-header"><i class="bi bi-building me-2"></i>Restaurante</div>
+    <div class="card-body">
+        <div class="row g-3 align-items-end">
+            <div class="col-md-4">
+                <label class="form-label fw-semibold">Restaurante</label>
+                <select id="selectTenant" class="form-select">
+                    <% (tenants || []).forEach(function(t) { %>
+                        <option value="<%= t.id %>" <%=Number(activeTenantId)===Number(t.id) ? 'selected' : '' %>><%=
+                                t.nombre %>
+                        </option>
+                        <% }); %>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <button type="button" class="btn btn-primary w-100" id="btnCargar">Ver ventas</button>
+            </div>
+        </div>
+    </div>
+</div>

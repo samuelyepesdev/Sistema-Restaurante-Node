@@ -1,0 +1,77 @@
+<div class="tab-pane fade" id="users">
+    <div class="glass-card p-0 overflow-hidden">
+        <div class="p-4 d-flex justify-content-between align-items-center">
+            <h6 class="mb-0 fw-bold">Personal Administrativo</h6>
+            <button class="btn btn-dark btn-sm rounded-pill px-3" data-bs-toggle="modal"
+                data-bs-target="#modalCreateUser">
+                <i class="bi bi-person-plus me-2"></i>Añadir Usuario
+            </button>
+        </div>
+        <div class="table-responsive">
+            <table class="table modern-table mb-0 align-middle">
+                <thead>
+                    <tr>
+                        <th class="ps-4">Usuario / Email</th>
+                        <th>Rol del Sistema</th>
+                        <th>Estado</th>
+                        <th class="text-end pe-4">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% tenantUsers.forEach(u=> { %>
+                        <tr class="user-row">
+                            <td class="ps-4">
+                                <div class="fw-semibold">
+                                    <%= u.username %>
+                                </div>
+                                <div class="text-muted small">
+                                    <%= u.email || 'Sin correo registrado' %>
+                                </div>
+                            </td>
+                            <td>
+                                <form onsubmit="return handleRoleChange(event, <%= u.id %>, <%= selectedTenant.id %>)"
+                                    class="d-flex gap-2">
+                                    <select name="rol_nombre" class="form-select form-select-sm" style="width: 140px;">
+                                        <option value="admin" <%=u.rol==='admin' ? 'selected' : '' %>>Administrador
+                                        </option>
+                                        <option value="mesero" <%=u.rol==='mesero' ? 'selected' : '' %>>Mesero</option>
+                                        <option value="cajero" <%=u.rol==='cajero' ? 'selected' : '' %>>Cajero</option>
+                                        <option value="cocinero" <%=u.rol==='cocinero' ? 'selected' : '' %>>Cocinero
+                                        </option>
+                                    </select>
+                                    <button type="submit" class="btn btn-icon btn-light"><i
+                                            class="bi bi-check2"></i></button>
+                                </form>
+                            </td>
+                            <td>
+                                <span
+                                    class="badge rounded-pill bg-<%= u.activo ? 'success' : 'danger' %>-subtle text-<%= u.activo ? 'success' : 'danger' %>">
+                                    <%= u.activo ? 'Activo' : 'Bloqueado' %>
+                                </span>
+                            </td>
+                            <td class="text-end pe-4">
+                                <div class="dropdown">
+                                    <button class="btn btn-icon btn-light" data-bs-toggle="dropdown"><i
+                                            class="bi bi-three-dots-vertical"></i></button>
+                                    <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0">
+                                        <li><a class="dropdown-item" href="javascript:void(0)"
+                                                onclick="openModalPassword(<%= u.id %>, '<%= u.username %>', <%= selectedTenant.id %>)"><i
+                                                    class="bi bi-key me-2"></i>Resetear
+                                                Clave</a></li>
+                                        <li><a class="dropdown-item text-<%= u.activo ? 'danger' : 'success' %>"
+                                                href="javascript:void(0)"
+                                                onclick="toggleUserStatus(<%= u.id %>, <%= selectedTenant.id %>, <%= u.activo ? 'false' : 'true' %>)">
+                                                <i
+                                                    class="bi bi-<%= u.activo ? 'shield-lock' : 'shield-check' %> me-2"></i>
+                                                <%= u.activo ? 'Bloquear Acceso' : 'Desbloquear Acceso' %>
+                                            </a></li>
+                                    </ul>
+                                </div>
+                            </td>
+                        </tr>
+                        <% }) %>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

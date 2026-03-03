@@ -3,7 +3,7 @@ const db = require('../config/database');
 class TenantService {
     static async getAllTenants() {
         const [rows] = await db.query(`
-            SELECT t.id, t.nombre, t.slug, t.activo, t.config, t.plan_id, t.created_at, 
+            SELECT t.id, t.nombre, t.email, t.slug, t.activo, t.config, t.plan_id, t.created_at, 
                    t.nit, t.direccion, t.telefono, t.ciudad, t.regimen_fiscal,
                    p.nombre AS plan_nombre, p.slug AS plan_slug
             FROM tenants t
@@ -18,6 +18,7 @@ class TenantService {
             return {
                 id: row.id,
                 nombre: row.nombre,
+                email: row.email,
                 slug: row.slug,
                 activo: row.activo,
                 config: config || {},
@@ -35,25 +36,26 @@ class TenantService {
     }
 
     static async createTenant(data) {
-        const { nombre, slug, config = {}, activo = true, plan_id = 1 } = data;
+        const { nombre, email, slug, config = {}, activo = true, plan_id = 1, nit, direccion, telefono, ciudad, regimen_fiscal } = data;
         const [existing] = await db.query('SELECT id FROM tenants WHERE slug = ?', [slug]);
         if (existing.length > 0) {
             throw new Error('El slug ya existe');
         }
         const planId = plan_id != null && plan_id !== '' ? parseInt(plan_id, 10) : 1;
         const [result] = await db.query(
-            'INSERT INTO tenants (nombre, slug, config, activo, plan_id, nit, direccion, telefono, ciudad, regimen_fiscal) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+            'INSERT INTO tenants (nombre, email, slug, config, activo, plan_id, nit, direccion, telefono, ciudad, regimen_fiscal) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
             [
                 nombre,
+                email || null,
                 slug,
                 JSON.stringify(config),
                 activo ? 1 : 0,
                 planId,
-                data.nit || null,
-                data.direccion || null,
-                data.telefono || null,
-                data.ciudad || null,
-                data.regimen_fiscal || 'No responsable de IVA'
+                nit || null,
+                direccion || null,
+                telefono || null,
+                ciudad || null,
+                regimen_fiscal || 'No responsable de IVA'
             ]
         );
         const tenantId = result.insertId;
@@ -86,7 +88,7 @@ class TenantService {
         const payload = [];
         const parts = [];
 
-        const fields = ['nombre', 'activo', 'plan_id', 'nit', 'direccion', 'telefono', 'ciudad', 'regimen_fiscal'];
+        const fields = ['nombre', 'email', 'activo', 'plan_id', 'nit', 'direccion', 'telefono', 'ciudad', 'regimen_fiscal'];
         fields.forEach(f => {
             if (data[f] !== undefined) {
                 parts.push(`${f} = ?`);

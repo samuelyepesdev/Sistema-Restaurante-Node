@@ -1,0 +1,45 @@
+<!-- Modal Tema -->
+<div class="modal fade" id="modalTema" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalTemaTitle">Nuevo tema</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="temaId">
+                <div class="mb-2">
+                    <label class="form-label">Nombre</label>
+                    <input type="text" class="form-control" id="temaNombre" required placeholder="Ej: Unidades de masa">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" id="btnGuardarTema">Guardar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Parámetro -->
+<div class="modal fade" id="modalParametro" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalParametroTitle">Nuevo parámetro</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="parametroId">
+                <div class="mb-2">
+                    <label class="form-label">Nombre</label>
+                    <input type="text" class="form-control" id="parametroNombre" required placeholder="Ej: kg, bebidas">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" id="btnGuardarParametro">Guardar</button>
+            </div>
+        </div>
+    </div>
+</div>

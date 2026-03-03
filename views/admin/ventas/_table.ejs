@@ -1,0 +1,56 @@
+<div class="card selector-card">
+    <div class="card-header"><i class="bi bi-list-ul me-2"></i>Ventas del restaurante</div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover table-ventas mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>#</th>
+                        <th>Fecha</th>
+                        <th>Cliente</th>
+                        <th>Forma pago</th>
+                        <th>Tipo</th>
+                        <th class="text-end">Total</th>
+                        <th class="text-center">Acción</th>
+                    </tr>
+                </thead>
+                <tbody id="tbodyVentas">
+                    <% (ventas || []).forEach(function(v) { %>
+                        <tr data-factura-id="<%= v.id %>">
+                            <td>
+                                <%= typeof v.numero !=='undefined' && v.numero !=null ? v.numero : v.id %>
+                            </td>
+                            <td>
+                                <%= new Date(v.fecha).toLocaleString() %>
+                            </td>
+                            <td>
+                                <%= v.cliente_nombre %>
+                            </td>
+                            <td>
+                                <%= (v.forma_pago || '' ).charAt(0).toUpperCase() + (v.forma_pago || '' ).slice(1) %>
+                            </td>
+                            <td><span class="badge bg-<%= v.evento_id ? 'info' : 'secondary' %>">
+                                    <%= v.tipo_venta || (v.evento_id ? 'Evento' : 'Venta diaria' ) %>
+                                </span></td>
+                            <td class="text-end">$<%= Number(v.total || 0).toFixed(2) %>
+                            </td>
+                            <td class="text-center">
+                                <button type="button" class="btn btn-sm btn-outline-danger btn-eliminar-venta"
+                                    data-id="<%= v.id %>"
+                                    data-numero="<%= typeof v.numero !== 'undefined' && v.numero != null ? v.numero : v.id %>"
+                                    data-cliente="<%= (v.cliente_nombre || '').replace(/" /g, '' ) %>" data-total="<%=
+                                        v.total %>">
+                                        <i class="bi bi-trash"></i> Eliminar
+                                </button>
+                            </td>
+                        </tr>
+                        <% }); %>
+                </tbody>
+            </table>
+        </div>
+        <% if (!ventas || ventas.length===0) { %>
+            <div class="p-4 text-center text-muted">Selecciona un restaurante y pulsa "Ver ventas" para listar las
+                facturas.</div>
+            <% } %>
+    </div>
+</div>

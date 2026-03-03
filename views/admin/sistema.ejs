@@ -1,160 +1,79 @@
-<% const selectedTenant = activeTenant || (tenants && tenants.find(t => t.id === Number(activeTenantId))); %>
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistema - Temas y parámetros</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+<% const selectedTenant=activeTenant || (tenants && tenants.find(t=> t.id === Number(activeTenantId))); %>
+    <!DOCTYPE html>
+    <html lang="es">
+
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Sistema - Temas y parámetros</title>
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
         <link rel="stylesheet" href="/css/admin-sistema.css">
-</head>
-<body>
-<%- include('../partials/navbar', { user, tenant: selectedTenant || null, currentAdminPage: 'sistema' }) %>
+    </head>
 
-<div class="container-fluid py-4">
-    <div class="admin-page-header d-flex flex-wrap align-items-center justify-content-between gap-3">
-        <div>
-            <h1><i class="bi bi-gear-wide-connected me-2"></i>Sistema</h1>
-            <p class="text-muted mb-0">Gestioná temas y parámetros por restaurante (tenant).</p>
-        </div>
-        <div class="d-flex align-items-center gap-2">
-            <label class="form-label mb-0 text-nowrap">Restaurante:</label>
-            <select class="form-select form-select-lg" id="selectorTenant" style="min-width: 220px;">
-                <option value="">Seleccionar restaurante</option>
-                <% (tenants || []).forEach(t => { %>
-                <option value="<%= t.id %>" <%= Number(activeTenantId) === t.id ? 'selected' : '' %>><%= t.nombre %></option>
-                <% }); %>
-            </select>
-        </div>
-    </div>
+    <body>
+        <%- include('../partials/navbar', { user, tenant: selectedTenant || null, currentAdminPage: 'sistema' }) %>
 
-    <% if (activeTenantId && selectedTenant) { %>
-    <input type="hidden" id="tenantId" value="<%= activeTenantId %>">
-    <div class="card">
-        <div class="card-header">
-            <ul class="nav nav-tabs card-header-tabs" id="sistemaTab" role="tablist">
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link active" id="temas-tab" data-bs-toggle="tab" data-bs-target="#temas-pane" type="button">Temas</button>
-                </li>
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link" id="parametros-tab" data-bs-toggle="tab" data-bs-target="#parametros-pane" type="button">Parámetros</button>
-                </li>
-            </ul>
-        </div>
-        <div class="card-body">
-            <div class="tab-content" id="sistemaTabContent">
-                <!-- Tab Temas -->
-                <div class="tab-pane fade show active" id="temas-pane" role="tabpanel">
-                    <p class="text-muted small mb-3">Temas agrupan parámetros (ej: "Unidades de masa" → kg, lb, g; "Alimentos" → bebidas, comidas). Asigná parámetros a cada tema.</p>
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <div class="card h-100">
-                                <div class="card-header d-flex justify-content-between align-items-center">
-                                    <span><i class="bi bi-collection me-2"></i>Temas</span>
-                                    <button type="button" class="btn btn-sm btn-primary" id="btnNuevoTema"><i class="bi bi-plus"></i> Nuevo</button>
-                                </div>
-                                <div class="card-body p-0">
-                                    <ul class="list-group list-group-flush" id="listaTemas"></ul>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <div class="card h-100">
-                                <div class="card-header d-flex justify-content-between align-items-center">
-                                    <span><i class="bi bi-tags me-2"></i>Parámetros</span>
-                                    <button type="button" class="btn btn-sm btn-primary" id="btnNuevoParametro"><i class="bi bi-plus"></i> Nuevo</button>
-                                </div>
-                                <div class="card-body p-0">
-                                    <ul class="list-group list-group-flush" id="listaParametros"></ul>
-                                </div>
-                            </div>
-                        </div>
+            <div class="container-fluid py-4">
+                <div class="admin-page-header d-flex flex-wrap align-items-center justify-content-between gap-3">
+                    <div>
+                        <h1><i class="bi bi-gear-wide-connected me-2"></i>Sistema</h1>
+                        <p class="text-muted mb-0">Gestioná temas y parámetros por restaurante (tenant).</p>
                     </div>
-                    <div class="card d-none" id="cardTemaParametros">
+                    <div class="d-flex align-items-center gap-2">
+                        <label class="form-label mb-0 text-nowrap">Restaurante:</label>
+                        <select class="form-select form-select-lg" id="selectorTenant" style="min-width: 220px;">
+                            <option value="">Seleccionar restaurante</option>
+                            <% (tenants || []).forEach(t=> { %>
+                                <option value="<%= t.id %>" <%=Number(activeTenantId)===t.id ? 'selected' : '' %>><%=
+                                        t.nombre %>
+                                </option>
+                                <% }); %>
+                        </select>
+                    </div>
+                </div>
+
+                <% if (activeTenantId && selectedTenant) { %>
+                    <input type="hidden" id="tenantId" value="<%= activeTenantId %>">
+                    <div class="card">
                         <div class="card-header">
-                            <i class="bi bi-link-45deg me-2"></i>Parámetros del tema: <strong id="temaParametrosNombre"></strong>
+                            <ul class="nav nav-tabs card-header-tabs" id="sistemaTab" role="tablist">
+                                <li class="nav-item" role="presentation">
+                                    <button class="nav-link active" id="temas-tab" data-bs-toggle="tab"
+                                        data-bs-target="#temas-pane" type="button">Temas</button>
+                                </li>
+                                <li class="nav-item" role="presentation">
+                                    <button class="nav-link" id="parametros-tab" data-bs-toggle="tab"
+                                        data-bs-target="#parametros-pane" type="button">Parámetros</button>
+                                </li>
+                            </ul>
                         </div>
                         <div class="card-body">
-                            <p class="small text-muted">Seleccioná los parámetros que pertenecen a este tema.</p>
-                            <div id="checkboxesParametrosTema"></div>
-                            <button type="button" class="btn btn-sm btn-primary mt-2" id="btnGuardarTemaParametros">Guardar</button>
+                            <div class="tab-content" id="sistemaTabContent">
+                                <!-- Tab Temas -->
+                                <%- include('sistema/_tab_temas', { ...locals, selectedTenant }) %>
+
+                                    <!-- Tab Parámetros -->
+                                    <%- include('sistema/_tab_parametros', { ...locals, selectedTenant }) %>
+                            </div>
                         </div>
                     </div>
-                </div>
-
-                <!-- Tab Parámetros (solo lista en segundo tab, misma lista que en Temas para editar/eliminar) -->
-                <div class="tab-pane fade" id="parametros-pane" role="tabpanel">
-                    <p class="text-muted small mb-3">Parámetros disponibles para este restaurante. Creá y editá desde aquí o desde la pestaña Temas.</p>
-                    <div class="card">
-                        <div class="card-header d-flex justify-content-between align-items-center">
-                            <span><i class="bi bi-tags me-2"></i>Listado de parámetros</span>
-                            <button type="button" class="btn btn-sm btn-primary" id="btnNuevoParametro2"><i class="bi bi-plus"></i> Nuevo parámetro</button>
+                    <% } else { %>
+                        <div class="alert alert-info">
+                            <i class="bi bi-info-circle me-2"></i>Seleccioná un restaurante arriba para gestionar sus
+                            temas y parámetros.
                         </div>
-                        <div class="card-body p-0">
-                            <ul class="list-group list-group-flush" id="listaParametros2"></ul>
-                        </div>
-                    </div>
-                </div>
+                        <% } %>
             </div>
-        </div>
-    </div>
-    <% } else { %>
-    <div class="alert alert-info">
-        <i class="bi bi-info-circle me-2"></i>Seleccioná un restaurante arriba para gestionar sus temas y parámetros.
-    </div>
-    <% } %>
-</div>
 
-<!-- Modal Tema -->
-<div class="modal fade" id="modalTema" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="modalTemaTitle">Nuevo tema</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <input type="hidden" id="temaId">
-                <div class="mb-2">
-                    <label class="form-label">Nombre</label>
-                    <input type="text" class="form-control" id="temaNombre" required placeholder="Ej: Unidades de masa">
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                <button type="button" class="btn btn-primary" id="btnGuardarTema">Guardar</button>
-            </div>
-        </div>
-    </div>
-</div>
+            <!-- Modales -->
+            <%- include('sistema/_modales') %>
 
-<!-- Modal Parámetro -->
-<div class="modal fade" id="modalParametro" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="modalParametroTitle">Nuevo parámetro</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <input type="hidden" id="parametroId">
-                <div class="mb-2">
-                    <label class="form-label">Nombre</label>
-                    <input type="text" class="form-control" id="parametroNombre" required placeholder="Ej: kg, bebidas">
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                <button type="button" class="btn btn-primary" id="btnGuardarParametro">Guardar</button>
-            </div>
-        </div>
-    </div>
-</div>
+                <!-- Scripts -->
+                <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+                <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+                <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+                <script src="/js/admin/sistema.js"></script>
+    </body>
 
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-<script src="/js/admin/sistema.js"></script>
-</body>
-</html>
+    </html>

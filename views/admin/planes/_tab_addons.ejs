@@ -1,0 +1,20 @@
+<div class="tab-pane fade" id="tabA">
+    <p class="text-muted small mb-3">Edita el precio de cada add-on.</p>
+    <% for (var xi=0; xi < (addons ? addons.length : 0); xi++) { var a=addons[xi]; %>
+        <div class="addon-row">
+            <div>
+                <strong style="font-size:.88rem;">
+                    <%= a.nombre %>
+                </strong>
+                <br><small class="text-muted">
+                    <%= a.descripcion %>
+                </small>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+                <input type="number" class="ap-input" id="ap-<%= a.id %>" value="<%= a.precio %>" min="0" step="100">
+                <button class="btn-savea" onclick="saveAddon(<%= a.id %>)"><i class="bi bi-floppy"></i>
+                    Guardar</button>
+            </div>
+        </div>
+        <% } %>
+</div>
