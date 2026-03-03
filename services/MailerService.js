@@ -7,18 +7,21 @@ class MailerService {
             console.log('--- Usando TRANSPORE SMTP REAL ---');
             return nodemailer.createTransport({
                 host: process.env.SMTP_HOST || 'smtp.gmail.com',
-                port: Number(process.env.SMTP_PORT) || 465,
+                port: Number(process.env.SMTP_PORT) || 587,
                 secure: String(process.env.SMTP_SECURE) === 'true',
                 auth: {
                     user: process.env.SMTP_USER,
                     pass: process.env.SMTP_PASS,
                 },
-                connectionTimeout: 20000,
-                greetingTimeout: 15000,
-                socketTimeout: 30000,
-                family: 4, // <-- ESTO OBLIGA A USAR IPv4 (AHORA TAMBIÉN A NIVEL GLOBAL)
+                connectionTimeout: 40000, // 40 segundos para conectar
+                greetingTimeout: 30000,   // 30 segundos para el saludo
+                socketTimeout: 60000,     // 60 segundos de lectura total
+                family: 4,
+                debug: true,              // <-- ESTO NOS DARÁ EL LOG DETALLADO
+                logger: true,             // <-- ESTO TAMBIÉN
                 tls: {
-                    rejectUnauthorized: false
+                    rejectUnauthorized: false,
+                    minVersion: 'TLSv1.2'
                 }
             });
         }
