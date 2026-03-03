@@ -11,9 +11,31 @@
                         id="nuevoCodigo" required></div>
                 <div class="mb-2"><label class="form-label">Nombre</label><input type="text" class="form-control"
                         id="nuevoNombre" required></div>
+                <div class="mb-2">
+                    <label class="form-label">Categoría</label>
+                    <select class="form-select" id="nuevoCategoriaId">
+                        <option value="">Seleccione una categoría</option>
+                        <% categoriasInsumo.forEach(c=> { %>
+                            <option value="<%= c.id %>">
+                                <%= c.name %>
+                            </option>
+                            <% }) %>
+                    </select>
+                </div>
                 <div class="row">
-                    <div class="col-6"><label class="form-label">Unidad compra</label><input type="text"
-                            class="form-control" id="nuevoUnidadCompra" value="UND"></div>
+                    <div class="col-6">
+                        <label class="form-label">Unidad de medida (compra)</label>
+                        <select class="form-select" id="nuevoUnidadMedidaId">
+                            <option value="">Seleccione o escriba...</option>
+                            <% unidadesCompra.forEach(u=> { %>
+                                <option value="<%= u.id %>" data-name="<%= u.name %>">
+                                    <%= u.name %>
+                                </option>
+                                <% }) %>
+                        </select>
+                        <input type="text" class="form-control d-none mt-2" id="nuevoUnidadCompraText"
+                            placeholder="Otra..." value="UND">
+                    </div>
                     <div class="col-6"><label class="form-label">Unidad base</label><select class="form-select"
                             id="nuevoUnidadBase">
                             <option value="g">g</option>
@@ -22,8 +44,9 @@
                         </select></div>
                 </div>
                 <div class="row mt-2">
-                    <div class="col-6"><label class="form-label" title="Tamaño en el que viene el producto">Presentación (Cant)</label><input type="number" step="0.01"
-                            class="form-control" id="nuevoCantidadCompra" value="1"></div>
+                    <div class="col-6"><label class="form-label" title="Tamaño en el que viene el producto">Presentación
+                            (Cant)</label><input type="number" step="0.01" class="form-control" id="nuevoCantidadCompra"
+                            value="1"></div>
                     <div class="col-6"><label class="form-label">Precio compra</label><input type="number" step="0.01"
                             class="form-control" id="nuevoPrecioCompra" value="0"></div>
                 </div>
@@ -31,7 +54,8 @@
                     <div class="col-6"><label class="form-label">Stock mínimo</label><input type="number" step="0.0001"
                             class="form-control" id="nuevoStockMinimo" value="0"></div>
                     <div class="col-6"><label class="form-label">Stock inicial</label><input type="number" step="0.0001"
-                            class="form-control" id="nuevoStockInicial" value="0" title="Cantidad disponible actualmente"></div>
+                            class="form-control" id="nuevoStockInicial" value="0"
+                            title="Cantidad disponible actualmente"></div>
                 </div>
             </div>
             <div class="modal-footer"><button type="button" class="btn btn-secondary"

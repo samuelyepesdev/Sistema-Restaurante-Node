@@ -46,6 +46,14 @@ router.get('/', async (req, res) => {
         const { productos } = await ProductService.getAllForView(tenantId);
         const tipoNegocio = (req.tenant && req.tenant.config && req.tenant.config.tipo_negocio) ? req.tenant.config.tipo_negocio : 'restaurante';
         const costeoPlantillaReposteria = tipoNegocio === 'panaderia' || tipoNegocio === 'pasteleria';
+
+        const TemaRepository = require('../../repositories/TemaRepository');
+        const temaCat = await TemaRepository.findByName('CATEGORIAS DE INSUMO', tenantId);
+        const temaUni = await TemaRepository.findByName('UNIDADES DE COMPRA', tenantId);
+        let categoriasInsumo = [], unidadesCompra = [];
+        if (temaCat) categoriasInsumo = await ParametroService.getByTemaId(temaCat.id, tenantId);
+        if (temaUni) unidadesCompra = await ParametroService.getByTemaId(temaUni.id, tenantId);
+
         res.render('costeo/index', {
             productos: productos || [],
             user: req.user,
@@ -54,7 +62,9 @@ router.get('/', async (req, res) => {
             tenants: [],
             costeoPlantillaReposteria,
             tipoNegocio,
-            allowedByPlan: res.locals.allowedByPlan || {}
+            allowedByPlan: res.locals.allowedByPlan || {},
+            categoriasInsumo,
+            unidadesCompra
         });
     } catch (error) {
         console.error('Error al cargar costeo:', error);

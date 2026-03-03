@@ -130,12 +130,46 @@
         document.getElementById('insumoId').value = insumo ? insumo.id : '';
         document.getElementById('insumoCodigo').value = insumo ? insumo.codigo : '';
         document.getElementById('insumoNombre').value = insumo ? insumo.nombre : '';
-        document.getElementById('insumoUnidad').value = insumo ? insumo.unidad_compra : 'UND';
+
+        const selectMedida = document.getElementById('insumoUnidadId');
+        const textMedida = document.getElementById('insumoUnidadText');
+        const selectCategoria = document.getElementById('insumoCategoriaId');
+
+        if (insumo) {
+            if (insumo.unidad_medida_id) {
+                selectMedida.value = insumo.unidad_medida_id;
+                textMedida.classList.add('d-none');
+            } else {
+                selectMedida.value = "";
+                textMedida.value = insumo.unidad_compra || 'UND';
+                textMedida.classList.remove('d-none');
+            }
+            if (insumo.categoria_id) {
+                selectCategoria.value = insumo.categoria_id;
+            } else {
+                selectCategoria.value = "";
+            }
+        } else {
+            selectMedida.value = "";
+            textMedida.value = "UND";
+            textMedida.classList.remove('d-none');
+            selectCategoria.value = "";
+        }
+
         document.getElementById('insumoCantidadCompra').value = insumo != null && insumo.cantidad_compra != null ? insumo.cantidad_compra : '1';
         document.getElementById('insumoPrecioCompra').value = insumo != null ? (insumo.precio_compra != null ? insumo.precio_compra : '0') : '0';
         title.textContent = insumo ? 'Editar Insumo' : 'Nuevo Insumo';
         bootstrap.Modal.getOrCreateInstance(modal).show();
     }
+
+    document.getElementById('insumoUnidadId')?.addEventListener('change', function () {
+        const textMedida = document.getElementById('insumoUnidadText');
+        if (this.value === "") {
+            textMedida.classList.remove('d-none');
+        } else {
+            textMedida.classList.add('d-none');
+        }
+    });
 
     document.getElementById('btnNuevoInsumo')?.addEventListener('click', (e) => {
         e.preventDefault();
@@ -154,20 +188,29 @@
 
     document.getElementById('btnGuardarInsumo')?.addEventListener('click', () => {
         const id = document.getElementById('insumoId').value;
+        const selectMedida = document.getElementById('insumoUnidadId');
+        const textMedida = document.getElementById('insumoUnidadText');
         const payload = {
             codigo: document.getElementById('insumoCodigo').value.trim(),
             nombre: document.getElementById('insumoNombre').value.trim(),
-            unidad_compra: document.getElementById('insumoUnidad').value,
+            unidad_compra: selectMedida.value ? selectMedida.options[selectMedida.selectedIndex].dataset.name || textMedida.value : textMedida.value || 'UND',
+            unidad_medida_id: selectMedida.value || null,
+            categoria_id: document.getElementById('insumoCategoriaId').value || null,
             cantidad_compra: parseFloat(document.getElementById('insumoCantidadCompra').value) || 1,
             precio_compra: parseFloat(document.getElementById('insumoPrecioCompra').value) || 0
         };
         const modalEl = document.getElementById('insumoModal');
         const instance = bootstrap.Modal.getInstance(modalEl);
-        const promise = id ? api('/api/insumos/' + id, { method: 'PUT', body: JSON.stringify(payload) }) : api('/api/insumos', { method: 'POST', body: JSON.stringify(payload) });
+        let promise;
+        if (id) {
+            promise = api('/api/insumos/' + id, { method: 'PUT', body: JSON.stringify(payload) });
+        } else {
+            promise = api('/api/insumos', { method: 'POST', body: JSON.stringify(payload) });
+        }
         promise.then(() => {
             if (instance) instance.hide();
             quitarBackdropModal();
-            loadInsumos(getInsumosFilters()).catch(() => {});
+            loadInsumos(getInsumosFilters()).catch(() => { });
             showToast('Insumo guardado', 'success');
         }).catch(err => {
             if (instance) instance.hide();

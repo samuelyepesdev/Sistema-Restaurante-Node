@@ -20,12 +20,23 @@ router.get('/', async (req, res) => {
         const tenantId = getTenantId(req);
         const insumos = await InventarioService.listInsumos(tenantId, {});
         const resumen = await InventarioService.getResumenValorizacion(tenantId);
+
+        const TemaRepository = require('../../repositories/TemaRepository');
+        const ParametroService = require('../../services/ParametroService');
+        const temaCat = await TemaRepository.findByName('CATEGORIAS DE INSUMO', tenantId);
+        const temaUni = await TemaRepository.findByName('UNIDADES DE COMPRA', tenantId);
+        let categoriasInsumo = [], unidadesCompra = [];
+        if (temaCat) categoriasInsumo = await ParametroService.getByTemaId(temaCat.id, tenantId);
+        if (temaUni) unidadesCompra = await ParametroService.getByTemaId(temaUni.id, tenantId);
+
         res.render('inventario/index', {
             user: req.user,
             tenant: req.tenant,
             insumos: insumos || [],
             resumen: resumen || {},
-            allowedByPlan: res.locals.allowedByPlan || {}
+            allowedByPlan: res.locals.allowedByPlan || {},
+            categoriasInsumo,
+            unidadesCompra
         });
     } catch (e) {
         if (e.message === 'Contexto de tenant no disponible') {
