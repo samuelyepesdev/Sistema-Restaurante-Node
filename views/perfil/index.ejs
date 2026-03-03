@@ -24,6 +24,20 @@
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
         <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
         <script>
+            function previewImage(input) {
+                if (input.files && input.files[0]) {
+                    var reader = new FileReader();
+                    reader.onload = function (e) {
+                        const plc = document.getElementById('previewLogoPlaceholder');
+                        if (plc) plc.classList.add('d-none');
+                        const img = document.getElementById('previewLogo');
+                        img.src = e.target.result;
+                        img.classList.remove('d-none');
+                    }
+                    reader.readAsDataURL(input.files[0]);
+                }
+            }
+
             function setTemplate(nav, text, pri, sec, cPri, cSec, mLibre = '#22c55e', mOcupada = '#f59e0b') {
                 document.getElementById('colorNavbar').value = nav;
                 document.getElementById('colorNavbarText').value = text;
@@ -43,27 +57,29 @@
                 btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Guardando...';
                 btn.disabled = true;
 
-                const data = {
-                    nombre: document.getElementById('nombre').value,
-                    direccion: document.getElementById('direccion').value,
-                    telefono: document.getElementById('telefono').value,
-                    colores: JSON.stringify({
-                        navbar: document.getElementById('colorNavbar').value,
-                        navbarText: document.getElementById('colorNavbarText').value,
-                        primary: document.getElementById('colorPrimary').value,
-                        secondary: document.getElementById('colorSecondary').value,
-                        cardPrimary: document.getElementById('colorCardPrimary').value,
-                        cardSecondary: document.getElementById('colorCardSecondary').value,
-                        mesaLibre: document.getElementById('colorMesaLibre').value,
-                        mesaOcupada: document.getElementById('colorMesaOcupada').value
-                    })
-                };
+                const fd = new FormData();
+                fd.append('nombre', document.getElementById('nombre').value);
+                fd.append('direccion', document.getElementById('direccion').value);
+                fd.append('telefono', document.getElementById('telefono').value);
+                fd.append('colores', JSON.stringify({
+                    navbar: document.getElementById('colorNavbar').value,
+                    navbarText: document.getElementById('colorNavbarText').value,
+                    primary: document.getElementById('colorPrimary').value,
+                    secondary: document.getElementById('colorSecondary').value,
+                    cardPrimary: document.getElementById('colorCardPrimary').value,
+                    cardSecondary: document.getElementById('colorCardSecondary').value,
+                    mesaLibre: document.getElementById('colorMesaLibre').value,
+                    mesaOcupada: document.getElementById('colorMesaOcupada').value
+                }));
+                const logoInput = document.getElementById('logo');
+                if (logoInput && logoInput.files.length > 0) {
+                    fd.append('logo', logoInput.files[0]);
+                }
 
                 try {
                     const response = await fetch('/perfil/actualizar', {
                         method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(data)
+                        body: fd // browser will automatically set correct boundary
                     });
 
                     const result = await response.json();
