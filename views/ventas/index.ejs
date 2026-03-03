@@ -171,7 +171,8 @@
                                                                                     { timeZone: 'America/Bogota' ,
                                                                                     dateStyle: 'short' ,
                                                                                     timeStyle: 'medium' }) : '' ) %>
-                                                                            </span></td>
+                                                                            </span>
+                                                                        </td>
                                                                         <td data-label="Cliente">
                                                                             <%= venta.cliente_nombre %>
                                                                         </td>
@@ -389,15 +390,19 @@
                                     <tr>
                                         <th>Producto</th>
                                         <th class="text-end">Cantidad</th>
-                                        <th>Unidad</th>
-                                        <th class="text-end">Precio Unit.</th>
+                                        <th class="d-none d-md-table-cell">Unidad</th>
+                                        <th class="text-end d-none d-md-table-cell">Precio Unit.</th>
                                         <th class="text-end">Subtotal</th>
                                     </tr>
                                 </thead>
                                 <tbody id="detallesProductos"></tbody>
                                 <tfoot class="table-light fw-bold">
                                     <tr>
-                                        <td colspan="4" class="text-end">Total:</td>
+                                        <!-- Desktop span -->
+                                        <td colspan="4" class="text-end d-none d-md-table-cell">Total:</td>
+                                        <!-- Mobile span -->
+                                        <td colspan="2" class="text-end d-md-none">Total:</td>
+
                                         <td class="text-end" id="detallesTotal"></td>
                                     </tr>
                                 </tfoot>
@@ -466,7 +471,14 @@
                             var precio = Number(producto.precio) || 0;
                             var subtotal = Number(producto.subtotal) || 0;
                             totalGeneral += subtotal;
-                            tbody.append('<tr><td>' + (producto.nombre || '') + '</td><td class="text-end">' + fmtNum(cantidad) + '</td><td>' + (producto.unidad || 'N/A') + '</td><td class="text-end">$' + fmtNum(precio) + '</td><td class="text-end">$' + fmtNum(subtotal) + '</td></tr>');
+                            tbody.append('<tr>' +
+                                '<td><div class="fw-medium">' + (producto.nombre || '') + '</div>' +
+                                '<div class="d-block d-md-none small text-muted">A $' + fmtNum(precio) + ' / ' + (producto.unidad || 'N/A') + '</div></td>' +
+                                '<td class="text-end align-middle">' + fmtNum(cantidad) + '</td>' +
+                                '<td class="d-none d-md-table-cell align-middle">' + (producto.unidad || 'N/A') + '</td>' +
+                                '<td class="text-end d-none d-md-table-cell align-middle">$' + fmtNum(precio) + '</td>' +
+                                '<td class="text-end align-middle">$' + fmtNum(subtotal) + '</td>' +
+                                '</tr>');
                         });
                         $('#detallesTotal').text('$' + fmtNum(totalGeneral));
                         var modal = getDetallesModal();
