@@ -622,24 +622,25 @@ $(document).ready(function () {
                 htmlMsg += `<a href="${data.result.previewUrl}" target="_blank" class="text-primary text-decoration-underline mt-2 d-inline-block">Ver preview del PDF aquí (Ethereal)</a>`;
             }
 
-            if (typeof window.showToast === 'function') {
-                window.showToast('Reporte generado correctamente. Revisa la cónsola o el correo.', 'success');
-            } else {
-                alert('Reporte generado correctamente. Revisa la consola o correo.');
-            }
-
-            // If we have access to Sweetalert (used in the project usually)
             if (typeof Swal !== 'undefined') {
                 Swal.fire({
                     icon: 'success',
                     title: 'Reporte Enviado',
-                    html: htmlMsg
+                    html: htmlMsg,
+                    confirmButtonColor: '#198754'
                 });
+            } else {
+                alert('Reporte generado correctamente. Revisa la consola o correo.');
             }
         } catch (e) {
             console.error(e);
             if (typeof Swal !== 'undefined') {
-                Swal.fire('Error', e.message, 'error');
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: e.message,
+                    confirmButtonColor: '#d33'
+                });
             } else {
                 alert(e.message);
             }
