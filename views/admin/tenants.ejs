@@ -47,20 +47,21 @@
                             </div>
 
                             <!-- Tabs de Navegación -->
-                            <%- include('tenants/_tabs') %>
+                            <%- include('tenants/_tabs', {...locals}) %>
 
                                 <div class="tab-content">
                                     <!-- Tab General -->
-                                    <%- include('tenants/_tab_general', { selectedTenant, plans }) %>
+                                    <%- include('tenants/_tab_general', { ...locals, selectedTenant, plans }) %>
 
                                         <!-- Tab Fiscal -->
-                                        <%- include('tenants/_tab_fiscal', { selectedTenant }) %>
+                                        <%- include('tenants/_tab_fiscal', { ...locals, selectedTenant }) %>
 
                                             <!-- Tab Apariencia -->
-                                            <%- include('tenants/_tab_apariencia', { selectedTenant }) %>
+                                            <%- include('tenants/_tab_apariencia', { ...locals, selectedTenant }) %>
 
                                                 <!-- Tab Usuarios -->
-                                                <%- include('tenants/_tab_usuarios', { selectedTenant }) %>
+                                                <%- include('tenants/_tab_usuarios', { ...locals, selectedTenant,
+                                                    tenantUsers }) %>
                                 </div>
                                 <% } else { %>
                                     <div class="empty-state">
@@ -78,10 +79,10 @@
             </div>
 
             <!-- Modales -->
-            <%- include('tenants/_modales', { plans, selectedTenant }) %>
+            <%- include('tenants/_modales', { ...locals, plans, selectedTenant }) %>
 
                 <!-- Scripts -->
-                <%- include('tenants/_scripts', { serverData }) %>
+                <%- include('tenants/_scripts', {...locals}) %>
     </body>
 
     </html>

@@ -22,16 +22,16 @@
             </div>
 
             <!-- Tarjetas de Estadísticas Principales -->
-            <%- include('dashboard/_stats_cards', { stats }) %>
+            <%- include('dashboard/_stats_cards', { ...locals, stats }) %>
 
                 <!-- Estadísticas de Uso -->
-                <%- include('dashboard/_usage_stats', { stats }) %>
+                <%- include('dashboard/_usage_stats', { ...locals, stats }) %>
 
                     <!-- Gráficos de Ventas -->
-                    <%- include('dashboard/_charts', { stats }) %>
+                    <%- include('dashboard/_charts', { ...locals, stats }) %>
 
                         <!-- Detalles por Plan y Accesos Rápidos -->
-                        <%- include('dashboard/_footer_details', { stats }) %>
+                        <%- include('dashboard/_footer_details', { ...locals, stats }) %>
         </div>
 
         <!-- Datos para los gráficos (Safe inject) -->

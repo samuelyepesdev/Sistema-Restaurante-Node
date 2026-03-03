@@ -52,21 +52,21 @@
 
             <div class="tab-content">
                 <!-- Tab Restaurantes -->
-                <%- include('planes/_tab_restaurantes', { tenants }) %>
+                <%- include('planes/_tab_restaurantes', { ...locals, tenants }) %>
 
                     <!-- Tab Planes -->
-                    <%- include('planes/_tab_planes', { plans }) %>
+                    <%- include('planes/_tab_planes', { ...locals, plans }) %>
 
                         <!-- Tab Add-ons -->
-                        <%- include('planes/_tab_addons', { addons }) %>
+                        <%- include('planes/_tab_addons', { ...locals, addons }) %>
             </div>
         </div>
 
         <!-- Modales -->
-        <%- include('planes/_modal_gestionar', { addons, plans }) %>
+        <%- include('planes/_modal_gestionar', { ...locals, addons, plans }) %>
 
             <!-- Scripts -->
-            <%- include('planes/_scripts', { serverData }) %>
+            <%- include('planes/_scripts', { ...locals, serverData }) %>
 </body>
 
 </html>

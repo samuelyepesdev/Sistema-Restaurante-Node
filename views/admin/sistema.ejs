@@ -51,10 +51,10 @@
                         <div class="card-body">
                             <div class="tab-content" id="sistemaTabContent">
                                 <!-- Tab Temas -->
-                                <%- include('sistema/_tab_temas', { selectedTenant }) %>
+                                <%- include('sistema/_tab_temas', { ...locals, selectedTenant }) %>
 
                                     <!-- Tab Parámetros -->
-                                    <%- include('sistema/_tab_parametros', { selectedTenant }) %>
+                                    <%- include('sistema/_tab_parametros', { ...locals, selectedTenant }) %>
                             </div>
                         </div>
                     </div>

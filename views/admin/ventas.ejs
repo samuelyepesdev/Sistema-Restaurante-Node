@@ -21,14 +21,14 @@
             </div>
 
             <!-- Selector de Restaurante -->
-            <%- include('ventas/_selector', { tenants, activeTenantId }) %>
+            <%- include('ventas/_selector', { ...locals, tenants, activeTenantId }) %>
 
                 <!-- Tabla de Ventas -->
-                <%- include('ventas/_table', { ventas }) %>
+                <%- include('ventas/_table', { ...locals, ventas }) %>
         </div>
 
         <!-- Scripts -->
-        <%- include('ventas/_scripts') %>
+        <%- include('ventas/_scripts', { ...locals }) %>
 </body>
 
 </html>
