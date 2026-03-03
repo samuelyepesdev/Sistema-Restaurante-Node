@@ -37,8 +37,7 @@
                                         <button type="button" class="btn btn-sm btn-outline-primary"
                                             onclick="editarReceta(<%= r.id %>)">Editar</button>
                                         <button type="button" class="btn btn-sm btn-outline-danger btn-eliminar-receta"
-                                            data-id="<%= r.id %>"
-                                            data-nombre="<%= typeof r.nombre_receta === 'string' ? r.nombre_receta.replace(/'/g, '\\\'') : '' %>">Eliminar</button>
+                                            data-id="<%= r.id %>" data-nombre="<%= r.nombre_receta %>">Eliminar</button>
                                     </div>
                                 </td>
                                 <% } %>
@@ -88,8 +87,7 @@
                         <i class="bi bi-pencil"></i> Editar
                     </button>
                     <button type="button" class="btn btn-sm btn-outline-danger flex-fill btn-eliminar-receta"
-                        data-id="<%= r.id %>"
-                        data-nombre="<%= typeof r.nombre_receta === 'string' ? r.nombre_receta.replace(/'/g, '\\\'') : '' %>">
+                        data-id="<%= r.id %>" data-nombre="<%= r.nombre_receta %>">
                         <i class="bi bi-trash"></i> Eliminar
                     </button>
                 </div>

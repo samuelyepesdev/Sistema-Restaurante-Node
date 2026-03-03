@@ -1,0 +1,155 @@
+<!-- Columna Personalización -->
+<div class="col-lg-7">
+    <div class="card shadow-sm border-0 h-100">
+        <div class="card-header bg-white border-0 pt-4 pb-0">
+            <h5 class="card-title mb-0"><i class="bi bi-palette-fill text-primary me-2"></i>Personalización y Datos</h5>
+        </div>
+        <div class="card-body">
+            <form id="perfilForm">
+                <h6 class="mb-3 text-muted">Datos de Información</h6>
+
+                <div class="mb-3">
+                    <label for="nombre" class="form-label">Nombre Comercial</label>
+                    <input type="text" class="form-control" id="nombre" name="nombre" value="<%= tenant.nombre %>"
+                        required>
+                </div>
+
+                <div class="row mb-4">
+                    <div class="col-md-6 mb-3 mb-md-0">
+                        <label for="direccion" class="form-label">Dirección / Sucursal</label>
+                        <input type="text" class="form-control" id="direccion" name="direccion"
+                            value="<%= tenant.direccion || '' %>">
+                    </div>
+                    <div class="col-md-6">
+                        <label for="telefono" class="form-label">Teléfono de Contacto</label>
+                        <input type="text" class="form-control" id="telefono" name="telefono"
+                            value="<%= tenant.telefono || '' %>">
+                    </div>
+                </div>
+
+                <hr class="my-4">
+
+                <h6 class="mb-3 text-muted">Paleta de Colores (Apariencia)</h6>
+                <p class="small text-muted mb-4">Selecciona los colores para personalizar la barra de
+                    navegación y los botones principales del sistema de tu negocio.</p>
+
+                <!-- Plantillas Predefinidas -->
+                <div class="mb-4">
+                    <label class="form-label d-block text-muted small fw-bold">Plantillas Rápidas</label>
+                    <div class="d-flex gap-2 flex-wrap">
+                        <button type="button" class="btn btn-sm btn-outline-secondary"
+                            onclick="setTemplate('#1e3a5f', '#ffffff', '#6366f1', '#6c757d', '#1e3a5f', '#0f766e', '#22c55e', '#f59e0b')">Moderno
+                            (Defecto)</button>
+                        <button type="button" class="btn btn-sm" style="background:#ffb6b9; color:#fff;"
+                            onclick="setTemplate('#fdf6e3', '#333333', '#ffb6b9', '#fae3d9', '#bbded6', '#8ac6d1', '#a0e8af', '#ffd3b6')">Pastel
+                            Dulce</button>
+                        <button type="button" class="btn btn-sm" style="background:#e74c3c; color:#fff;"
+                            onclick="setTemplate('#2c3e50', '#ecf0f1', '#e74c3c', '#95a5a6', '#34495e', '#16a085', '#27ae60', '#d35400')">Rojo
+                            Oscuro</button>
+                        <button type="button" class="btn btn-sm" style="background:#22c55e; color:#fff;"
+                            onclick="setTemplate('#14532d', '#ffffff', '#22c55e', '#a8a29e', '#166534', '#15803d', '#4ade80', '#fb923c')">Bosque</button>
+                        <button type="button" class="btn btn-sm" style="background:#f5ce42; color:#1a1a1a;"
+                            onclick="setTemplate('#1a1a1a', '#f5ce42', '#f5ce42', '#333333', '#2a2a2a', '#3f3f3f', '#a3e635', '#f59e0b')">Lujo</button>
+                    </div>
+                </div>
+
+                <% const cfg=typeof tenant.config==='string' ? JSON.parse(tenant.config) : (tenant.config || {}); const
+                    colores=cfg.colores || {}; %>
+
+                    <div class="row g-4">
+                        <!-- Navbar Background -->
+                        <div class="col-md-6">
+                            <label class="form-label d-block">Barra Superior (Fondo)</label>
+                            <div class="d-flex align-items-center">
+                                <input type="color" class="form-control form-control-color me-2" id="colorNavbar"
+                                    title="Elegir color" value="<%= colores.navbar || '#1e3a5f' %>">
+                                <span class="small text-muted">El fondo del menú donde tienes las distintas
+                                    páginas.</span>
+                            </div>
+                        </div>
+
+                        <!-- Navbar Text -->
+                        <div class="col-md-6">
+                            <label class="form-label d-block">Barra Superior (Texto)</label>
+                            <div class="d-flex align-items-center">
+                                <input type="color" class="form-control form-control-color me-2" id="colorNavbarText"
+                                    title="Elegir color" value="<%= colores.navbarText || '#ffffff' %>">
+                                <span class="small text-muted">El color de las letras del menú superior para asegurar
+                                    contraste.</span>
+                            </div>
+                        </div>
+
+                        <!-- Botones Principales -->
+                        <div class="col-md-6">
+                            <label class="form-label d-block">Botones Principales (Links)</label>
+                            <div class="d-flex align-items-center">
+                                <input type="color" class="form-control form-control-color me-2" id="colorPrimary"
+                                    title="Elegir color" value="<%= colores.primary || '#6366f1' %>">
+                                <span class="small text-muted">Color para el botón de "Guardar", links activos y
+                                    destaques.</span>
+                            </div>
+                        </div>
+
+                        <!-- Botones Secundarios -->
+                        <div class="col-md-6">
+                            <label class="form-label d-block">Botones Secundarios</label>
+                            <div class="d-flex align-items-center">
+                                <input type="color" class="form-control form-control-color me-2" id="colorSecondary"
+                                    title="Elegir color" value="<%= colores.secondary || '#6c757d' %>">
+                                <span class="small text-muted">Color para botones como "Cancelar" o "Limpiar".</span>
+                            </div>
+                        </div>
+
+                        <!-- Tarjetas Dashboard Principales -->
+                        <div class="col-md-6">
+                            <label class="form-label d-block">Tarjetas Dashboard (Primario)</label>
+                            <div class="d-flex align-items-center">
+                                <input type="color" class="form-control form-control-color me-2" id="colorCardPrimary"
+                                    title="Elegir color" value="<%= colores.cardPrimary || '#1e3a5f' %>">
+                                <span class="small text-muted">Color base para tarjetas de ingresos y métricas
+                                    globales.</span>
+                            </div>
+                        </div>
+
+                        <!-- Tarjetas Dashboard Secundarias -->
+                        <div class="col-md-6">
+                            <label class="form-label d-block">Tarjetas Dashboard (Secundario)</label>
+                            <div class="d-flex align-items-center">
+                                <input type="color" class="form-control form-control-color me-2" id="colorCardSecondary"
+                                    title="Elegir color" value="<%= colores.cardSecondary || '#0f766e' %>">
+                                <span class="small text-muted">Color para tarjetas de cantidades y números de
+                                    operaciones.</span>
+                            </div>
+                        </div>
+
+                        <!-- Mesa Libre -->
+                        <div class="col-md-6">
+                            <label class="form-label d-block">Mesas Libres y Opciones</label>
+                            <div class="d-flex align-items-center">
+                                <input type="color" class="form-control form-control-color me-2" id="colorMesaLibre"
+                                    title="Elegir color mesa libre" value="<%= colores.mesaLibre || '#22c55e' %>">
+                                <span class="small text-muted">Color de estado e indicativo para las mesas u operaciones
+                                    sin usar.</span>
+                            </div>
+                        </div>
+
+                        <!-- Mesa Ocupada -->
+                        <div class="col-md-6">
+                            <label class="form-label d-block">Mesas Ocupadas</label>
+                            <div class="d-flex align-items-center">
+                                <input type="color" class="form-control form-control-color me-2" id="colorMesaOcupada"
+                                    title="Elegir color mesa ocupada" value="<%= colores.mesaOcupada || '#f59e0b' %>">
+                                <span class="small text-muted">Color de estado en uso o bloqueadas en el panel.</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-end mt-5">
+                        <button type="submit" class="btn btn-primary px-4 py-2" id="btnGuardar">
+                            <i class="bi bi-save me-2"></i>Guardar Cambios
+                        </button>
+                    </div>
+            </form>
+        </div>
+    </div>
+</div>
