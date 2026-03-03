@@ -70,12 +70,9 @@ class ReporteMensualService {
         await browser.close();
 
         // Determinar destinatario
-        // En tu DB tenants no veo "correo" explícitamente en TenantService (o tal vez config.correo),
-        // Si no hay correo del tenant, tomaremos el testEmail, sino un placeholder
         let to = options.testEmail;
         if (!to) {
-            to = (tenant.config && tenant.config.correo) ? tenant.config.correo : process.env.ADMIN_EMAIL;
-            if (!to) to = 'contacto@ejemplo.com'; // Fallback
+            to = tenant.email || (tenant.config && tenant.config.correo) || process.env.ADMIN_EMAIL || 'contacto@ejemplo.com';
         }
 
         const subject = `Reporte Mensual - ${tenant.nombre} - ${data.mes}`;

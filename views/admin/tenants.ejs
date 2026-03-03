@@ -126,6 +126,14 @@
                                                     value="<%= selectedTenant.nombre %>" required>
                                             </div>
                                             <div class="col-md-6">
+                                                <label class="form-label">Correo Electrónico para Reportes</label>
+                                                <input type="email" name="email" class="form-control"
+                                                    value="<%= selectedTenant.email || '' %>"
+                                                    placeholder="correo@ejemplo.com">
+                                                <div class="form-text">A este correo llegarán los reportes automáticos
+                                                    mensuales.</div>
+                                            </div>
+                                            <div class="col-md-6">
                                                 <label class="form-label">Identificador (Slug)</label>
                                                 <div class="input-group">
                                                     <span class="input-group-text bg-light text-muted">/tienda/</span>
@@ -428,6 +436,11 @@
                                     <div class="col-md-6">
                                         <label class="form-label">Ciudad</label>
                                         <input name="ciudad" class="form-control">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">Correo Electrónico (Reportes)</label>
+                                        <input type="email" name="email" class="form-control"
+                                            placeholder="admin@restaurante.com">
                                     </div>
                                     <div class="col-md-6">
                                         <label class="form-label">Tipo de Negocio</label>
