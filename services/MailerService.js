@@ -13,6 +13,12 @@ class MailerService {
                     user: process.env.SMTP_USER,
                     pass: process.env.SMTP_PASS,
                 },
+                connectionTimeout: 10000, // 10 segundos de espera para conectar
+                greetingTimeout: 5000,
+                socketTimeout: 15000,
+                tls: {
+                    rejectUnauthorized: false // Evita fallos por certificados en algunos entornos
+                }
             });
         }
 
