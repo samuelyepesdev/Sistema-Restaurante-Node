@@ -8,7 +8,7 @@ const express = require('express');
 const router = express.Router();
 const StatsService = require('../../services/StatsService');
 const StatsRepository = require('../../repositories/StatsRepository');
-const { requireRole } = require('../../middleware/auth');
+const { requireRole, requirePermission } = require('../../middleware/auth');
 
 // GET /dashboard - Dashboard page (only for admin)
 router.get('/', requireRole('admin'), async (req, res) => {
@@ -75,7 +75,7 @@ router.get('/eventos-calendario', requireRole('admin'), async (req, res) => {
     }
 });
 
-router.post('/test-reporte-mensual', requireRole('admin'), async (req, res) => {
+router.post('/test-reporte-mensual', requirePermission('reporte_mensual.test'), async (req, res) => {
     try {
         const tenantId = req.tenant?.id;
         if (!tenantId) {
