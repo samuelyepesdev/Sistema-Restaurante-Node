@@ -19,12 +19,14 @@
                 class="d-flex flex-column flex-md-row justify-content-between align-items-stretch align-items-md-center gap-3 mb-3">
                 <h4 class="mb-0 fw-semibold"><i class="bi bi-grid me-2"></i>Mesas</h4>
                 <div class="d-flex flex-wrap gap-2">
-                    <button id="btnCrearMasivas" class="btn btn-success">
-                        <i class="bi bi-plus-circle me-1"></i>Crear Múltiples Mesas
-                    </button>
-                    <button id="btnNuevaMesa" class="btn btn-primary">
-                        <i class="bi bi-plus-lg me-1"></i>Nueva Mesa
-                    </button>
+                    <% if (user.rol !=='mesero' && user.rol !=='cajero' ) { %>
+                        <button id="btnCrearMasivas" class="btn btn-success">
+                            <i class="bi bi-plus-circle me-1"></i>Crear Múltiples Mesas
+                        </button>
+                        <button id="btnNuevaMesa" class="btn btn-primary">
+                            <i class="bi bi-plus-lg me-1"></i>Nueva Mesa
+                        </button>
+                        <% } %>
                 </div>
             </div>
 

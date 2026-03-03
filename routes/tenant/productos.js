@@ -14,7 +14,7 @@ const { requirePlanFeature } = require('../../middleware/planFeature');
 let ExcelJS; // Lazy import for Excel template/import
 
 // GET /productos - Show products page (solo del tenant)
-router.get('/', async (req, res) => {
+router.get('/', requirePermission('productos.ver'), async (req, res) => {
     try {
         const tenantId = req.tenant?.id;
         if (!tenantId) return res.status(403).render('errors/internal', { error: { message: 'Contexto de tenant no disponible' } });
@@ -85,7 +85,7 @@ router.get('/:id(\\d+)', async (req, res) => {
 });
 
 // POST /productos - Create new product (del tenant)
-router.post('/', async (req, res) => {
+router.post('/', requirePermission('productos.crear'), async (req, res) => {
     try {
         const tenantId = req.tenant?.id;
         if (!tenantId) return res.status(403).json({ error: 'Contexto de tenant no disponible' });
@@ -101,7 +101,7 @@ router.post('/', async (req, res) => {
 });
 
 // PUT /productos/:id/precio - Update only price (e.g. apply suggested price from costeo)
-router.put('/:id/precio', async (req, res) => {
+router.put('/:id/precio', requirePermission('productos.editar'), async (req, res) => {
     try {
         const tenantId = req.tenant?.id;
         if (!tenantId) return res.status(403).json({ error: 'Contexto de tenant no disponible' });
@@ -122,7 +122,7 @@ router.put('/:id/precio', async (req, res) => {
 });
 
 // PUT /productos/:id - Update product (del tenant)
-router.put('/:id', async (req, res) => {
+router.put('/:id', requirePermission('productos.editar'), async (req, res) => {
     try {
         const tenantId = req.tenant?.id;
         if (!tenantId) return res.status(403).json({ error: 'Contexto de tenant no disponible' });
@@ -139,7 +139,7 @@ router.put('/:id', async (req, res) => {
 });
 
 // DELETE /productos/:id
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', requirePermission('productos.eliminar'), async (req, res) => {
     try {
         const tenantId = req.tenant?.id;
         if (!tenantId) return res.status(403).json({ error: 'Contexto de tenant no disponible' });

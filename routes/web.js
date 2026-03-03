@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { requireAuth, optionalAuth, restrictSuperadminToAdmin } = require('../middleware/auth');
+const { requireAuth, optionalAuth, restrictSuperadminToAdmin, requirePermission } = require('../middleware/auth');
 const { attachTenantContext, costeoTenantContext } = require('../middleware/tenant');
 const { requirePlanFeature } = require('../middleware/planFeature');
 
@@ -59,9 +59,9 @@ router.get('/', optionalAuth, (req, res) => {
 
 router.use('/productos', requireAuthWithTenant, requirePlanFeature('productos'), productosRoutes);
 router.use('/perfil', requireAuthWithTenant, perfilRoutes);
-router.use('/clientes', requireAuthWithTenant, requirePlanFeature('clientes'), clientesRoutes);
+router.use('/clientes', requireAuthWithTenant, requirePlanFeature('clientes'), requirePermission('clientes.ver'), clientesRoutes);
 router.use('/facturas', requireAuthWithTenant, requirePlanFeature('ventas'), facturasRoutes);
-router.use('/mesas', requireAuthWithTenant, requirePlanFeature('mesas'), mesasRoutes);
+router.use('/mesas', requireAuthWithTenant, requirePlanFeature('mesas'), requirePermission('mesas.ver'), mesasRoutes);
 router.use('/cocina', requireAuthWithTenant, requirePlanFeature('cocina'), cocinaRoutes);
 router.use('/configuracion', requireAuthWithTenant, requirePlanFeature('configuracion'), configuracionRoutes);
 router.use('/ventas', requireAuthWithTenant, requirePlanFeature('ventas'), ventasRoutes);
@@ -73,11 +73,11 @@ router.use('/analitica', requireAuthWithTenant, requirePlanFeature('analitica'),
 router.use('/costeo', requireAuth, restrictSuperadminToAdmin, costeoTenantContext, requirePlanFeature('costeo'), costeoRoutes);
 
 // --- RUTAS API (Opcional: puedes separarlas en api.js después) ---
-router.use('/api/productos', requireAuthWithTenant, requirePlanFeature('productos'), productosRoutes);
-router.use('/api/clientes', requireAuthWithTenant, requirePlanFeature('clientes'), clientesRoutes);
-router.use('/api/facturas', requireAuthWithTenant, requirePlanFeature('ventas'), facturasRoutes);
-router.use('/api/mesas', requireAuthWithTenant, requirePlanFeature('mesas'), mesasRoutes);
-router.use('/api/cocina', requireAuthWithTenant, requirePlanFeature('cocina'), cocinaRoutes);
+router.use('/api/productos', requireAuthWithTenant, requirePlanFeature('productos'), requirePermission('productos.ver'), productosRoutes);
+router.use('/api/clientes', requireAuthWithTenant, requirePlanFeature('clientes'), requirePermission('clientes.ver'), clientesRoutes);
+router.use('/api/facturas', requireAuthWithTenant, requirePlanFeature('ventas'), requirePermission('facturas.ver'), facturasRoutes);
+router.use('/api/mesas', requireAuthWithTenant, requirePlanFeature('mesas'), requirePermission('mesas.ver'), mesasRoutes);
+router.use('/api/cocina', requireAuthWithTenant, requirePlanFeature('cocina'), requirePermission('cocina.ver'), cocinaRoutes);
 router.use('/api/dashboard', requireAuthWithTenant, requirePlanFeature('dashboard'), dashboardRoutes);
 
 // --- RUTAS DE SUPERADMIN ---

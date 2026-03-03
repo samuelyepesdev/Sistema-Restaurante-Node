@@ -33,14 +33,16 @@
                                     <i class="bi bi-calculator"></i>
                                 </button>
                                 <% } %>
-                                    <button class="btn btn-sm btn-outline-primary me-1" data-id="<%= producto.id %>"
-                                        data-action="editar">
-                                        <i class="bi bi-pencil"></i>
-                                    </button>
-                                    <button class="btn btn-sm btn-outline-danger" data-id="<%= producto.id %>"
-                                        data-action="eliminar">
-                                        <i class="bi bi-trash"></i>
-                                    </button>
+                                    <% if (user.rol !=='mesero' ) { %>
+                                        <button class="btn btn-sm btn-outline-primary me-1" data-id="<%= producto.id %>"
+                                            data-action="editar">
+                                            <i class="bi bi-pencil"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-danger" data-id="<%= producto.id %>"
+                                            data-action="eliminar">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                        <% } %>
                         </div>
                     </td>
                 </tr>

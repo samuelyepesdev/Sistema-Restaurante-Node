@@ -93,8 +93,6 @@ CROSS JOIN permisos p
 WHERE r.nombre = 'mesero'
 AND p.nombre IN (
     'productos.ver',
-    'clientes.ver',
-    'clientes.crear',
     'mesas.ver',
     'mesas.gestionar',
     'facturas.crear'
@@ -127,7 +125,8 @@ AND p.nombre IN (
     'facturas.crear',
     'facturas.ver',
     'ventas.ver',
-    'ventas.exportar'
+    'ventas.exportar',
+    'mesas.ver'
 )
 ON DUPLICATE KEY UPDATE rol_id = rol_id;
 

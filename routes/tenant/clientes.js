@@ -9,8 +9,10 @@ const router = express.Router();
 const ClienteService = require('../../services/ClienteService');
 const ParametroService = require('../../services/ParametroService');
 
+const { requirePermission } = require('../../middleware/auth');
+
 // GET /clientes - Show clients page (solo del tenant)
-router.get('/', async (req, res) => {
+router.get('/', requirePermission('clientes.ver'), async (req, res) => {
     try {
         const tenantId = req.tenant?.id;
         if (!tenantId) return res.status(403).render('errors/internal', { error: { message: 'Contexto de tenant no disponible' } });
@@ -38,7 +40,7 @@ router.get('/', async (req, res) => {
 });
 
 // GET /clientes/buscar - Search clients (del tenant)
-router.get('/buscar', async (req, res) => {
+router.get('/buscar', requirePermission('clientes.ver'), async (req, res) => {
     try {
         const tenantId = req.tenant?.id;
         if (!tenantId) return res.status(403).json({ error: 'Contexto de tenant no disponible' });
@@ -52,7 +54,7 @@ router.get('/buscar', async (req, res) => {
 });
 
 // GET /clientes/:id - Get client by ID (del tenant)
-router.get('/:id', async (req, res) => {
+router.get('/:id', requirePermission('clientes.ver'), async (req, res) => {
     try {
         const tenantId = req.tenant?.id;
         if (!tenantId) return res.status(403).json({ error: 'Contexto de tenant no disponible' });
@@ -68,7 +70,7 @@ router.get('/:id', async (req, res) => {
 });
 
 // POST /clientes - Create new client (del tenant)
-router.post('/', async (req, res) => {
+router.post('/', requirePermission('clientes.crear'), async (req, res) => {
     try {
         const tenantId = req.tenant?.id;
         if (!tenantId) return res.status(403).json({ error: 'Contexto de tenant no disponible' });
@@ -84,7 +86,7 @@ router.post('/', async (req, res) => {
 });
 
 // PUT /clientes/:id - Update client (del tenant)
-router.put('/:id', async (req, res) => {
+router.put('/:id', requirePermission('clientes.editar'), async (req, res) => {
     try {
         const tenantId = req.tenant?.id;
         if (!tenantId) return res.status(403).json({ error: 'Contexto de tenant no disponible' });
@@ -101,7 +103,7 @@ router.put('/:id', async (req, res) => {
 });
 
 // DELETE /clientes/:id - Delete client (del tenant)
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', requirePermission('clientes.eliminar'), async (req, res) => {
     try {
         const tenantId = req.tenant?.id;
         if (!tenantId) return res.status(403).json({ error: 'Contexto de tenant no disponible' });

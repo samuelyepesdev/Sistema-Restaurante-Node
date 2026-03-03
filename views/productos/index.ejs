@@ -23,19 +23,23 @@
                             <i class="bi bi-box-fill me-2"></i>Gestión de Productos
                         </div>
                         <div class="d-flex flex-wrap gap-2">
-                            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#nuevoProductoModal">
-                                <i class="bi bi-plus-lg me-1"></i>Nuevo Producto
-                            </button>
-                            <% if (typeof allowedByPlan !=='undefined' && allowedByPlan && allowedByPlan.plantillas &&
-                                user && user.permisos && user.permisos.includes('plantillas.ver')) { %>
-                                <button id="btnDescargarPlantilla" class="btn btn-outline-success">
-                                    <i class="bi bi-file-earmark-excel"></i> Plantilla Excel
+                            <% if (user.rol !=='mesero' ) { %>
+                                <button class="btn btn-primary" data-bs-toggle="modal"
+                                    data-bs-target="#nuevoProductoModal">
+                                    <i class="bi bi-plus-lg me-1"></i>Nuevo Producto
                                 </button>
-                                <button id="btnImportarProductos" class="btn btn-outline-primary">
-                                    <i class="bi bi-upload"></i> Importar Excel
-                                </button>
-                                <input type="file" id="archivoImport" accept=".xlsx" class="d-none">
                                 <% } %>
+                                    <% if (typeof allowedByPlan !=='undefined' && allowedByPlan &&
+                                        allowedByPlan.plantillas && user && user.permisos &&
+                                        user.permisos.includes('plantillas.ver')) { %>
+                                        <button id="btnDescargarPlantilla" class="btn btn-outline-success">
+                                            <i class="bi bi-file-earmark-excel"></i> Plantilla Excel
+                                        </button>
+                                        <button id="btnImportarProductos" class="btn btn-outline-primary">
+                                            <i class="bi bi-upload"></i> Importar Excel
+                                        </button>
+                                        <input type="file" id="archivoImport" accept=".xlsx" class="d-none">
+                                        <% } %>
                         </div>
                     </div>
                 </div>
