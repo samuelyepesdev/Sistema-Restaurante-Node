@@ -1,8 +1,25 @@
 <div class="row g-4 mb-4">
+    <div class="col-12">
+        <div class="card h-100">
+            <div class="card-header bg-white d-flex align-items-center justify-content-between">
+                <div><i class="bi bi-graph-up-arrow me-2 text-primary"></i>Ventas Diarias por Restaurante (Mes Actual)
+                </div>
+                <div class="badge bg-light text-dark fw-normal border">Vista Multi-Serie</div>
+            </div>
+            <div class="card-body">
+                <div style="height: 400px;">
+                    <canvas id="chartVentasTenants"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4 mb-4">
     <div class="col-lg-6">
         <div class="card h-100">
             <div class="card-header bg-white">
-                <i class="bi bi-graph-up me-2"></i>Ventas del Mes Actual (Diarias)
+                <i class="bi bi-graph-up me-2"></i>Total Ventas del Mes Actual (Global)
             </div>
             <div class="card-body">
                 <div style="height: 300px;">
@@ -14,7 +31,7 @@
     <div class="col-lg-6">
         <div class="card h-100">
             <div class="card-header bg-white">
-                <i class="bi bi-graph-down me-2 text-secondary"></i>Ventas del Mes Anterior (Diarias)
+                <i class="bi bi-graph-down me-2 text-secondary"></i>Total Ventas del Mes Anterior (Global)
             </div>
             <div class="card-body">
                 <div style="height: 300px;">

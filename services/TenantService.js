@@ -218,10 +218,18 @@ class TenantService {
             ORDER BY mes ASC
         `);
 
-        // Ventas del mes actuales diarias
-        const hoyColombia = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Bogota' });
-        const parts = hoyColombia.split('-');
-        const mesInicioStr = `${parts[0]}-${parts[1]}-01`;
+        // Ventas del mes actuales diarias (Bogotá UTC-5)
+        const bogotaOffset = -5;
+        const now = new Date();
+        const bogotaDate = new Date(now.getTime() + (bogotaOffset * 3600000));
+        const yyyy = bogotaDate.getUTCFullYear();
+        const mm = String(bogotaDate.getUTCMonth() + 1).padStart(2, '0');
+        const dd = String(bogotaDate.getUTCDate()).padStart(2, '0');
+
+        const hoyColombia = `${yyyy}-${mm}-${dd}`;
+        const mesInicioStr = `${yyyy}-${mm}-01`;
+        const diaHoy = bogotaDate.getUTCDate(); // Día actual en Bogotá
+        const parts = [String(yyyy), mm, dd];
 
         const [ventasDiaRows] = await db.query(`
             SELECT DATE(CONVERT_TZ(fecha, '+00:00', '-05:00')) AS fecha, SUM(total) as total
@@ -238,7 +246,6 @@ class TenantService {
         });
 
         const ventasDiariasMes = [];
-        const diaHoy = parseInt(parts[2], 10);
         for (let i = 1; i <= diaHoy; i++) {
             const fechaStr = `${parts[0]}-${parts[1]}-${String(i).padStart(2, '0')}`;
             ventasDiariasMes.push({
@@ -281,6 +288,54 @@ class TenantService {
             });
         }
 
+        // --- NUEVO: Ventas diarias por restaurante (Mes Actual) ---
+        // 1. Obtener todos los tenants activos para asegurar que aparezcan en la gráfica aunque tengan 0 ventas
+        const [tenantsActivos] = await db.query('SELECT id, nombre FROM tenants WHERE activo = 1');
+        const nombresTenants = new Set();
+        const ventasPorTenantYFecha = {};
+
+        tenantsActivos.forEach(t => {
+            const nombre = t.nombre || 'Desconocido';
+            nombresTenants.add(nombre);
+            ventasPorTenantYFecha[nombre] = {};
+        });
+
+        // 2. Obtener las ventas reales
+        const [ventasTenantRows] = await db.query(`
+            SELECT t.nombre AS tenant_nombre, DATE(CONVERT_TZ(f.fecha, '+00:00', '-05:00')) AS fecha, SUM(f.total) as total
+            FROM facturas f
+            JOIN tenants t ON f.tenant_id = t.id
+            WHERE DATE(CONVERT_TZ(f.fecha, '+00:00', '-05:00')) BETWEEN ? AND ?
+            GROUP BY f.tenant_id, fecha
+            ORDER BY fecha ASC
+        `, [mesInicioStr, hoyColombia]);
+
+        ventasTenantRows.forEach(r => {
+            const f = (r.fecha instanceof Date) ? r.fecha.toISOString().split('T')[0] : String(r.fecha || '').substring(0, 10);
+            const t = r.tenant_nombre || 'Desconocido';
+            if (!ventasPorTenantYFecha[t]) {
+                ventasPorTenantYFecha[t] = {};
+                nombresTenants.add(t);
+            }
+            ventasPorTenantYFecha[t][f] = parseFloat(r.total || 0);
+        });
+
+        const ventasDiariasPorTenant = [];
+        Array.from(nombresTenants).forEach(nombre => {
+            const dataPuntos = [];
+            for (let i = 1; i <= diaHoy; i++) {
+                const fechaStr = `${parts[0]}-${parts[1]}-${String(i).padStart(2, '0')}`;
+                dataPuntos.push({
+                    fecha: fechaStr,
+                    total: (ventasPorTenantYFecha[nombre] && ventasPorTenantYFecha[nombre][fechaStr]) || 0
+                });
+            }
+            ventasDiariasPorTenant.push({
+                nombre: nombre,
+                data: dataPuntos
+            });
+        });
+
         const r = resumen[0] || {};
         const toNum = (val) => (val === undefined || val === null) ? 0 : (typeof val === 'bigint' ? Number(val) : parseFloat(val) || 0);
         const rowVal = (row) => (row && typeof row === 'object') ? toNum(Object.values(row)[0]) : 0;
@@ -298,7 +353,8 @@ class TenantService {
             restaurantesUltimos30Dias: parseInt(rowVal(recientesRow?.[0]) || 0, 10),
             historicoRegistro: historicoRows || [],
             ventasDiariasMes,
-            ventasDiariasMesAnterior
+            ventasDiariasMesAnterior,
+            ventasDiariasPorTenant
         };
     }
 
