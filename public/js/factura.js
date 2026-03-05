@@ -66,8 +66,8 @@ $(document).ready(function () {
         if (!$('#cliente_id').val() && cf) seleccionarCliente(cf);
     });
 
-    // Búsqueda de clientes
-    $('#cliente').on('keyup', function () {
+    // Búsqueda de clientes (usa 'input' para mejor soporte en móvil)
+    $('#cliente').on('input', function () {
         clearTimeout(timeoutCliente);
         const valor = $(this).val();
         if (valor.length < 2) return;
@@ -114,23 +114,35 @@ $(document).ready(function () {
         $container.append($lista.show());
     }
 
-    // Búsqueda de productos
-    $('#producto').on('keyup', function () {
+    // Búsqueda de productos (usa 'input' para mejor soporte en móvil)
+    $('#producto').on('input', function () {
         clearTimeout(timeoutProducto);
         const valor = $(this).val().trim();
-        if (valor.length < 2) { $('#resultadosProductos').hide(); return; }
+        const $res = $('#resultadosProductos');
+        if (valor.length < 2) { $res.hide(); return; }
+
+        // Show loading state optionally
+        $res.html('<div class="p-2 text-muted small text-center"><div class="spinner-border spinner-border-sm me-1" role="status"></div> Buscando...</div>').show();
+
         timeoutProducto = setTimeout(() => {
             $.ajax({
                 url: '/api/productos/buscar',
                 data: { q: valor },
-                success: productos => mostrarListaProductos(productos)
+                success: productos => mostrarListaProductos(productos),
+                error: (xhr) => {
+                    console.error('Error buscando productos:', xhr.status, xhr.responseText);
+                    $res.html('<div class="p-3 text-danger small text-center"><i class="bi bi-exclamation-triangle"></i> Error en la búsqueda</div>').show();
+                }
             });
         }, 300);
     });
 
     function mostrarListaProductos(productos) {
         const $res = $('#resultadosProductos').empty();
-        if (!productos.length) { $res.hide(); return; }
+        if (!productos || !productos.length) {
+            $res.html('<div class="p-3 text-muted small text-center"><i class="bi bi-search"></i> No se encontraron productos</div>').show();
+            return;
+        }
         productos.forEach(p => {
             const precio = (Number(p.precio_unidad) || 0).toLocaleString('es-CO');
             $('<a href="#" class="search-item">')
@@ -140,6 +152,7 @@ $(document).ready(function () {
         });
         $res.show();
     }
+
 
     function agregarProductoALista(p) {
         const precio = Number(p.precio_unidad) || 0;
@@ -326,6 +339,6 @@ $(document).ready(function () {
 
     $('#nuevaVenta').click(() => { limpiarSesionProvisional(); limpiarTodo(); });
 
-    // Cierre de dropdowns
-    $(document).on('click', e => { if (!$(e.target).closest('.search-container').length) $('.search-results').remove(); });
+    // Cierre de dropdowns al hacer clic fuera — usa .hide() (NO .remove()) para no destruir el elemento del DOM
+    $(document).on('click', e => { if (!$(e.target).closest('.search-container').length) $('#resultadosProductos').hide(); });
 });
