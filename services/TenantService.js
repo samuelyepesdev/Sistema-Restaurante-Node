@@ -88,7 +88,7 @@ class TenantService {
         const payload = [];
         const parts = [];
 
-        const fields = ['nombre', 'email', 'activo', 'plan_id', 'nit', 'direccion', 'telefono', 'ciudad', 'regimen_fiscal'];
+        const fields = ['nombre', 'email', 'activo', 'plan_id', 'nit', 'direccion', 'telefono', 'ciudad', 'regimen_fiscal', 'logo_data', 'logo_tipo'];
         fields.forEach(f => {
             if (data[f] !== undefined) {
                 parts.push(`${f} = ?`);

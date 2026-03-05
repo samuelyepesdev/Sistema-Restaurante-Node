@@ -43,22 +43,20 @@
             <% if (user) { %>
                 <li class="nav-item dropdown">
                     <button class="n-user" data-bs-toggle="dropdown">
-                        <% const tconfig=(typeof tenant !=='undefined' && tenant && tenant.config) ? (typeof
-                            tenant.config==='string' ? JSON.parse(tenant.config) : tenant.config) : {}; %>
-                            <% if (tconfig.logo) { %>
-                                <div class="n-av bg-transparent">
-                                    <img src="<%= tconfig.logo %>" alt="Logo"
-                                        class="rounded-circle object-fit-cover w-100 h-100">
+                        <% if (typeof tenant !=='undefined' && tenant && tenant.logo_src) { %>
+                            <div class="n-av bg-transparent">
+                                <img src="<%= tenant.logo_src %>" alt="Logo"
+                                    class="rounded-circle object-fit-cover w-100 h-100">
+                            </div>
+                            <% } else { %>
+                                <div class="n-av">
+                                    <%= nav.userInitial %>
                                 </div>
-                                <% } else { %>
-                                    <div class="n-av">
-                                        <%= nav.userInitial %>
-                                    </div>
-                                    <% } %>
-                                        <span class="d-none d-md-inline">
-                                            <%= nav.userFirstName %>
-                                        </span>
-                                        <div class="n-dot"></div>
+                                <% } %>
+                                    <span class="d-none d-md-inline">
+                                        <%= nav.userFirstName %>
+                                    </span>
+                                    <div class="n-dot"></div>
                     </button>
                     <ul class="dropdown-menu dropdown-menu-end">
                         <li>

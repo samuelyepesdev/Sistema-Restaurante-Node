@@ -7,21 +7,8 @@ const TenantService = require('../../services/TenantService');
 const StatsService = require('../../services/StatsService');
 const { requirePermission } = require('../../middleware/auth');
 
-// Configuración de Multer para el logo del negocio
-const storage = multer.diskStorage({
-    destination: function (req, file, cb) {
-        const dir = path.join(__dirname, '../../public/uploads/logos');
-        if (!fs.existsSync(dir)) {
-            fs.mkdirSync(dir, { recursive: true });
-        }
-        cb(null, dir);
-    },
-    filename: function (req, file, cb) {
-        const ext = path.extname(file.originalname);
-        const uniqueName = `tenant_${req.tenant.id}_logo_${Date.now()}${ext}`;
-        cb(null, uniqueName);
-    }
-});
+// Configuración de Multer para el logo del negocio (Usando memoria para guardar en BD)
+const storage = multer.memoryStorage();
 
 const upload = multer({
     storage: storage,
@@ -60,18 +47,23 @@ router.post('/actualizar', requirePermission('perfil.editar'), upload.single('lo
             newConfig.colores = JSON.parse(colores);
         }
 
-        if (req.file) {
-            newConfig.logo = `/uploads/logos/${req.file.filename}`;
-        }
-
-        await TenantService.updateTenant(tenantId, {
+        const updateData = {
             nombre,
             direccion,
             telefono,
             config: newConfig
-        });
+        };
 
-        res.json({ success: true, message: 'Perfil actualizado correctamente. Recarga la página para ver los cambios de color.' });
+        if (req.file) {
+            updateData.logo_data = req.file.buffer;
+            updateData.logo_tipo = req.file.mimetype.split('/')[1];
+            // Limpiar logo del config si existía para evitar conflictos
+            if (newConfig.logo) delete newConfig.logo;
+        }
+
+        await TenantService.updateTenant(tenantId, updateData);
+
+        res.json({ success: true, message: 'Perfil actualizado correctamente. Los cambios se mantendrán incluso después de nuevos deploys.' });
     } catch (error) {
         console.error('Error actualizando perfil:', error);
         res.status(500).json({ success: false, message: error.message });

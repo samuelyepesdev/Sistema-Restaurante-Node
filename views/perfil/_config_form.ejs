@@ -13,8 +13,8 @@
                     <div class="d-flex align-items-center gap-3">
                         <% const tcfg=typeof tenant.config==='string' ? JSON.parse(tenant.config) : (tenant.config ||
                             {}); %>
-                            <% if (tcfg.logo) { %>
-                                <img src="<%= tcfg.logo %>" alt="Logo"
+                            <% if (tenant.logo_src) { %>
+                                <img src="<%= tenant.logo_src %>" alt="Logo"
                                     class="rounded-circle object-fit-cover shadow-sm border" width="64" height="64"
                                     id="previewLogo">
                                 <% } else { %>
