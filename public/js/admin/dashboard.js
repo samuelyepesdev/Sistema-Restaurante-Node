@@ -89,6 +89,8 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     // ─── Gráfico multi-serie por tenant ────────────────────────────────────────
+    let chartTenants = null; // Instancia global para poder actualizarla en el refresh
+
     function createMultiLineChart(ctx, tenantDataArray) {
         if (!ctx) return;
 
@@ -121,7 +123,7 @@ document.addEventListener('DOMContentLoaded', function () {
             };
         });
 
-        new Chart(ctx, {
+        chartTenants = new Chart(ctx, {
             type: 'line',
             data: { labels, datasets },
             options: {
@@ -158,6 +160,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
             }
         });
+        return chartTenants;
     }
 
     // ─── Inicializar gráficas ──────────────────────────────────────────────────
@@ -252,6 +255,22 @@ document.addEventListener('DOMContentLoaded', function () {
                     flashElement(newCol.querySelector('.card'));
                 }
             });
+
+            // ── Actualizar el último punto del gráfico multi-tenant (hoy) ──────
+            if (chartTenants && chartTenants.data && chartTenants.data.datasets) {
+                let chartActualizado = false;
+                data.ventasHoyPorTenant.forEach(v => {
+                    const dataset = chartTenants.data.datasets.find(ds => ds.label === v.nombre);
+                    if (dataset && dataset.data.length > 0) {
+                        const lastIdx = dataset.data.length - 1;
+                        if (dataset.data[lastIdx] !== v.total) {
+                            dataset.data[lastIdx] = v.total;
+                            chartActualizado = true;
+                        }
+                    }
+                });
+                if (chartActualizado) chartTenants.update('none'); // 'none' = sin animación para no distraer
+            }
 
             // Mostrar hora de última actualización
             const timeEl = document.getElementById('lastUpdatedTime');
