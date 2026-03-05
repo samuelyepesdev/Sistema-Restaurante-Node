@@ -170,8 +170,8 @@ $(document).ready(function () {
         const tbody = $('#productosTabla').empty();
         totalFactura = 0;
         if (!productosFactura.length) {
-            tbody.append('<tr><td colspan="6" class="empty-state"><i class="bi bi-cart-x"></i><div>No hay productos</div></td></tr>');
-            $('#productosListaMobile').html('<div class="empty-state py-4"><i class="bi bi-cart-x"></i><div>No hay productos</div></div>');
+            tbody.append('<tr><td colspan="6" class="empty-state" style="padding:3.5rem 2rem;"><i class="bi bi-cart-x"></i><div class="fw-semibold mt-2">Sin productos en la venta</div><small class="text-muted d-block mt-1">Escribe en el buscador de arriba para agregar productos</small></td></tr>');
+            $('#productosListaMobile').html('<div class="empty-state py-4"><i class="bi bi-cart-x"></i><div class="fw-semibold mt-2">Sin productos</div><small class="text-muted d-block mt-1">Usa el buscador para agregar</small></div>');
             $('#totalFactura').text('0.00');
             return;
         }
