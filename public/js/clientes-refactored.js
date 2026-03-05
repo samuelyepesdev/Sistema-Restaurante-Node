@@ -30,12 +30,18 @@ class ClientManager {
             onEdit: (id) => this.handleEdit(id)
         });
 
-        // Initialize table manager
+        // Initialize table manager (Desktop)
         this.tableManager = new TableManager({
             tableBodyId: 'clientesTabla',
             onEdit: (id) => this.editClient(id),
-            onDelete: (id) => this.deleteClient(id),
-            deleteConfirmMessage: '¿Está seguro de que desea eliminar este cliente?'
+            onDelete: (id) => this.deleteClient(id)
+        });
+
+        // Initialize mobile list manager (New)
+        this.mobileManager = new TableManager({
+            tableBodyId: 'clientesListaMobile',
+            onEdit: (id) => this.editClient(id),
+            onDelete: (id) => this.deleteClient(id)
         });
 
         // Initialize search manager
@@ -148,21 +154,27 @@ class ClientManager {
      * Handle search
      */
     handleSearch(searchTerm) {
-        if (!this.tableManager) return;
+        if (this.tableManager) {
+            this.tableManager.filterRows((row) => {
+                const text = row.textContent.toLowerCase();
+                return text.includes(searchTerm);
+            }, 'tr');
+        }
 
-        this.tableManager.filterRows((row) => {
-            const text = row.textContent.toLowerCase();
-            return text.includes(searchTerm);
-        });
+        if (this.mobileManager) {
+            this.mobileManager.filterRows((row) => {
+                const text = row.textContent.toLowerCase();
+                return text.includes(searchTerm);
+            }, '.cliente-card');
+        }
     }
 
     /**
      * Clear search
      */
     clearSearch() {
-        if (this.tableManager) {
-            this.tableManager.clearFilters();
-        }
+        if (this.tableManager) this.tableManager.clearFilters('tr');
+        if (this.mobileManager) this.mobileManager.clearFilters('.cliente-card');
     }
 }
 

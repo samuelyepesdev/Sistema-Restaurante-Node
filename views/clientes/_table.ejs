@@ -58,3 +58,45 @@
         </tbody>
     </table>
 </div>
+
+<!-- Vista Móvil: Lista de Cartas -->
+<div class="clientes-mobile-list" id="clientesListaMobile">
+    <% clientes.forEach(function(cliente) { %>
+        <div class="cliente-card" data-cliente-id="<%= cliente.id %>">
+            <div class="cliente-info-row">
+                <div class="cliente-main-info">
+                    <span class="cliente-name">
+                        <%= cliente.nombre %>
+                    </span>
+                    <span class="cliente-doc">
+                        <%= cliente.tipo_documento %>: <%= cliente.numero_documento || '-' %>
+                    </span>
+                </div>
+            </div>
+
+            <div class="cliente-details">
+                <div class="detail-item">
+                    <span class="detail-label">Teléfono</span>
+                    <%= cliente.telefono || 'Sin tel' %>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Email</span>
+                    <%= cliente.email || 'Sin email' %>
+                </div>
+                <div class="detail-item" style="grid-column: span 2;">
+                    <span class="detail-label">Dirección</span>
+                    <%= cliente.direccion || 'Sin dirección' %>
+                </div>
+            </div>
+
+            <div class="cliente-actions">
+                <button class="btn btn-outline-primary" data-cliente-id="<%= cliente.id %>" data-action="editar">
+                    <i class="bi bi-pencil me-1"></i> Editar
+                </button>
+                <button class="btn btn-outline-danger" data-cliente-id="<%= cliente.id %>" data-action="eliminar">
+                    <i class="bi bi-trash me-1"></i> Borrar
+                </button>
+            </div>
+        </div>
+        <% }); %>
+</div>

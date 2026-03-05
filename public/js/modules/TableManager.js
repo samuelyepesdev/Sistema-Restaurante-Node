@@ -72,27 +72,28 @@ class TableManager {
      * Filter table rows
      * @param {Function} matchFunction - Function that returns true if row matches
      */
-    filterRows(matchFunction) {
+    filterRows(matchFunction, selector = 'tr') {
         if (!this.tableBody) return;
 
-        const rows = this.tableBody.querySelectorAll('tr');
-        rows.forEach(row => {
-            const matches = matchFunction(row);
-            row.style.display = matches ? '' : 'none';
+        const items = this.tableBody.querySelectorAll(selector);
+        items.forEach(item => {
+            const matches = matchFunction(item);
+            item.style.display = matches ? '' : 'none';
         });
     }
 
     /**
      * Clear all filters (show all rows)
      */
-    clearFilters() {
+    clearFilters(selector = 'tr') {
         if (!this.tableBody) return;
 
-        const rows = this.tableBody.querySelectorAll('tr');
-        rows.forEach(row => {
-            row.style.display = '';
+        const items = this.tableBody.querySelectorAll(selector);
+        items.forEach(item => {
+            item.style.display = '';
         });
     }
+
 }
 
 // Export for use in modules

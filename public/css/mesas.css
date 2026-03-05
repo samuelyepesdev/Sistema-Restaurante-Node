@@ -188,3 +188,59 @@ body {
     background-color: #198754;
     color: white;
 }
+
+/* Responsive para pantallas muy pequeñas (320px - 375px) */
+@media (max-width: 400px) {
+    .mesa-num {
+        font-size: 1.2rem;
+    }
+
+    .mesa-estado-pill {
+        padding: .15rem .4rem;
+        font-size: .65rem;
+    }
+
+    .card-body {
+        padding: 0.5rem !important;
+        /* Relleno mínimo para ganar espacio */
+    }
+
+    .btn-cta {
+        font-size: 0.75rem;
+        /* Botón principal más pequeño */
+        padding: 0.4rem 0.2rem;
+    }
+
+    .btn-cta i {
+        margin-right: 2px !important;
+        font-size: 0.8rem;
+    }
+
+    .btn-sec {
+        font-size: 0.7rem;
+        padding: 0.3rem 0.1rem;
+    }
+
+    .btn-sec i {
+        font-size: 0.75rem;
+        margin-right: 1px !important;
+    }
+
+    .mesa-num {
+        font-size: 1.1rem;
+    }
+
+    .mesa-estado-pill {
+        padding: 0.1rem 0.3rem;
+        font-size: 0.6rem;
+        gap: 2px;
+    }
+
+    .mesa-desc {
+        font-size: 0.65rem;
+        margin-bottom: 0.5rem !important;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+}
