@@ -300,13 +300,16 @@
             const resp = await fetch(`/admin/tenants/${tenantId}/users/${userId}/password`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ password: pass1 })
+                body: JSON.stringify({ newPassword: pass1, newPasswordConfirm: pass2 })
             });
-            if (resp.ok) {
-                Swal.fire('Éxito', 'Contraseña actualizada correctamente', 'success')
+
+            const data = await resp.json();
+
+            if (resp.ok && data.success) {
+                Swal.fire('Éxito', data.message || 'Contraseña actualizada correctamente', 'success')
                     .then(() => bootstrap.Modal.getInstance(document.getElementById('modalCambiarPassword')).hide());
             } else {
-                Swal.fire('Error', 'No se pudo actualizar la contraseña', 'error');
+                Swal.fire('Error', data.error || 'No se pudo actualizar la contraseña', 'error');
             }
         } catch (e) {
             Swal.fire('Error', 'Error de red', 'error');
