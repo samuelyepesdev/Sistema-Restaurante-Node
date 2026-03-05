@@ -16,7 +16,7 @@
     "outputPath": "dist"
   },
   "scripts": {
-    "start": "node scripts/run-migrations.js && node scripts/create-admin.js && node scripts/seed-doc-types.js && node server.js",
+    "start": "node scripts/run-migrations.js && node scripts/create-admin.js && node scripts/seed-doc-types.js && node scripts/seed-temas-parametros.js && node server.js",
     "dev": "nodemon server.js",
     "package": "pkg . --public --target node18-win-x64",
     "migrate": "node scripts/run-migrations.js",

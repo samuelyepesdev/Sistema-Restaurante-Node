@@ -2,9 +2,22 @@
  * ParametroService - Business logic for parametros (e.g. kg, lb, g, bebidas, comidas)
  * Related to: ParametroRepository, TemaRepository
  */
-
 const ParametroRepository = require('../repositories/ParametroRepository');
 const TemaRepository = require('../repositories/TemaRepository');
+
+const CATALOGOS_INVENTARIO = {
+    'CATEGORIAS DE INSUMO': [
+        'Frutas, verduras, hortalizas, legumbres, cereales, semillas, frutos secos y aceites vegetales.',
+        'Carnes (res, pollo, cerdo), pescados, mariscos, huevos y productos lácteos (leche, queso, yogur).',
+        'Origen Mineral: Agua y sales minerales.'
+    ],
+    'UNIDADES DE COMPRA': [
+        'GRAMOS', 'LIBRAS', 'KILOGRAMOS', 'ARROBA', 'QUINTAL', 'ONZA',
+        'MILILITROS', 'LITROS', 'GALONES', 'ONZA LÍQUIDA', 'BARRIL',
+        'UNIDADES', 'CAJAS', 'METROS', 'CENTIMETROS', 'PAQUETES',
+        'ROLLOS', 'TABLETAS', 'TEST', 'SACKETS'
+    ]
+};
 
 class ParametroService {
     static async list(tenantId, activeOnly = true) {
@@ -60,6 +73,40 @@ class ParametroService {
     static async getByTemaId(temaId, tenantId) {
         return ParametroRepository.getParametrosByTemaId(temaId, tenantId);
     }
+
+    /**
+     * Seed initial inventory parameters and themes for a tenant.
+     * @param {number} tenantId 
+     */
+    static async seedInventoryParams(tenantId) {
+        let created = 0;
+        for (const [temaName, params] of Object.entries(CATALOGOS_INVENTARIO)) {
+            let temaId;
+            const existingTema = await TemaRepository.findByName(temaName, tenantId);
+
+            if (!existingTema) {
+                temaId = await TemaRepository.create(tenantId, { name: temaName, status: 1 });
+            } else {
+                temaId = existingTema.id;
+            }
+
+            for (const paramName of params) {
+                const existingParam = await ParametroRepository.findByName(paramName, tenantId);
+                let pid;
+
+                if (!existingParam) {
+                    pid = await ParametroRepository.create(tenantId, { name: paramName, status: 1 });
+                    created++;
+                } else {
+                    pid = existingParam.id;
+                }
+
+                await TemaRepository.addParametroToTema(temaId, pid);
+            }
+        }
+        return created;
+    }
 }
 
 module.exports = ParametroService;
+module.exports.CATALOGOS_INVENTARIO = CATALOGOS_INVENTARIO;

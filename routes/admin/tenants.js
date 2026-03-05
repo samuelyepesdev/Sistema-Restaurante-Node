@@ -8,6 +8,7 @@ const PlanService = require('../../services/PlanService');
 const { syncPlanPermissionsToTenantUsers } = require('../../services/PlanPermissionSyncService');
 const { ROLES } = require('../../utils/constants');
 const authService = require('../../services/AuthService');
+const ParametroService = require('../../services/ParametroService');
 
 // Solo superadmins: si no lo es, redirigir a / (no mostrar 403 para no dejar pegado)
 router.use((req, res, next) => {
@@ -74,6 +75,7 @@ router.post('/', async (req, res) => {
         const tenantId = tenant.id;
         const tipoNegocio = configObj.tipo_negocio || 'restaurante';
         await CategoryService.seedDefaultCategories(tenantId, tipoNegocio);
+        await ParametroService.seedInventoryParams(tenantId);
         await TenantUserService.createTenantUser(tenantId, {
             username: admin_username,
             password: admin_password,
