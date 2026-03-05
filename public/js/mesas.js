@@ -5,6 +5,7 @@ $(function () {
   const canvas = new bootstrap.Offcanvas('#canvasPedido');
   let pedidoActual = null; // { id, mesa_id }
   let items = []; // items del pedido en UI
+  let clienteActual = { id: null, nombre: 'Consumidor Final' }; // NUEVO: cliente de la mesa
   let descuentosPorItem = {}; // { itemId: percent } - solo para esta venta; no cambia el precio del producto en catálogo
   let propinaPedido = 0; // propina que deja el cliente (se suma al total)
 
@@ -91,13 +92,19 @@ $(function () {
     try {
       descuentosPorItem = {};
       propinaPedido = 0;
+      // Resetear cliente a consumidor final al abrir
+      clienteActual = { id: null, nombre: 'Consumidor Final' };
+      actualizarUICliente();
+
       const resp = await fetch('/api/mesas/abrir', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ mesa_id: mesaId }) });
       const data = await resp.json();
       if (!resp.ok) throw new Error(data.error || 'Error al abrir pedido');
       pedidoActual = data.pedido;
       $('#pedidoMesa').text(mesaNumero);
+
       const $btnLiberar = $('#btnLiberarMesaHeader');
       if ($btnLiberar.length) $btnLiberar.prop('disabled', currentMesaEstado === 'libre').toggleClass('d-none', currentMesaEstado === 'libre');
+
       await cargarPedido(pedidoActual.id);
       canvas.show();
     } catch (err) {
@@ -111,6 +118,14 @@ $(function () {
     if (!resp.ok) throw new Error(data.error || 'Error al cargar pedido');
     items = data.items || [];
     propinaPedido = Number(data.pedido?.propina) || 0;
+
+    // NUEVO: Recuperar cliente asociado al pedido
+    if (data.pedido?.cliente_id) {
+      clienteActual = { id: data.pedido.cliente_id, nombre: data.pedido.cliente_nombre || 'Consumidor Final' };
+    } else {
+      clienteActual = { id: null, nombre: 'Consumidor Final' };
+    }
+    actualizarUICliente();
     if (items.length > 0) currentMesaEstado = 'ocupada';
     const $btnLiberar = $('#btnLiberarMesaHeader');
     if ($btnLiberar.length) $btnLiberar.prop('disabled', currentMesaEstado === 'libre').toggleClass('d-none', currentMesaEstado === 'libre');
@@ -220,27 +235,185 @@ $(function () {
   $('#buscarProductoMesa').on('input', function () {
     clearTimeout(to);
     const q = this.value.trim();
-    if (q.length < 2) { $('#resultadosProductoMesa').empty(); return; }
+    if (q.length < 2) { $('#resultadosProductoMesa').hide().empty(); return; }
     to = setTimeout(async () => {
       const resp = await fetch(`/api/productos/buscar?q=${encodeURIComponent(q)}`);
       const productos = await resp.json();
       const list = $('#resultadosProductoMesa');
       list.empty();
-      productos.forEach(p => {
-        const item = $(`
-          <a href="#" class="list-group-item list-group-item-action">
-            <div><strong>${p.codigo}</strong> - ${p.nombre}</div>
-            <div class="small text-muted">KG: $${p.precio_kg} | UND: $${p.precio_unidad} | LB: $${p.precio_libra}</div>
-          </a>`);
-        item.on('click', e => {
-          e.preventDefault();
-          $('#resultadosProductoMesa').empty();
-          $('#buscarProductoMesa').val('');
-          seleccionarProducto(p);
+      if (productos.length === 0) {
+        list.append('<div class="list-group-item text-muted">No se encontraron productos</div>');
+      } else {
+        productos.forEach(p => {
+          const item = $(`
+            <a href="#" class="list-group-item list-group-item-action">
+              <div class="d-flex justify-content-between align-items-center">
+                <div>
+                  <div class="fw-bold text-primary">${p.codigo}</div>
+                  <div class="text-dark">${p.nombre}</div>
+                </div>
+                <div class="text-end">
+                    <span class="badge bg-light text-dark border">$${p.precio_unidad?.toLocaleString()}</span>
+                </div>
+              </div>
+            </a>`);
+          item.on('click', e => {
+            e.preventDefault();
+            list.hide().empty();
+            $('#buscarProductoMesa').val('');
+            seleccionarProducto(p);
+          });
+          list.append(item);
         });
-        list.append(item);
-      });
+      }
+      list.show();
     }, 250);
+  });
+
+  // NUEVO: Lógica de Cliente en Mesas (Modal)
+  function actualizarUICliente() {
+    const nombre = clienteActual.nombre || 'Consumidor Final';
+    $('#labelClienteActual').text('Cliente: ' + nombre);
+
+    // Texto corto para el botón
+    let textoBoton = nombre.split(' ')[0];
+    if (textoBoton.length > 8) textoBoton = textoBoton.substring(0, 7) + '..';
+    $('#btnClienteTexto').text(textoBoton);
+  }
+
+  const modalClienteMesa = new bootstrap.Modal(document.getElementById('modalBuscarClienteMesa'));
+
+  $('#btnBuscarClienteMesa').on('click', function () {
+    modalClienteMesa.show();
+    setTimeout(() => $('#buscarClienteInputMesa').focus(), 500);
+  });
+
+  $('#btnResetClienteDefault').on('click', async function () {
+    const originalCliente = { ...clienteActual };
+    clienteActual = { id: null, nombre: 'Consumidor Final' };
+
+    if (pedidoActual && pedidoActual.id) {
+      try {
+        await fetch(`/api/mesas/pedidos/${pedidoActual.id}/cliente`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ cliente_id: null }) // Enviar null para limpiar asociación
+        });
+      } catch (err) {
+        console.error(err);
+        clienteActual = originalCliente;
+        return Swal.fire({ icon: 'error', title: 'Error al resetear cliente' });
+      }
+    }
+
+    actualizarUICliente();
+    modalClienteMesa.hide();
+    $('#buscarClienteInputMesa').val('');
+  });
+
+  let toCliente;
+  $('#buscarClienteInputMesa').on('input', function () {
+    clearTimeout(toCliente);
+    const q = this.value.trim();
+    const list = $('#resultadosClienteMesa');
+    const loader = $('#loadingClienteMesa');
+
+    if (q.length < 2) {
+      list.html(`
+        <div class="text-center py-4 text-muted">
+            <i class="bi bi-keyboard fs-1 d-block mb-2"></i>
+            <small>Escriba al menos 2 caracteres para buscar</small>
+        </div>
+      `).show();
+      loader.hide();
+      return;
+    }
+
+    loader.show();
+    list.hide();
+
+    toCliente = setTimeout(async () => {
+      try {
+        const cacheBuster = Date.now();
+        const resp = await fetch(`/api/clientes/buscar?q=${encodeURIComponent(q)}&_=${cacheBuster}`);
+
+        if (!resp.ok) {
+          const errData = await resp.json().catch(() => ({}));
+          console.error('Error al buscar clientes:', errData);
+          loader.hide();
+          list.html(`<div class="list-group-item text-danger text-center py-3">
+              <i class="bi bi-exclamation-triangle me-2"></i>Error: ${errData.error || 'No se pudo buscar'}
+           </div>`).show();
+          return;
+        }
+
+        const clientesData = await resp.json();
+        const clientes = Array.isArray(clientesData) ? clientesData : [];
+
+        list.empty();
+        loader.hide();
+        list.show();
+
+        if (clientes.length === 0) {
+          list.append('<div class="list-group-item text-muted text-center py-3">Sin resultados</div>');
+        } else {
+          clientes.forEach(c => {
+            const docInfo = c.numero_documento ? `${c.tipo_documento || 'DOC'}: ${c.numero_documento}` : 'Sin documento';
+            const item = $(`
+              <a href="#" class="list-group-item list-group-item-action py-3 border-bottom">
+                <div class="d-flex justify-content-between align-items-center">
+                  <div>
+                      <div class="fw-bold text-dark">${c.nombre}</div>
+                      <div class="small text-muted">${docInfo}</div>
+                  </div>
+                  <i class="bi bi-chevron-right text-muted"></i>
+                </div>
+              </a>`);
+            item.on('click', async e => {
+              e.preventDefault();
+              const originalCliente = { ...clienteActual };
+              clienteActual = { id: c.id, nombre: c.nombre };
+
+              // Persistir asociación si hay pedido abierto
+              if (pedidoActual && pedidoActual.id) {
+                try {
+                  const r = await fetch(`/api/mesas/pedidos/${pedidoActual.id}/cliente`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ cliente_id: c.id })
+                  });
+                  if (!r.ok) throw new Error('No se pudo asociar el cliente');
+                } catch (err) {
+                  console.error(err);
+                  clienteActual = originalCliente; // Revertir en error
+                  return Swal.fire({ icon: 'error', title: 'Error al asociar cliente' });
+                }
+              }
+
+              actualizarUICliente();
+              modalClienteMesa.hide();
+              $('#buscarClienteInputMesa').val('');
+              list.empty();
+            });
+            list.append(item);
+          });
+        }
+      } catch (err) {
+        console.error('Error en búsqueda:', err);
+        loader.hide();
+        list.html('<div class="list-group-item text-danger text-center py-3">Error de red o servidor</div>').show();
+      }
+    }, 250);
+  });
+
+  // Cerrar listas al hacer click fuera
+  $(document).on('click', function (e) {
+    if (!$(e.target).closest('#buscarProductoMesa, #resultadosProductoMesa').length) {
+      $('#resultadosProductoMesa').hide();
+    }
+    if (!$(e.target).closest('#buscarClienteInputMesa, #resultadosClienteMesa, #btnBuscarClienteMesa').length) {
+      $('#resultadosClienteMesa').hide();
+    }
   });
 
   // Selección rápida: cantidad 1 por defecto. Nota para cocina solo si el producto es de categoría "Comidas"
@@ -529,15 +702,20 @@ $(function () {
         return;
       }
 
-      // Obtener cliente predeterminado automáticamente
-      const cliente = await getOrCreateConsumidorFinal();
-      if (!cliente || !cliente.id) {
-        Swal.fire({ icon: 'error', title: 'No se pudo obtener el cliente predeterminado' });
-        return;
+      // Usar cliente seleccionado o el consumidor final predeterminado
+      let clienteIdFacturar = clienteActual.id;
+
+      if (!clienteIdFacturar) {
+        const clienteDefault = await getOrCreateConsumidorFinal();
+        if (!clienteDefault || !clienteDefault.id) {
+          Swal.fire({ icon: 'error', title: 'No se pudo obtener el cliente predeterminado' });
+          return;
+        }
+        clienteIdFacturar = clienteDefault.id;
       }
 
       // Mostrar modal de pago (total incluye propina)
-      await mostrarModalPago(totalConPropinaFacturar, cliente.id);
+      await mostrarModalPago(totalConPropinaFacturar, clienteIdFacturar);
     } catch (err) {
       Swal.fire({ icon: 'error', title: err.message });
     }

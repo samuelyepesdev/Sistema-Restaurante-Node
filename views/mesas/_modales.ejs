@@ -37,19 +37,37 @@
             <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
         </div>
     </div>
-    <div class="offcanvas-body d-flex flex-column">
-        <div class="mb-2">
-            <div class="input-group">
-                <span class="input-group-text"><i class="bi bi-search"></i></span>
-                <input id="buscarProductoMesa" class="form-control" placeholder="Buscar producto...">
+    <div class="offcanvas-body d-flex flex-column pt-3">
+        <!-- Fila Superior: Buscador de Producto y Cliente Compacto -->
+        <div class="row g-2 mb-3">
+            <div class="col-8 position-relative">
+                <div class="input-group input-group-sm mb-0 shadow-sm border rounded-pill overflow-hidden">
+                    <span class="input-group-text bg-white border-0 ps-3"><i
+                            class="bi bi-search text-primary"></i></span>
+                    <input id="buscarProductoMesa" class="form-control border-0 py-2" placeholder="Cargar producto...">
+                </div>
+                <div id="resultadosProductoMesa" class="list-group search-results-premium" style="display: none;"></div>
             </div>
-            <div id="resultadosProductoMesa" class="list-group"></div>
+            <div class="col-4">
+                <button
+                    class="btn btn-sm btn-outline-primary rounded-pill w-100 h-100 d-flex align-items-center justify-content-center py-2"
+                    id="btnBuscarClienteMesa" title="Cambiar cliente">
+                    <i class="bi bi-person-fill me-1"></i>
+                    <span class="text-truncate" style="max-width: 60px;" id="btnClienteTexto">Final</span>
+                </button>
+            </div>
         </div>
-        <div class="d-flex justify-content-end mb-2">
-            <button id="btnLiberarMesaHeader" class="btn btn-outline-secondary btn-sm"><i class="bi bi-unlock"></i>
-                Liberar mesa</button>
+
+        <div class="d-flex justify-content-between align-items-center mb-2 px-1">
+            <div class="small text-muted fw-semibold">
+                <span id="labelClienteActual" class="badge bg-light text-dark border-0">Cliente: Consumidor Final</span>
+            </div>
+            <button id="btnLiberarMesaHeader" class="btn btn-link btn-sm text-danger text-decoration-none p-0 fw-bold">
+                <i class="bi bi-unlock me-1"></i>Liberar
+            </button>
         </div>
-        <div class="table-responsive flex-grow-1">
+
+        <div class="table-responsive flex-grow-1 border-top">
             <table class="table table-sm table-pedido-mesas align-middle">
                 <thead class="table-light">
                     <tr>
@@ -271,6 +289,76 @@
         </div>
     </div>
 </div>
+
+<!-- Modal Buscar Cliente Mesa -->
+<div class="modal fade" id="modalBuscarClienteMesa" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header bg-light border-0 py-3">
+                <h6 class="modal-title fw-bold"><i class="bi bi-person-search me-2"></i>Seleccionar Cliente</h6>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <div class="position-relative mb-4">
+                    <div class="input-group shadow-sm border rounded-pill overflow-hidden">
+                        <span class="input-group-text bg-white border-0 ps-3"><i class="bi bi-search"></i></span>
+                        <input id="buscarClienteInputMesa" class="form-control border-0 py-2"
+                            placeholder="Nombre, NIT o documento...">
+                    </div>
+                </div>
+                <div id="resultadosClienteMesa" class="list-group list-group-flush"
+                    style="max-height: 300px; overflow-y: auto;">
+                    <div class="text-center py-4 text-muted">
+                        <i class="bi bi-keyboard fs-1 d-block mb-2"></i>
+                        <small>Escriba al menos 2 caracteres para buscar</small>
+                    </div>
+                </div>
+                <div id="loadingClienteMesa" class="text-center py-4 d-none">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Cargando...</span>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer border-0 bg-light py-2">
+                <button type="button" class="btn btn-sm btn-primary rounded-pill px-4"
+                    id="btnResetClienteDefault">Consumidor Final</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* Ajustes específicos para que no se sienta cargado */
+    .offcanvas-body {
+        scrollbar-width: thin;
+    }
+
+    .table-pedido-mesas thead th {
+        font-size: 0.7rem;
+        text-transform: uppercase;
+        color: #64748b;
+        font-weight: 700;
+        background: #f8fafc !important;
+        border-bottom: 2px solid #e2e8f0;
+        padding: 0.75rem 0.5rem !important;
+    }
+
+    .td-producto {
+        font-weight: 600;
+        color: #1e293b;
+        font-size: 0.85rem;
+    }
+
+    .td-subtotal {
+        color: #0f172a;
+        font-size: 0.85rem;
+    }
+
+    #totalPedido {
+        font-size: 1.25rem;
+        color: #0d6efd;
+    }
+</style>
 
 <!-- Modal para crear múltiples mesas -->
 <div class="modal fade" id="modalCrearMasivas" tabindex="-1">

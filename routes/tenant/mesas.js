@@ -265,7 +265,13 @@ router.get('/pedidos/:pedidoId', async (req, res) => {
         if (!tenantId) return res.status(403).json({ error: 'Contexto de tenant no disponible' });
 
         const pedidoId = req.params.pedidoId;
-        const [pedidos] = await db.query('SELECT * FROM pedidos WHERE id = ? AND tenant_id = ?', [pedidoId, tenantId]);
+        const [pedidos] = await db.query(`
+            SELECT p.*, c.nombre AS cliente_nombre 
+            FROM pedidos p 
+            LEFT JOIN clientes c ON c.id = p.cliente_id 
+            WHERE p.id = ? AND p.tenant_id = ?`,
+            [pedidoId, tenantId]);
+
         if (pedidos.length === 0) return res.status(404).json({ error: 'Pedido no encontrado' });
         const pedido = pedidos[0];
         const [items] = await db.query(`
@@ -740,6 +746,36 @@ router.put('/:mesaId/liberar', async (req, res) => {
     } catch (error) {
         console.error('Error interno al liberar mesa:', error);
         res.status(500).json({ error: 'Error interno' });
+    }
+});
+
+// PUT /pedidos/:pedidoId/cliente - API: actualizar cliente de un pedido
+router.put('/pedidos/:pedidoId/cliente', async (req, res) => {
+    try {
+        const tenantId = req.tenant?.id;
+        if (!tenantId) return res.status(403).json({ error: 'Contexto de tenant no disponible' });
+
+        const pedidoId = req.params.pedidoId;
+        const { cliente_id } = req.body; // Puede ser null para Consumidor Final
+
+        let clienteAsociado = null;
+        if (cliente_id !== null && cliente_id !== undefined) {
+            // Verificar que el el cliente pertenece al tenant
+            const [rows] = await db.query('SELECT id, nombre FROM clientes WHERE id = ? AND tenant_id = ?', [cliente_id, tenantId]);
+            if (rows.length === 0) return res.status(404).json({ error: 'Cliente no encontrado' });
+            clienteAsociado = rows[0];
+        }
+
+        const [result] = await db.query(
+            'UPDATE pedidos SET cliente_id = ? WHERE id = ? AND tenant_id = ?',
+            [cliente_id, pedidoId, tenantId]
+        );
+
+        if (result.affectedRows === 0) return res.status(404).json({ error: 'Pedido no encontrado' });
+        res.json({ message: 'Cliente asociado al pedido', cliente: clienteAsociado });
+    } catch (error) {
+        console.error('Error al asociar cliente al pedido:', error);
+        res.status(500).json({ error: 'Error al asociar cliente' });
     }
 });
 

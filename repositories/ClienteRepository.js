@@ -33,13 +33,17 @@ class ClienteRepository {
      * @returns {Promise<Array>} Array of clients
      */
     static async search(query, tenantId, limit = 10) {
-        const searchTerm = `%${query}%`;
+        if (!query) return [];
+        const searchTerm = `%${query.trim().toLowerCase()}%`;
+        
         const [clientes] = await db.query(`
-            SELECT * FROM clientes 
-            WHERE tenant_id = ? AND (nombre LIKE ? OR telefono LIKE ? OR numero_documento LIKE ? OR email LIKE ?)
+            SELECT id, nombre, telefono, numero_documento, email, tipo_documento FROM clientes 
+            WHERE tenant_id = ? 
+            AND (LOWER(nombre) LIKE ? OR telefono LIKE ? OR numero_documento LIKE ? OR LOWER(email) LIKE ?)
             ORDER BY nombre
             LIMIT ?
         `, [tenantId, searchTerm, searchTerm, searchTerm, searchTerm, limit]);
+        
         return clientes;
     }
 

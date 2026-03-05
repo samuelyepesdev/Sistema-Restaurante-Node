@@ -13,23 +13,36 @@
                 <form id="formCliente">
                     <input type="hidden" id="clienteId">
                     <div class="row">
-                        <div class="col-4 mb-3">
+                        <div class="col-5 mb-3">
                             <label class="form-label">Tipo Doc.</label>
-                            <select class="form-select" id="tipo_documento" name="tipo_documento">
-                                <% if (typeof tiposDocumento !=='undefined' && tiposDocumento.length> 0) { %>
-                                    <% tiposDocumento.forEach(function(tipo) { %>
-                                        <option value="<%= tipo.nombre %>">
-                                            <%= tipo.nombre %>
-                                        </option>
-                                        <% }); %>
-                                            <% } else { %>
-                                                <option value="CC" selected>CC</option>
-                                                <option value="NIT">NIT</option>
-                                                <% } %>
-                            </select>
+                            <% const getFriendlyName=(code)=> {
+                                const names = {
+                                'CC': 'Cédula de Ciudadanía (CC)',
+                                'NIT': 'NIT / RUT',
+                                'CE': 'Cédula Extranjería (CE)',
+                                'PP': 'Pasaporte',
+                                'PA': 'Pasaporte',
+                                'TI': 'Tarjeta Identidad',
+                                'PEP': 'Permiso Especial (PEP)'
+                                };
+                                return names[code] || code;
+                                };
+                                %>
+                                <select class="form-select" id="tipo_documento" name="tipo_documento">
+                                    <% if (typeof tiposDocumento !=='undefined' && tiposDocumento.length> 0) { %>
+                                        <% tiposDocumento.forEach(function(tipo) { %>
+                                            <option value="<%= tipo.nombre %>">
+                                                <%= getFriendlyName(tipo.nombre) %>
+                                            </option>
+                                            <% }); %>
+                                                <% } else { %>
+                                                    <option value="CC" selected>Cédula de Ciudadanía (CC)</option>
+                                                    <option value="NIT">NIT / RUT</option>
+                                                    <% } %>
+                                </select>
                         </div>
-                        <div class="col-8 mb-3">
-                            <label class="form-label">Núm. de Documento (NIT/CC)</label>
+                        <div class="col-7 mb-3">
+                            <label class="form-label">Núm. de Documento</label>
                             <input type="text" class="form-control" id="numero_documento" name="numero_documento"
                                 placeholder="000.000.000-0">
                         </div>

@@ -244,3 +244,46 @@ body {
         text-overflow: ellipsis;
     }
 }
+
+/* Resultados de búsqueda Premium para Mesas */
+.search-results-premium {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    z-index: 1060;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    border-radius: 12px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    max-height: 250px;
+    overflow-y: auto;
+    margin-top: 5px;
+    animation: fadeInSlide 0.2s ease-out;
+}
+
+@keyframes fadeInSlide {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.search-results-premium .list-group-item {
+    border: none;
+    padding: 0.8rem 1.25rem;
+    transition: all 0.2s;
+    background: transparent;
+}
+
+.search-results-premium .list-group-item:hover {
+    background: rgba(13, 110, 253, 0.05);
+    padding-left: 1.5rem;
+}
