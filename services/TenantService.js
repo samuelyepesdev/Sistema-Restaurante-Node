@@ -321,14 +321,25 @@ class TenantService {
         });
 
         const ventasDiariasPorTenant = [];
+        const ventasHoyPorTenant = [];
+
         Array.from(nombresTenants).forEach(nombre => {
             const dataPuntos = [];
             for (let i = 1; i <= diaHoy; i++) {
                 const fechaStr = `${parts[0]}-${parts[1]}-${String(i).padStart(2, '0')}`;
+                const totalDia = (ventasPorTenantYFecha[nombre] && ventasPorTenantYFecha[nombre][fechaStr]) || 0;
                 dataPuntos.push({
                     fecha: fechaStr,
-                    total: (ventasPorTenantYFecha[nombre] && ventasPorTenantYFecha[nombre][fechaStr]) || 0
+                    total: totalDia
                 });
+
+                // Si i es el día de hoy, lo guardamos para las cards
+                if (i === parseInt(dd, 10)) {
+                    ventasHoyPorTenant.push({
+                        nombre: nombre,
+                        total: totalDia
+                    });
+                }
             }
             ventasDiariasPorTenant.push({
                 nombre: nombre,
@@ -354,7 +365,8 @@ class TenantService {
             historicoRegistro: historicoRows || [],
             ventasDiariasMes,
             ventasDiariasMesAnterior,
-            ventasDiariasPorTenant
+            ventasDiariasPorTenant,
+            ventasHoyPorTenant
         };
     }
 
