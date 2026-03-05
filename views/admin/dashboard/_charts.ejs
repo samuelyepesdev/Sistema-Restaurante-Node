@@ -1,13 +1,25 @@
 <!-- Ventas de Hoy por Restaurante -->
 <div class="row g-4 mb-5">
     <div class="col-12">
-        <h5 class="mb-3 d-flex align-items-center text-secondary fw-bold">
-            <i class="bi bi-clock-history me-2 text-primary"></i> VENTAS DE HOY POR RESTAURANTE
-        </h5>
-        <div class="row g-3">
+        <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
+            <h5 class="mb-0 d-flex align-items-center text-secondary fw-bold">
+                <i class="bi bi-clock-history me-2 text-primary"></i> VENTAS DE HOY POR RESTAURANTE
+            </h5>
+            <div class="d-flex align-items-center gap-2">
+                <span class="badge bg-light text-dark border fw-normal" id="totalHoyBadge">
+                    Total: $<span id="ventasHoyTotalGlobal">
+                        <%= Number(stats.ventasHoyTotalGlobal || 0).toLocaleString('es-CO') %>
+                    </span>
+                </span>
+                <span class="small text-muted" id="lastUpdatedLabel" title="Actualización automática cada 60 segundos">
+                    <i class="bi bi-arrow-clockwise me-1"></i><span id="lastUpdatedTime">Actualizado al cargar</span>
+                </span>
+            </div>
+        </div>
+        <div class="row g-3" id="ventasHoyContainer">
             <% if (stats.ventasHoyPorTenant && stats.ventasHoyPorTenant.length> 0) { %>
-                <% stats.ventasHoyPorTenant.forEach(v=> { %>
-                    <div class="col-6 col-md-4 col-lg-3">
+                <% stats.ventasHoyPorTenant.forEach((v, idx)=> { %>
+                    <div class="col-6 col-md-4 col-lg-3" data-tenant-card="<%= v.nombre %>">
                         <div class="card h-100 border-0 shadow-sm"
                             style="border-radius: 12px; transition: all 0.2s ease-in-out; border-left: 4px solid #667eea !important;">
                             <div class="card-body p-3">
@@ -21,8 +33,12 @@
                                         <i class="bi bi-lightning-fill" style="font-size: 0.7rem;"></i>
                                     </div>
                                 </div>
-                                <div class="h4 mb-0 fw-bold text-dark">
+                                <div class="h4 mb-1 fw-bold text-dark tenant-ventas-total">
                                     $<%= Number(v.total || 0).toLocaleString('es-CO') %>
+                                </div>
+                                <div class="small text-muted tenant-ventas-facturas">
+                                    <i class="bi bi-receipt me-1"></i>
+                                    <%= v.facturas || 0 %> factura<%= (v.facturas || 0) !==1 ? 's' : '' %>
                                 </div>
                                 <div class="mt-2 progress" style="height: 4px;">
                                     <div class="progress-bar <%= (v.total > 0) ? 'bg-success' : 'bg-light' %>"
@@ -33,7 +49,7 @@
                     </div>
                     <% }) %>
                         <% } else { %>
-                            <div class="col-12">
+                            <div class="col-12" id="noVentasHoy">
                                 <div class="alert alert-light border shadow-sm">
                                     <i class="bi bi-info-circle me-2"></i> No se encontraron datos de ventas para hoy.
                                 </div>

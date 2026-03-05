@@ -321,31 +321,36 @@ class TenantService {
         });
 
         const ventasDiariasPorTenant = [];
-        const ventasHoyPorTenant = [];
-
+        // Ya NO usamos el bucle para calcular "hoy" — usamos consulta SQL directa
         Array.from(nombresTenants).forEach(nombre => {
             const dataPuntos = [];
             for (let i = 1; i <= diaHoy; i++) {
                 const fechaStr = `${parts[0]}-${parts[1]}-${String(i).padStart(2, '0')}`;
                 const totalDia = (ventasPorTenantYFecha[nombre] && ventasPorTenantYFecha[nombre][fechaStr]) || 0;
-                dataPuntos.push({
-                    fecha: fechaStr,
-                    total: totalDia
-                });
-
-                // Si i es el día de hoy, lo guardamos para las cards
-                if (i === parseInt(dd, 10)) {
-                    ventasHoyPorTenant.push({
-                        nombre: nombre,
-                        total: totalDia
-                    });
-                }
+                dataPuntos.push({ fecha: fechaStr, total: totalDia });
             }
-            ventasDiariasPorTenant.push({
-                nombre: nombre,
-                data: dataPuntos
-            });
+            ventasDiariasPorTenant.push({ nombre, data: dataPuntos });
         });
+
+        // CORRECCIÓN: Ventas de HOY por tenant con consulta directa (sin depender del bucle)
+        const [ventasHoyDirectas] = await db.query(`
+            SELECT t.nombre AS tenant_nombre, COALESCE(SUM(f.total), 0) AS total, COUNT(f.id) AS facturas
+            FROM tenants t
+            LEFT JOIN facturas f ON f.tenant_id = t.id
+                AND DATE(CONVERT_TZ(f.fecha, '+00:00', '-05:00')) = ?
+            WHERE t.activo = 1
+            GROUP BY t.id, t.nombre
+            ORDER BY total DESC
+        `, [hoyColombia]);
+
+        const ventasHoyPorTenant = ventasHoyDirectas.map(r => ({
+            nombre: r.tenant_nombre,
+            total: parseFloat(r.total || 0),
+            facturas: parseInt(r.facturas || 0, 10)
+        }));
+
+        // Total global de ventas de hoy (todas los tenants)
+        const ventasHoyTotalGlobal = ventasHoyPorTenant.reduce((sum, v) => sum + v.total, 0);
 
         const r = resumen[0] || {};
         const toNum = (val) => (val === undefined || val === null) ? 0 : (typeof val === 'bigint' ? Number(val) : parseFloat(val) || 0);
@@ -366,7 +371,8 @@ class TenantService {
             ventasDiariasMes,
             ventasDiariasMesAnterior,
             ventasDiariasPorTenant,
-            ventasHoyPorTenant
+            ventasHoyPorTenant,
+            ventasHoyTotalGlobal
         };
     }
 
