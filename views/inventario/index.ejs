@@ -150,7 +150,32 @@
                     } else {
                         textMedida.classList.add('d-none');
                     }
+                    actualizarPreviewCosto();
                 });
+
+                // Preview de costo por unidad base en tiempo real
+                function actualizarPreviewCosto() {
+                    const precio = parseFloat(document.getElementById('nuevoPrecioCompra')?.value) || 0;
+                    const cantidad = parseFloat(document.getElementById('nuevoCantidadCompra')?.value) || 1;
+                    const unidadBase = document.getElementById('nuevoUnidadBase')?.value || 'g';
+                    const preview = document.getElementById('previewCostoPorUnidad');
+                    const previewValor = document.getElementById('previewCosto');
+                    const previewUnidad = document.getElementById('previewUnidadBase');
+                    if (preview && previewValor) {
+                        previewUnidad.textContent = unidadBase;
+                        if (precio > 0 && cantidad > 0) {
+                            const costoPorUnidad = precio / cantidad;
+                            previewValor.textContent = '$' + costoPorUnidad.toLocaleString('es-CO', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+                            preview.style.display = '';
+                        } else {
+                            preview.style.display = 'none';
+                        }
+                    }
+                }
+                document.getElementById('nuevoPrecioCompra')?.addEventListener('input', actualizarPreviewCosto);
+                document.getElementById('nuevoCantidadCompra')?.addEventListener('input', actualizarPreviewCosto);
+                document.getElementById('nuevoUnidadBase')?.addEventListener('change', actualizarPreviewCosto);
+
                 document.getElementById('btnConfirmarEntrada').addEventListener('click', async () => {
                     const id = document.getElementById('entradaInsumoId').value;
                     const cantidad = parseFloat(document.getElementById('entradaCantidad').value);
@@ -280,10 +305,38 @@
                             return;
                         }
                         vacio.style.display = 'none';
+                        // Encabezado de leyenda
+                        const encabezado = document.createElement('li');
+                        encabezado.className = 'list-group-item d-flex justify-content-between align-items-center bg-light py-1';
+                        encabezado.innerHTML = '<small class="fw-semibold text-muted">INSUMO</small><small class="fw-semibold text-muted text-end">STOCK ACTUAL → MÍNIMO REQUERIDO</small>';
+                        ul.appendChild(encabezado);
+
                         listaMercadoActual.forEach(function (it) {
                             const li = document.createElement('li');
-                            li.className = 'list-group-item d-flex justify-content-between align-items-center' + (it.bajo ? ' list-group-item-warning' : '');
-                            li.innerHTML = '<span>' + (it.nombre || it.codigo) + '</span><span class="badge bg-secondary">' + formatoNum(it.stock_actual) + ' / ' + formatoNum(it.stock_minimo) + ' ' + (it.unidad_base || '') + '</span>';
+                            const stockActual = parseFloat(it.stock_actual) || 0;
+                            const stockMin = parseFloat(it.stock_minimo) || 0;
+                            const falta = Math.max(0, stockMin - stockActual);
+                            const unidad = it.unidad_base || '';
+                            const sinStock = stockActual <= 0;
+
+                            // Color de urgencia
+                            let rowClass = 'list-group-item d-flex justify-content-between align-items-start flex-wrap gap-1 py-2';
+                            if (sinStock) rowClass += ' list-group-item-danger';
+                            else if (it.bajo) rowClass += ' list-group-item-warning';
+                            li.className = rowClass;
+
+                            // Badge de urgencia
+                            const urgBadge = sinStock
+                                ? '<span class="badge bg-danger ms-2">Sin stock</span>'
+                                : '<span class="badge bg-warning text-dark ms-2">Bajo mínimo</span>';
+
+                            li.innerHTML =
+                                '<span class="fw-semibold">' + (it.nombre || it.codigo) + urgBadge + '</span>' +
+                                '<span class="text-end">' +
+                                '<span class="d-block small"><span class="text-muted">Tienes:</span> <strong>' + formatoNum(stockActual) + ' ' + unidad + '</strong></span>' +
+                                '<span class="d-block small"><span class="text-muted">Mínimo:</span> <strong>' + formatoNum(stockMin) + ' ' + unidad + '</strong></span>' +
+                                (falta > 0 ? '<span class="d-block small text-danger fw-bold">⬆ Comprar: ' + formatoNum(falta) + ' ' + unidad + '</span>' : '') +
+                                '</span>';
                             ul.appendChild(li);
                         });
                     }
@@ -302,9 +355,15 @@
                     if (incluirCerca) incluirCerca.addEventListener('change', cargarListaMercado);
                     document.getElementById('btnListaMercadoCopiar').addEventListener('click', function () {
                         const lineas = listaMercadoActual.map(function (it) {
-                            return (it.nombre || it.codigo) + ' - ' + formatoNum(it.stock_actual) + ' / ' + formatoNum(it.stock_minimo) + ' ' + (it.unidad_base || '');
+                            const stockActual = parseFloat(it.stock_actual) || 0;
+                            const stockMin = parseFloat(it.stock_minimo) || 0;
+                            const falta = Math.max(0, stockMin - stockActual);
+                            const u = it.unidad_base || '';
+                            let linea = (it.nombre || it.codigo) + ': Tienes ' + formatoNum(stockActual) + ' ' + u + ' / Mínimo ' + formatoNum(stockMin) + ' ' + u;
+                            if (falta > 0) linea += ' → COMPRAR: ' + formatoNum(falta) + ' ' + u;
+                            return linea;
                         });
-                        const texto = 'Lista de mercado\n' + (new Date().toLocaleDateString('es-CO')) + '\n\n' + (lineas.length ? lineas.join('\n') : 'Nada por reponer.');
+                        const texto = 'LISTA DE MERCADO\n' + (new Date().toLocaleDateString('es-CO')) + '\n' + '─'.repeat(40) + '\n\n' + (lineas.length ? lineas.join('\n') : 'Nada por reponer.');
                         navigator.clipboard.writeText(texto).then(function () {
                             Swal.fire({
                                 icon: 'success',
@@ -325,7 +384,13 @@
                     });
                     document.getElementById('btnListaMercadoImprimir').addEventListener('click', function () {
                         const lineas = listaMercadoActual.map(function (it) {
-                            return (it.nombre || it.codigo) + ' — ' + formatoNum(it.stock_actual) + ' / ' + formatoNum(it.stock_minimo) + ' ' + (it.unidad_base || '');
+                            const stockActual = parseFloat(it.stock_actual) || 0;
+                            const stockMin = parseFloat(it.stock_minimo) || 0;
+                            const falta = Math.max(0, stockMin - stockActual);
+                            const u = it.unidad_base || '';
+                            let linea = (it.nombre || it.codigo) + ': Tienes ' + formatoNum(stockActual) + ' ' + u + ' / Mínimo ' + formatoNum(stockMin) + ' ' + u;
+                            if (falta > 0) linea += ' → Comprar: ' + formatoNum(falta) + ' ' + u;
+                            return linea;
                         });
                         const titulo = 'Lista de mercado - ' + (new Date().toLocaleDateString('es-CO'));
                         const html = '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>' + titulo + '</title><style>body{font-family:sans-serif;padding:1rem;} h1{font-size:1.25rem;} ul{list-style:none;padding:0;} li{padding:0.25rem 0;border-bottom:1px solid #eee;}</style></head><body><h1>' + titulo + '</h1><ul><li>' + (lineas.length ? lineas.join('</li><li>') : 'Nada por reponer.') + '</li></ul></body></html>';

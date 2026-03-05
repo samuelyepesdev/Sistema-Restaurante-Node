@@ -3,18 +3,28 @@
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">Nuevo insumo</h5><button type="button" class="btn-close"
-                    data-bs-dismiss="modal"></button>
+                <h5 class="modal-title"><i class="bi bi-boxes me-2"></i>Nuevo insumo</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
-                <div class="mb-2"><label class="form-label">Código</label><input type="text" class="form-control"
-                        id="nuevoCodigo" required></div>
-                <div class="mb-2"><label class="form-label">Nombre</label><input type="text" class="form-control"
-                        id="nuevoNombre" required></div>
-                <div class="mb-2">
-                    <label class="form-label">Categoría</label>
+
+                <!-- ─── Sección principal (simple) ─── -->
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Nombre del insumo <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control" id="nuevoNombre" placeholder="Ej: Pollo, Tomate, Harina..."
+                        required>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Código <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control" id="nuevoCodigo" placeholder="Ej: PLL-001" required>
+                    <div class="form-text">Referencia corta para identificar el insumo.</div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Categoría</label>
                     <select class="form-select" id="nuevoCategoriaId">
-                        <option value="">Seleccione una categoría</option>
+                        <option value="">Sin categoría</option>
                         <% categoriasInsumo.forEach(c=> { %>
                             <option value="<%= c.id %>">
                                 <%= c.name %>
@@ -22,45 +32,100 @@
                             <% }) %>
                     </select>
                 </div>
-                <div class="row">
-                    <div class="col-6">
-                        <label class="form-label">Unidad de medida (compra)</label>
-                        <select class="form-select" id="nuevoUnidadMedidaId">
-                            <option value="">Seleccione o escriba...</option>
-                            <% unidadesCompra.forEach(u=> { %>
-                                <option value="<%= u.id %>" data-name="<%= u.name %>">
-                                    <%= u.name %>
-                                </option>
-                                <% }) %>
+
+                <div class="row g-3 mb-3">
+                    <div class="col-4">
+                        <label class="form-label fw-semibold">Unidad</label>
+                        <select class="form-select" id="nuevoUnidadBase">
+                            <option value="g">g (gramos)</option>
+                            <option value="ml">ml (mililitros)</option>
+                            <option value="UND">UND (unidades)</option>
                         </select>
-                        <input type="text" class="form-control d-none mt-2" id="nuevoUnidadCompraText"
-                            placeholder="Otra..." value="UND">
+                        <div class="form-text">¿Cómo se mide este insumo?</div>
                     </div>
-                    <div class="col-6"><label class="form-label">Unidad base</label><select class="form-select"
-                            id="nuevoUnidadBase">
-                            <option value="g">g</option>
-                            <option value="ml">ml</option>
-                            <option value="UND">UND</option>
-                        </select></div>
+                    <div class="col-4">
+                        <label class="form-label fw-semibold">Stock inicial</label>
+                        <input type="number" step="0.01" class="form-control" id="nuevoStockInicial" value="0" min="0"
+                            placeholder="0">
+                        <div class="form-text">Cuánto tienes ahora.</div>
+                    </div>
+                    <div class="col-4">
+                        <label class="form-label fw-semibold">Stock mínimo</label>
+                        <input type="number" step="0.01" class="form-control" id="nuevoStockMinimo" value="0" min="0"
+                            placeholder="0">
+                        <div class="form-text">Alerta si baja de este nivel.</div>
+                    </div>
                 </div>
-                <div class="row mt-2">
-                    <div class="col-6"><label class="form-label" title="Tamaño en el que viene el producto">Presentación
-                            (Cant)</label><input type="number" step="0.01" class="form-control" id="nuevoCantidadCompra"
-                            value="1"></div>
-                    <div class="col-6"><label class="form-label">Precio compra</label><input type="number" step="0.01"
-                            class="form-control" id="nuevoPrecioCompra" value="0"></div>
+
+                <!-- ─── Sección avanzada (costeo) ─── -->
+                <div class="accordion accordion-flush" id="accordionCosteo">
+                    <div class="accordion-item border rounded">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed py-2 px-3 text-muted small fw-semibold"
+                                type="button" data-bs-toggle="collapse" data-bs-target="#colapseCosteo"
+                                aria-expanded="false">
+                                <i class="bi bi-calculator me-2 text-primary"></i>
+                                Opciones avanzadas — Cálculo automático de costos
+                                <span class="badge bg-light text-secondary border ms-2 fw-normal">Opcional</span>
+                            </button>
+                        </h2>
+                        <div id="colapseCosteo" class="accordion-collapse collapse">
+                            <div class="accordion-body pt-2 pb-3">
+                                <p class="text-muted small mb-3">
+                                    <i class="bi bi-info-circle me-1"></i>
+                                    Completa esto solo si quieres que el sistema calcule automáticamente cuánto cuesta
+                                    producir cada plato que usa este insumo (módulo de Costeo).
+                                </p>
+                                <div class="row g-2 mb-2">
+                                    <div class="col-6">
+                                        <label class="form-label small">Unidad de compra</label>
+                                        <select class="form-select form-select-sm" id="nuevoUnidadMedidaId">
+                                            <option value="">Seleccione...</option>
+                                            <% unidadesCompra.forEach(u=> { %>
+                                                <option value="<%= u.id %>" data-name="<%= u.name %>">
+                                                    <%= u.name %>
+                                                </option>
+                                                <% }) %>
+                                        </select>
+                                        <input type="text" class="form-control form-control-sm d-none mt-1"
+                                            id="nuevoUnidadCompraText" placeholder="Otra..." value="UND">
+                                        <div class="form-text">Ej: bolsa, litro, kilo...</div>
+                                    </div>
+                                    <div class="col-6">
+                                        <label class="form-label small">Presentación (cantidad en unidad base)</label>
+                                        <input type="number" step="0.01" class="form-control form-control-sm"
+                                            id="nuevoCantidadCompra" value="1" min="0.01"
+                                            title="Cuántas unidades base trae cada presentación de compra. Ej: 1 bolsa = 1000g">
+                                        <div class="form-text">Ej: 1 kg = 1000 <span class="fw-bold">g</span></div>
+                                    </div>
+                                </div>
+                                <div class="mb-2">
+                                    <label class="form-label small">Precio de compra (por presentación)</label>
+                                    <div class="input-group input-group-sm">
+                                        <span class="input-group-text">$</span>
+                                        <input type="number" step="0.01" class="form-control" id="nuevoPrecioCompra"
+                                            value="0" min="0">
+                                    </div>
+                                    <div class="form-text">Lo que pagas cuando compras una presentación de este insumo.
+                                    </div>
+                                </div>
+                                <div id="previewCostoPorUnidad" class="alert alert-info py-1 px-2 small mt-2"
+                                    style="display:none;">
+                                    <i class="bi bi-tag me-1"></i> Costo estimado por <span
+                                        id="previewUnidadBase">g</span>: <strong id="previewCosto">—</strong>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div class="row mt-2">
-                    <div class="col-6"><label class="form-label">Stock mínimo</label><input type="number" step="0.0001"
-                            class="form-control" id="nuevoStockMinimo" value="0"></div>
-                    <div class="col-6"><label class="form-label">Stock inicial</label><input type="number" step="0.0001"
-                            class="form-control" id="nuevoStockInicial" value="0"
-                            title="Cantidad disponible actualmente"></div>
-                </div>
+
             </div>
-            <div class="modal-footer"><button type="button" class="btn btn-secondary"
-                    data-bs-dismiss="modal">Cerrar</button><button type="button" class="btn btn-primary"
-                    id="btnCrearInsumo">Crear</button></div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" id="btnCrearInsumo">
+                    <i class="bi bi-plus-lg me-1"></i> Crear insumo
+                </button>
+            </div>
         </div>
     </div>
 </div>
@@ -126,11 +191,21 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
-                <p class="text-muted small mb-2">Insumos bajo stock o cerca del mínimo para reponer.</p>
+                <p class="text-muted small mb-1">
+                    <i class="bi bi-info-circle me-1"></i>
+                    Estos son los insumos que <strong>necesitan reponerse</strong> porque su cantidad actual está por
+                    debajo del nivel mínimo que definiste.
+                </p>
+                <p class="text-muted small mb-3">
+                    Cada fila muestra <strong>cuánto tienes</strong>, <strong>cuánto deberías tener como
+                        mínimo</strong>, y <strong>cuánto te falta comprar</strong>.
+                </p>
                 <div class="form-check mb-3">
                     <input class="form-check-input" type="checkbox" id="listaMercadoIncluirCerca">
-                    <label class="form-check-label" for="listaMercadoIncluirCerca">Incluir insumos cerca del
-                        mínimo (hasta 120% del mínimo)</label>
+                    <label class="form-check-label" for="listaMercadoIncluirCerca">
+                        <i class="bi bi-exclamation-triangle-fill text-warning me-1"></i>
+                        Incluir también los que están <strong>cerca del mínimo</strong> (menos del 120% del mínimo)
+                    </label>
                 </div>
                 <div id="listaMercadoContenido">
                     <ul class="list-group list-group-flush" id="listaMercadoItems"></ul>
