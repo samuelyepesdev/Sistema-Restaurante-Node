@@ -1,4 +1,4 @@
-$(document).ready(function() {
+$(document).ready(function () {
     let timeoutCliente;
     let timeoutProducto;
     let pedidosGuardados = JSON.parse(localStorage.getItem('pedidos') || '[]');
@@ -7,27 +7,27 @@ $(document).ready(function() {
     // Obtener o crear cliente "Consumidor final" (siempre es el cliente por defecto)
     function getOrCreateConsumidorFinal() {
         return fetch('/api/clientes/buscar?q=consumidor%20final')
-            .then(function(r) { return r.json(); })
-            .then(function(list) {
-                var cf = (list || []).find(function(c) { return (c.nombre || '').toLowerCase() === 'consumidor final'; });
+            .then(function (r) { return r.json(); })
+            .then(function (list) {
+                var cf = (list || []).find(function (c) { return (c.nombre || '').toLowerCase() === 'consumidor final'; });
                 if (cf) return cf;
                 return fetch('/api/clientes', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ nombre: 'Consumidor final' })
-                }).then(function(r) {
-                    if (r.ok) return r.json().then(function(data) { return { id: data.id, nombre: 'Consumidor final' }; });
+                }).then(function (r) {
+                    if (r.ok) return r.json().then(function (data) { return { id: data.id, nombre: 'Consumidor final' }; });
                     return null;
                 });
             })
-            .catch(function() { return null; });
+            .catch(function () { return null; });
     }
 
     // Función para actualizar localStorage
     function actualizarLocalStorage() {
         localStorage.setItem('pedidos', JSON.stringify(pedidosGuardados));
     }
-    
+
     // Función para actualizar indicadores de pasos
     function updateStepIndicator(stepNum, completed) {
         const step = $(`#step${stepNum}`);
@@ -40,7 +40,7 @@ $(document).ready(function() {
             step.addClass('active');
         }
     }
-    
+
     function getCurrentStep() {
         const productosFactura = window.productosFactura || [];
         if (productosFactura.length > 0) return 3;
@@ -49,22 +49,22 @@ $(document).ready(function() {
     }
 
     // Búsqueda de clientes
-    $('#cliente').on('keyup', function() {
+    $('#cliente').on('keyup', function () {
         clearTimeout(timeoutCliente);
         const valor = $(this).val();
-        
+
         if (valor.length < 2) return;
 
         timeoutCliente = setTimeout(() => {
             $.ajax({
                 url: '/api/clientes/buscar',
                 data: { q: valor },
-                success: function(clientes) {
+                success: function (clientes) {
                     if (clientes.length === 0) {
                         $('#infoCliente').hide();
                         return;
                     }
-                    
+
                     // Si solo hay un cliente, seleccionarlo automáticamente
                     if (clientes.length === 1) {
                         seleccionarCliente(clientes[0]);
@@ -78,7 +78,7 @@ $(document).ready(function() {
     });
 
     // Búsqueda de productos: al seleccionar uno se agrega directo a la venta (como en Mesas)
-    $('#producto').on('keyup', function() {
+    $('#producto').on('keyup', function () {
         clearTimeout(timeoutProducto);
         const valor = $(this).val().trim();
         const $resultados = $('#resultadosProductos');
@@ -90,13 +90,8 @@ $(document).ready(function() {
             $.ajax({
                 url: '/api/productos/buscar',
                 data: { q: valor },
-                success: function(productos) {
+                success: function (productos) {
                     if (!productos || productos.length === 0) {
-                        $resultados.empty().hide();
-                        return;
-                    }
-                    if (productos.length === 1) {
-                        agregarProductoALista(productos[0]);
                         $resultados.empty().hide();
                         return;
                     }
@@ -116,14 +111,14 @@ $(document).ready(function() {
         // Actualizar campos visibles
         $('#cliente').val(cliente.nombre);
         $('#cliente_id').val(cliente.id);
-        
+
         // Actualizar información del cliente
         $('#direccionCliente').text(cliente.direccion || 'No especificada');
         $('#telefonoCliente').text(cliente.telefono || 'No especificado');
-        
+
         // Mostrar el panel de información
         $('#infoCliente').slideDown();
-        
+
         // Actualizar pasos
         if (typeof updateStepIndicator === 'function') {
             updateStepIndicator(1, true);
@@ -134,21 +129,23 @@ $(document).ready(function() {
     // Calcular subtotal de una línea (con descuento si existe)
     function subtotalLinea(item) {
         const pct = (item.descuento_porcentaje || 0) / 100;
+        // El subtotal se calcula sobre el 'precio' actual (que puede ser el original o uno modificado)
         return item.cantidad * item.precio * (1 - pct);
     }
 
     // Agregar producto a la venta (como en Mesas: buscar → clic → se agrega)
     function agregarProductoALista(producto) {
         if (!producto || !producto.id) return;
-        const precio = Number(producto.precio_unidad) || 0;
+        const precioOriginal = Number(producto.precio_unidad) || 0;
         const item = {
             producto_id: producto.id,
             nombre: producto.nombre,
             cantidad: 1,
             unidad: 'UND',
-            precio: precio,
+            precio_original: precioOriginal,
+            precio: precioOriginal,
             descuento_porcentaje: 0,
-            subtotal: precio
+            subtotal: precioOriginal
         };
         item.subtotal = subtotalLinea(item);
         productosFactura.push(item);
@@ -166,7 +163,7 @@ $(document).ready(function() {
             lista.append(
                 $('<a href="#" class="list-group-item list-group-item-action">')
                     .text(`${cliente.nombre} ${cliente.telefono ? '- ' + cliente.telefono : ''}`)
-                    .click(function(e) {
+                    .click(function (e) {
                         e.preventDefault();
                         seleccionarCliente(cliente);
                         lista.remove();
@@ -180,14 +177,14 @@ $(document).ready(function() {
     function mostrarListaProductos(productos) {
         const $resultados = $('#resultadosProductos');
         $resultados.empty();
-        productos.forEach(function(producto) {
+        productos.forEach(function (producto) {
             const precioUnd = Number(producto.precio_unidad) || 0;
             const $item = $('<a href="#" class="list-group-item list-group-item-action">')
                 .html(
                     '<div><strong>' + (producto.codigo || '') + '</strong> - ' + (producto.nombre || '') + '</div>' +
                     '<div class="small text-muted">$' + precioUnd.toLocaleString('es-CO') + ' UND</div>'
                 )
-                .on('click', function(e) {
+                .on('click', function (e) {
                     e.preventDefault();
                     agregarProductoALista(producto);
                 });
@@ -197,14 +194,14 @@ $(document).ready(function() {
     }
 
     // Cerrar resultados de búsqueda al hacer clic fuera
-    $(document).on('click', function(e) {
+    $(document).on('click', function (e) {
         if (!$(e.target).closest('.search-container').length) {
             $('#resultadosProductos').empty().hide();
         }
     });
 
     // Cliente por defecto: siempre Consumidor final al cargar la página
-    getOrCreateConsumidorFinal().then(function(cf) {
+    getOrCreateConsumidorFinal().then(function (cf) {
         if (cf && cf.id) {
             seleccionarCliente({
                 id: cf.id,
@@ -269,7 +266,7 @@ $(document).ready(function() {
 
         // Vista móvil: tarjetas con nombre, cantidad (+/- pequeños), unitario/subtotal, descuento, eliminar
         var mobileHtml = '';
-        productosFactura.forEach(function(item, index) {
+        productosFactura.forEach(function (item, index) {
             var precioStr = Number(item.precio).toLocaleString('es-CO');
             var subtotalStr = Number(item.subtotal).toLocaleString('es-CO');
             var descBadge = (item.descuento_porcentaje && item.descuento_porcentaje > 0) ? ' <span class="badge bg-success">-' + item.descuento_porcentaje + '%</span>' : '';
@@ -293,7 +290,7 @@ $(document).ready(function() {
         $('#totalFactura').text(totalFactura.toLocaleString('es-CO'));
     }
 
-    window.quitarCantidadFactura = function(index) {
+    window.quitarCantidadFactura = function (index) {
         if (index < 0 || index >= productosFactura.length) return;
         const item = productosFactura[index];
         if (item.cantidad <= 1) {
@@ -305,7 +302,7 @@ $(document).ready(function() {
         actualizarTablaProductos();
     };
 
-    window.agregarCantidadFactura = function(index) {
+    window.agregarCantidadFactura = function (index) {
         if (index < 0 || index >= productosFactura.length) return;
         const item = productosFactura[index];
         item.cantidad++;
@@ -314,18 +311,39 @@ $(document).ready(function() {
     };
 
     // Modal descuento: abrir con índice de línea
-    window.abrirModalDescuento = function(index) {
+    window.abrirModalDescuento = function (index) {
         if (index < 0 || index >= productosFactura.length) return;
         window._descuentoLineIndex = index;
         var item = productosFactura[index];
-        $('#descuentoModalProducto').text(item.nombre + ' — $' + Number(item.subtotal).toLocaleString('es-CO'));
+
+        $('#descuentoModalProducto').text(item.nombre);
+        $('#descuentoModalPrecioActual').text(Number(item.precio).toLocaleString('es-CO'));
+
+        // Reset campos manuales
+        $('#descuentoPorcentajeManual').val(item.descuento_porcentaje > 0 ? item.descuento_porcentaje : '');
+        $('#nuevoPrecioManual').val(item.precio);
+
         var modal = new bootstrap.Modal(document.getElementById('descuentoModal'));
         modal.show();
     };
 
-    // Aplicar porcentaje de descuento a la línea actual
-    $(document).on('click', '.btn-descuento', function() {
+    // Aplicar porcentaje de descuento rápido
+    $(document).on('click', '.btn-descuento-quick', function () {
         var pct = parseInt($(this).data('pct'), 10);
+        aplicarPorcentaje(pct);
+    });
+
+    // Aplicar porcentaje manual
+    $('#btnAplicarPctManual').on('click', function () {
+        var pct = parseFloat($('#descuentoPorcentajeManual').val());
+        if (isNaN(pct) || pct < 0 || pct > 100) {
+            Swal.fire({ icon: 'warning', title: 'Porcentaje inválido', text: 'Ingrese un valor entre 0 y 100' });
+            return;
+        }
+        aplicarPorcentaje(pct);
+    });
+
+    function aplicarPorcentaje(pct) {
         var index = window._descuentoLineIndex;
         if (index == null || index < 0 || index >= productosFactura.length) return;
         var item = productosFactura[index];
@@ -333,20 +351,42 @@ $(document).ready(function() {
         item.subtotal = subtotalLinea(item);
         actualizarTablaProductos();
         bootstrap.Modal.getInstance(document.getElementById('descuentoModal')).hide();
+    }
+
+    // Aplicar precio fijo manual
+    $('#btnAplicarPrecioFijo').on('click', function () {
+        var nuevoPrecio = parseFloat($('#nuevoPrecioManual').val());
+        if (isNaN(nuevoPrecio) || nuevoPrecio < 0) {
+            Swal.fire({ icon: 'warning', title: 'Precio inválido', text: 'Ingrese un valor mayor o igual a 0' });
+            return;
+        }
+        var index = window._descuentoLineIndex;
+        if (index == null || index < 0 || index >= productosFactura.length) return;
+        var item = productosFactura[index];
+
+        item.precio = nuevoPrecio;
+        // Si se cambia el precio a mano, reseteamos el % de descuento para evitar confusiones
+        item.descuento_porcentaje = 0;
+
+        item.subtotal = subtotalLinea(item);
+        actualizarTablaProductos();
+        bootstrap.Modal.getInstance(document.getElementById('descuentoModal')).hide();
     });
 
-    $('#quitarDescuentoBtn').on('click', function() {
+    $('#quitarDescuentoBtn').on('click', function () {
         var index = window._descuentoLineIndex;
         if (index != null && index >= 0 && index < productosFactura.length) {
-            productosFactura[index].descuento_porcentaje = 0;
-            productosFactura[index].subtotal = subtotalLinea(productosFactura[index]);
+            var item = productosFactura[index];
+            item.precio = item.precio_original; // Restaurar precio original
+            item.descuento_porcentaje = 0;
+            item.subtotal = subtotalLinea(item);
             actualizarTablaProductos();
         }
         bootstrap.Modal.getInstance(document.getElementById('descuentoModal')).hide();
     });
 
     // Función para eliminar producto
-    window.eliminarProducto = function(index) {
+    window.eliminarProducto = function (index) {
         productosFactura.splice(index, 1);
         actualizarTablaProductos();
     };
@@ -368,7 +408,7 @@ $(document).ready(function() {
         $('#infoCliente').hide();
         $('#formaPago').val('efectivo');
         limpiarFormularioProducto();
-        
+
         // Solo limpiar el ID si no se indica mantenerlo
         if (!mantenerPedidoId) {
             localStorage.removeItem('pedidoActualId');
@@ -376,9 +416,9 @@ $(document).ready(function() {
     }
 
     // Nueva venta: limpiar todo y dejar Consumidor final para empezar de nuevo
-    $('#nuevaVenta').on('click', function() {
+    $('#nuevaVenta').on('click', function () {
         limpiarFormulario();
-        getOrCreateConsumidorFinal().then(function(cf) {
+        getOrCreateConsumidorFinal().then(function (cf) {
             if (cf && cf.id) {
                 seleccionarCliente({ id: cf.id, nombre: cf.nombre || 'Consumidor final', direccion: cf.direccion || '', telefono: cf.telefono || '' });
             }
@@ -386,11 +426,11 @@ $(document).ready(function() {
     });
 
     // Guardar pedido
-    $('#guardarPedido').click(function() {
+    $('#guardarPedido').click(function () {
         console.log('=== INICIO GUARDADO DE PEDIDO ===');
         const cliente_id = $('#cliente_id').val();
         const cliente_nombre = $('#cliente').val();
-        
+
         if (!cliente_id) {
             console.log('Error: No hay cliente seleccionado');
             mostrarAlerta('warning', 'Por favor seleccione un cliente');
@@ -417,10 +457,10 @@ $(document).ready(function() {
 
         console.log('Pedido a guardar:', pedido);
         console.log('Pedidos guardados antes:', pedidosGuardados);
-        
+
         pedidosGuardados.push(pedido);
         actualizarLocalStorage();
-        
+
         console.log('Pedidos guardados después:', pedidosGuardados);
         console.log('LocalStorage actualizado');
 
@@ -430,18 +470,18 @@ $(document).ready(function() {
     });
 
     // Función para cargar un pedido guardado
-    window.cargarPedido = function(index) {
+    window.cargarPedido = function (index) {
         console.log('=== INICIO CARGA DE PEDIDO ===');
         console.log('Índice del pedido a cargar:', index);
-        
+
         const pedido = pedidosGuardados[index];
         console.log('Pedido encontrado:', pedido);
-        
+
         if (!pedido) {
             console.error('No se encontró el pedido');
             return;
         }
-        
+
         // Primero limpiar todo (sin eliminar el ID)
         productosFactura = [];
         totalFactura = 0;
@@ -451,32 +491,32 @@ $(document).ready(function() {
         $('#infoCliente').hide();
         $('#formaPago').val('efectivo');
         limpiarFormularioProducto();
-        
+
         // Guardar el ID del pedido cargado
         localStorage.setItem('pedidoActualId', pedido.id);
         console.log('ID del pedido guardado en localStorage:', pedido.id);
         console.log('Verificación del ID guardado:', localStorage.getItem('pedidoActualId'));
-        
+
         // Cargar información del cliente
         $('#cliente').val(pedido.cliente_nombre);
         $('#cliente_id').val(pedido.cliente_id);
         $('#direccionCliente').text(pedido.direccion || 'No especificada');
         $('#telefonoCliente').text(pedido.telefono || 'No especificado');
         $('#infoCliente').show();
-        
+
         // Cargar productos
         productosFactura = pedido.productos;
         totalFactura = pedido.total;
-        
+
         // Cargar forma de pago
         $('#formaPago').val(pedido.forma_pago || 'efectivo');
-        
+
         // Actualizar la tabla de productos
         actualizarTablaProductos();
-        
+
         // Cerrar el modal de pedidos
         $('#pedidosModal').modal('hide');
-        
+
         console.log('=== FIN CARGA DE PEDIDO ===');
         console.log('Estado final:', {
             pedidoId: pedido.id,
@@ -487,11 +527,11 @@ $(document).ready(function() {
     };
 
     // Generar factura
-    $('#generarFactura').click(function() {
+    $('#generarFactura').click(function () {
         console.log('=== INICIO GENERACIÓN DE FACTURA ===');
         const cliente_id = $('#cliente_id').val() || $('#cliente').val();
         const forma_pago = $('#formaPago').val();
-        
+
         if (!cliente_id) {
             mostrarAlerta('warning', 'Por favor seleccione un cliente primero');
             // Resaltar paso 1
@@ -507,7 +547,7 @@ $(document).ready(function() {
             setTimeout(() => $('#step2').removeClass('animate__animated animate__shakeX'), 1000);
             return;
         }
-        
+
         // Marcar paso 4 como activo
         updateStepIndicator(4, false);
 
@@ -524,6 +564,7 @@ $(document).ready(function() {
                     producto_id: p.producto_id,
                     cantidad: p.cantidad,
                     precio: Math.round(precioFinal * 100) / 100,
+                    precio_original: p.precio_original || p.precio, // Enviar el precio original para registro de descuentos
                     unidad: p.unidad,
                     subtotal: Math.round(p.subtotal * 100) / 100,
                     descuento_porcentaje: (p.descuento_porcentaje && p.descuento_porcentaje > 0) ? p.descuento_porcentaje : null
@@ -547,10 +588,10 @@ $(document).ready(function() {
             method: 'POST',
             data: JSON.stringify(factura),
             contentType: 'application/json',
-            success: function(response) {
+            success: function (response) {
                 Swal.close();
                 console.log('Factura generada exitosamente:', response);
-                
+
                 if (response && response.id) {
                     // No borrar el pedido guardado: se mantiene en la lista por si lo quieren reutilizar o consultar
                     localStorage.removeItem('pedidoActualId');
@@ -566,10 +607,10 @@ $(document).ready(function() {
                     if (typeof updateStepIndicator === 'function') {
                         updateStepIndicator(4, true);
                     }
-                    
+
                     // Limpiar el formulario y volver a dejar Consumidor final como cliente
                     limpiarFormulario();
-                    getOrCreateConsumidorFinal().then(function(cf) {
+                    getOrCreateConsumidorFinal().then(function (cf) {
                         if (cf && cf.id) {
                             seleccionarCliente({ id: cf.id, nombre: cf.nombre || 'Consumidor final', direccion: cf.direccion || '', telefono: cf.telefono || '' });
                         }
@@ -579,7 +620,7 @@ $(document).ready(function() {
                     mostrarAlerta('error', 'Error: No se recibió el ID de la factura');
                 }
             },
-            error: function(xhr, status, error) {
+            error: function (xhr, status, error) {
                 Swal.close();
                 console.error('Error al generar factura:', {
                     status: xhr.status,
@@ -602,14 +643,14 @@ $(document).ready(function() {
                         }
                     }
                 }
-                
+
                 mostrarAlerta('error', mensajeError);
             }
         });
     });
 
     // Ver pedidos guardados
-    $('#verPedidos').click(function() {
+    $('#verPedidos').click(function () {
         console.log('=== MOSTRANDO PEDIDOS GUARDADOS ===');
         const tbody = $('#pedidosGuardados');
         tbody.empty();
@@ -626,10 +667,10 @@ $(document).ready(function() {
                 </tr>
             `);
         } else {
-        pedidosGuardados.forEach((pedido, index) => {
-            const productosResumen = pedido.productos.map(p => p.nombre).join(', ');
-            
-            tbody.append(`
+            pedidosGuardados.forEach((pedido, index) => {
+                const productosResumen = pedido.productos.map(p => p.nombre).join(', ');
+
+                tbody.append(`
                 <tr>
                     <td>
                         <strong>${pedido.cliente_nombre}</strong><br>
@@ -653,30 +694,30 @@ $(document).ready(function() {
                     </td>
                 </tr>
             `);
-        });
+            });
         }
 
         $('#pedidosModal').modal('show');
     });
 
     // Función para facturar pedido directamente
-    window.facturarPedido = function(index) {
+    window.facturarPedido = function (index) {
         console.log('=== INICIO FACTURACIÓN DIRECTA DE PEDIDO ===');
         console.log('Índice del pedido:', index);
         const pedido = pedidosGuardados[index];
         console.log('Pedido a facturar:', pedido);
-        
+
         // Primero eliminar el pedido
         pedidosGuardados.splice(index, 1);
         actualizarLocalStorage();
         console.log('Pedido eliminado de la lista');
-        
+
         // Cerrar el modal de pedidos
         $('#pedidosModal').modal('hide');
-        
+
         // Cargar el pedido
         cargarPedido(pedido);
-        
+
         // Generar la factura
         setTimeout(() => {
             $('#generarFactura').click();
@@ -684,15 +725,15 @@ $(document).ready(function() {
     };
 
     // Función para eliminar pedido
-    window.eliminarPedido = function(index) {
+    window.eliminarPedido = function (index) {
         console.log('=== INICIO ELIMINACIÓN DE PEDIDO ===');
         console.log('Índice del pedido:', index);
-            if (confirm('¿Está seguro de eliminar este pedido?')) {
+        if (confirm('¿Está seguro de eliminar este pedido?')) {
             console.log('Pedidos antes de eliminar:', pedidosGuardados);
-                pedidosGuardados.splice(index, 1);
-                actualizarLocalStorage();
+            pedidosGuardados.splice(index, 1);
+            actualizarLocalStorage();
             console.log('Pedidos después de eliminar:', pedidosGuardados);
-                $('#verPedidos').click();
+            $('#verPedidos').click();
             mostrarAlerta('success', 'Pedido eliminado exitosamente');
             console.log('=== FIN ELIMINACIÓN DE PEDIDO ===');
         }

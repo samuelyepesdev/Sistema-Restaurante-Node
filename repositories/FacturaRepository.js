@@ -94,19 +94,20 @@ class FacturaRepository {
 
             const factura_id = result.insertId;
 
-            // Insert invoice details (incl. descuento_porcentaje si viene para mostrar en factura impresa)
+            // Insert invoice details (incl. descuento_porcentaje y precio_original para mostrar en factura impresa)
             const detallesValues = facturaData.productos.map(p => [
                 factura_id,
                 p.producto_id,
                 p.cantidad,
                 p.precio,
+                p.precio_original || p.precio, // Guardar precio original (catálogo)
                 p.unidad,
                 p.subtotal,
                 (p.descuento_porcentaje != null && p.descuento_porcentaje > 0) ? p.descuento_porcentaje : null
             ]);
 
             await connection.query(
-                'INSERT INTO detalle_factura (factura_id, producto_id, cantidad, precio_unitario, unidad_medida, subtotal, descuento_porcentaje) VALUES ?',
+                'INSERT INTO detalle_factura (factura_id, producto_id, cantidad, precio_unitario, precio_original, unidad_medida, subtotal, descuento_porcentaje) VALUES ?',
                 [detallesValues]
             );
 
@@ -130,9 +131,11 @@ class FacturaRepository {
         const [facturas] = await db.query(`
             SELECT f.id, f.tenant_id, f.numero, f.cliente_id, f.total, f.forma_pago, f.propina, f.evento_id,
                    DATE_FORMAT(f.fecha, '%Y-%m-%d %H:%i:%s') AS fecha,
-                   c.nombre AS cliente_nombre, c.direccion, c.telefono
+                   c.nombre AS cliente_nombre, c.direccion, c.telefono,
+                   e.nombre AS evento_nombre
             FROM facturas f
             JOIN clientes c ON f.cliente_id = c.id
+            LEFT JOIN eventos e ON f.evento_id = e.id
             WHERE f.id = ? AND f.tenant_id = ?
         `, [id, tenantId]);
         return facturas[0] || null;

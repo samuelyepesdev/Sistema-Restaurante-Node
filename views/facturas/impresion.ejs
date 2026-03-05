@@ -42,7 +42,7 @@
                                                         <% } %>
                                                             <% if (tenant.telefono || config.telefono) { %>
                                                                 <span>Tel: <%= tenant.telefono || config.telefono %>
-                                                                        </span>
+                                                                </span>
                                                                 <% } %>
                             </div>
                 </div>
@@ -73,6 +73,11 @@
                                     <%= factura.telefono %>
                                 </div>
                                 <% } %>
+                                    <% if (typeof factura.evento_nombre !=='undefined' && factura.evento_nombre) { %>
+                                        <div class="mt-2 text-primary" style="font-weight: bold;">
+                                            Venta de Evento: <%= factura.evento_nombre %>
+                                        </div>
+                                        <% } %>
                 </div>
 
                 <div class="divider"></div>
@@ -84,8 +89,8 @@
                                 <%= item.producto_nombre %>
                                     <% if (item.descuento_porcentaje !=null && Number(item.descuento_porcentaje)> 0) {
                                         %>
-                                        <span class="producto-descuento-tag"> (descuento <%=
-                                                Number(item.descuento_porcentaje).toFixed(0) %>% aplicado)</span>
+                                        <div class="small text-success fw-bold">(Descuento <%=
+                                                Number(item.descuento_porcentaje).toFixed(0) %>% aplicado)</div>
                                         <% } %>
                             </div>
                             <div class="producto-detalles">
@@ -95,7 +100,13 @@
                                         <%= item.unidad_medida %>
                                 </div>
                                 <div class="producto-precio">
-                                    $<%= Number(item.precio_unitario).toLocaleString('es-CO') %> c/u
+                                    <% if (item.precio_original && Number(item.precio_original)>
+                                        Number(item.precio_unitario)) { %>
+                                        <span style="text-decoration: line-through; font-size: 0.8em; opacity: 0.7;">
+                                            $<%= Number(item.precio_original).toLocaleString('es-CO') %>
+                                        </span>
+                                        <% } %>
+                                            $<%= Number(item.precio_unitario).toLocaleString('es-CO') %> c/u
                                 </div>
                                 <div class="producto-total">
                                     $<%= Number(item.subtotal).toLocaleString('es-CO') %>
