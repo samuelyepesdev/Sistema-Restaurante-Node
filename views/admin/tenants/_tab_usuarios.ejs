@@ -53,6 +53,9 @@
                                                 onclick="openModalPassword(<%= u.id %>, '<%= u.username %>', <%= selectedTenant.id %>)"><i
                                                     class="bi bi-key me-2"></i>Resetear
                                                 Clave</a></li>
+                                        <li><a class="dropdown-item" href="javascript:void(0)"
+                                                onclick="openModalCorreo(<%= u.id %>, '<%= u.username %>', '<%= u.email || '' %>', <%= selectedTenant.id %>)"><i
+                                                    class="bi bi-envelope me-2"></i>Actualizar Correo</a></li>
                                         <li><a class="dropdown-item text-<%= u.activo ? 'danger' : 'success' %>"
                                                 href="javascript:void(0)"
                                                 onclick="toggleUserStatus(<%= u.id %>, <%= selectedTenant.id %>, <%= u.activo ? 'false' : 'true' %>)">

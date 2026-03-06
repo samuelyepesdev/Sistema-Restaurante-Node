@@ -90,6 +90,16 @@ class TenantUserService {
         const [result] = await db.query('DELETE FROM usuarios WHERE id = ? AND tenant_id = ?', [userId, tenantId]);
         return result;
     }
+
+    static async updateEmail(userId, tenantId, email) {
+        const [users] = await db.query('SELECT id FROM usuarios WHERE id = ? AND tenant_id = ?', [userId, tenantId]);
+        if (users.length === 0) {
+            throw new Error('Usuario no encontrado en ese restaurante.');
+        }
+
+        const [result] = await db.query('UPDATE usuarios SET email = ? WHERE id = ? AND tenant_id = ?', [email || null, userId, tenantId]);
+        return result;
+    }
 }
 
 module.exports = TenantUserService;

@@ -316,6 +316,43 @@
         }
     });
 
+    function openModalCorreo(userId, username, currentEmail, tenantId) {
+        document.getElementById('modalCorreoUserId').value = userId;
+        document.getElementById('modalCorreoUsername').innerText = username;
+        document.getElementById('modalCorreoInput').value = currentEmail;
+        document.getElementById('modalCorreoTenantId').value = tenantId;
+        new bootstrap.Modal(document.getElementById('modalEditarCorreo')).show();
+    }
+
+    document.getElementById('btnGuardarCorreo').addEventListener('click', async () => {
+        const userId = document.getElementById('modalCorreoUserId').value;
+        const tenantId = document.getElementById('modalCorreoTenantId').value;
+        const email = document.getElementById('modalCorreoInput').value;
+
+        try {
+            const resp = await fetch(`/admin/tenants/${tenantId}/users/${userId}/email`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email })
+            });
+
+            const data = await resp.json();
+
+            if (resp.ok && data.success) {
+                Swal.fire('Éxito', data.message || 'Correo actualizado correctamente', 'success')
+                    .then(() => {
+                        const modal = bootstrap.Modal.getInstance(document.getElementById('modalEditarCorreo'));
+                        if (modal) modal.hide();
+                        window.location.reload();
+                    });
+            } else {
+                Swal.fire('Error', data.error || 'No se pudo actualizar el correo', 'error');
+            }
+        } catch (e) {
+            Swal.fire('Error', 'Error de red', 'error');
+        }
+    });
+
     // Seeding de categor?as
     const btnSeed = document.getElementById('btnSeedCategorias');
     if (btnSeed) {

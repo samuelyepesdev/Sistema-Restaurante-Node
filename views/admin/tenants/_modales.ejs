@@ -93,6 +93,10 @@
                         <input name="username" class="form-control" required>
                     </div>
                     <div class="mb-3">
+                        <label class="form-label">Correo Electrónico (Reportes)</label>
+                        <input name="email" type="email" class="form-control" placeholder="usuario@correo.com">
+                    </div>
+                    <div class="mb-3">
                         <label class="form-label">Contraseña</label>
                         <input name="password" type="password" class="form-control" required>
                     </div>
@@ -135,8 +139,30 @@
                 </div>
             </div>
             <div class="modal-footer border-0 pt-0">
-                <button type="button" class="btn btn-primary w-100" id="btnGuardarPassword">Aplicar
-                    Cambio</button>
+                <button type="button" class="btn btn-primary w-100" id="btnGuardarPassword">Aplicar Cambio</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Editar Correo -->
+<div class="modal fade" id="modalEditarCorreo" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title fw-bold">Actualizar Correo</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="modalCorreoUserId">
+                <input type="hidden" id="modalCorreoTenantId">
+                <div class="mb-3">
+                    <label class="form-label">Correo para <strong id="modalCorreoUsername"></strong></label>
+                    <input type="email" id="modalCorreoInput" class="form-control" placeholder="usuario@correo.com">
+                </div>
+            </div>
+            <div class="modal-footer border-0 pt-0">
+                <button type="button" class="btn btn-primary w-100" id="btnGuardarCorreo">Guardar Correo</button>
             </div>
         </div>
     </div>

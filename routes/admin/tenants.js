@@ -226,6 +226,24 @@ router.put('/:tenantId/users/:userId/password', async (req, res) => {
     }
 });
 
+// PUT /admin/tenants/:tenantId/users/:userId/email - Actualizar correo del usuario
+router.put('/:tenantId/users/:userId/email', async (req, res) => {
+    try {
+        const { email } = req.body;
+        await TenantUserService.updateEmail(req.params.userId, req.params.tenantId, email);
+        await TenantAuditService.log({
+            tenantId: req.params.tenantId,
+            userId: req.user?.id || null,
+            accion: 'actualizar_correo_usuario',
+            detalles: `usuario_id=${req.params.userId} correo=${email || 'sin correo'}`
+        });
+        res.status(200).json({ success: true, message: 'Correo actualizado exitosamente.' });
+    } catch (error) {
+        console.error('Error al actualizar el correo del usuario:', error);
+        res.status(400).json({ error: error.message || 'Error al actualizar el correo.' });
+    }
+});
+
 // DELETE /admin/tenants/:tenantId/users/:userId - Eliminar usuario del tenant
 router.delete('/:tenantId/users/:userId', async (req, res) => {
     try {
