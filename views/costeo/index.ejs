@@ -94,9 +94,9 @@
                 window.COSTEO_SHOW_TENANT_SELECTOR = <%= typeof showTenantSelector !== 'undefined' && showTenantSelector ? 'true' : 'false' %>;
                 window.COSTEO_PLANTILLA_REPOSTERIA = <%= typeof costeoPlantillaReposteria !== 'undefined' && costeoPlantillaReposteria ? 'true' : 'false' %>;
             </script>
-            <script src="/js/costeo.js"></script>
+            <script src="/js/modulos/costeo.js"></script>
             <% if (typeof costeoPlantillaReposteria !=='undefined' && costeoPlantillaReposteria) { %>
-                <script src="/js/costeo-reposteria.js"></script>
+                <script src="/js/modulos/costeo-reposteria.js"></script>
                 <% } %>
 </body>
 
