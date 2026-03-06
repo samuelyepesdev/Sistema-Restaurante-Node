@@ -12,8 +12,8 @@
 
 require('dotenv').config();
 const db = require('../config/database');
-const CategoryService = require('../services/CategoryService');
-const CategoryRepository = require('../repositories/CategoryRepository');
+const CategoryService = require('../services/Admin/CategoryService');
+const CategoryRepository = require('../repositories/Admin/CategoryRepository');
 
 function getTenantId() {
     const arg = process.argv.find(a => a.startsWith('--tenant='));

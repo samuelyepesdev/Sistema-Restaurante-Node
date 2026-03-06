@@ -7,7 +7,7 @@
     <title>Mesas</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
-    <link rel="stylesheet" href="/css/mesas.css">
+    <link rel="stylesheet" href="/css/modulos/mesas.css">
 </head>
 
 <body>
@@ -38,84 +38,8 @@
             <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
             <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
             <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-            <script src="/js/mesas.js?v=2"></script>
-            <script>
-                // Handle crear múltiples mesas
-                $(document).ready(function () {
-                    const modalCrearMasivas = new bootstrap.Modal(document.getElementById('modalCrearMasivas'));
-
-                    $('#btnCrearMasivas').on('click', function () {
-                        $('#formCrearMasivas')[0].reset();
-                        $('#cantidadMesas').val(10);
-                        modalCrearMasivas.show();
-                    });
-
-                    $('#btnConfirmarCrearMasivas').on('click', async function () {
-                        const cantidad = parseInt($('#cantidadMesas').val());
-                        const prefijo = $('#prefijoMesas').val().trim();
-
-                        if (!cantidad || cantidad < 1 || cantidad > 100) {
-                            Swal.fire({
-                                icon: 'error',
-                                title: 'Error',
-                                text: 'La cantidad debe estar entre 1 y 100'
-                            });
-                            return;
-                        }
-
-                        $(this).prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-1"></span>Creando...');
-
-                        try {
-                            // Get token from localStorage or cookie
-                            const token = localStorage.getItem('auth_token') || '';
-
-                            const response = await fetch('/api/mesas/crear-masivas', {
-                                method: 'POST',
-                                headers: {
-                                    'Content-Type': 'application/json',
-                                    'Authorization': `Bearer ${token}`
-                                },
-                                body: JSON.stringify({ cantidad, prefijo: prefijo || null })
-                            });
-
-                            const data = await response.json();
-
-                            if (!response.ok) {
-                                throw new Error(data.error || 'Error al crear mesas');
-                            }
-
-                            modalCrearMasivas.hide();
-
-                            let message = `? Se crearon ${data.creadas} mesas exitosamente`;
-                            if (data.desde) {
-                                message += `\nDesde: ${data.desde}`;
-                            }
-                            if (data.errores > 0) {
-                                message += `\n?? ${data.errores} mesas no se pudieron crear (ya exist�an)`;
-                            }
-
-                            await Swal.fire({
-                                icon: 'success',
-                                title: 'Mesas Creadas',
-                                text: message,
-                                timer: 3000
-                            });
-
-                            // Reload page to show new mesas
-                            window.location.reload();
-
-                        } catch (error) {
-                            Swal.fire({
-                                icon: 'error',
-                                title: 'Error',
-                                text: error.message
-                            });
-                        } finally {
-                            $(this).prop('disabled', false).html('<i class="bi bi-check-lg me-1"></i>Crear Mesas');
-                        }
-                    });
-                });
-            </script>
+            <script src="/js/modulos/mesas.js?v=2"></script>
+            <%- include('_scripts') %>
 </body>
 
 </html>

@@ -1,4 +1,4 @@
-const authService = require('../services/AuthService');
+const authService = require('../services/Shared/AuthService');
 const { PERMISSIONS, ROLES } = require('../utils/constants');
 
 /**

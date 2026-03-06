@@ -1,174 +1,30 @@
 const express = require('express');
-const { body, validationResult } = require('express-validator');
 const router = express.Router();
-const authService = require('../services/AuthService');
-const TenantRepository = require('../repositories/TenantRepository');
+const AuthController = require('../app/Http/Controllers/AuthController');
 const { requireAuth } = require('../middleware/auth');
-const { ROLES } = require('../utils/constants');
+const BaseRequest = require('../app/Http/Requests/BaseRequest');
+const LoginRequest = require('../app/Http/Requests/Auth/LoginRequest');
+const ChangePasswordRequest = require('../app/Http/Requests/Auth/ChangePasswordRequest');
 
-/**
- * POST /auth/login
- * Authenticate user and return JWT token
- */
-router.post('/login', [
-    body('username').notEmpty().withMessage('Usuario es requerido'),
-    body('password').notEmpty().withMessage('Contraseña es requerida')
-], async (req, res) => {
-    try {
-        // Check validation errors
-        const errors = validationResult(req);
-        if (!errors.isEmpty()) {
-            return res.status(400).json({
-                error: 'Datos inválidos',
-                details: errors.array()
-            });
-        }
+// GET /auth/login - Vista
+router.get('/login', AuthController.showLogin);
 
-        const { username, password } = req.body;
+// POST /auth/login - Logic
+router.post('/login', BaseRequest.validate(LoginRequest), AuthController.login);
 
-        // Authenticate user
-        const result = await authService.authenticateUser(username, password);
+// GET /auth/logout - Redirect
+router.get('/logout', AuthController.logout);
 
-        if (!result.success) {
-            return res.status(401).json({ error: result.message });
-        }
+// POST /auth/logout - API
+router.post('/logout', AuthController.logoutPost);
 
-        // Si tiene tenant_id (no es superadmin), comprobar que el restaurante esté activo antes de dar sesión
-        const tenantId = result.user.tenant_id;
-        const rol = String(result.user.rol || '').toLowerCase();
-        if (tenantId != null && rol !== ROLES.SUPERADMIN) {
-            const tenant = await TenantRepository.findById(tenantId);
-            if (tenant && !tenant.activo) {
-                const msg = 'Tu restaurante "' + (tenant.nombre || '') + '" está desactivado. Contacta al administrador.';
-                return res.status(403).json({ error: msg });
-            }
-        }
+// GET /auth/me - Profile API
+router.get('/me', requireAuth, AuthController.me);
 
-        // Siempre guardar token en cookie para que la siguiente navegación (GET /admin/tenants, etc.) tenga sesión
-        res.cookie('auth_token', result.token, {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: 'strict',
-            maxAge: 24 * 60 * 60 * 1000 // 24 hours
-        });
+// GET /auth/cambiar-password - Vista
+router.get('/cambiar-password', requireAuth, AuthController.showChangePassword);
 
-        // Return user data and token
-        res.json({
-            success: true,
-            user: result.user,
-            token: result.token
-        });
-    } catch (error) {
-        console.error('Error en login:', error);
-        res.status(500).json({ error: 'Error al iniciar sesión' });
-    }
-});
-
-/**
- * GET /auth/login
- * Show login page (mensaje en query para mostrar tenant desactivado, etc.)
- */
-router.get('/login', (req, res) => {
-    const mensaje = req.query.mensaje || '';
-    res.render('auth/login', { title: 'Iniciar Sesión', mensaje });
-});
-
-/**
- * POST /auth/logout
- * Logout user (clear token)
- */
-router.post('/logout', (req, res) => {
-    res.clearCookie('auth_token');
-    res.json({ success: true, message: 'Sesión cerrada' });
-});
-
-/**
- * GET /auth/logout
- * Logout user (web redirect)
- */
-router.get('/logout', (req, res) => {
-    res.clearCookie('auth_token');
-    res.redirect('/auth/login');
-});
-
-/**
- * GET /auth/me
- * Get current authenticated user
- */
-router.get('/me', requireAuth, async (req, res) => {
-    try {
-        const user = await authService.getUserById(req.user.id);
-        if (!user) {
-            return res.status(404).json({ error: 'Usuario no encontrado' });
-        }
-        res.json({ user });
-    } catch (error) {
-        console.error('Error al obtener usuario:', error);
-        res.status(500).json({ error: 'Error al obtener usuario' });
-    }
-});
-
-/**
- * GET /auth/cambiar-password
- * Form to change current user password (superadmin or any logged-in user)
- */
-router.get('/cambiar-password', requireAuth, (req, res) => {
-    res.render('auth/cambiar-password', {
-        title: 'Cambiar contraseña',
-        user: req.user,
-        success: req.query.ok === '1'
-    });
-});
-
-/**
- * POST /auth/cambiar-password
- * Change password (current user only)
- */
-router.post('/cambiar-password', requireAuth, [
-    body('currentPassword').notEmpty().withMessage('La contraseña actual es requerida'),
-    body('newPassword').isLength({ min: 6 }).withMessage('La nueva contraseña debe tener al menos 6 caracteres'),
-    body('newPasswordConfirm').custom((value, { req }) => {
-        if (value !== req.body.newPassword) {
-            throw new Error('La confirmación no coincide con la nueva contraseña');
-        }
-        return true;
-    })
-], async (req, res) => {
-    try {
-        const errors = validationResult(req);
-        if (!errors.isEmpty()) {
-            const msg = errors.array().map(e => e.msg).join('. ');
-            if (req.xhr || req.headers.accept?.indexOf('json') > -1) {
-                return res.status(400).json({ error: msg });
-            }
-            return res.render('auth/cambiar-password', {
-                title: 'Cambiar contraseña',
-                user: req.user,
-                error: msg
-            });
-        }
-        const userId = req.user.id;
-        const { currentPassword, newPassword } = req.body;
-        const result = await authService.changePassword(userId, currentPassword, newPassword);
-        if (!result.success) {
-            if (req.xhr || req.headers.accept?.indexOf('json') > -1) {
-                return res.status(400).json({ error: result.message });
-            }
-            return res.render('auth/cambiar-password', {
-                title: 'Cambiar contraseña',
-                user: req.user,
-                error: result.message
-            });
-        }
-        if (req.xhr || req.headers.accept?.indexOf('json') > -1) {
-            return res.json({ success: true, message: 'Contraseña actualizada.' });
-        }
-        return res.redirect('/auth/cambiar-password?ok=1');
-    } catch (error) {
-        console.error('Error en cambiar-password:', error);
-        res.status(500).json({ error: 'Error al procesar la solicitud' });
-    }
-});
+// POST /auth/cambiar-password - Logic
+router.post('/cambiar-password', requireAuth, BaseRequest.validate(ChangePasswordRequest), AuthController.changePassword);
 
 module.exports = router;
-

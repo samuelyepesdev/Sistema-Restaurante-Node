@@ -1,6 +1,6 @@
 require('dotenv').config();
 const db = require('../config/database');
-const ParametroService = require('../services/ParametroService');
+const ParametroService = require('../services/Shared/ParametroService');
 
 async function runSeed() {
     console.log('🚀 Iniciando seeding de Temas y Parámetros para Insumos...');

@@ -1,6 +1,6 @@
 const db = require('../config/database');
-const TemaRepository = require('../repositories/TemaRepository');
-const ParametroRepository = require('../repositories/ParametroRepository');
+const TemaRepository = require('../repositories/Shared/TemaRepository');
+const ParametroRepository = require('../repositories/Shared/ParametroRepository');
 
 async function seedDocTypes() {
     console.log('🚀 Iniciando seeding de Tipos de Documento...');

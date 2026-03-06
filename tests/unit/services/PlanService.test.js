@@ -9,7 +9,7 @@ jest.mock('../../../repositories/PlanRepository', () => ({
 }));
 
 const PlanService = require('../../../services/PlanService');
-const PlanRepository = require('../../../repositories/PlanRepository');
+const PlanRepository = require('../repositories/Admin/PlanRepository');
 
 describe('PlanService', () => {
   beforeEach(() => {
