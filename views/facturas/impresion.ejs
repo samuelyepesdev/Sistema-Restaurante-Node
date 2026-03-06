@@ -85,30 +85,13 @@
                 <div class="productos-lista">
                     <% detalles.forEach(function(item) { %>
                         <div class="producto-item">
-                            <div class="producto-nombre">
-                                <%= item.producto_nombre %>
-                                    <% if (item.descuento_porcentaje !=null && Number(item.descuento_porcentaje)> 0) {
-                                        %>
-                                        <div class="small text-success fw-bold">(Descuento <%=
-                                                Number(item.descuento_porcentaje).toFixed(0) %>% aplicado)</div>
-                                        <% } %>
-                            </div>
-                            <div class="producto-detalles">
-                                <div class="producto-cantidad">
-                                    <%= Number(item.cantidad).toLocaleString('es-CO', { minimumFractionDigits: 0,
-                                        maximumFractionDigits: 0 }) %>
-                                        <%= item.unidad_medida %>
+                            <div class="producto-detalles" style="padding-left: 0;">
+                                <div class="producto-nombre"
+                                    style="margin: 0; font-weight: bold; font-size: 1.2em; flex: 3; text-transform: uppercase;">
+                                    <%= item.producto_nombre %>
                                 </div>
-                                <div class="producto-precio">
-                                    <% if (item.precio_original && Number(item.precio_original)>
-                                        Number(item.precio_unitario)) { %>
-                                        <span style="text-decoration: line-through; font-size: 0.8em; opacity: 0.7;">
-                                            $<%= Number(item.precio_original).toLocaleString('es-CO') %>
-                                        </span>
-                                        <% } %>
-                                            $<%= Number(item.precio_unitario).toLocaleString('es-CO') %> c/u
-                                </div>
-                                <div class="producto-total">
+                                <div class="producto-total"
+                                    style="text-align: right; flex: 1; font-weight: bold; font-size: 1.2em;">
                                     $<%= Number(item.subtotal).toLocaleString('es-CO') %>
                                 </div>
                             </div>
@@ -116,13 +99,18 @@
                         <% }); %>
                             <% if (factura.propina !=null && Number(factura.propina)> 0) { %>
                                 <div class="producto-item" style="border-bottom: none;">
-                                    <div class="producto-detalles">
-                                        <span class="producto-nombre">Propina</span>
-                                        <span>$<%= Number(factura.propina).toLocaleString('es-CO') %></span>
+                                    <div class="producto-detalles" style="padding-left: 0;">
+                                        <div class="producto-nombre"
+                                            style="margin: 0; font-weight: bold; font-size: 1.2em; flex: 3;">
+                                            Propina</div>
+                                        <div class="producto-total"
+                                            style="text-align: right; flex: 1; font-weight: bold; font-size: 1.2em;">$
+                                            <%= Number(factura.propina).toLocaleString('es-CO') %>
+                                        </div>
                                     </div>
                                 </div>
                                 <% } %>
-                                    <div class="total-final">
+                                    <div class="total-final" style="font-size: 1.4em;">
                                         Total: $<%= Number(factura.total).toLocaleString('es-CO') %>
                                     </div>
                 </div>
