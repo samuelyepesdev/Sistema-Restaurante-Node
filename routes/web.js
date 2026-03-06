@@ -4,10 +4,13 @@ const { requireAuth, optionalAuth, restrictSuperadminToAdmin, requirePermission 
 const { attachTenantContext, costeoTenantContext } = require('../middleware/tenant');
 const { requirePlanFeature } = require('../middleware/planFeature');
 
+// Importar controladores base
+const HomeController = require('../app/Http/Controllers/HomeController');
+
 // Middlewares comunes
 const requireAuthWithTenant = [requireAuth, restrictSuperadminToAdmin, attachTenantContext];
 
-// Importar rutas
+// Importar micro-rutas (Cada una delegada a su Controller)
 const authRoutes = require('./auth');
 const productosRoutes = require('./tenant/productos');
 const clientesRoutes = require('./tenant/clientes');
@@ -30,33 +33,13 @@ const inventarioRoutes = require('./tenant/inventario');
 const recetasRoutes = require('./tenant/recetas');
 const perfilRoutes = require('./tenant/perfil');
 
-// --- RUTAS PÚBLICAS ---
+// --- RUTAS PÚBLICAS Y AUTH ---
 router.use('/auth', authRoutes);
 
-// --- RUTA PRINCIPAL ---
-router.get('/', optionalAuth, (req, res) => {
-    if (req.user) {
-        const rol = String((req.user.rol || '')).toLowerCase();
-        if (rol === 'superadmin') {
-            res.redirect('/admin/dashboard');
-        } else if (rol === 'admin') {
-            res.redirect('/dashboard');
-        } else if (rol === 'mesero') {
-            res.redirect('/mesas');
-        } else if (rol === 'cocinero') {
-            res.redirect('/cocina');
-        } else if (rol === 'cajero') {
-            res.redirect('/ventas');
-        } else {
-            res.redirect('/mesas');
-        }
-    } else {
-        res.redirect('/auth/login');
-    }
-});
+// --- RUTA PRINCIPAL (Home & Redirección) ---
+router.get('/', optionalAuth, HomeController.index);
 
 // --- RUTAS DE TENANT (RESTAURANTE) ---
-
 router.use('/productos', requireAuthWithTenant, requirePlanFeature('productos'), productosRoutes);
 router.use('/perfil', requireAuthWithTenant, perfilRoutes);
 router.use('/clientes', requireAuthWithTenant, requirePlanFeature('clientes'), requirePermission('clientes.ver'), clientesRoutes);
@@ -72,7 +55,7 @@ router.use('/dashboard', requireAuthWithTenant, requirePlanFeature('dashboard'),
 router.use('/analitica', requireAuthWithTenant, requirePlanFeature('analitica'), analiticaRoutes);
 router.use('/costeo', requireAuth, restrictSuperadminToAdmin, costeoTenantContext, requirePlanFeature('costeo'), costeoRoutes);
 
-// --- RUTAS API (Opcional: puedes separarlas en api.js después) ---
+// --- RUTAS API ---
 router.use('/api/productos', requireAuthWithTenant, requirePlanFeature('productos'), requirePermission('productos.ver'), productosRoutes);
 router.use('/api/clientes', requireAuthWithTenant, requirePlanFeature('clientes'), requirePermission('clientes.ver'), clientesRoutes);
 router.use('/api/facturas', requireAuthWithTenant, requirePlanFeature('ventas'), requirePermission('facturas.ver'), facturasRoutes);

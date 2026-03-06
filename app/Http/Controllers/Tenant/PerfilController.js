@@ -1,0 +1,55 @@
+const TenantService = require('../../../../services/TenantService');
+const StatsService = require('../../../../services/StatsService');
+
+class PerfilController {
+    // GET /perfil
+    static async index(req, res) {
+        try {
+            const tenantId = req.tenant.id;
+            const stats = await StatsService.getDashboardStats(tenantId);
+            res.render('perfil/index', { tenant: req.tenant, user: req.user, stats });
+        } catch (error) {
+            console.error('Error cargando perfil:', error);
+            res.status(500).render('errors/internal', { error: { message: 'Error cargando perfil' } });
+        }
+    }
+
+    // POST /perfil/actualizar
+    static async update(req, res) {
+        try {
+            const tenantId = req.tenant.id;
+            const { nombre, direccion, telefono, colores } = req.body;
+
+            let newConfig = req.tenant.config || {};
+            if (typeof newConfig === 'string') {
+                try { newConfig = JSON.parse(newConfig); } catch (e) { newConfig = {}; }
+            }
+
+            if (colores) {
+                newConfig.colores = JSON.parse(colores);
+            }
+
+            const updateData = {
+                nombre,
+                direccion,
+                telefono,
+                config: newConfig
+            };
+
+            if (req.file) {
+                updateData.logo_data = req.file.buffer;
+                updateData.logo_tipo = req.file.mimetype.split('/')[1];
+                if (newConfig.logo) delete newConfig.logo;
+            }
+
+            await TenantService.updateTenant(tenantId, updateData);
+
+            res.json({ success: true, message: 'Perfil actualizado correctamente. Los cambios se mantendrán incluso después de nuevos deploys.' });
+        } catch (error) {
+            console.error('Error actualizando perfil:', error);
+            res.status(500).json({ success: false, message: error.message });
+        }
+    }
+}
+
+module.exports = PerfilController;
