@@ -1,7 +1,7 @@
-const RecetaService = require('../../../../services/RecetaService');
-const ProductService = require('../../../../services/ProductService');
-const InventarioService = require('../../../../services/InventarioService');
-const RecetaRepository = require('../../../../repositories/RecetaRepository');
+const RecetaService = require('../../../../services/Tenant/RecetaService');
+const ProductService = require('../../../../services/Tenant/ProductService');
+const InventarioService = require('../../../../services/Tenant/InventarioService');
+const RecetaRepository = require('../../../../repositories/Tenant/RecetaRepository');
 
 class RecetasController {
     // GET /recetas

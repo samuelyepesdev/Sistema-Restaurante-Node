@@ -1,6 +1,6 @@
-const ProductService = require('../../../../services/ProductService');
-const CategoryService = require('../../../../services/CategoryService');
-const RecetaService = require('../../../../services/RecetaService');
+const ProductService = require('../../../../services/Tenant/ProductService');
+const CategoryService = require('../../../../services/Admin/CategoryService');
+const RecetaService = require('../../../../services/Tenant/RecetaService');
 let ExcelJS;
 
 class ProductosController {

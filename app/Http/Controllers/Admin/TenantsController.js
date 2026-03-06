@@ -1,10 +1,10 @@
-const TenantService = require('../../../../services/TenantService');
-const TenantUserService = require('../../../../services/TenantUserService');
-const TenantAuditService = require('../../../../services/TenantAuditService');
-const CategoryService = require('../../../../services/CategoryService');
-const PlanService = require('../../../../services/PlanService');
-const { syncPlanPermissionsToTenantUsers } = require('../../../../services/PlanPermissionSyncService');
-const ParametroService = require('../../../../services/ParametroService');
+const TenantService = require('../../../../services/Admin/TenantService');
+const TenantUserService = require('../../../../services/Admin/TenantUserService');
+const TenantAuditService = require('../../../../services/Admin/TenantAuditService');
+const CategoryService = require('../../../../services/Admin/CategoryService');
+const PlanService = require('../../../../services/Admin/PlanService');
+const { syncPlanPermissionsToTenantUsers } = require('../../../../services/Admin/PlanPermissionSyncService');
+const ParametroService = require('../../../../services/Shared/ParametroService');
 
 class TenantsController {
     // GET /admin/tenants

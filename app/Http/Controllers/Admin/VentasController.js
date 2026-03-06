@@ -1,6 +1,6 @@
-const TenantService = require('../../../../services/TenantService');
+const TenantService = require('../../../../services/Admin/TenantService');
 const VentaService = require('../../../../services/VentaService');
-const FacturaRepository = require('../../../../repositories/FacturaRepository');
+const FacturaRepository = require('../../../../repositories/Tenant/FacturaRepository');
 
 class VentasController {
     // GET /admin/ventas

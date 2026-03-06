@@ -5,7 +5,7 @@
  */
 
 const { planHasModule, getPermissionNamesForModule } = require('../utils/planPermissions');
-const authService = require('../services/AuthService');
+const authService = require('../services/Shared/AuthService');
 
 /**
  * @param {string} featureSlug - Slug del módulo en el plan (ej: 'costeo', 'productos', 'analitica', 'eventos')

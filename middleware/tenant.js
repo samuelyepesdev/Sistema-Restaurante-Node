@@ -4,8 +4,8 @@
  * Sets req.tenant and req.user.tenant_id for use in services/repos.
  */
 
-const TenantRepository = require('../repositories/TenantRepository');
-const AuthService = require('../services/AuthService');
+const TenantRepository = require('../repositories/Admin/TenantRepository');
+const AuthService = require('../services/Shared/AuthService');
 const { getAllowedByPlan, getAllowedForUser } = require('../utils/planPermissions');
 
 /**

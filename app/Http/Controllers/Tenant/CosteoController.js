@@ -1,12 +1,12 @@
-const InsumoService = require('../../../../services/InsumoService');
-const RecetaService = require('../../../../services/RecetaService');
-const CosteoService = require('../../../../services/CosteoService');
-const ProductService = require('../../../../services/ProductService');
-const TemaService = require('../../../../services/TemaService');
-const ParametroService = require('../../../../services/ParametroService');
-const ProductoParametroRepository = require('../../../../repositories/ProductoParametroRepository');
+const InsumoService = require('../../../../services/Tenant/InsumoService');
+const RecetaService = require('../../../../services/Tenant/RecetaService');
+const CosteoService = require('../../../../services/Tenant/CosteoService');
+const ProductService = require('../../../../services/Tenant/ProductService');
+const TemaService = require('../../../../services/Shared/TemaService');
+const ParametroService = require('../../../../services/Shared/ParametroService');
+const ProductoParametroRepository = require('../../../../repositories/Tenant/ProductoParametroRepository');
 const TenantService = require('../../../../services/TenantService');
-const CostosFijosRepository = require('../../../../repositories/CostosFijosRepository');
+const CostosFijosRepository = require('../../../../repositories/Tenant/CostosFijosRepository');
 const ExcelJS = require('exceljs');
 
 class CosteoController {
@@ -33,7 +33,7 @@ class CosteoController {
             const tipoNegocio = (req.tenant && req.tenant.config && req.tenant.config.tipo_negocio) ? req.tenant.config.tipo_negocio : 'restaurante';
             const costeoPlantillaReposteria = tipoNegocio === 'panaderia' || tipoNegocio === 'pasteleria';
 
-            const TemaRepository = require('../../../../repositories/TemaRepository');
+            const TemaRepository = require('../../../../repositories/Tenant/TemaRepository');
             const temaCat = await TemaRepository.findByName('CATEGORIAS DE INSUMO', tenantId);
             const temaUni = await TemaRepository.findByName('UNIDADES DE COMPRA', tenantId);
             let categoriasInsumo = [], unidadesCompra = [];

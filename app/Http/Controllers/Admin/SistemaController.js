@@ -1,6 +1,6 @@
-const TenantService = require('../../../../services/TenantService');
-const TemaService = require('../../../../services/TemaService');
-const ParametroService = require('../../../../services/ParametroService');
+const TenantService = require('../../../../services/Admin/TenantService');
+const TemaService = require('../../../../services/Shared/TemaService');
+const ParametroService = require('../../../../services/Shared/ParametroService');
 
 class SistemaController {
     static getTenantId(req) {

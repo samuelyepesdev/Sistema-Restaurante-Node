@@ -1,4 +1,4 @@
-const AnaliticaService = require('../../../../services/AnaliticaService');
+const AnaliticaService = require('../../../../services/Tenant/AnaliticaService');
 
 class AnaliticaController {
     // GET /analitica

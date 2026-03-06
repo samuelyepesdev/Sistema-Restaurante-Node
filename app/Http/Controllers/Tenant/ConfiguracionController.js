@@ -1,4 +1,4 @@
-const ConfiguracionService = require('../../../../services/ConfiguracionService');
+const ConfiguracionService = require('../../../../services/Tenant/ConfiguracionService');
 
 class ConfiguracionController {
     // GET /configuracion

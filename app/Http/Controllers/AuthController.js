@@ -1,5 +1,5 @@
-const authService = require('../../../services/AuthService');
-const TenantRepository = require('../../../repositories/TenantRepository');
+const authService = require('../../../services/Shared/AuthService');
+const TenantRepository = require('../../../repositories/Admin/TenantRepository');
 const { validationResult } = require('express-validator');
 const { ROLES } = require('../../../utils/constants');
 

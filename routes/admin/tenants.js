@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const TenantsController = require('../../app/Http/Controllers/Admin/TenantsController');
 const { ROLES } = require('../../utils/constants');
-const authService = require('../../services/AuthService');
+const authService = require('../../services/Shared/AuthService');
 
 // Middleware de seguridad para el módulo admin
 router.use((req, res, next) => {

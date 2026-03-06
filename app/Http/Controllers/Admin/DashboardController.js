@@ -1,4 +1,4 @@
-const TenantService = require('../../../../services/TenantService');
+const TenantService = require('../../../../services/Admin/TenantService');
 const db = require('../../../../config/database');
 
 class DashboardController {

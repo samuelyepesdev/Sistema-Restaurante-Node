@@ -1,5 +1,5 @@
 const TenantService = require('../../../../services/TenantService');
-const StatsService = require('../../../../services/StatsService');
+const StatsService = require('../../../../services/Tenant/StatsService');
 
 class PerfilController {
     // GET /perfil

@@ -1,5 +1,5 @@
-const PermisoRepository = require('../../../../repositories/PermisoRepository');
-const TenantService = require('../../../../services/TenantService');
+const PermisoRepository = require('../../../../repositories/Admin/PermisoRepository');
+const TenantService = require('../../../../services/Admin/TenantService');
 
 class PermisosController {
     // GET /admin/permisos

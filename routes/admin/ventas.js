@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const VentasController = require('../../app/Http/Controllers/Admin/VentasController');
-const authService = require('../../services/AuthService');
+const authService = require('../../services/Shared/AuthService');
 const { ROLES } = require('../../utils/constants');
 
 // Guard: solo superadmin

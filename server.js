@@ -43,7 +43,7 @@ app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 const { requireAuth, optionalAuth, restrictSuperadminToAdmin } = require('./middleware/auth');
 const { attachTenantContext, costeoTenantContext } = require('./middleware/tenant');
 const { requirePlanFeature } = require('./middleware/planFeature');
-const PlanService = require('./services/PlanService');
+const PlanService = require('./services/Admin/PlanService');
 
 // Opcional: adjuntar user si hay token (para res.locals.plans en navbar)
 app.use(optionalAuth);

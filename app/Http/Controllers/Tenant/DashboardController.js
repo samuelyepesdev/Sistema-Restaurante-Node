@@ -1,6 +1,6 @@
-const StatsService = require('../../../../services/StatsService');
-const StatsRepository = require('../../../../repositories/StatsRepository');
-const ReporteMensualService = require('../../../../services/ReporteMensualService');
+const StatsService = require('../../../../services/Tenant/StatsService');
+const StatsRepository = require('../../../../repositories/Tenant/StatsRepository');
+const ReporteMensualService = require('../../../../services/Tenant/ReporteMensualService');
 
 class DashboardController {
     // GET /dashboard

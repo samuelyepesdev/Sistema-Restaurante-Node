@@ -1,6 +1,6 @@
 const db = require('../../../../config/database');
-const FacturaRepository = require('../../../../repositories/FacturaRepository');
-const InventarioService = require('../../../../services/InventarioService');
+const FacturaRepository = require('../../../../repositories/Tenant/FacturaRepository');
+const InventarioService = require('../../../../services/Tenant/InventarioService');
 
 class MesasController {
     // GET /mesas

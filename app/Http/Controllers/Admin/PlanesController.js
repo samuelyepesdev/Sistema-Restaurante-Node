@@ -1,6 +1,6 @@
-const PlanService = require('../../../../services/PlanService');
-const AddonService = require('../../../../services/AddonService');
-const TenantService = require('../../../../services/TenantService');
+const PlanService = require('../../../../services/Admin/PlanService');
+const AddonService = require('../../../../services/Admin/AddonService');
+const TenantService = require('../../../../services/Admin/TenantService');
 
 class PlanesController {
     // GET /admin/planes

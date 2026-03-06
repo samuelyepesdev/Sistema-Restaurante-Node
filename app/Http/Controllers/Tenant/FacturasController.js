@@ -1,6 +1,6 @@
-const FacturaService = require('../../../../services/FacturaService');
-const EventoService = require('../../../../services/EventoService');
-const ConfiguracionService = require('../../../../services/ConfiguracionService');
+const FacturaService = require('../../../../services/Tenant/FacturaService');
+const EventoService = require('../../../../services/Tenant/EventoService');
+const ConfiguracionService = require('../../../../services/Tenant/ConfiguracionService');
 const { toFechaISOUtc } = require('../../../../utils/dateHelpers');
 
 class FacturasController {

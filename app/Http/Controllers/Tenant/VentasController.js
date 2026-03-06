@@ -1,6 +1,6 @@
-const VentaService = require('../../../../services/VentaService');
-const ConfiguracionService = require('../../../../services/ConfiguracionService');
-const EventoService = require('../../../../services/EventoService');
+const VentaService = require('../../../../services/Tenant/VentaService');
+const ConfiguracionService = require('../../../../services/Tenant/ConfiguracionService');
+const EventoService = require('../../../../services/Tenant/EventoService');
 const { toFechaISOUtc } = require('../../../../utils/dateHelpers');
 let ExcelJS;
 

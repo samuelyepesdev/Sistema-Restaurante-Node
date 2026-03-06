@@ -1,5 +1,5 @@
-const ClienteService = require('../../../../services/ClienteService');
-const ParametroService = require('../../../../services/ParametroService');
+const ClienteService = require('../../../../services/Tenant/ClienteService');
+const ParametroService = require('../../../../services/Shared/ParametroService');
 
 class ClientesController {
     // GET /clientes

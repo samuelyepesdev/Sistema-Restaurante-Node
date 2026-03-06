@@ -1,4 +1,4 @@
-const EventoService = require('../../../../services/EventoService');
+const EventoService = require('../../../../services/Tenant/EventoService');
 
 class EventosController {
     // GET /eventos
