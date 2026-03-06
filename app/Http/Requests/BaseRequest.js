@@ -18,8 +18,15 @@ class BaseRequest {
      * @returns {Function} Middleware function.
      */
     static validate(RequestClass) {
-        const instance = new RequestClass();
-        const rules = instance.rules();
+        // If RequestClass has static rules method, use it.
+        // Otherwise try instance method for backward compatibility.
+        let rules = [];
+        if (typeof RequestClass.rules === 'function') {
+            rules = RequestClass.rules();
+        } else {
+            const instance = new RequestClass();
+            rules = instance.rules();
+        }
 
         return [
             ...rules,

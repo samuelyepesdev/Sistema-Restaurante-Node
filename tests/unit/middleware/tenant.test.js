@@ -7,7 +7,7 @@ jest.mock('../../../repositories/TenantRepository', () => ({
   findById: jest.fn()
 }));
 
-const TenantRepository = require('../../../repositories/TenantRepository');
+const TenantRepository = require('../repositories/Admin/TenantRepository');
 const { attachTenantContext, costeoTenantContext } = require('../../../middleware/tenant');
 
 const createReq = (overrides = {}) => ({

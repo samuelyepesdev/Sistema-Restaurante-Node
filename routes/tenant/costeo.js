@@ -5,6 +5,9 @@ const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 5 *
 const CosteoController = require('../../app/Http/Controllers/Tenant/CosteoController');
 const { requirePermission, requireRole } = require('../../middleware/auth');
 const { requirePlanFeature } = require('../../middleware/planFeature');
+const BaseRequest = require('../../app/Http/Requests/BaseRequest');
+const StoreInsumoRequest = require('../../app/Http/Requests/Tenant/StoreInsumoRequest');
+const StoreRecetaRequest = require('../../app/Http/Requests/Tenant/StoreRecetaRequest');
 
 const isSuperadminMiddleware = (req, res, next) => {
     if (req.user && String(req.user.rol || '').toLowerCase() === 'superadmin') {
@@ -18,18 +21,18 @@ router.get('/', CosteoController.index);
 
 // --- Insumos API ---
 router.get('/api/insumos', CosteoController.listInsumos);
-router.post('/api/insumos', CosteoController.storeInsumo);
+router.post('/api/insumos', BaseRequest.validate(StoreInsumoRequest), CosteoController.storeInsumo);
 router.get('/api/insumos/plantilla', requirePermission('plantillas.ver'), requirePlanFeature('plantillas'), CosteoController.downloadPlantillaInsumos);
 router.post('/api/insumos/cargar', requirePermission('plantillas.ver'), requirePlanFeature('plantillas'), upload.single('archivo'), CosteoController.importInsumos);
 router.get('/api/insumos/:id', CosteoController.showInsumo);
-router.put('/api/insumos/:id', CosteoController.updateInsumo);
+router.put('/api/insumos/:id', BaseRequest.validate(StoreInsumoRequest), CosteoController.updateInsumo);
 router.delete('/api/insumos/:id', CosteoController.destroyInsumo);
 
 // --- Recetas API ---
 router.get('/api/recetas', CosteoController.listRecetas);
 router.get('/api/recetas/:id', CosteoController.showReceta);
-router.post('/api/recetas', CosteoController.storeReceta);
-router.put('/api/recetas/:id', CosteoController.updateReceta);
+router.post('/api/recetas', BaseRequest.validate(StoreRecetaRequest), CosteoController.storeReceta);
+router.put('/api/recetas/:id', BaseRequest.validate(StoreRecetaRequest), CosteoController.updateReceta);
 router.delete('/api/recetas/:id', CosteoController.destroyReceta);
 
 // --- Otros Cálculos ---

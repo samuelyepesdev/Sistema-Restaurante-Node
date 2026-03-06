@@ -11,7 +11,7 @@ jest.mock('../../../repositories/FacturaRepository', () => ({
   getDetailsForAPI: jest.fn()
 }));
 
-const FacturaRepository = require('../../../repositories/FacturaRepository');
+const FacturaRepository = require('../repositories/Tenant/FacturaRepository');
 
 describe('FacturaService', () => {
   beforeEach(() => {

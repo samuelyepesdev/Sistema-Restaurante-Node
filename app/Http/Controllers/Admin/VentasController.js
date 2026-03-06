@@ -1,5 +1,5 @@
 const TenantService = require('../../../../services/Admin/TenantService');
-const VentaService = require('../../../../services/VentaService');
+const VentaService = require('../../../../services/Tenant/VentaService');
 const FacturaRepository = require('../../../../repositories/Tenant/FacturaRepository');
 
 class VentasController {

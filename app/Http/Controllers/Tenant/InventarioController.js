@@ -1,6 +1,6 @@
 const InventarioService = require('../../../../services/Tenant/InventarioService');
 const InsumoService = require('../../../../services/Tenant/InsumoService');
-const TemaRepository = require('../../../../repositories/Tenant/TemaRepository');
+const TemaRepository = require('../../../../repositories/Shared/TemaRepository');
 const ParametroService = require('../../../../services/Shared/ParametroService');
 
 class InventarioController {

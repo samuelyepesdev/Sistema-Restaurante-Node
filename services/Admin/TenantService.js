@@ -71,8 +71,8 @@ class TenantService {
     }
 
     static async seedInitialData(tenantId) {
-        const TemaRepository = require('../repositories/TemaRepository');
-        const ParametroRepository = require('../repositories/ParametroRepository');
+        const TemaRepository = require('../../repositories/Shared/TemaRepository');
+        const ParametroRepository = require('../../repositories/Shared/ParametroRepository');
 
         // 1. TIPO_DOCUMENTO
         const temaId = await TemaRepository.create(tenantId, { name: 'TIPO_DOCUMENTO', status: 1 });

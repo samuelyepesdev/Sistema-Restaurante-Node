@@ -3,8 +3,8 @@
  * Related to: TemaRepository, ParametroRepository
  */
 
-const TemaRepository = require('../../repositories/Tenant/TemaRepository');
-const ParametroRepository = require('../../repositories/Tenant/ParametroRepository');
+const TemaRepository = require('../../repositories/Shared/TemaRepository');
+const ParametroRepository = require('../../repositories/Shared/ParametroRepository');
 
 class TemaService {
     static async list(tenantId, activeOnly = true) {

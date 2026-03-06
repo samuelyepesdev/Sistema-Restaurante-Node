@@ -2,8 +2,8 @@
  * ParametroService - Business logic for parametros (e.g. kg, lb, g, bebidas, comidas)
  * Related to: ParametroRepository, TemaRepository
  */
-const ParametroRepository = require('../../repositories/Tenant/ParametroRepository');
-const TemaRepository = require('../../repositories/Tenant/TemaRepository');
+const ParametroRepository = require('../../repositories/Shared/ParametroRepository');
+const TemaRepository = require('../../repositories/Shared/TemaRepository');
 
 const CATALOGOS_INVENTARIO = {
     'CATEGORIAS DE INSUMO': [

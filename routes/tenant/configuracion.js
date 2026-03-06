@@ -2,6 +2,8 @@ const express = require('express');
 const router = express.Router();
 const multer = require('multer');
 const ConfiguracionController = require('../../app/Http/Controllers/Tenant/ConfiguracionController');
+const BaseRequest = require('../../app/Http/Requests/BaseRequest');
+const StoreConfiguracionRequest = require('../../app/Http/Requests/Tenant/StoreConfiguracionRequest');
 
 // Multer configuration
 const upload = multer({
@@ -21,7 +23,7 @@ router.get('/', ConfiguracionController.index);
 router.post('/', upload.fields([
     { name: 'logo', maxCount: 1 },
     { name: 'qr', maxCount: 1 }
-]), ConfiguracionController.store);
+]), BaseRequest.validate(StoreConfiguracionRequest), ConfiguracionController.store);
 
 // Helpers
 router.get('/impresoras', ConfiguracionController.getPrinters);

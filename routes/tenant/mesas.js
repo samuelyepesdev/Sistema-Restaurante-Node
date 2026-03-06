@@ -2,6 +2,8 @@ const express = require('express');
 const router = express.Router();
 const MesasController = require('../../app/Http/Controllers/Tenant/MesasController');
 const { requirePermission } = require('../../middleware/auth');
+const BaseRequest = require('../../app/Http/Requests/BaseRequest');
+const StoreMesaRequest = require('../../app/Http/Requests/Tenant/StoreMesaRequest');
 
 // GET /mesas - Vista principal
 router.get('/', MesasController.index);
@@ -10,10 +12,10 @@ router.get('/', MesasController.index);
 router.get('/listar', MesasController.list);
 
 // POST /mesas/crear - Crear mesa
-router.post('/crear', MesasController.store);
+router.post('/crear', requirePermission('mesas.crear'), BaseRequest.validate(StoreMesaRequest), MesasController.store);
 
 // PUT /mesas/:mesaId - Editar mesa
-router.put('/:mesaId', requirePermission('mesas.editar'), MesasController.update);
+router.put('/:mesaId', requirePermission('mesas.editar'), BaseRequest.validate(StoreMesaRequest), MesasController.update);
 
 // POST /mesas/crear-masivas - Crear múltiples
 router.post('/crear-masivas', MesasController.storeMasivas);

@@ -7,7 +7,7 @@
 
 const { getPermissionNamesForModule } = require('../../utils/planPermissions');
 const PermisoRepository = require('../../repositories/Admin/PermisoRepository');
-const PlanService = require('../services/PlanService');
+const PlanService = require('./PlanService');
 const { ROLES } = require('../../utils/constants');
 
 /**

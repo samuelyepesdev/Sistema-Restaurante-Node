@@ -5,7 +5,7 @@ const ProductService = require('../../../../services/Tenant/ProductService');
 const TemaService = require('../../../../services/Shared/TemaService');
 const ParametroService = require('../../../../services/Shared/ParametroService');
 const ProductoParametroRepository = require('../../../../repositories/Tenant/ProductoParametroRepository');
-const TenantService = require('../../../../services/TenantService');
+const TenantService = require('../../../../services/Admin/TenantService');
 const CostosFijosRepository = require('../../../../repositories/Tenant/CostosFijosRepository');
 const ExcelJS = require('exceljs');
 
@@ -33,7 +33,7 @@ class CosteoController {
             const tipoNegocio = (req.tenant && req.tenant.config && req.tenant.config.tipo_negocio) ? req.tenant.config.tipo_negocio : 'restaurante';
             const costeoPlantillaReposteria = tipoNegocio === 'panaderia' || tipoNegocio === 'pasteleria';
 
-            const TemaRepository = require('../../../../repositories/Tenant/TemaRepository');
+            const TemaRepository = require('../../../../repositories/Shared/TemaRepository');
             const temaCat = await TemaRepository.findByName('CATEGORIAS DE INSUMO', tenantId);
             const temaUni = await TemaRepository.findByName('UNIDADES DE COMPRA', tenantId);
             let categoriasInsumo = [], unidadesCompra = [];

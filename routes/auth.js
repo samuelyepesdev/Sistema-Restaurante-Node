@@ -1,17 +1,16 @@
 const express = require('express');
-const { body } = require('express-validator');
 const router = express.Router();
 const AuthController = require('../app/Http/Controllers/AuthController');
 const { requireAuth } = require('../middleware/auth');
+const BaseRequest = require('../app/Http/Requests/BaseRequest');
+const LoginRequest = require('../app/Http/Requests/Auth/LoginRequest');
+const ChangePasswordRequest = require('../app/Http/Requests/Auth/ChangePasswordRequest');
 
 // GET /auth/login - Vista
 router.get('/login', AuthController.showLogin);
 
 // POST /auth/login - Logic
-router.post('/login', [
-    body('username').notEmpty().withMessage('Usuario es requerido'),
-    body('password').notEmpty().withMessage('Contraseña es requerida')
-], AuthController.login);
+router.post('/login', BaseRequest.validate(LoginRequest), AuthController.login);
 
 // GET /auth/logout - Redirect
 router.get('/logout', AuthController.logout);
@@ -26,15 +25,6 @@ router.get('/me', requireAuth, AuthController.me);
 router.get('/cambiar-password', requireAuth, AuthController.showChangePassword);
 
 // POST /auth/cambiar-password - Logic
-router.post('/cambiar-password', requireAuth, [
-    body('currentPassword').notEmpty().withMessage('La contraseña actual es requerida'),
-    body('newPassword').isLength({ min: 6 }).withMessage('La nueva contraseña debe tener al menos 6 caracteres'),
-    body('newPasswordConfirm').custom((value, { req }) => {
-        if (value !== req.body.newPassword) {
-            throw new Error('La confirmación no coincide con la nueva contraseña');
-        }
-        return true;
-    })
-], AuthController.changePassword);
+router.post('/cambiar-password', requireAuth, BaseRequest.validate(ChangePasswordRequest), AuthController.changePassword);
 
 module.exports = router;

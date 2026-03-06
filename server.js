@@ -139,7 +139,7 @@ async function startServer() {
             // Programar tareas automáticas (Cron Jobs)
             try {
                 const cron = require('node-cron');
-                const ReporteMensualService = require('./services/ReporteMensualService');
+                const ReporteMensualService = require('./services/Tenant/ReporteMensualService');
                 // Se ejecuta el primer (1) día de cada mes a las 6:00 AM (0 6 1 * *)
                 cron.schedule('0 6 1 * *', async () => {
                     console.log('--- CRON: Iniciando envío de reportes mensuales ---');
