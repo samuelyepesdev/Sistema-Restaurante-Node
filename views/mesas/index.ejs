@@ -30,7 +30,18 @@
                 </div>
             </div>
 
-            <%- include('_grid', { mesas: mesas }) %>
+            <!-- Sección de Mesas Virtuales (WhatsApp / Domicilios) -->
+            <% if (typeof mesasVirtuales !=='undefined' && mesasVirtuales.length> 0) { %>
+                <div class="mb-5">
+                    <h5 class="mb-3 text-primary fw-bold"><i class="bi bi-whatsapp me-2"></i>Pedidos WhatsApp /
+                        Domicilios</h5>
+                    <%- include('_grid', { mesas: mesasVirtuales }) %>
+                        <hr class="my-4">
+                </div>
+                <% } %>
+
+                    <h5 class="mb-3 fw-bold text-secondary">Atención en Salón</h5>
+                    <%- include('_grid', { mesas: mesas }) %>
         </div>
 
         <%- include('_modales') %>

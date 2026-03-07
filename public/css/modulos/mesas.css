@@ -35,6 +35,11 @@ body {
     border-top: 4px solid #64748b;
 }
 
+.mesa-card.virtual {
+    border-top: 4px solid #0ea5e9;
+    background: linear-gradient(to bottom right, #ffffff, #f0f9ff);
+}
+
 /* Pill de estado */
 .mesa-estado-pill {
     display: inline-flex;

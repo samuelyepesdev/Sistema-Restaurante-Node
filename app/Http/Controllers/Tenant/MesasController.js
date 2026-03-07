@@ -9,18 +9,22 @@ class MesasController {
             const tenantId = req.tenant?.id;
             if (!tenantId) return res.status(403).render('errors/internal', { error: { message: 'Contexto de tenant no disponible' } });
 
-            const [mesas] = await db.query(`
+            const [mesasData] = await db.query(`
                 SELECT m.*, (
                     SELECT COUNT(*) FROM pedidos p 
                     WHERE p.mesa_id = m.id AND p.estado NOT IN ('cerrado','cancelado')
                 ) AS pedidos_abiertos
                 FROM mesas m
                 WHERE m.tenant_id = ?
-                ORDER BY CAST(m.numero AS UNSIGNED), m.numero
+                ORDER BY m.tipo ASC, CAST(m.numero AS UNSIGNED), m.numero
             `, [tenantId]);
+
+            const mesas = mesasData.filter(m => m.tipo === 'fisica');
+            const mesasVirtuales = mesasData.filter(m => m.tipo === 'virtual');
 
             res.render('mesas/index', {
                 mesas: mesas || [],
+                mesasVirtuales: mesasVirtuales || [],
                 user: req.user,
                 tenant: req.tenant
             });
@@ -45,7 +49,7 @@ class MesasController {
                 ) AS pedidos_abiertos
                 FROM mesas m
                 WHERE m.tenant_id = ?
-                ORDER BY CAST(m.numero AS UNSIGNED), m.numero
+                ORDER BY m.tipo ASC, CAST(m.numero AS UNSIGNED), m.numero
             `, [tenantId]);
             res.json(mesas);
         } catch (error) {
