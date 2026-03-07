@@ -8,15 +8,24 @@ class WhatsAppService {
     constructor() {
         this.clients = new Map(); // client_id -> WhatsApp Client
         this.qrCodes = new Map(); // tenant_id -> QR Base64
+        this.initializing = new Set(); // tenant_id -> boolean
     }
 
     /**
      * Inicializa un cliente para un tenant específico
      */
     async initializeClient(tenantId) {
-        if (this.clients.has(tenantId)) return;
+        if (this.clients.has(tenantId) || this.initializing.has(tenantId)) {
+            console.log(`[WhatsApp] Init omitido para Tenant ${tenantId} (Ya en proceso o conectado)`);
+            return;
+        }
+        this.initializing.add(tenantId);
 
         console.log(`[WhatsApp] Inicializando cliente para Tenant ${tenantId}`);
+
+        // Actualizar estado inmediatamente a esperando_qr (sin código aún)
+        await db.query('UPDATE whatsapp_configs SET estado = ?, last_qr = NULL WHERE tenant_id = ?',
+            ['esperando_qr', tenantId]);
 
         const client = new Client({
             authStrategy: new LocalAuth({
@@ -43,6 +52,7 @@ class WhatsAppService {
             console.log(`[WhatsApp] Cliente listo para Tenant ${tenantId}`);
             this.qrCodes.delete(tenantId);
             this.clients.set(tenantId, client);
+            this.initializing.delete(tenantId);
 
             await db.query('UPDATE whatsapp_configs SET estado = ?, last_qr = NULL WHERE tenant_id = ?',
                 ['conectado', tenantId]);
@@ -67,6 +77,7 @@ class WhatsAppService {
             await client.initialize();
         } catch (error) {
             console.error(`[WhatsApp] Error inicializando cliente para Tenant ${tenantId}:`, error);
+            this.initializing.delete(tenantId);
         }
     }
 
@@ -75,7 +86,7 @@ class WhatsAppService {
      */
     async handleIncomingMessage(tenantId, msg) {
         const from = msg.from; // Teléfono del cliente
-        const body = msg.body.trim().toLowerCase();
+        const body = msg.body.trim().toLowerCase().replace(/\.$/, '');
 
         // Evitar grupos
         if (from.includes('@g.us')) return;
@@ -175,9 +186,11 @@ class WhatsAppService {
         return this.qrCodes.get(tenantId);
     }
     async destroyClient(tenantId) {
+        this.initializing.delete(tenantId);
         const client = this.clients.get(tenantId);
         if (client) {
             try {
+                await client.logout();
                 await client.destroy();
                 console.log(`[WhatsApp] Cliente destruido para Tenant ${tenantId}`);
             } catch (error) {

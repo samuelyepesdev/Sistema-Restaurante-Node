@@ -89,6 +89,10 @@
                         <button id="btnConnect" class="btn btn-success px-4 py-2 fw-bold">
                             <i class="bi bi-plug-fill me-2"></i>Iniciar Conexión
                         </button>
+                        <button id="btnCancel" class="btn btn-outline-secondary px-4 py-2 fw-bold d-none"
+                            onclick="desconectar()">
+                            <i class="bi bi-x-circle me-2"></i>Cancelar / Reiniciar
+                        </button>
                     </div>
                 </div>
             </div>
@@ -110,13 +114,15 @@
                 $badge.removeClass('status-connected status-disconnected status-waiting');
                 $qrContainer.addClass('d-none');
                 $connectedContainer.addClass('d-none');
-                $btnConnect.prop('disabled', false);
+                $btnConnect.prop('disabled', false).removeClass('d-none');
+                $('#btnCancel').addClass('d-none');
 
                 if (status === 'conectado') {
                     $badge.addClass('status-connected');
                     $text.text('Conectado');
                     $connectedContainer.removeClass('d-none');
                     $btnConnect.addClass('d-none');
+                    $('#btnCancel').removeClass('d-none').text('Desconectar');
                 } else if (status === 'esperando_qr') {
                     $badge.addClass('status-waiting');
                     $text.text('Esperando escaneo');
@@ -125,10 +131,11 @@
                         $qrContainer.removeClass('d-none');
                     }
                     $btnConnect.prop('disabled', true).text('Procesando...');
+                    $('#btnCancel').removeClass('d-none').text('Cancelar / Reiniciar');
                 } else {
                     $badge.addClass('status-disconnected');
                     $text.text('Desconectado');
-                    $btnConnect.removeClass('d-none').text('Iniciar Conexión');
+                    $btnConnect.text('Iniciar Conexión');
                 }
             }
 
@@ -157,16 +164,24 @@
             });
 
             async function desconectar() {
-                const result = await confirmarAccion('¿Desconectar WhatsApp?', 'Se cerrará la sesión actual y el bot dejará de responder.');
+                const result = await Swal.fire({
+                    title: '¿Desconectar WhatsApp?',
+                    text: 'Se cerrará la sesión actual y el bot dejará de responder.',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonText: 'Sí, desconectar',
+                    cancelButtonText: 'Cancelar'
+                });
+
                 if (result.isConfirmed) {
                     try {
                         const res = await fetch('/whatsapp/disconnect', { method: 'POST' });
                         if (res.ok) {
-                            mostrarAlerta('WhatsApp desconectado', 'success');
+                            Swal.fire('Desconectado', 'La sesión ha sido cerrada.', 'success');
                             checkStatus();
                         }
                     } catch (e) {
-                        mostrarAlerta('Error al desconectar', 'error');
+                        Swal.fire('Error', 'No se pudo desconectar', 'error');
                     }
                 }
             }

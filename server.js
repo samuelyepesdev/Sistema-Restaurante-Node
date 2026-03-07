@@ -150,6 +150,9 @@ async function startServer() {
                 // Inicializar WhatsApp para tenants que ya estaban conectados
                 try {
                     const WhatsAppService = require('./services/Tenant/WhatsAppService');
+                    // Limpiar estados inconsistentes (si el servidor se apagó esperando un QR, ese QR ya no sirve)
+                    await db.query('UPDATE whatsapp_configs SET estado = "desconectado", last_qr = NULL WHERE estado = "esperando_qr"');
+
                     const [configs] = await db.query('SELECT tenant_id FROM whatsapp_configs WHERE estado = "conectado"');
                     for (const row of configs) {
                         WhatsAppService.initializeClient(row.tenant_id).catch(e => console.error(`Error reconectando WhatsApp tenant ${row.tenant_id}:`, e));
