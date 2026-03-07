@@ -42,7 +42,9 @@ class BaseRequest {
                     }
 
                     return res.status(400).render('errors/generic', {
-                        error: { message: 'Por favor corregí los siguientes errores: ' + errors.array().map(e => e.msg).join(', ') }
+                        error: { message: 'Por favor corregí los siguientes errores: ' + errors.array().map(e => e.msg).join(', ') },
+                        tenant: req.tenant || null,
+                        user: req.user || null
                     });
                 }
                 next();

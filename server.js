@@ -129,7 +129,7 @@ async function startServer() {
         console.log('Conexión exitosa a la base de datos');
 
         // Iniciar el servidor solo si la conexión a la base de datos es exitosa
-        const server = app.listen(PORT, '0.0.0.0', () => {
+        const server = app.listen(PORT, '0.0.0.0', async () => {
             console.log(`Servidor corriendo en http://localhost:${PORT} (LAN habilitada)`);
             console.log('Rutas disponibles:');
             console.log('- GET  /', '(Página principal)');
@@ -146,6 +146,17 @@ async function startServer() {
                     await ReporteMensualService.procesarCierreMensual();
                 });
                 console.log('--- Cron jobs iniciados exitosamente ---');
+
+                // Inicializar WhatsApp para tenants que ya estaban conectados
+                try {
+                    const WhatsAppService = require('./services/Tenant/WhatsAppService');
+                    const [configs] = await db.query('SELECT tenant_id FROM whatsapp_configs WHERE estado = "conectado"');
+                    for (const row of configs) {
+                        WhatsAppService.initializeClient(row.tenant_id).catch(e => console.error(`Error reconectando WhatsApp tenant ${row.tenant_id}:`, e));
+                    }
+                } catch (waErr) {
+                    console.error('Error inicializando WhatsApp Service:', waErr.message);
+                }
             } catch (cronErr) {
                 console.error('Error iniciando cron jobs:', cronErr.message);
             }
