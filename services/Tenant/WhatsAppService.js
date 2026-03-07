@@ -78,6 +78,10 @@ class WhatsAppService {
         } catch (error) {
             console.error(`[WhatsApp] Error inicializando cliente para Tenant ${tenantId}:`, error);
             this.initializing.delete(tenantId);
+
+            // Si falla el arranque, volver a estado desconectado para que el usuario pueda intentar de nuevo
+            await db.query('UPDATE whatsapp_configs SET estado = ?, last_qr = NULL WHERE tenant_id = ?',
+                ['desconectado', tenantId]);
         }
     }
 
@@ -86,10 +90,20 @@ class WhatsAppService {
      */
     async handleIncomingMessage(tenantId, msg) {
         const from = msg.from; // Teléfono del cliente
-        const body = msg.body.trim().toLowerCase().replace(/\.$/, '');
+        const body = (msg.body || '').trim().toLowerCase().replace(/\.$/, '');
 
-        // Evitar grupos
-        if (from.includes('@g.us')) return;
+        // SEGURIDAD CRÍTICA: Solo permitir chats individuales (@c.us)
+        // Esto ignora: @g.us (grupos), @broadcast (estados/difusión), @newsletter, etc.
+        if (!from.endsWith('@c.us')) {
+            if (from.includes('@broadcast')) {
+                console.log(`[WhatsApp] Seguridad: Ignorando actualización de estado (status@broadcast) para Tenant ${tenantId}`);
+            } else if (from.endsWith('@g.us')) {
+                console.log(`[WhatsApp] Seguridad: Ignorando mensaje de grupo para Tenant ${tenantId}`);
+            } else {
+                console.log(`[WhatsApp] Seguridad: Ignorando remitente no admitido (${from}) para Tenant ${tenantId}`);
+            }
+            return;
+        }
 
         console.log(`[WhatsApp] Mensaje de ${from} para Tenant ${tenantId}: ${body}`);
 
@@ -112,7 +126,7 @@ class WhatsAppService {
                 break;
 
             case 'browsing_menu':
-                const [productos] = await db.query('SELECT id, nombre, precio_unidad FROM productos WHERE tenant_id = ? AND precio_unidad > 0 AND deleted_at IS NULL LIMIT 20', [tenantId]);
+                const [productos] = await db.query('SELECT id, nombre, precio_unidad FROM productos WHERE tenant_id = ? AND precio_unidad > 0 AND activo = 1 LIMIT 20', [tenantId]);
 
                 if (body === 'menu') {
                     let menuMsg = '📖 *Nuestra Carta:*\n\n';
@@ -127,24 +141,24 @@ class WhatsAppService {
                     if (index >= 0 && index < productos.length) {
                         const selected = productos[index];
 
-                        // Guardar en meta_data (carrito)
-                        let metaData = conversation.meta_data || { cart: [] };
-                        if (typeof metaData === 'string') metaData = JSON.parse(metaData);
-                        if (!metaData.cart) metaData.cart = [];
+                        // Guardar en pending_order_data (carrito)
+                        let cartData = conversation.pending_order_data || { cart: [] };
+                        if (typeof cartData === 'string') cartData = JSON.parse(cartData);
+                        if (!cartData.cart) cartData.cart = [];
 
-                        metaData.cart.push({
+                        cartData.cart.push({
                             id: selected.id,
                             nombre: selected.nombre,
                             precio: selected.precio_unidad,
                             cantidad: 1
                         });
 
-                        await db.query('UPDATE whatsapp_conversations SET meta_data = ? WHERE tenant_id = ? AND customer_phone = ?',
-                            [JSON.stringify(metaData), tenantId, from]);
+                        await db.query('UPDATE whatsapp_conversations SET pending_order_data = ? WHERE tenant_id = ? AND customer_phone = ?',
+                            [JSON.stringify(cartData), tenantId, from]);
 
                         let cartMsg = `✅ *${selected.nombre}* añadido.\n\n`;
                         cartMsg += '*Tu pedido actual:*\n';
-                        metaData.cart.forEach(item => {
+                        cartData.cart.forEach(item => {
                             cartMsg += `- ${item.nombre} ($${Number(item.precio).toLocaleString('es-CO')})\n`;
                         });
                         cartMsg += '\nEscribe otro número para añadir más, o escribe *PEDIR* para finalizar.';
