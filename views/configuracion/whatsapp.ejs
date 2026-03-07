@@ -96,6 +96,34 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Configuración de Mensajes -->
+            <div class="row justify-content-center mt-5">
+                <div class="col-md-8">
+                    <div class="card shadow-sm border-0 rounded-4">
+                        <div class="card-body p-4">
+                            <h5 class="fw-bold mb-3"><i class="bi bi-chat-dots me-2 text-primary"></i>Configuración de
+                                Mensajes</h5>
+                            <form id="formConfig">
+                                <div class="mb-3">
+                                    <label class="form-label fw-semibold">Mensaje de Bienvenida</label>
+                                    <textarea name="mensaje_bienvenida" class="form-control" rows="4"
+                                        placeholder="Escribe el mensaje que verán los clientes al saludarte..."><%= config.mensaje_bienvenida %></textarea>
+                                    <div class="form-text text-muted">
+                                        Este mensaje se enviará cuando un cliente escriba por primera vez o después de
+                                        mucho tiempo.
+                                    </div>
+                                </div>
+                                <div class="text-end">
+                                    <button type="submit" class="btn btn-primary px-4">
+                                        <i class="bi bi-save me-2"></i>Guardar Configuración
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -160,6 +188,40 @@
                 } catch (e) {
                     Swal.fire('Error', 'No se pudo iniciar la conexión', 'error');
                     $(this).prop('disabled', false).text('Iniciar Conexión');
+                }
+            });
+
+            $('#formConfig').submit(async function (e) {
+                e.preventDefault();
+                const $btn = $(this).find('button[type="submit"]');
+                $btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-2"></span>Guardando...');
+
+                const formData = {
+                    mensaje_bienvenida: $(this).find('textarea[name="mensaje_bienvenida"]').val()
+                };
+
+                try {
+                    const res = await fetch('/whatsapp/save-config', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(formData)
+                    });
+
+                    if (res.ok) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Guardado',
+                            text: 'La configuración de mensajes se ha actualizado correctamente.',
+                            timer: 2000,
+                            showConfirmButton: false
+                        });
+                    } else {
+                        throw new Error('No se pudo guardar');
+                    }
+                } catch (e) {
+                    Swal.fire('Error', 'No se pudieron guardar los cambios', 'error');
+                } finally {
+                    $btn.prop('disabled', false).html('<i class="bi bi-save me-2"></i>Guardar Configuración');
                 }
             });
 

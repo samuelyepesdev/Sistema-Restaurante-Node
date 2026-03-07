@@ -20,7 +20,7 @@ class MesasController {
             `, [tenantId]);
 
             const mesas = mesasData.filter(m => m.tipo === 'fisica');
-            const mesasVirtuales = mesasData.filter(m => m.tipo === 'virtual');
+            const mesasVirtuales = mesasData.filter(m => m.tipo === 'virtual' && m.estado !== 'libre');
 
             res.render('mesas/index', {
                 mesas: mesas || [],
@@ -48,7 +48,7 @@ class MesasController {
                     WHERE p.mesa_id = m.id AND p.estado NOT IN ('cerrado','cancelado')
                 ) AS pedidos_abiertos
                 FROM mesas m
-                WHERE m.tenant_id = ?
+                WHERE m.tenant_id = ? AND (m.tipo = 'fisica' OR m.estado <> 'libre')
                 ORDER BY m.tipo ASC, CAST(m.numero AS UNSIGNED), m.numero
             `, [tenantId]);
             res.json(mesas);

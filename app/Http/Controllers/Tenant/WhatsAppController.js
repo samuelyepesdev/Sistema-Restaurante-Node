@@ -72,6 +72,24 @@ class WhatsAppController {
             res.status(500).json({ error: 'No se pudo desconectar' });
         }
     }
+
+    /**
+     * Guardar configuración (mensaje de bienvenida, etc)
+     */
+    static async saveConfig(req, res) {
+        try {
+            const tenantId = req.tenant.id;
+            const { mensaje_bienvenida } = req.body;
+
+            await db.query('UPDATE whatsapp_configs SET mensaje_bienvenida = ? WHERE tenant_id = ?',
+                [mensaje_bienvenida, tenantId]);
+
+            res.json({ success: true, message: 'Configuración guardada' });
+        } catch (error) {
+            console.error('Error en WhatsAppController.saveConfig:', error);
+            res.status(500).json({ error: 'Error al guardar configuración' });
+        }
+    }
 }
 
 module.exports = WhatsAppController;

@@ -666,6 +666,18 @@ $(function () {
           }
         }
       });
+
+      // Ocultar mesas virtuales que ya no aparecen en el listado (porque se liberaron)
+      const idsRecibidos = mesas.map(m => m.id);
+      document.querySelectorAll('.mesa-card.virtual').forEach(card => {
+        const id = parseInt(card.dataset.mesaId);
+        const col = card.closest('.col-6, .col-sm-6'); // El contenedor de la columna
+        if (!idsRecibidos.includes(id)) {
+          if (col) col.style.display = 'none';
+        } else {
+          if (col) col.style.display = 'block';
+        }
+      });
     } catch (_) { /* ignorar errores de red */ }
   }
 

@@ -8,6 +8,7 @@ const { attachTenantContext } = require('../../middleware/tenant');
 router.get('/', WhatsAppController.index);
 router.post('/connect', WhatsAppController.connect);
 router.post('/disconnect', WhatsAppController.disconnect);
+router.post('/save-config', WhatsAppController.saveConfig);
 router.get('/status', WhatsAppController.status);
 
 module.exports = router;

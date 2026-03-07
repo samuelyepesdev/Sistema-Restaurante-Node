@@ -23,7 +23,13 @@
                         </span>
                     </div>
                     <div class="mesa-desc mb-3">
-                        <%= m.descripcion || '' %>
+                        <% if (m.tipo==='virtual' && m.descripcion) { %>
+                            <span class="text-dark fw-bold"><i class="bi bi-person me-1"></i>
+                                <%= m.descripcion %>
+                            </span>
+                            <% } else { %>
+                                <%= m.descripcion || '' %>
+                                    <% } %>
                     </div>
                     <div class="d-grid gap-2">
                         <% if (m.estado==='libre' ) { %>
