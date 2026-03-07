@@ -95,6 +95,7 @@
         </div>
 
         <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
         <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
         <script>
             let pollingInterval;
@@ -154,6 +155,21 @@
                     $(this).prop('disabled', false).text('Iniciar Conexión');
                 }
             });
+
+            async function desconectar() {
+                const result = await confirmarAccion('¿Desconectar WhatsApp?', 'Se cerrará la sesión actual y el bot dejará de responder.');
+                if (result.isConfirmed) {
+                    try {
+                        const res = await fetch('/whatsapp/disconnect', { method: 'POST' });
+                        if (res.ok) {
+                            mostrarAlerta('WhatsApp desconectado', 'success');
+                            checkStatus();
+                        }
+                    } catch (e) {
+                        mostrarAlerta('Error al desconectar', 'error');
+                    }
+                }
+            }
 
             // Iniciar polling si ya estaba en algún estado
             pollingInterval = setInterval(checkStatus, 3000);

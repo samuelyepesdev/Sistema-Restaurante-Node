@@ -101,23 +101,64 @@ class WhatsAppService {
                 break;
 
             case 'browsing_menu':
-                if (body === 'menu') {
-                    // Obtener productos (solo los que tengan precio > 0)
-                    const [productos] = await db.query('SELECT nombre, precio_unidad FROM productos WHERE tenant_id = ? AND precio_unidad > 0 LIMIT 10', [tenantId]);
+                const [productos] = await db.query('SELECT id, nombre, precio_unidad FROM productos WHERE tenant_id = ? AND precio_unidad > 0 AND deleted_at IS NULL LIMIT 20', [tenantId]);
 
+                if (body === 'menu') {
                     let menuMsg = '📖 *Nuestra Carta:*\n\n';
                     productos.forEach((p, i) => {
                         menuMsg += `${i + 1}. *${p.nombre}* - $${Number(p.precio_unidad).toLocaleString('es-CO')}\n`;
                     });
-                    menuMsg += '\nEscribe el número del producto para añadirlo.';
+                    menuMsg += '\nEscribe el *número* del producto para añadirlo.';
                     await msg.reply(menuMsg);
-                } else {
-                    await msg.reply('No entendí. Escribe *MENU* para ver la carta.');
+                }
+                else if (!isNaN(body)) {
+                    const index = parseInt(body) - 1;
+                    if (index >= 0 && index < productos.length) {
+                        const selected = productos[index];
+
+                        // Guardar en meta_data (carrito)
+                        let metaData = conversation.meta_data || { cart: [] };
+                        if (typeof metaData === 'string') metaData = JSON.parse(metaData);
+                        if (!metaData.cart) metaData.cart = [];
+
+                        metaData.cart.push({
+                            id: selected.id,
+                            nombre: selected.nombre,
+                            precio: selected.precio_unidad,
+                            cantidad: 1
+                        });
+
+                        await db.query('UPDATE whatsapp_conversations SET meta_data = ? WHERE tenant_id = ? AND customer_phone = ?',
+                            [JSON.stringify(metaData), tenantId, from]);
+
+                        let cartMsg = `✅ *${selected.nombre}* añadido.\n\n`;
+                        cartMsg += '*Tu pedido actual:*\n';
+                        metaData.cart.forEach(item => {
+                            cartMsg += `- ${item.nombre} ($${Number(item.precio).toLocaleString('es-CO')})\n`;
+                        });
+                        cartMsg += '\nEscribe otro número para añadir más, o escribe *PEDIR* para finalizar.';
+                        await msg.reply(cartMsg);
+                    } else {
+                        await msg.reply('Número inválido. Por favor elige un número de la lista o escribe *MENU*.');
+                    }
+                }
+                else if (body.includes('pedir')) {
+                    await msg.reply('¡Excelente decisión! 📝\n\nPor favor envíanos tu *Nombre* y *Dirección* para completar el pedido (ejemplo: Samuel Yepes - Calle 10 #20-30).');
+                    await this.updateConversationState(tenantId, from, 'confirming');
+                }
+                else {
+                    await msg.reply('No entendí. Escribe *MENU* para ver la carta o el número del producto deseado.');
                 }
                 break;
 
+            case 'confirming':
+                await msg.reply('¡Pedido recibido! 🎉\n\nEstamos procesando tu orden. En un momento un asesor te confirmará por aquí. ¡Gracias por elegirnos!');
+                await this.updateConversationState(tenantId, from, 'completed');
+                break;
+
             default:
-                await msg.reply('Estamos mejorando nuestro bot. Pronto podrás realizar pedidos completos por aquí. Por ahora, escribe *MENU* para ver qué tenemos para ofrecerte.');
+                await msg.reply('Hola de nuevo. 👋 Escribe *MENU* para iniciar un nuevo pedido.');
+                await this.updateConversationState(tenantId, from, 'browsing_menu');
         }
     }
 
@@ -132,6 +173,23 @@ class WhatsAppService {
 
     getQR(tenantId) {
         return this.qrCodes.get(tenantId);
+    }
+    async destroyClient(tenantId) {
+        const client = this.clients.get(tenantId);
+        if (client) {
+            try {
+                await client.destroy();
+                console.log(`[WhatsApp] Cliente destruido para Tenant ${tenantId}`);
+            } catch (error) {
+                console.error(`[WhatsApp] Error al destruir cliente para Tenant ${tenantId}:`, error);
+            }
+            this.clients.delete(tenantId);
+        }
+        this.qrCodes.delete(tenantId);
+
+        // Actualizar DB
+        await db.query('UPDATE whatsapp_configs SET estado = ?, last_qr = NULL WHERE tenant_id = ?',
+            ['desconectado', tenantId]);
     }
 }
 

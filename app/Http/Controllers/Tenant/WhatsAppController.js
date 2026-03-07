@@ -9,7 +9,7 @@ class WhatsAppController {
         try {
             const tenantId = req.tenant.id;
 
-            // Obtener configuración actal
+            // Obtener configuración actual
             let [rows] = await db.query('SELECT * FROM whatsapp_configs WHERE tenant_id = ?', [tenantId]);
             let config = rows[0];
 
@@ -56,6 +56,20 @@ class WhatsAppController {
             res.json(rows[0] || { estado: 'desconectado' });
         } catch (error) {
             res.status(500).json({ error: 'Error obteniendo estado' });
+        }
+    }
+
+    /**
+     * Cerrar sesión y destruir cliente
+     */
+    static async disconnect(req, res) {
+        try {
+            const tenantId = req.tenant.id;
+            await WhatsAppService.destroyClient(tenantId);
+            res.json({ message: 'WhatsApp desconectado correctamente' });
+        } catch (error) {
+            console.error('Error en WhatsAppController.disconnect:', error);
+            res.status(500).json({ error: 'No se pudo desconectar' });
         }
     }
 }
