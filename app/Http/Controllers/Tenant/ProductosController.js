@@ -277,6 +277,21 @@ class ProductosController {
             res.status(500).json({ error: error.message || 'Error al importar productos' });
         }
     }
+
+    // PATCH /productos/:id/favorito
+    static async toggleFavorite(req, res) {
+        try {
+            const tenantId = req.tenant?.id;
+            if (!tenantId) return res.status(403).json({ error: 'Contexto de tenant no disponible' });
+            const id = parseInt(req.params.id, 10);
+            const { es_favorito } = req.body;
+            await ProductService.toggleFavorite(id, tenantId, es_favorito);
+            res.json({ message: 'Estado de favorito actualizado' });
+        } catch (error) {
+            console.error('Error al actualizar favorito:', error);
+            res.status(500).json({ error: 'Error al actualizar favorito' });
+        }
+    }
 }
 
 module.exports = ProductosController;

@@ -43,4 +43,7 @@ router.get('/plantilla', requirePermission('plantillas.ver'), requirePlanFeature
 // POST /productos/importar - Import products from Excel
 router.post('/importar', requirePermission('plantillas.ver'), requirePlanFeature('plantillas'), upload.single('archivo'), ProductosController.import);
 
+// PATCH /productos/:id/favorito - Toggle favorite
+router.patch('/:id/favorito', requirePermission('productos.editar'), ProductosController.toggleFavorite);
+
 module.exports = router;

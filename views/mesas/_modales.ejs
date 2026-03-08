@@ -113,6 +113,56 @@
     </div>
 </div>
 
+<!-- Panel de Favoritos Lateral (Aparece junto al offcanvas en Tablet/PC) -->
+<div id="sidePanelFavoritos" class="d-none d-md-block shadow-lg">
+    <div class="p-3">
+        <div class="d-flex align-items-center justify-content-between mb-3 border-bottom pb-2">
+            <h6 class="fw-bold mb-0 text-white">
+                <i class="bi bi-star-fill me-2 text-warning"></i>Favoritos
+            </h6>
+            <select id="filtroCategoriaFav" class="form-select form-select-sm border-0 bg-white"
+                style="width: auto; font-size: 0.75rem; border-radius: 8px;">
+                <option value="todos">Todos</option>
+                <% (typeof categorias !=='undefined' ? categorias : []).forEach(cat=> { %>
+                    <option value="<%= cat.id %>">
+                        <%= cat.nombre %>
+                    </option>
+                    <% }) %>
+            </select>
+        </div>
+        <div id="gridFavoritos" class="row g-2 overflow-auto"
+            style="max-height: calc(100vh - 120px); align-content: flex-start;">
+            <% (typeof productos !=='undefined' ? productos : []).filter(p=> p.es_favorito).forEach(p => { %>
+                <div class="col-6 col-lg-4 col-xl-3 mb-2">
+                    <div class="card p-2 text-center producto-fav-card shadow-sm border-0 h-100" data-id="<%= p.id %>"
+                        data-nombre="<%= p.nombre %>" data-precio="<%= p.precio_unidad %>"
+                        data-categoria="<%= p.categoria_id %>" data-categoria-nombre="<%= p.categoria_nombre %>">
+                        <div class="producto-fav-initials">
+                            <%= p.nombre.substring(0,2).toUpperCase() %>
+                        </div>
+                        <div class="small fw-bold text-truncate w-100 mt-1" style="font-size: 0.7rem;">
+                            <%= p.nombre %>
+                        </div>
+                        <div class="badge bg-primary-subtle text-primary border-0 mt-1" style="font-size: 0.65rem;">$<%=
+                                Number(p.precio_unidad).toLocaleString('es-CO') %>
+                        </div>
+                    </div>
+                </div>
+                <% }) %>
+                    <% if ((typeof productos !=='undefined' ? productos : []).filter(p=> p.es_favorito).length === 0) {
+                        %>
+                        <div class="col-12 text-center text-white-50 py-5">
+                            <i class="bi bi-star d-block fs-1 mb-2"></i>
+                            <p class="small">Marca productos como favoritos en el menú de productos para que aparezcan
+                                aquí.</p>
+                        </div>
+                        <% } %>
+        </div>
+    </div>
+</div>
+</div>
+</div>
+
 <!-- Modal Aplicar descuento: paso 1 = elegir producto, paso 2 = elegir % (solo esta venta en mesas) -->
 <div class="modal fade" id="descuentoModalMesa" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
@@ -357,6 +407,91 @@
     #totalPedido {
         font-size: 1.25rem;
         color: #0d6efd;
+    }
+
+    /* Panel de Favoritos Lateral */
+    #sidePanelFavoritos {
+        position: fixed;
+        top: 0;
+        right: 420px;
+        /* Ancho del offcanvas de pedido */
+        width: calc(100vw - 420px);
+        height: 100vh;
+        background: rgba(33, 37, 41, 0.95);
+        backdrop-filter: blur(10px);
+        z-index: 1050;
+        /* Un poco por debajo del offcanvas pero sobre casi todo */
+        transition: all 0.3s ease-in-out;
+        opacity: 0;
+        visibility: hidden;
+        pointer-events: none;
+        border-right: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    body.offcanvas-open #sidePanelFavoritos {
+        opacity: 1;
+        visibility: visible;
+        pointer-events: auto;
+    }
+
+    .bg-white-opacity {
+        background: rgba(255, 255, 255, 0.1) !important;
+        color: white !important;
+    }
+
+    .bg-white-opacity option {
+        background: white;
+        color: black;
+    }
+
+    .producto-fav-card {
+        cursor: pointer;
+        transition: all 0.2s;
+        border-radius: 12px;
+        background: white;
+        border: 2px solid transparent !important;
+    }
+
+    .producto-fav-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2) !important;
+        border-color: #0d6efd !important;
+    }
+
+    .producto-fav-initials {
+        width: 35px;
+        height: 35px;
+        background: #f1f5f9;
+        color: #64748b;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto;
+        font-weight: 800;
+        font-size: 0.8rem;
+    }
+
+    @media (max-width: 992px) {
+        #sidePanelFavoritos {
+            right: 400px;
+            width: 300px;
+            /* Panel más estrecho en tablets */
+        }
+    }
+
+    /* Scrollbar personalizado */
+    #gridFavoritos::-webkit-scrollbar {
+        width: 5px;
+    }
+
+    #gridFavoritos::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    #gridFavoritos::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 10px;
     }
 </style>
 

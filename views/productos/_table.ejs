@@ -17,6 +17,12 @@
                         <%= producto.codigo %>
                     </td>
                     <td>
+                        <button class="btn btn-sm btn-link p-0 me-1 btn-toggle-favorito" data-id="<%= producto.id %>"
+                            data-favorito="<%= producto.es_favorito %>"
+                            title="<%= producto.es_favorito ? 'Quitar de favoritos' : 'Agregar a favoritos' %>">
+                            <i
+                                class="bi <%= producto.es_favorito ? 'bi-star-fill text-warning' : 'bi-star text-muted' %>"></i>
+                        </button>
                         <%= producto.nombre %>
                     </td>
                     <td><span class="badge bg-secondary">

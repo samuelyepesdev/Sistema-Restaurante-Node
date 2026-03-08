@@ -88,6 +88,39 @@ class ProductManager {
         if (btnAplicar) {
             btnAplicar.addEventListener('click', () => this.aplicarPrecioSugerido());
         }
+
+        // Favoritos: toggle
+        $(document).on('click', '.btn-toggle-favorito', (e) => {
+            const btn = $(e.currentTarget);
+            const id = btn.data('id');
+            const esFav = btn.data('favorito');
+            this.toggleFavorite(id, !esFav, btn);
+        });
+    }
+
+    /**
+     * Toggle favorite status
+     */
+    async toggleFavorite(id, nuevoEstado, btn) {
+        try {
+            await fetch(`/api/productos/${id}/favorito`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ es_favorito: nuevoEstado })
+            }).then(res => { if (!res.ok) throw new Error('Error al actualizar favorito'); });
+
+            // Update UI
+            btn.data('favorito', nuevoEstado);
+            btn.attr('title', nuevoEstado ? 'Quitar de favoritos' : 'Agregar a favoritos');
+            const icon = btn.find('i');
+            if (nuevoEstado) {
+                icon.removeClass('bi-star text-muted').addClass('bi-star-fill text-warning');
+            } else {
+                icon.removeClass('bi-star-fill text-warning').addClass('bi-star text-muted');
+            }
+        } catch (error) {
+            AlertManager.alert(error.message, 'error');
+        }
     }
 
     /**
@@ -182,7 +215,7 @@ class ProductManager {
             } else {
                 await ApiClient.post('/api/productos', productData);
             }
-            
+
             Utils.reload();
         } catch (error) {
             AlertManager.alert(error.message, 'error');
@@ -315,7 +348,7 @@ class ProductManager {
             }
 
             if (e.ctrlKey || e.metaKey) {
-                switch(e.key.toLowerCase()) {
+                switch (e.key.toLowerCase()) {
                     case 'b':
                         e.preventDefault();
                         document.getElementById('buscarProducto')?.focus();
@@ -348,31 +381,31 @@ class ProductManager {
         // Import products
         const btnImportar = document.getElementById('btnImportarProductos');
         const inputImport = document.getElementById('archivoImport');
-        
+
         if (btnImportar && inputImport) {
             btnImportar.addEventListener('click', () => inputImport.click());
-            
+
             inputImport.addEventListener('change', async (e) => {
                 if (!e.target.files.length) return;
-                
+
                 const formData = new FormData();
                 formData.append('archivo', e.target.files[0]);
-                
+
                 btnImportar.disabled = true;
                 btnImportar.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Importando...';
-                
+
                 try {
                     const response = await fetch('/api/productos/importar', {
                         method: 'POST',
                         body: formData
                     });
-                    
+
                     const data = await response.json();
-                    
+
                     if (!response.ok) {
                         throw new Error(data.error || 'Error al importar');
                     }
-                    
+
                     alert(`Importación completa: ${data.inserted} filas.`);
                     Utils.reload();
                 } catch (error) {

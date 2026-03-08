@@ -1,6 +1,8 @@
 const db = require('../../../../config/database');
 const FacturaRepository = require('../../../../repositories/Tenant/FacturaRepository');
 const InventarioService = require('../../../../services/Tenant/InventarioService');
+const CategoryService = require('../../../../services/Admin/CategoryService');
+const ProductRepository = require('../../../../repositories/Tenant/ProductRepository');
 
 class MesasController {
     // GET /mesas
@@ -22,9 +24,15 @@ class MesasController {
             const mesas = mesasData.filter(m => m.tipo === 'fisica');
             const mesasVirtuales = mesasData.filter(m => m.tipo === 'virtual' && m.estado !== 'libre');
 
+            // Cargar categorías y productos para el apartado de favoritos (solo activos)
+            const categorias = await CategoryService.getAllActive(tenantId);
+            const productos = await ProductRepository.findAll(tenantId);
+
             res.render('mesas/index', {
                 mesas: mesas || [],
                 mesasVirtuales: mesasVirtuales || [],
+                categorias: categorias || [],
+                productos: productos || [],
                 user: req.user,
                 tenant: req.tenant
             });

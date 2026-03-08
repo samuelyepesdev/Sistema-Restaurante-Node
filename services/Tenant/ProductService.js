@@ -194,6 +194,17 @@ class ProductService {
 
         return { inserted: products.length };
     }
+
+    /**
+     * Toggle favorite status
+     * @param {number} id - Product ID
+     * @param {number} tenantId - Tenant ID
+     * @param {boolean} esFavorito - Favorite status
+     * @returns {Promise<Object>} Update result
+     */
+    static async toggleFavorite(id, tenantId, esFavorito) {
+        return await ProductRepository.toggleFavorite(id, tenantId, esFavorito);
+    }
 }
 
 module.exports = ProductService;
