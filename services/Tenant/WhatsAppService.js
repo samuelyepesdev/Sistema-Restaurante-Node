@@ -121,12 +121,25 @@ class WhatsAppService {
      */
     async handleIncomingMessage(tenantId, msg) {
         const from = msg.from; // Teléfono del cliente
-        const body = (msg.body || '').trim().toLowerCase().replace(/\.$/, '');
 
-        // SEGURIDAD CRÍTICA: Solo permitir chats individuales (@c.us)
-        if (!from.endsWith('@c.us')) return;
+        // Normalizar texto: quitar acentos y pasar a minúsculas
+        const rawBody = msg.body || '';
+        const body = rawBody.trim().toLowerCase()
+            .normalize("NFD").replace(/[\u0300-\u036f]/g, "") // Quitar acentos
+            .replace(/\.$/, '');
 
-        console.log(`[WhatsApp] Mensaje de ${from} para Tenant ${tenantId}: ${body}`);
+        console.log(`[WhatsApp] Mensaje RECIBIDO de ${from} (Tenant ${tenantId}): "${msg.body}" -> Normalizado: "${body}"`);
+
+        // SEGURIDAD: Solo permitir chats individuales (evitar grupos)
+        // @c.us es estándar, pero algunas cuentas de empresa usan otros formatos.
+        // Lo importante es NO responder en grupos (@g.us)
+        if (from.endsWith('@g.us')) {
+            console.log(`[WhatsApp] Ignorando mensaje de grupo: ${from}`);
+            return;
+        }
+
+        if (from.includes('@broadcast')) return; // Ignorar estados
+
 
         // 1. Obtener Configuración y Conversación
         const [configRows] = await db.query('SELECT mensaje_bienvenida, mensaje_transferencia FROM whatsapp_configs WHERE tenant_id = ?', [tenantId]);
@@ -159,7 +172,8 @@ class WhatsAppService {
                 break;
 
             case 'selecting_category':
-                const [cats] = await db.query('SELECT id, nombre FROM categorias WHERE activa = 1');
+                const [cats] = await db.query('SELECT id, nombre FROM categorias WHERE tenant_id = ? AND activa = 1', [tenantId]);
+
                 const catIdx = parseInt(body) - 1;
 
                 if (!isNaN(catIdx) && catIdx >= 0 && catIdx < cats.length) {
@@ -294,7 +308,8 @@ class WhatsAppService {
                 break;
 
             case 'confirming':
-                if (body === 'si' || body === 'sí') {
+                if (body === 'si' || body === 'si') { // 'sí' ya está normalizado a 'si'
+
                     try {
                         let cDataFinal = conversation.pending_order_data;
                         if (typeof cDataFinal === 'string') cDataFinal = JSON.parse(cDataFinal);
@@ -332,7 +347,8 @@ class WhatsAppService {
     }
 
     async sendCategories(tenantId, msg) {
-        const [cats] = await db.query('SELECT nombre FROM categorias WHERE activa = 1');
+        const [cats] = await db.query('SELECT nombre FROM categorias WHERE tenant_id = ? AND activa = 1', [tenantId]);
+
         let catMsg = '🍽️ *¿Qué te gustaría pedir hoy?*\n\nElige una categoría:\n';
         cats.forEach((c, i) => {
             catMsg += `${i + 1}. ${c.nombre}\n`;
