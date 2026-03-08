@@ -231,12 +231,12 @@ class WhatsAppService {
 
                 if (body === '1' || body.includes('domicilio')) {
                     cData.order_type = 'Domicilio';
-                    await db.query('UPDATE whatsapp_conversations SET current_state = "confirming", pending_order_data = ? WHERE tenant_id = ? AND customer_phone = ?',
+                    await db.query('UPDATE whatsapp_conversations SET current_state = "ordering", pending_order_data = ? WHERE tenant_id = ? AND customer_phone = ?',
                         [JSON.stringify(cData), tenantId, from]);
-                    await msg.reply('¡Perfecto! 🛵\n\nPor favor envíanos tu *Nombre* y *Dirección* para el envío (ejemplo: Yasney Hernandez - Calle 29a #26-41).');
+                    await msg.reply('¡Perfecto! 🛵\n\nPor favor envíanos tu *Nombre* y *Dirección* para el envío (ejemplo: juan - siempre viva.');
                 } else if (body === '2' || body.includes('recoger') || body.includes('local')) {
                     cData.order_type = 'Pickup / Local';
-                    await db.query('UPDATE whatsapp_conversations SET current_state = "confirming", pending_order_data = ? WHERE tenant_id = ? AND customer_phone = ?',
+                    await db.query('UPDATE whatsapp_conversations SET current_state = "ordering", pending_order_data = ? WHERE tenant_id = ? AND customer_phone = ?',
                         [JSON.stringify(cData), tenantId, from]);
                     await msg.reply('¡Entendido! 🥡\n\nPor favor envíanos tu *Nombre* para tener listo tu pedido.');
                 } else {
@@ -244,14 +244,80 @@ class WhatsAppService {
                 }
                 break;
 
+            case 'ordering':
+                let orderData = conversation.pending_order_data;
+                if (typeof orderData === 'string') orderData = JSON.parse(orderData);
+
+                // Guardar info del cliente (Nombre/Dirección)
+                orderData.customer_info = msg.body;
+
+                await db.query('UPDATE whatsapp_conversations SET current_state = "selecting_payment_method", pending_order_data = ? WHERE tenant_id = ? AND customer_phone = ?',
+                    [JSON.stringify(orderData), tenantId, from]);
+
+                await msg.reply('¿Cómo deseas realizar el pago?\n\n1. 💵 *Efectivo*\n2. 📲 *Transferencia*\n3. 💳 *Datáfono*');
+                break;
+
+            case 'selecting_payment_method':
+                let pData = conversation.pending_order_data;
+                if (typeof pData === 'string') pData = JSON.parse(pData);
+
+                if (body === '1' || body.includes('efectivo')) {
+                    pData.payment_method = 'Efectivo';
+                } else if (body === '2' || body.includes('transferencia')) {
+                    pData.payment_method = 'Transferencia';
+                } else if (body === '3' || body.includes('datafono')) {
+                    pData.payment_method = 'Datafono';
+                } else {
+                    await msg.reply('Por favor elige una opción de pago válida (1, 2 o 3).');
+                    return;
+                }
+
+                await db.query('UPDATE whatsapp_conversations SET current_state = "confirming", pending_order_data = ? WHERE tenant_id = ? AND customer_phone = ?',
+                    [JSON.stringify(pData), tenantId, from]);
+
+                let confirmMsg = `📝 *Resumen de tu pedido:*\n\n`;
+                const total = pData.cart.reduce((sum, item) => sum + (item.precio * item.cantidad), 0);
+                pData.cart.forEach(item => {
+                    confirmMsg += `- ${item.nombre} x${item.cantidad} ($${Number(item.precio * item.cantidad).toLocaleString('es-CO')})\n`;
+                });
+                confirmMsg += `\n*Total:* $${Number(total).toLocaleString('es-CO')}`;
+                confirmMsg += `\n*Tipo:* ${pData.order_type}`;
+                confirmMsg += `\n*Pago:* ${pData.payment_method}`;
+
+                if (pData.payment_method === 'Transferencia') {
+                    confirmMsg += `\n\n⚠️ *Nota:* Al confirmar, te enviaremos los datos para la transferencia.`;
+                }
+
+                confirmMsg += `\n\n¿Confirmas tu pedido? Escribe *SI* para finalizar o *NO* para cancelar.`;
+                await msg.reply(confirmMsg);
+                break;
+
             case 'confirming':
-                try {
-                    await this.finalizeOrder(tenantId, from, msg.body, conversation);
-                    await msg.reply('¡Pedido recibido! 🎉\n\nEstamos procesando tu orden. En un momento te confirmaremos. ¡Gracias por elegirnos!');
-                    await this.updateConversationState(tenantId, from, 'completed');
-                } catch (error) {
-                    console.error('[WhatsApp] Error al finalizar pedido:', error);
-                    await msg.reply('Error al procesar. Por favor intenta de nuevo.');
+                if (body === 'si' || body === 'sí') {
+                    try {
+                        let cDataFinal = conversation.pending_order_data;
+                        if (typeof cDataFinal === 'string') cDataFinal = JSON.parse(cDataFinal);
+
+                        await this.finalizeOrder(tenantId, from, cDataFinal.customer_info, conversation);
+
+                        let finalMsg = '¡Pedido recibido! 🎉\n\nEstamos procesando tu orden. ';
+                        if (cDataFinal.payment_method === 'Transferencia') {
+                            finalMsg += '\n\n📲 *Datos de Transferencia:*\n- Nequi/Daviplata: 3123456789\n- A nombre de: Restaurante XYZ\n- Valor a transferir: *$' + Number(cDataFinal.cart.reduce((sum, i) => sum + (i.precio * i.cantidad), 0)).toLocaleString('es-CO') + '*';
+                            finalMsg += '\n\n*Por favor envía el comprobante por este medio.*';
+                        }
+                        finalMsg += '\n\nEn un momento te confirmaremos. ¡Gracias!';
+
+                        await msg.reply(finalMsg);
+                        await this.updateConversationState(tenantId, from, 'completed');
+                    } catch (error) {
+                        console.error('[WhatsApp] Error al finalizar pedido:', error);
+                        await msg.reply('Error al procesar. Por favor intenta de nuevo.');
+                    }
+                } else if (body === 'no') {
+                    await msg.reply('Pedido cancelado. Escribe *MENU* cuando gustes volver a pedir. 👋');
+                    await this.updateConversationState(tenantId, from, 'welcome');
+                } else {
+                    await msg.reply('Por favor responde *SI* para confirmar o *NO* para cancelar.');
                 }
                 break;
 
@@ -364,9 +430,10 @@ class WhatsAppService {
 
         // 3. Crear el pedido principal
         const orderType = cartData.order_type || 'WhatsApp';
+        const paymentMethod = cartData.payment_method || 'Efectivo';
         const [orderResult] = await db.query(
-            'INSERT INTO pedidos (tenant_id, mesa_id, estado, canal, total, notas) VALUES (?, ?, ?, ?, ?, ?)',
-            [tenantId, mesaId, 'abierto', 'whatsapp', total, `[${orderType}] ${customerInfo}\nTel: ${phone}`]
+            'INSERT INTO pedidos (tenant_id, mesa_id, estado, canal, metodo_pago, total, notas) VALUES (?, ?, ?, ?, ?, ?, ?)',
+            [tenantId, mesaId, 'abierto', 'whatsapp', paymentMethod, total, `[${orderType}][${paymentMethod}] ${customerInfo}\nTel: ${phone}`]
         );
         const pedidoId = orderResult.insertId;
 
