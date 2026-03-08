@@ -23,12 +23,43 @@ class PermisoRepository {
      */
     static async getPermisosAgrupadosPorSeccion() {
         const permisos = await PermisoRepository.getAllPermisos();
-        const byName = {};
-        permisos.forEach(p => { byName[p.nombre] = p; });
+        const mappedSections = {};
+
+        // 1. Inicializar con secciones fijas para mantener orden preferido
+        for (const seccion of Object.keys(PERMISSION_SECTIONS)) {
+            mappedSections[seccion] = [];
+        }
+
+        // 2. Distribuir permisos
+        permisos.forEach(p => {
+            let found = false;
+            // Buscar en secciones fijas
+            for (const [seccion, nombres] of Object.entries(PERMISSION_SECTIONS)) {
+                if (nombres.includes(p.nombre)) {
+                    mappedSections[seccion].push(p);
+                    found = true;
+                    break;
+                }
+            }
+
+            // Si no está en sección fija, agrupar por prefijo (p.ej. "whatsapp.ver" -> "Whatsapp")
+            if (!found) {
+                const prefix = p.nombre.split('.')[0];
+                const seccionName = prefix.charAt(0).toUpperCase() + prefix.slice(1);
+
+                if (!mappedSections[seccionName]) {
+                    mappedSections[seccionName] = [];
+                }
+                mappedSections[seccionName].push(p);
+            }
+        });
+
+        // 3. Convertir a array filtrando vacíos
         const result = [];
-        for (const [seccion, nombres] of Object.entries(PERMISSION_SECTIONS)) {
-            const list = nombres.map(n => byName[n]).filter(Boolean);
-            if (list.length) result.push({ seccion, permisos: list });
+        for (const [seccion, list] of Object.entries(mappedSections)) {
+            if (list.length > 0) {
+                result.push({ seccion, permisos: list });
+            }
         }
         return result;
     }
