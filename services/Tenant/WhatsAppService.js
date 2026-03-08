@@ -129,9 +129,10 @@ class WhatsAppService {
         console.log(`[WhatsApp] Mensaje de ${from} para Tenant ${tenantId}: ${body}`);
 
         // 1. Obtener Configuración y Conversación
-        const [configRows] = await db.query('SELECT mensaje_bienvenida FROM whatsapp_configs WHERE tenant_id = ?', [tenantId]);
+        const [configRows] = await db.query('SELECT mensaje_bienvenida, mensaje_transferencia FROM whatsapp_configs WHERE tenant_id = ?', [tenantId]);
         const config = configRows[0];
         const welcomeMsg = config?.mensaje_bienvenida || '¡Hola! 👋 Bienvenido.\nEscribe *MENU* para empezar.';
+        const transferMsg = config?.mensaje_transferencia || '📲 *Datos de Transferencia:*\n- Valor a transferir: *${total}*\n\n*Por favor envía el comprobante por este medio.*';
 
         let [convRows] = await db.query('SELECT * FROM whatsapp_conversations WHERE tenant_id = ? AND customer_phone = ?',
             [tenantId, from]);
@@ -302,10 +303,13 @@ class WhatsAppService {
 
                         let finalMsg = '¡Pedido recibido! 🎉\n\nEstamos procesando tu orden. ';
                         if (cDataFinal.payment_method === 'Transferencia') {
-                            finalMsg += '\n\n📲 *Datos de Transferencia:*\n- Nequi/Daviplata: 3123456789\n- A nombre de: Restaurante XYZ\n- Valor a transferir: *$' + Number(cDataFinal.cart.reduce((sum, i) => sum + (i.precio * i.cantidad), 0)).toLocaleString('es-CO') + '*';
-                            finalMsg += '\n\n*Por favor envía el comprobante por este medio.*';
+                            const totalStr = Number(cDataFinal.cart.reduce((sum, i) => sum + (i.precio * i.cantidad), 0)).toLocaleString('es-CO');
+                            // Reemplazar ${total} en el mensaje configurado si existe
+                            let customTransferMsg = transferMsg.replace('${total}', '$' + totalStr);
+                            finalMsg += '\n\n' + customTransferMsg;
+                        } else {
+                            finalMsg += '\n\nEn un momento te confirmaremos. ¡Gracias!';
                         }
-                        finalMsg += '\n\nEn un momento te confirmaremos. ¡Gracias!';
 
                         await msg.reply(finalMsg);
                         await this.updateConversationState(tenantId, from, 'completed');

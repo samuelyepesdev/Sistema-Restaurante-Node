@@ -56,98 +56,152 @@
 
         <div class="container py-5">
             <div class="row justify-content-center">
-                <div class="col-md-8 text-center">
-                    <i class="bi bi-whatsapp whatsapp-icon"></i>
-                    <h2 class="fw-bold mb-4">Conexión con WhatsApp</h2>
-                    <p class="text-muted mb-5">Escanea el código QR para conectar tu restaurante y empezar a recibir
-                        pedidos automáticos.</p>
-
-                    <div id="statusContainer" class="mb-4">
-                        <span id="statusBadge" class="status-badge status-disconnected">
-                            <i class="bi bi-circle-fill" style="font-size: 0.5rem;"></i>
-                            <span id="statusText">Desconectado</span>
-                        </span>
+                <div class="col-md-10 col-lg-8">
+                    <div class="text-center mb-5">
+                        <i class="bi bi-whatsapp whatsapp-icon"></i>
+                        <h2 class="fw-bold">Gestión de WhatsApp</h2>
+                        <p class="text-muted">Conecta tu restaurante y personaliza la experiencia de tus clientes.</p>
                     </div>
 
-                    <div id="qrContainer" class="qr-container d-none">
-                        <h5 class="mb-3">Escanea este código</h5>
-                        <img id="qrImage" src="" alt="QR WhatsApp" class="img-fluid mb-3">
-                        <p class="small text-muted">Abre WhatsApp en tu teléfono > Dispositivos vinculados > Vincular un
-                            dispositivo.</p>
-                    </div>
+                    <!-- Pestañas -->
+                    <ul class="nav nav-pills nav-fill mb-4 p-1 bg-white rounded-pill shadow-sm" id="whatsappTabs"
+                        role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active rounded-pill fw-bold" id="conn-tab" data-bs-toggle="pill"
+                                data-bs-target="#conn-content" type="button" role="tab">
+                                <i class="bi bi-plug-fill me-2"></i>Conexión
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link rounded-pill fw-bold" id="msg-tab" data-bs-toggle="pill"
+                                data-bs-target="#msg-content" type="button" role="tab">
+                                <i class="bi bi-chat-dots-fill me-2"></i>Mensajes y Pagos
+                            </button>
+                        </li>
+                    </ul>
 
-                    <div id="connectedContainer" class="qr-container d-none">
-                        <div class="text-success mb-3">
-                            <i class="bi bi-check-circle-fill" style="font-size: 4rem;"></i>
-                        </div>
-                        <h4 class="fw-bold">¡Sistema Conectado!</h4>
-                        <p class="text-muted">Tu restaurante ya puede recibir pedidos de WhatsApp automáticamente.</p>
-                        <button class="btn btn-outline-danger btn-sm mt-3" onclick="desconectar()">Desconectar</button>
-                    </div>
-
-                    <div id="actionButtons" class="mt-4">
-                        <div id="connectOptions" class="card border-0 shadow-sm rounded-4 p-4 mx-auto"
-                            style="max-width: 500px;">
-                            <h6 class="fw-bold mb-3">Elige cómo conectar:</h6>
-                            <div class="d-grid gap-3">
-                                <button id="btnConnect" class="btn btn-success py-2 fw-bold">
-                                    <i class="bi bi-qr-code me-2"></i>Conectar con Código QR
-                                </button>
-
-                                <div class="hr-text text-muted my-1">O también</div>
-
-                                <div class="input-group">
-                                    <span class="input-group-text bg-white border-end-0 text-muted">+</span>
-                                    <input type="number" id="pairingPhone" class="form-control border-start-0"
-                                        placeholder="Número de teléfono (con código de país ej: 57312...)">
-                                    <button id="btnConnectCode" class="btn btn-primary fw-bold">
-                                        Vincular con Código
-                                    </button>
+                    <div class="tab-content" id="whatsappTabsContent">
+                        <!-- Pestaña Conexión -->
+                        <div class="tab-pane fade show active" id="conn-content" role="tabpanel">
+                            <div class="card border-0 shadow-sm rounded-4 text-center p-5">
+                                <div id="statusContainer" class="mb-4">
+                                    <span id="statusBadge" class="status-badge status-disconnected">
+                                        <i class="bi bi-circle-fill" style="font-size: 0.5rem;"></i>
+                                        <span id="statusText">Desconectado</span>
+                                    </span>
                                 </div>
-                                <div class="form-text text-start mt-0">
-                                    <i class="bi bi-info-circle me-1"></i>Ingresa el número oficial de tu restaurante.
+
+                                <div id="qrContainer" class="qr-container d-none shadow-none border">
+                                    <h5 class="mb-3">Escanea este código</h5>
+                                    <img id="qrImage" src="" alt="QR WhatsApp" class="img-fluid mb-3">
+                                    <p class="small text-muted">Abre WhatsApp en tu teléfono > Dispositivos vinculados >
+                                        Vincular un dispositivo.</p>
+                                </div>
+
+                                <div id="connectedContainer" class="qr-container d-none shadow-none border">
+                                    <div class="text-success mb-3">
+                                        <i class="bi bi-check-circle-fill" style="font-size: 4rem;"></i>
+                                    </div>
+                                    <h4 class="fw-bold">¡Sistema Conectado!</h4>
+                                    <p class="text-muted">Tu restaurante ya puede recibir pedidos de WhatsApp
+                                        automáticamente.</p>
+                                    <button class="btn btn-outline-danger btn-sm mt-3"
+                                        onclick="desconectar()">Desconectar</button>
+                                </div>
+
+                                <div id="actionButtons">
+                                    <div id="connectOptions" class="mx-auto" style="max-width: 450px;">
+                                        <h6 class="fw-bold mb-3">Elige cómo conectar:</h6>
+                                        <div class="d-grid gap-3">
+                                            <button id="btnConnect" class="btn btn-success py-2 fw-bold shadow-sm">
+                                                <i class="bi bi-qr-code me-2"></i>Conectar con Código QR
+                                            </button>
+
+                                            <div class="d-flex align-items-center">
+                                                <hr class="flex-grow-1">
+                                                <span class="px-2 text-muted small">O TAMBIÉN</span>
+                                                <hr class="flex-grow-1">
+                                            </div>
+
+                                            <div class="input-group">
+                                                <span class="input-group-text bg-white border-end-0 text-muted">+</span>
+                                                <input type="number" id="pairingPhone"
+                                                    class="form-control border-start-0"
+                                                    placeholder="Número de teléfono (ej: 57312...)">
+                                                <button id="btnConnectCode" class="btn btn-primary fw-bold">
+                                                    Vincular con Código
+                                                </button>
+                                            </div>
+                                            <div class="form-text text-start mt-0 small">
+                                                <i class="bi bi-info-circle me-1"></i>Ingresa el número oficial de tu
+                                                restaurante.
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div id="pairingCodeContainer" class="qr-container d-none shadow-none border">
+                                        <h5 class="mb-3">Código de Vinculación</h5>
+                                        <div class="display-4 fw-bold text-primary mb-3" id="pairingCodeDisplay"></div>
+                                        <p class="mb-3">En tu celular ve a <b>WhatsApp > Dispositivos vinculados >
+                                                Vincular un dispositivo > Vincular con número de teléfono</b>.</p>
+                                    </div>
+
+                                    <button id="btnCancel"
+                                        class="btn btn-outline-secondary px-4 py-2 mt-4 fw-bold d-none"
+                                        onclick="desconectar()">
+                                        <i class="bi bi-x-circle me-2"></i>Cancelar / Reiniciar
+                                    </button>
                                 </div>
                             </div>
                         </div>
 
-                        <div id="pairingCodeContainer" class="qr-container d-none">
-                            <h5 class="mb-3">Código de Vinculación</h5>
-                            <div class="display-4 fw-bold text-primary mb-3" id="pairingCodeDisplay"></div>
-                            <p class="mb-3">En tu celular ve a <b>WhatsApp > Dispositivos vinculados > Vincular un
-                                    dispositivo > Vincular con número de teléfono</b> e ingresa el código de arriba.</p>
-                        </div>
+                        <!-- Pestaña Mensajes -->
+                        <div class="tab-pane fade" id="msg-content" role="tabpanel">
+                            <div class="card shadow-sm border-0 rounded-4">
+                                <div class="card-body p-4">
+                                    <h5 class="fw-bold mb-4"><i
+                                            class="bi bi-sliders me-2 text-primary"></i>Configuración de Bot y Pagos
+                                    </h5>
+                                    <form id="formConfig">
+                                        <div class="mb-4">
+                                            <label class="form-label fw-bold">
+                                                <i class="bi bi-chat-left-text me-1"></i>Mensaje de Bienvenida
+                                            </label>
+                                            <textarea name="mensaje_bienvenida" class="form-control rounded-3" rows="3"
+                                                placeholder="Escribe el saludo inicial..."><%= config.mensaje_bienvenida %></textarea>
+                                            <div class="form-text text-muted">Aparece cuando el cliente escribe "Menu" o
+                                                saluda por primera vez.</div>
+                                        </div>
 
-                        <button id="btnCancel" class="btn btn-outline-secondary px-4 py-2 mt-4 fw-bold d-none"
-                            onclick="desconectar()">
-                            <i class="bi bi-x-circle me-2"></i>Cancelar / Reiniciar
-                        </button>
-                    </div>
-                </div>
-            </div>
+                                        <hr class="my-4">
 
-            <!-- Configuración de Mensajes -->
-            <div class="row justify-content-center mt-5">
-                <div class="col-md-8">
-                    <div class="card shadow-sm border-0 rounded-4">
-                        <div class="card-body p-4">
-                            <h5 class="fw-bold mb-3"><i class="bi bi-chat-dots me-2 text-primary"></i>Configuración de
-                                Mensajes</h5>
-                            <form id="formConfig">
-                                <div class="mb-3">
-                                    <label class="form-label fw-semibold">Mensaje de Bienvenida</label>
-                                    <textarea name="mensaje_bienvenida" class="form-control" rows="4"
-                                        placeholder="Escribe el mensaje que verán los clientes al saludarte..."><%= config.mensaje_bienvenida %></textarea>
-                                    <div class="form-text text-muted">
-                                        Este mensaje se enviará cuando un cliente escriba por primera vez o después de
-                                        mucho tiempo.
-                                    </div>
+                                        <div class="mb-4">
+                                            <label class="form-label fw-bold">
+                                                <i class="bi bi-bank me-1"></i>Información para Transferencias
+                                            </label>
+                                            <textarea name="mensaje_transferencia" class="form-control rounded-3"
+                                                rows="5"
+                                                placeholder="Ej: Nequi: 3123456789 - A nombre de: Juan Perez..."><%= config.mensaje_transferencia %></textarea>
+                                            <div class="form-text text-muted">
+                                                Este mensaje se enviará automáticamente si el cliente elige pagar por
+                                                **Transferencia**.
+                                            </div>
+                                        </div>
+
+                                        <div class="alert alert-info border-0 rounded-3 small">
+                                            <i class="bi bi-info-circle-fill me-2"></i>
+                                            Puedes usar emojis para que los mensajes se vean más amigables en WhatsApp.
+                                        </div>
+
+                                        <div class="text-end mt-4">
+                                            <button type="submit"
+                                                class="btn btn-primary px-5 py-2 fw-bold rounded-pill shadow-sm">
+                                                <i class="bi bi-save me-2"></i>Guardar Cambios
+                                            </button>
+                                        </div>
+                                    </form>
                                 </div>
-                                <div class="text-end">
-                                    <button type="submit" class="btn btn-primary px-4">
-                                        <i class="bi bi-save me-2"></i>Guardar Configuración
-                                    </button>
-                                </div>
-                            </form>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -258,7 +312,8 @@
                 $btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-2"></span>Guardando...');
 
                 const formData = {
-                    mensaje_bienvenida: $(this).find('textarea[name="mensaje_bienvenida"]').val()
+                    mensaje_bienvenida: $(this).find('textarea[name="mensaje_bienvenida"]').val(),
+                    mensaje_transferencia: $(this).find('textarea[name="mensaje_transferencia"]').val()
                 };
 
                 try {

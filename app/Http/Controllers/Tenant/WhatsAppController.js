@@ -80,10 +80,10 @@ class WhatsAppController {
     static async saveConfig(req, res) {
         try {
             const tenantId = req.tenant.id;
-            const { mensaje_bienvenida } = req.body;
+            const { mensaje_bienvenida, mensaje_transferencia } = req.body;
 
-            await db.query('UPDATE whatsapp_configs SET mensaje_bienvenida = ? WHERE tenant_id = ?',
-                [mensaje_bienvenida, tenantId]);
+            await db.query('UPDATE whatsapp_configs SET mensaje_bienvenida = ?, mensaje_transferencia = ? WHERE tenant_id = ?',
+                [mensaje_bienvenida, mensaje_transferencia, tenantId]);
 
             res.json({ success: true, message: 'Configuración guardada' });
         } catch (error) {
