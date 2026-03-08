@@ -16,6 +16,8 @@ router.get('/', PlanesController.index);
 
 // API Planes & Precios
 router.put('/api/planes/:id/precios', PlanesController.updatePrices);
+router.put('/api/planes/:id', PlanesController.updateGeneral);
+router.get('/exportar-pdf', PlanesController.exportPdf);
 
 // API Add-ons
 router.get('/api/addons', PlanesController.listAddons);

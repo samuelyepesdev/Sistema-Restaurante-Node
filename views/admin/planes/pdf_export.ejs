@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Portafolio de Planes GastroFlow</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 0;
+        }
+
+        body {
+            font-family: 'Helvetica', 'Arial', sans-serif;
+            color: #1e293b;
+            margin: 0;
+            padding: 0;
+            background-color: #f8fafc;
+        }
+
+        .page {
+            padding: 40px;
+            position: relative;
+            min-height: 297mm;
+            box-sizing: border-box;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #4f46e5;
+        }
+
+        .header h1 {
+            color: #4f46e5;
+            margin: 0;
+            font-size: 32px;
+            letter-spacing: -0.5px;
+        }
+
+        .header p {
+            color: #64748b;
+            margin: 8px 0 0;
+            font-size: 16px;
+        }
+
+        .plan-card {
+            background: white;
+            border-radius: 16px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            page-break-inside: avoid;
+            border: 1px solid #e2e8f0;
+        }
+
+        .plan-banner {
+            padding: 20px 30px;
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .plan-banner h2 {
+            margin: 0;
+            font-size: 24px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .plan-tag {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .plan-content {
+            padding: 30px;
+        }
+
+        .section-title {
+            font-size: 14px;
+            font-weight: 700;
+            color: #4f46e5;
+            text-transform: uppercase;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+        }
+
+        .section-title::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: #e2e8f0;
+            margin-left: 15px;
+        }
+
+        .desc-text {
+            font-size: 14px;
+            color: #475569;
+            line-height: 1.6;
+            text-align: justify;
+            margin-bottom: 20px;
+        }
+
+        .desc-detallada {
+            font-size: 13px;
+            color: #64748b;
+            font-style: italic;
+            background: #f1f5f9;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 25px;
+            border-left: 4px solid #cbd5e1;
+        }
+
+        .features-grid {
+            display: flex;
+            flex-wrap: wrap;
+            margin-bottom: 25px;
+        }
+
+        .feature-item {
+            width: 50%;
+            font-size: 13px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: flex-start;
+        }
+
+        .feature-icon {
+            color: #10b981;
+            margin-right: 8px;
+            font-weight: bold;
+        }
+
+        .pricing-section {
+            background: #f8fafc;
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .pricing-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            text-align: center;
+        }
+
+        .price-box {
+            padding: 10px;
+        }
+
+        .price-label {
+            font-size: 11px;
+            text-transform: uppercase;
+            color: #64748b;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .price-value {
+            font-size: 18px;
+            font-weight: 800;
+            color: #1e293b;
+        }
+
+        .price-unit {
+            font-size: 10px;
+            color: #94a3b8;
+        }
+
+        .footer {
+            text-align: center;
+            font-size: 11px;
+            color: #94a3b8;
+            margin-top: 50px;
+        }
+
+        /* Colores por plan */
+        .bg-basico {
+            background: linear-gradient(135deg, #64748b, #475569);
+        }
+
+        .bg-pro {
+            background: linear-gradient(135deg, #2563eb, #1d4ed8);
+        }
+
+        .bg-premium {
+            background: linear-gradient(135deg, #8b5cf6, #6d28d9);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="page">
+        <div class="header">
+            <h1>GastroFlow Portafolio</h1>
+            <p>Transformando la gestión de tu restaurante con inteligencia</p>
+        </div>
+
+        <% plans.forEach(plan=> { %>
+            <div class="plan-card">
+                <div class="plan-banner bg-<%= plan.slug %>">
+                    <h2>Plan <%= plan.nombre %>
+                    </h2>
+                    <span class="plan-tag">
+                        <%= plan.slug.toUpperCase() %>
+                    </span>
+                </div>
+                <div class="plan-content">
+                    <div class="section-title">Nuestra Propuesta</div>
+                    <p class="desc-text">
+                        <%= plan.descripcion %>
+                    </p>
+
+                    <% if (plan.descripcion_detallada) { %>
+                        <div class="desc-detallada">
+                            <%= plan.descripcion_detallada %>
+                        </div>
+                        <% } %>
+
+                            <div class="section-title">¿Qué incluye?</div>
+                            <div class="features-grid">
+                                <% plan.caracteristicas.forEach(feat=> { %>
+                                    <div class="feature-item">
+                                        <span class="feature-icon">✓</span>
+                                        <span>
+                                            <%= feat.charAt(0).toUpperCase() + feat.slice(1).replace(/_/g, ' ' ) %>
+                                        </span>
+                                    </div>
+                                    <% }) %>
+                            </div>
+
+                            <div class="section-title">Inversión Mensual</div>
+                            <div class="pricing-section">
+                                <div class="pricing-grid">
+                                    <div class="price-box">
+                                        <div class="price-label">Pequeño</div>
+                                        <div class="price-value">$<%=
+                                                Number(plan.precio_pequeno).toLocaleString('es-CO') %>
+                                        </div>
+                                        <div class="price-unit">por mes</div>
+                                    </div>
+                                    <div class="price-box"
+                                        style="border-left: 1px solid #e2e8f0; border-right: 1px solid #e2e8f0;">
+                                        <div class="price-label">Mediano</div>
+                                        <div class="price-value">$<%=
+                                                Number(plan.precio_mediano).toLocaleString('es-CO') %>
+                                        </div>
+                                        <div class="price-unit">por mes</div>
+                                    </div>
+                                    <div class="price-box">
+                                        <div class="price-label">Grande</div>
+                                        <div class="price-value">$<%= Number(plan.precio_grande).toLocaleString('es-CO')
+                                                %>
+                                        </div>
+                                        <div class="price-unit">por mes</div>
+                                    </div>
+                                </div>
+                            </div>
+                </div>
+            </div>
+            <% }) %>
+
+                <div class="footer">
+                    GastroFlow SAS &copy; <%= new Date().getFullYear() %> - Portafolio Oficial de Servicios
+                        Gastronómicos<br>
+                        Generado el <%= new Date().toLocaleDateString('es-CO') %>
+                </div>
+    </div>
+</body>
+
+</html>

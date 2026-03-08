@@ -1,6 +1,9 @@
 const PlanService = require('../../../../services/Admin/PlanService');
 const AddonService = require('../../../../services/Admin/AddonService');
 const TenantService = require('../../../../services/Admin/TenantService');
+const ejs = require('ejs');
+const path = require('path');
+const puppeteer = require('puppeteer');
 
 class PlanesController {
     // GET /admin/planes
@@ -46,6 +49,70 @@ class PlanesController {
         } catch (error) {
             console.error('Error al actualizar precios del plan:', error);
             res.status(400).json({ error: error.message || 'Error al actualizar precios' });
+        }
+    }
+
+    // PUT /api/planes/:id
+    static async updateGeneral(req, res) {
+        try {
+            const { nombre, descripcion, descripcion_detallada } = req.body;
+            const plan = await PlanService.updateGeneral(Number(req.params.id), {
+                nombre, descripcion, descripcion_detallada
+            });
+            res.json({ ok: true, plan });
+        } catch (error) {
+            console.error('Error al actualizar datos del plan:', error);
+            res.status(400).json({ error: error.message || 'Error al actualizar datos' });
+        }
+    }
+
+    // GET /admin/planes/exportar-pdf
+    static async exportPdf(req, res) {
+        let browser = null;
+        try {
+            const plans = await PlanService.getAll();
+            const templatePath = path.join(__dirname, '../../../../views/admin/planes/pdf_export.ejs');
+
+            const html = await ejs.renderFile(templatePath, { plans });
+
+            browser = await puppeteer.launch({
+                headless: true,
+                args: [
+                    '--no-sandbox',
+                    '--disable-setuid-sandbox',
+                    '--disable-dev-shm-usage',
+                    '--font-render-hinting=none'
+                ]
+            });
+            const page = await browser.newPage();
+
+            // Forzar media type a 'print' para asegurar que se apliquen los estilos correctos
+            await page.emulateMediaType('print');
+
+            await page.setContent(html, {
+                waitUntil: ['networkidle0', 'load', 'domcontentloaded'],
+                timeout: 30000
+            });
+
+            const pdfBuffer = await page.pdf({
+                format: 'A4',
+                printBackground: true,
+                margin: { top: '10mm', bottom: '10mm', left: '10mm', right: '10mm' },
+                displayHeaderFooter: false,
+                preferCSSPageSize: true
+            });
+
+            await browser.close();
+            browser = null;
+
+            res.setHeader('Content-Type', 'application/pdf');
+            res.setHeader('Content-Disposition', 'inline; filename=Planes_GastroFlow.pdf');
+            res.setHeader('Content-Length', pdfBuffer.length);
+            res.send(pdfBuffer);
+        } catch (error) {
+            console.error('Error al exportar planes a PDF:', error);
+            if (browser) await browser.close();
+            res.status(500).send('Error al generar el PDF: ' + error.message);
         }
     }
 
