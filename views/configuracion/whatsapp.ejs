@@ -110,47 +110,60 @@
                                 </div>
 
                                 <div id="actionButtons">
-                                    <div id="connectOptions" class="mx-auto" style="max-width: 450px;">
-                                        <h6 class="fw-bold mb-3">Elige cómo conectar:</h6>
-                                        <div class="d-grid gap-3">
-                                            <button id="btnConnect" class="btn btn-success py-2 fw-bold shadow-sm">
-                                                <i class="bi bi-qr-code me-2"></i>Conectar con Código QR
-                                            </button>
-
-                                            <div class="d-flex align-items-center">
-                                                <hr class="flex-grow-1">
-                                                <span class="px-2 text-muted small">O TAMBIÉN</span>
-                                                <hr class="flex-grow-1">
-                                            </div>
-
-                                            <div class="input-group">
-                                                <span class="input-group-text bg-white border-end-0 text-muted">+</span>
-                                                <input type="number" id="pairingPhone"
-                                                    class="form-control border-start-0"
-                                                    placeholder="Número de teléfono (ej: 57312...)">
-                                                <button id="btnConnectCode" class="btn btn-primary fw-bold">
-                                                    Vincular con Código
+                                    <% if (nav.can.whatsappAjustes) { %>
+                                        <div id="connectOptions" class="mx-auto" style="max-width: 450px;">
+                                            <h6 class="fw-bold mb-3">Elige cómo conectar:</h6>
+                                            <div class="d-grid gap-3">
+                                                <button id="btnConnect" class="btn btn-success py-2 fw-bold shadow-sm">
+                                                    <i class="bi bi-qr-code me-2"></i>Conectar con Código QR
                                                 </button>
-                                            </div>
-                                            <div class="form-text text-start mt-0 small">
-                                                <i class="bi bi-info-circle me-1"></i>Ingresa el número oficial de tu
-                                                restaurante.
+
+                                                <div class="d-flex align-items-center">
+                                                    <hr class="flex-grow-1">
+                                                    <span class="px-2 text-muted small">O TAMBIÉN</span>
+                                                    <hr class="flex-grow-1">
+                                                </div>
+
+                                                <div class="input-group">
+                                                    <span
+                                                        class="input-group-text bg-white border-end-0 text-muted">+</span>
+                                                    <input type="number" id="pairingPhone"
+                                                        class="form-control border-start-0"
+                                                        placeholder="Número de teléfono (ej: 57312...)">
+                                                    <button id="btnConnectCode" class="btn btn-primary fw-bold">
+                                                        Vincular con Código
+                                                    </button>
+                                                </div>
+                                                <div class="form-text text-start mt-0 small">
+                                                    <i class="bi bi-info-circle me-1"></i>Ingresa el número oficial de
+                                                    tu
+                                                    restaurante.
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
+                                        <% } else { %>
+                                            <div class="alert alert-warning border-0 rounded-4">
+                                                <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                                                No tienes permisos para vincular o desvincular WhatsApp.
+                                            </div>
+                                            <% } %>
 
-                                    <div id="pairingCodeContainer" class="qr-container d-none shadow-none border">
-                                        <h5 class="mb-3">Código de Vinculación</h5>
-                                        <div class="display-4 fw-bold text-primary mb-3" id="pairingCodeDisplay"></div>
-                                        <p class="mb-3">En tu celular ve a <b>WhatsApp > Dispositivos vinculados >
-                                                Vincular un dispositivo > Vincular con número de teléfono</b>.</p>
-                                    </div>
+                                                <div id="pairingCodeContainer"
+                                                    class="qr-container d-none shadow-none border">
+                                                    <h5 class="mb-3">Código de Vinculación</h5>
+                                                    <div class="display-4 fw-bold text-primary mb-3"
+                                                        id="pairingCodeDisplay"></div>
+                                                    <p class="mb-3">En tu celular ve a <b>WhatsApp > Dispositivos
+                                                            vinculados >
+                                                            Vincular un dispositivo > Vincular con número de
+                                                            teléfono</b>.</p>
+                                                </div>
 
-                                    <button id="btnCancel"
-                                        class="btn btn-outline-secondary px-4 py-2 mt-4 fw-bold d-none"
-                                        onclick="desconectar()">
-                                        <i class="bi bi-x-circle me-2"></i>Cancelar / Reiniciar
-                                    </button>
+                                                <button id="btnCancel"
+                                                    class="btn btn-outline-secondary px-4 py-2 mt-4 fw-bold d-none"
+                                                    onclick="desconectar()">
+                                                    <i class="bi bi-x-circle me-2"></i>Cancelar / Reiniciar
+                                                </button>
                                 </div>
                             </div>
                         </div>
@@ -168,7 +181,8 @@
                                                 <i class="bi bi-chat-left-text me-1"></i>Mensaje de Bienvenida
                                             </label>
                                             <textarea name="mensaje_bienvenida" class="form-control rounded-3" rows="3"
-                                                placeholder="Escribe el saludo inicial..."><%= config.mensaje_bienvenida %></textarea>
+                                                placeholder="Escribe el saludo inicial..." <%=!nav.can.whatsappAjustes
+                                                ? 'disabled' : '' %>><%= config.mensaje_bienvenida %></textarea>
                                             <div class="form-text text-muted">Aparece cuando el cliente escribe "Menu" o
                                                 saluda por primera vez.</div>
                                         </div>
@@ -181,7 +195,9 @@
                                             </label>
                                             <textarea name="mensaje_transferencia" class="form-control rounded-3"
                                                 rows="5"
-                                                placeholder="Ej: Nequi: 3123456789 - A nombre de: Juan Perez..."><%= config.mensaje_transferencia %></textarea>
+                                                placeholder="Ej: Nequi: 3123456789 - A nombre de: Juan Perez..."
+                                                <%=!nav.can.whatsappAjustes ? 'disabled' : ''
+                                                %>><%= config.mensaje_transferencia %></textarea>
                                             <div class="form-text text-muted">
                                                 Este mensaje se enviará automáticamente si el cliente elige pagar por
                                                 **Transferencia**.
@@ -193,12 +209,14 @@
                                             Puedes usar emojis para que los mensajes se vean más amigables en WhatsApp.
                                         </div>
 
-                                        <div class="text-end mt-4">
-                                            <button type="submit"
-                                                class="btn btn-primary px-5 py-2 fw-bold rounded-pill shadow-sm">
-                                                <i class="bi bi-save me-2"></i>Guardar Cambios
-                                            </button>
-                                        </div>
+                                        <% if (nav.can.whatsappAjustes) { %>
+                                            <div class="text-end mt-4">
+                                                <button type="submit"
+                                                    class="btn btn-primary px-5 py-2 fw-bold rounded-pill shadow-sm">
+                                                    <i class="bi bi-save me-2"></i>Guardar Cambios
+                                                </button>
+                                            </div>
+                                            <% } %>
                                     </form>
                                 </div>
                             </div>

@@ -146,17 +146,18 @@
 <div class="modal fade" id="modalEntrada" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content">
-            <div class="modal-header">Entrada - <span id="entradaInsumoNombre"></span></div>
+            <div class="modal-header fw-bold">🛒 Registrar Compra / Entrada - <span id="entradaInsumoNombre"></span>
+            </div>
             <div class="modal-body">
                 <input type="hidden" id="entradaInsumoId">
 
                 <div class="mb-2">
-                    <label class="form-label small fw-bold">Cantidad</label>
+                    <label class="form-label small fw-bold">¿Cuánto entró? (Cantidad)</label>
                     <input type="number" step="0.0001" class="form-control" id="entradaCantidad">
                 </div>
 
                 <div class="mb-2">
-                    <label class="form-label small fw-bold">Costo unitario (opcional)</label>
+                    <label class="form-label small fw-bold">Precio de compra (por unidad)</label>
                     <input type="number" step="0.01" class="form-control" id="entradaCosto"
                         placeholder="Dejar vacío para usar costo actual">
                 </div>
@@ -180,13 +181,13 @@
                 </div>
 
                 <div class="mb-2">
-                    <label class="form-label small fw-bold">Notas adicionales</label>
+                    <label class="form-label small fw-bold">Notas o descripción</label>
                     <input type="text" class="form-control" id="entradaRef" placeholder="Ej: Compra mensual">
                 </div>
             </div>
             <div class="modal-footer"><button type="button" class="btn btn-secondary"
                     data-bs-dismiss="modal">Cerrar</button><button type="button" class="btn btn-success"
-                    id="btnConfirmarEntrada">Registrar entrada</button></div>
+                    id="btnConfirmarEntrada">Guardar Movimiento</button></div>
         </div>
     </div>
 </div>
@@ -195,16 +196,16 @@
 <div class="modal fade" id="modalSalida" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content">
-            <div class="modal-header">Salida - <span id="salidaInsumoNombre"></span></div>
+            <div class="modal-header fw-bold">📤 Registrar Gasto / Salida - <span id="salidaInsumoNombre"></span></div>
             <div class="modal-body"><input type="hidden" id="salidaInsumoId">
                 <p class="small text-muted">Disponible: <span id="salidaDisponible">0</span></p><label
-                    class="form-label">Cantidad</label><input type="number" step="0.0001" class="form-control"
-                    id="salidaCantidad"><label class="form-label mt-2">Referencia</label><input type="text"
-                    class="form-control" id="salidaRef">
+                    class="form-label">¿Cuánto salió / se gastó?</label><input type="number" step="0.0001"
+                    class="form-control" id="salidaCantidad"><label class="form-label mt-2">Referencia</label><input
+                    type="text" class="form-control" id="salidaRef">
             </div>
             <div class="modal-footer"><button type="button" class="btn btn-secondary"
                     data-bs-dismiss="modal">Cerrar</button><button type="button" class="btn btn-danger"
-                    id="btnConfirmarSalida">Registrar salida</button></div>
+                    id="btnConfirmarSalida">Registrar Gasto</button></div>
         </div>
     </div>
 </div>
@@ -265,36 +266,37 @@
             </div>
         </div>
     </div>
-    <!-- Modal Movimientos -->
-    <div class="modal fade" id="modalMovimientos" tabindex="-1">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header">Historial de movimientos - <span id="movInsumoNombre" class="fw-bold"></span>
+</div>
+
+<!-- Modal Movimientos -->
+<div class="modal fade" id="modalMovimientos" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">Historial de movimientos - <span id="movInsumoNombre" class="fw-bold"></span>
+            </div>
+            <div class="modal-body p-0">
+                <div class="table-responsive" style="max-height: 400px;">
+                    <table class="table table-sm table-hover mb-0">
+                        <thead class="bg-light sticky-top">
+                            <tr>
+                                <th class="ps-3">Fecha</th>
+                                <th>Tipo</th>
+                                <th class="text-end">Cantidad</th>
+                                <th>Ref / Factura</th>
+                                <th>Proveedor</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbodyMovimientos">
+                            <!-- Se llena vía JS -->
+                        </tbody>
+                    </table>
                 </div>
-                <div class="modal-body p-0">
-                    <div class="table-responsive" style="max-height: 400px;">
-                        <table class="table table-sm table-hover mb-0">
-                            <thead class="bg-light sticky-top">
-                                <tr>
-                                    <th class="ps-3">Fecha</th>
-                                    <th>Tipo</th>
-                                    <th class="text-end">Cantidad</th>
-                                    <th>Ref / Factura</th>
-                                    <th>Proveedor</th>
-                                </tr>
-                            </thead>
-                            <tbody id="tbodyMovimientos">
-                                <!-- Se llena vía JS -->
-                            </tbody>
-                        </table>
-                    </div>
-                    <div id="movimientosCargando" class="text-center py-4" style="display:none;">
-                        <div class="spinner-border spinner-border-sm text-primary"></div> Cargando historial...
-                    </div>
+                <div id="movimientosCargando" class="text-center py-4" style="display:none;">
+                    <div class="spinner-border spinner-border-sm text-primary"></div> Cargando historial...
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
-                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
             </div>
         </div>
     </div>

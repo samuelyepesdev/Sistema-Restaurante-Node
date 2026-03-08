@@ -1,4 +1,4 @@
-<ul class="navbar-nav me-auto align-items-lg-center flex-wrap">
+﻿<ul class="navbar-nav me-auto align-items-lg-center flex-wrap">
 
     <% if (nav.isSuperadmin) { %>
         <li class="nav-item"><a
@@ -65,7 +65,8 @@
                                                                     </li>
                                                                     <% } %>
 
-                                                                        <% if (nav.can.inventario) { %>
+                                                                        <% if (nav.can.inventario &&
+                                                                            !nav.can.proveedores) { %>
                                                                             <li class="nav-item"><a class="nav-link"
                                                                                     href="/inventario"><i
                                                                                         class="bi bi-boxes"></i>Inventario</a>
@@ -108,10 +109,9 @@
                                                                                                         </li>
                                                                                                         <% } %>
                                                                                                             <% if
-                                                                                                                (nav.can.inventario)
-                                                                                                                { %>
-                                                                                                                <li><a class="dropdown-item"
-                                                                                                                        href="/proveedores"><i
+                                                                                                                (nav.can.proveedores) { %>
+                                                                                                                 <li><a class="dropdown-item"
+                                                                                                                         href="/proveedores"><i
                                                                                                                             class="bi bi-truck text-primary"></i>Proveedores</a>
                                                                                                                 </li>
                                                                                                                 <% } %>

@@ -43,10 +43,12 @@ module.exports = function navbarLocals(req, res, next) {
                 analitica: hp('analitica.ver') && cs('analitica'),
                 configuracion: hp('configuracion.ver') && cs('configuracion'),
                 perfil: hp('perfil.ver'),
-                whatsapp: hp('configuracion.ver') && cs('configuracion'),
+                whatsapp: hp('whatsapp.ver') && cs('configuracion'),
+                whatsappAjustes: hp('whatsapp.ajustes') && cs('configuracion'),
+                proveedores: hp('proveedores.ver') && cs('inventario'),
             };
 
-            const hasMas = can.recetas || can.eventos || can.analitica || can.whatsapp;
+            const hasMas = can.recetas || can.eventos || can.analitica || can.whatsapp || can.proveedores;
 
             let primaryColor = '#6366f1';
             let bgStart = '#1e3a5f';
