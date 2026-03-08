@@ -77,42 +77,39 @@ class PlanesController {
 
             browser = await puppeteer.launch({
                 headless: true,
-                args: [
-                    '--no-sandbox',
-                    '--disable-setuid-sandbox',
-                    '--disable-dev-shm-usage',
-                    '--font-render-hinting=none'
-                ]
+                args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-gpu']
             });
             const page = await browser.newPage();
 
-            // Forzar media type a 'print' para asegurar que se apliquen los estilos correctos
-            await page.emulateMediaType('print');
-
-            await page.setContent(html, {
-                waitUntil: ['networkidle0', 'load', 'domcontentloaded'],
-                timeout: 30000
-            });
+            // Usar setContent con timeout y waitUntil: 'load'
+            await page.setContent(html, { waitUntil: 'load', timeout: 30000 });
 
             const pdfBuffer = await page.pdf({
                 format: 'A4',
                 printBackground: true,
-                margin: { top: '10mm', bottom: '10mm', left: '10mm', right: '10mm' },
-                displayHeaderFooter: false,
-                preferCSSPageSize: true
+                margin: { top: '15mm', bottom: '15mm', left: '15mm', right: '15mm' }
             });
 
             await browser.close();
             browser = null;
 
-            res.setHeader('Content-Type', 'application/pdf');
-            res.setHeader('Content-Disposition', 'inline; filename=Planes_GastroFlow.pdf');
-            res.setHeader('Content-Length', pdfBuffer.length);
-            res.send(pdfBuffer);
+            // Headers seguros para Express
+            res.type('application/pdf');
+            res.attachment('Portafolio_GastroFlow.pdf');
+            return res.end(pdfBuffer, 'binary');
         } catch (error) {
-            console.error('Error al exportar planes a PDF:', error);
-            if (browser) await browser.close();
-            res.status(500).send('Error al generar el PDF: ' + error.message);
+            console.error('[PDF_EXPORT_ERROR]:', error);
+            if (browser) {
+                try { await browser.close(); } catch (e) { }
+            }
+            // Si hay error, enviamos un HTML amigable en lugar de un buffer corrupto
+            res.status(500).send(`
+                <div style="font-family:sans-serif; text-align:center; padding:50px;">
+                    <h1 style="color:#ef4444;">Error al generar reporte</h1>
+                    <p>${error.message}</p>
+                    <button onclick="window.close()">Cerrar pestaña</button>
+                </div>
+            `);
         }
     }
 
