@@ -1,0 +1,32 @@
+/* proveedores.css */
+.card {
+    transition: all 0.2s ease-in-out;
+}
+
+.table thead th {
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 700;
+}
+
+.btn-white {
+    background: #fff;
+    border: 1px solid #dee2e6;
+}
+
+.btn-white:hover {
+    background: #f8f9fa;
+}
+
+.badge {
+    font-weight: 600;
+}
+
+.bg-success-subtle {
+    background-color: #d1e7dd !important;
+}
+
+.bg-danger-subtle {
+    background-color: #f8d7da !important;
+}

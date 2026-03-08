@@ -42,13 +42,13 @@ module.exports = function navbarLocals(req, res, next) {
                 eventos: hp('eventos.ver') && cs('eventos'),
                 analitica: hp('analitica.ver') && cs('analitica'),
                 configuracion: hp('configuracion.ver') && cs('configuracion'),
-                perfil: hp('perfil.ver') && cs('dashboard'), // using dashboard or no feature limit? let's stick to true or cs('dashboard')
+                perfil: hp('perfil.ver'),
+                whatsapp: hp('whatsapp.ver') && cs('configuracion'),
+                whatsappAjustes: hp('whatsapp.ajustes') && cs('configuracion'),
+                proveedores: hp('proveedores.ver') && cs('inventario'),
             };
 
-            // Fix for perfil plan access
-            can.perfil = hp('perfil.ver');
-
-            const hasMas = can.recetas || can.eventos || can.analitica;
+            const hasMas = can.recetas || can.eventos || can.analitica || can.whatsapp || can.proveedores;
 
             let primaryColor = '#6366f1';
             let bgStart = '#1e3a5f';

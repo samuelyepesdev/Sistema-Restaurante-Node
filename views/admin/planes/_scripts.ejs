@@ -151,17 +151,39 @@
         setText('tb-tam-' + tid, labels[tamano] || tamano);
     }
 
-    async function savePlanPrecios(planId) {
+    async function savePlanCompleto(planId) {
         var sq = function (s) { return parseFloat(document.getElementById('pp-' + planId + '-' + s).value || 0); };
+        var nombre = document.getElementById('pn-' + planId).value;
+        var descShort = document.getElementById('pd-' + planId).value;
+        var descLong = document.getElementById('pdd-' + planId).value;
+
         try {
+            // 1. Guardar precios
             await apiFetch('/admin/planes/api/planes/' + planId + '/precios', 'PUT', {
                 precio_pequeno: sq('pequeno'), precio_mediano: sq('mediano'), precio_grande: sq('grande')
             });
+
+            // 2. Guardar datos generales (nombre, descripciones)
+            await apiFetch('/admin/planes/api/planes/' + planId, 'PUT', {
+                nombre: nombre,
+                descripcion: descShort,
+                descripcion_detallada: descLong
+            });
+
+            // Actualizar memoria local
             var p = ALL_PLANS.find(function (pl) { return pl.id === planId; });
-            if (p) { p.precio_pequeno = sq('pequeno'); p.precio_mediano = sq('mediano'); p.precio_grande = sq('grande'); }
-            Swal.fire({ icon: 'success', title: 'Precios actualizados', timer: 1300, showConfirmButton: false });
+            if (p) {
+                p.precio_pequeno = sq('pequeno');
+                p.precio_mediano = sq('mediano');
+                p.precio_grande = sq('grande');
+                p.nombre = nombre;
+                p.descripcion = descShort;
+                p.descripcion_detallada = descLong;
+            }
+
+            Swal.fire({ icon: 'success', title: 'Plan actualizado correctamente', timer: 1500, showConfirmButton: false });
         } catch (e) {
-            Swal.fire({ icon: 'error', title: 'Error', text: e.message });
+            Swal.fire({ icon: 'error', title: 'Error al actualizar plan', text: e.message });
         }
     }
 

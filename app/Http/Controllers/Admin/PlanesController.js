@@ -1,6 +1,9 @@
 const PlanService = require('../../../../services/Admin/PlanService');
 const AddonService = require('../../../../services/Admin/AddonService');
 const TenantService = require('../../../../services/Admin/TenantService');
+const ejs = require('ejs');
+const path = require('path');
+const puppeteer = require('puppeteer');
 
 class PlanesController {
     // GET /admin/planes
@@ -46,6 +49,67 @@ class PlanesController {
         } catch (error) {
             console.error('Error al actualizar precios del plan:', error);
             res.status(400).json({ error: error.message || 'Error al actualizar precios' });
+        }
+    }
+
+    // PUT /api/planes/:id
+    static async updateGeneral(req, res) {
+        try {
+            const { nombre, descripcion, descripcion_detallada } = req.body;
+            const plan = await PlanService.updateGeneral(Number(req.params.id), {
+                nombre, descripcion, descripcion_detallada
+            });
+            res.json({ ok: true, plan });
+        } catch (error) {
+            console.error('Error al actualizar datos del plan:', error);
+            res.status(400).json({ error: error.message || 'Error al actualizar datos' });
+        }
+    }
+
+    // GET /admin/planes/exportar-pdf
+    static async exportPdf(req, res) {
+        let browser = null;
+        try {
+            const plans = await PlanService.getAll();
+            const templatePath = path.join(__dirname, '../../../../views/admin/planes/pdf_export.ejs');
+
+            const html = await ejs.renderFile(templatePath, { plans });
+
+            browser = await puppeteer.launch({
+                headless: true,
+                args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-gpu']
+            });
+            const page = await browser.newPage();
+
+            // Usar setContent con timeout y waitUntil: 'load'
+            await page.setContent(html, { waitUntil: 'load', timeout: 30000 });
+
+            const pdfBuffer = await page.pdf({
+                format: 'A4',
+                printBackground: true,
+                margin: { top: '15mm', bottom: '15mm', left: '15mm', right: '15mm' }
+            });
+
+            await browser.close();
+            browser = null;
+
+            // Headers seguros para Express
+            res.type('application/pdf');
+            res.attachment('Portafolio_GastroFlow.pdf');
+            return res.end(pdfBuffer, 'binary');
+        } catch (error) {
+            console.error('[PDF_EXPORT_ERROR]:', error);
+            if (browser) {
+                try { await browser.close(); } catch (e) { }
+            }
+            // Si hay error, enviamos un HTML amigable en lugar de un buffer corrupto
+            res.status(500).send(`
+                <div style="font-family:sans-serif; text-align:center; padding:50px;">
+                    <h1 style="color:#ef4444;">Error al generar reporte</h1>
+                    <p>${error.message}</p>
+                    <button onclick="window.close()">Cerrar pestaña</button>
+                </div>
+            `);
         }
     }
 

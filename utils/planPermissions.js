@@ -40,7 +40,11 @@ const PERMISSION_TO_MODULE = {
     'eventos.crear': 'eventos',
     'eventos.editar': 'eventos',
     'eventos.eliminar': 'eventos',
-    'ventas_evento.realizar': 'eventos'
+    'ventas_evento.realizar': 'eventos',
+    'proveedores.ver': 'inventario',
+    'proveedores.editar': 'inventario',
+    'whatsapp.ver': 'configuracion',
+    'whatsapp.ajustes': 'configuracion'
 };
 
 // Módulos que se usan en navbar / rutas (para allowedByPlan)

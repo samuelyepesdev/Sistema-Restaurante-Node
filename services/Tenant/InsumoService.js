@@ -31,7 +31,8 @@ class InsumoService {
             unidad_base: data.unidad_base || 'g',
             stock_minimo: data.stock_minimo !== undefined ? parseFloat(data.stock_minimo) : 0,
             categoria_id: data.categoria_id ? parseInt(data.categoria_id, 10) : null,
-            unidad_medida_id: data.unidad_medida_id ? parseInt(data.unidad_medida_id, 10) : null
+            unidad_medida_id: data.unidad_medida_id ? parseInt(data.unidad_medida_id, 10) : null,
+            proveedor_id: data.proveedor_id ? parseInt(data.proveedor_id, 10) : null
         });
     }
 
@@ -53,6 +54,7 @@ class InsumoService {
         if (data.stock_minimo !== undefined) updateData.stock_minimo = parseFloat(data.stock_minimo);
         if (data.categoria_id !== undefined) updateData.categoria_id = data.categoria_id ? parseInt(data.categoria_id, 10) : null;
         if (data.unidad_medida_id !== undefined) updateData.unidad_medida_id = data.unidad_medida_id ? parseInt(data.unidad_medida_id, 10) : null;
+        if (data.proveedor_id !== undefined) updateData.proveedor_id = data.proveedor_id ? parseInt(data.proveedor_id, 10) : null;
         await InsumoRepository.update(id, tenantId, updateData);
         return { message: 'Insumo actualizado' };
     }

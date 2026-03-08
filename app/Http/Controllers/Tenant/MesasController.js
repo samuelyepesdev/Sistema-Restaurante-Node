@@ -1,6 +1,8 @@
 const db = require('../../../../config/database');
 const FacturaRepository = require('../../../../repositories/Tenant/FacturaRepository');
 const InventarioService = require('../../../../services/Tenant/InventarioService');
+const CategoryService = require('../../../../services/Admin/CategoryService');
+const ProductRepository = require('../../../../repositories/Tenant/ProductRepository');
 
 class MesasController {
     // GET /mesas
@@ -9,18 +11,28 @@ class MesasController {
             const tenantId = req.tenant?.id;
             if (!tenantId) return res.status(403).render('errors/internal', { error: { message: 'Contexto de tenant no disponible' } });
 
-            const [mesas] = await db.query(`
+            const [mesasData] = await db.query(`
                 SELECT m.*, (
                     SELECT COUNT(*) FROM pedidos p 
                     WHERE p.mesa_id = m.id AND p.estado NOT IN ('cerrado','cancelado')
                 ) AS pedidos_abiertos
                 FROM mesas m
                 WHERE m.tenant_id = ?
-                ORDER BY CAST(m.numero AS UNSIGNED), m.numero
+                ORDER BY m.tipo ASC, CAST(m.numero AS UNSIGNED), m.numero
             `, [tenantId]);
+
+            const mesas = mesasData.filter(m => m.tipo === 'fisica');
+            const mesasVirtuales = mesasData.filter(m => m.tipo === 'virtual' && m.estado !== 'libre');
+
+            // Cargar categorías y productos para el apartado de favoritos (solo activos)
+            const categorias = await CategoryService.getAllActive(tenantId);
+            const productos = await ProductRepository.findAll(tenantId);
 
             res.render('mesas/index', {
                 mesas: mesas || [],
+                mesasVirtuales: mesasVirtuales || [],
+                categorias: categorias || [],
+                productos: productos || [],
                 user: req.user,
                 tenant: req.tenant
             });
@@ -44,8 +56,8 @@ class MesasController {
                     WHERE p.mesa_id = m.id AND p.estado NOT IN ('cerrado','cancelado')
                 ) AS pedidos_abiertos
                 FROM mesas m
-                WHERE m.tenant_id = ?
-                ORDER BY CAST(m.numero AS UNSIGNED), m.numero
+                WHERE m.tenant_id = ? AND (m.tipo = 'fisica' OR m.estado <> 'libre')
+                ORDER BY m.tipo ASC, CAST(m.numero AS UNSIGNED), m.numero
             `, [tenantId]);
             res.json(mesas);
         } catch (error) {

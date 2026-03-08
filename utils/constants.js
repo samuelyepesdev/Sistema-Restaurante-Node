@@ -87,7 +87,9 @@ const PERMISSION_SECTIONS = {
     Analítica: ['analitica.ver'],
     Predicción: ['prediccion.ver'],
     Perfil: ['perfil.ver', 'perfil.editar'],
-    Reportes: ['reporte_mensual.test']
+    Reportes: ['reporte_mensual.test'],
+    WhatsApp: ['whatsapp.ver', 'whatsapp.ajustes'],
+    Proveedores: ['proveedores.ver', 'proveedores.editar']
 };
 
 // Table states

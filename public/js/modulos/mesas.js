@@ -9,6 +9,14 @@ $(function () {
   let descuentosPorItem = {}; // { itemId: percent } - solo para esta venta; no cambia el precio del producto en catálogo
   let propinaPedido = 0; // propina que deja el cliente (se suma al total)
 
+  // Toggle Offcanvas Class on Body for favorites panel
+  document.getElementById('canvasPedido')?.addEventListener('shown.bs.offcanvas', () => {
+    document.body.classList.add('offcanvas-open');
+  });
+  document.getElementById('canvasPedido')?.addEventListener('hidden.bs.offcanvas', () => {
+    document.body.classList.remove('offcanvas-open');
+  });
+
   // Helpers UI
   function formatear(valor) { return `$${Number(valor || 0).toLocaleString('es-CO')}` }
   function subtotalConDescuento(cantidad, precio, itemId) {
@@ -664,6 +672,18 @@ $(function () {
             nuevoBtn.innerHTML = '<i class="bi bi-unlock me-1"></i>Liberar';
             btnVer.insertAdjacentElement('afterend', nuevoBtn);
           }
+        }
+      });
+
+      // Ocultar mesas virtuales que ya no aparecen en el listado (porque se liberaron)
+      const idsRecibidos = mesas.map(m => m.id);
+      document.querySelectorAll('.mesa-card.virtual').forEach(card => {
+        const id = parseInt(card.dataset.mesaId);
+        const col = card.closest('.col-6, .col-sm-6'); // El contenedor de la columna
+        if (!idsRecibidos.includes(id)) {
+          if (col) col.style.display = 'none';
+        } else {
+          if (col) col.style.display = 'block';
         }
       });
     } catch (_) { /* ignorar errores de red */ }
@@ -1381,6 +1401,33 @@ $(function () {
     const resp = await fetch('/api/mesas/crear', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ numero, descripcion: descripcion.trim() }) });
     if (!resp.ok) { const err = await resp.json(); return Swal.fire({ icon: 'error', title: err.error || 'Error' }); }
     Swal.fire({ icon: 'success', title: 'Mesa creada' }).then(() => location.reload());
+  });
+
+  // --- Lógica de Favoritos (Apartado lateral en Tablet/PC) ---
+  $(document).on('click', '.producto-fav-card', function () {
+    const p = {
+      id: $(this).data('id'),
+      nombre: $(this).data('nombre'),
+      precio_unidad: $(this).data('precio'),
+      categoria_nombre: $(this).data('categoria-nombre')
+    };
+    seleccionarProducto(p);
+  });
+
+  $('#filtroCategoriaFav').on('change', function () {
+    const catId = $(this).val();
+    if (catId === 'todos') {
+      $('.producto-fav-card').fadeIn(200);
+    } else {
+      $('.producto-fav-card').each(function () {
+        const itemCatId = $(this).data('categoria');
+        if (String(itemCatId) === String(catId)) {
+          $(this).fadeIn(200);
+        } else {
+          $(this).fadeOut(100);
+        }
+      });
+    }
   });
 });
 

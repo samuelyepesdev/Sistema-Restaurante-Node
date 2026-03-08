@@ -140,6 +140,21 @@ class ProductRepository {
             connection.release();
         }
     }
+
+    /**
+     * Toggle favorite status
+     * @param {number} id - Product ID
+     * @param {number} tenantId - Tenant ID
+     * @param {boolean} esFavorito - Favorite status
+     * @returns {Promise<Object>} Update result
+     */
+    static async toggleFavorite(id, tenantId, esFavorito) {
+        const [result] = await db.query(
+            'UPDATE productos SET es_favorito = ? WHERE id = ? AND tenant_id = ?',
+            [esFavorito ? 1 : 0, id, tenantId]
+        );
+        return result;
+    }
 }
 
 module.exports = ProductRepository;

@@ -32,6 +32,8 @@ const eventosRoutes = require('./tenant/eventos');
 const inventarioRoutes = require('./tenant/inventario');
 const recetasRoutes = require('./tenant/recetas');
 const perfilRoutes = require('./tenant/perfil');
+const whatsappRoutes = require('./tenant/whatsapp');
+const proveedoresRoutes = require('./tenant/proveedores');
 
 // --- RUTAS PÚBLICAS Y AUTH ---
 router.use('/auth', authRoutes);
@@ -50,9 +52,11 @@ router.use('/configuracion', requireAuthWithTenant, requirePlanFeature('configur
 router.use('/ventas', requireAuthWithTenant, requirePlanFeature('ventas'), ventasRoutes);
 router.use('/eventos', requireAuthWithTenant, requirePlanFeature('eventos'), eventosRoutes);
 router.use('/inventario', requireAuthWithTenant, requirePlanFeature('inventario'), inventarioRoutes);
+router.use('/proveedores', requireAuthWithTenant, requirePlanFeature('inventario'), requirePermission('proveedores.ver'), proveedoresRoutes);
 router.use('/recetas', requireAuthWithTenant, requirePlanFeature('recetas'), recetasRoutes);
 router.use('/dashboard', requireAuthWithTenant, requirePlanFeature('dashboard'), dashboardRoutes);
 router.use('/analitica', requireAuthWithTenant, requirePlanFeature('analitica'), analiticaRoutes);
+router.use('/whatsapp', requireAuthWithTenant, requirePlanFeature('configuracion'), requirePermission('whatsapp.ver'), whatsappRoutes);
 router.use('/costeo', requireAuth, restrictSuperadminToAdmin, costeoTenantContext, requirePlanFeature('costeo'), costeoRoutes);
 
 // --- RUTAS API ---

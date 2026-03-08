@@ -1,12 +1,18 @@
 <div class="row" id="gridMesas">
     <% mesas.forEach(m=> { %>
         <div class="col-6 col-sm-6 col-md-4 col-lg-3 mb-3 px-1">
-            <div class="card mesa-card <%= m.estado %>" data-mesa-id="<%= m.id %>" data-mesa-estado="<%= m.estado %>">
+            <div class="card mesa-card <%= m.estado %> <%= m.tipo === 'virtual' ? 'virtual' : '' %>"
+                data-mesa-id="<%= m.id %>" data-mesa-estado="<%= m.estado %>">
                 <div class="card-body p-3">
                     <div class="d-flex justify-content-between align-items-start mb-2">
-                        <div class="mesa-num">Mesa <span class="text-primary">
-                                <%= m.numero %>
-                            </span></div>
+                        <div class="mesa-num">
+                            <% if (m.tipo==='virtual' ) { %>
+                                <i class="bi bi-whatsapp text-success small me-1"></i>
+                                <% } %>
+                                    Mesa <span class="text-primary">
+                                        <%= m.numero %>
+                                    </span>
+                        </div>
                         <span class="mesa-estado-pill pill-<%= m.estado %>">
                             <% if (m.estado==='libre' ) { %><i class="bi bi-circle-fill"
                                     style="font-size:.5rem;"></i>Libre
@@ -17,7 +23,13 @@
                         </span>
                     </div>
                     <div class="mesa-desc mb-3">
-                        <%= m.descripcion || '' %>
+                        <% if (m.tipo==='virtual' && m.descripcion) { %>
+                            <span class="text-dark fw-bold"><i class="bi bi-person me-1"></i>
+                                <%= m.descripcion %>
+                            </span>
+                            <% } else { %>
+                                <%= m.descripcion || '' %>
+                                    <% } %>
                     </div>
                     <div class="d-grid gap-2">
                         <% if (m.estado==='libre' ) { %>

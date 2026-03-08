@@ -7,14 +7,17 @@
                 <div class="col-md-4">
                     <div class="plan-card">
                         <div class="plan-hdr" style="background:<%= pGrad %>">
-                            <h5>
-                                <%= p.nombre %>
-                            </h5>
-                            <p>
-                                <%= p.descripcion %>
-                            </p>
+                            <input type="text" class="plan-title-input mb-1" id="pn-<%= p.id %>" value="<%= p.nombre %>"
+                                style="background:transparent; border:none; color:white; font-weight:bold; font-size:1.25rem; width:100%; border-bottom: 1px dashed rgba(255,255,255,0.3);">
+                            <textarea class="plan-desc-input" id="pd-<%= p.id %>" rows="2"
+                                style="background:transparent; border:none; color:rgba(255,255,255,0.9); font-size:0.85rem; width:100%; resize:none;"><%= p.descripcion %></textarea>
                         </div>
                         <div class="plan-body">
+                            <div class="mb-3">
+                                <label class="small text-muted fw-bold">Descripción Detallada (PDF)</label>
+                                <textarea class="form-control form-control-sm" id="pdd-<%= p.id %>" rows="3"
+                                    style="font-size: 0.75rem;"><%= p.descripcion_detallada %></textarea>
+                            </div>
                             <ul class="feat-list">
                                 <% for (var fi=0; fi < (p.caracteristicas ? p.caracteristicas.length : 0); fi++) { %>
                                     <li><i class="bi bi-check-circle-fill text-success" style="font-size:.68rem;"></i>
@@ -31,8 +34,8 @@
                             </div>
                             <div class="price-row"><label>Grande</label> <input type="number" class="price-input"
                                     id="pp-<%= p.id %>-grande" value="<%= p.precio_grande  %>" min="0" step="100"></div>
-                            <button class="btn-savep mt-2" onclick="savePlanPrecios(<%= p.id %>)">
-                                <i class="bi bi-floppy me-1"></i>Guardar precios
+                            <button class="btn-savep mt-2" onclick="savePlanCompleto(<%= p.id %>)">
+                                <i class="bi bi-floppy me-1"></i>Guardar Cambios
                             </button>
                         </div>
                     </div>

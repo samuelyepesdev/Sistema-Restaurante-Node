@@ -11,7 +11,7 @@ class PlanRepository {
      */
     static async findAll() {
         const [rows] = await db.query(
-            'SELECT id, nombre, slug, descripcion, caracteristicas, orden, activo, precio_pequeno, precio_mediano, precio_grande, created_at, updated_at FROM planes WHERE activo = TRUE ORDER BY orden ASC'
+            'SELECT id, nombre, slug, descripcion, descripcion_detallada, caracteristicas, orden, activo, precio_pequeno, precio_mediano, precio_grande, created_at, updated_at FROM planes WHERE activo = TRUE ORDER BY orden ASC'
         );
         return rows.map(PlanRepository._mapRow);
     }
@@ -24,7 +24,7 @@ class PlanRepository {
     static async findById(id) {
         if (id == null || id === undefined) return null;
         const [rows] = await db.query(
-            'SELECT id, nombre, slug, descripcion, caracteristicas, orden, activo, precio_pequeno, precio_mediano, precio_grande, created_at, updated_at FROM planes WHERE id = ?',
+            'SELECT id, nombre, slug, descripcion, descripcion_detallada, caracteristicas, orden, activo, precio_pequeno, precio_mediano, precio_grande, created_at, updated_at FROM planes WHERE id = ?',
             [id]
         );
         const row = rows[0];
@@ -40,7 +40,7 @@ class PlanRepository {
     static async findBySlug(slug) {
         if (!slug) return null;
         const [rows] = await db.query(
-            'SELECT id, nombre, slug, descripcion, caracteristicas, orden, activo, precio_pequeno, precio_mediano, precio_grande, created_at, updated_at FROM planes WHERE slug = ?',
+            'SELECT id, nombre, slug, descripcion, descripcion_detallada, caracteristicas, orden, activo, precio_pequeno, precio_mediano, precio_grande, created_at, updated_at FROM planes WHERE slug = ?',
             [slug]
         );
         const row = rows[0];
@@ -65,6 +65,28 @@ class PlanRepository {
         );
     }
 
+    /**
+     * Actualizar datos generales de un plan
+     * @param {number} id
+     * @param {Object} data 
+     */
+    static async update(id, data) {
+        const fields = [];
+        const values = [];
+
+        if (data.nombre !== undefined) { fields.push('nombre = ?'); values.push(data.nombre); }
+        if (data.descripcion !== undefined) { fields.push('descripcion = ?'); values.push(data.descripcion); }
+        if (data.descripcion_detallada !== undefined) { fields.push('descripcion_detallada = ?'); values.push(data.descripcion_detallada); }
+
+        if (fields.length === 0) return;
+
+        values.push(id);
+        await db.query(
+            `UPDATE planes SET ${fields.join(', ')} WHERE id = ?`,
+            values
+        );
+    }
+
     static _mapRow(row) {
         let caracteristicas = [];
         if (row.caracteristicas) {
@@ -77,6 +99,7 @@ class PlanRepository {
             nombre: row.nombre,
             slug: row.slug,
             descripcion: row.descripcion || '',
+            descripcion_detallada: row.descripcion_detallada || '',
             caracteristicas: Array.isArray(caracteristicas) ? caracteristicas : [],
             orden: row.orden || 0,
             activo: Boolean(row.activo),

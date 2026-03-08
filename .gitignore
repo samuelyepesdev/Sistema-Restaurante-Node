@@ -29,3 +29,8 @@ Thumbs.db
 .idea/
 .vscode/
 .agents/
+
+# WhatsApp session data
+.wwebjs_auth/
+.wwebjs_cache/
+.agent/

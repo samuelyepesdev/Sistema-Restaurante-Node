@@ -31,6 +31,18 @@ class PlanService {
         await PlanRepository.updatePrecios(id, data);
         return PlanRepository.findById(id);
     }
+
+    /**
+     * Actualizar datos generales de un plan
+     * @param {number} id
+     * @param {Object} data
+     */
+    static async updateGeneral(id, data) {
+        const plan = await PlanRepository.findById(id);
+        if (!plan) throw new Error('Plan no encontrado');
+        await PlanRepository.update(id, data);
+        return PlanRepository.findById(id);
+    }
 }
 
 module.exports = PlanService;
