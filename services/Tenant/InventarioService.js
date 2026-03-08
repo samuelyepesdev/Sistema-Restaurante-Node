@@ -40,7 +40,7 @@ class InventarioService {
     /**
      * Registrar entrada: aumenta stock y actualiza costo promedio (promedio ponderado).
      */
-    static async registrarEntrada(tenantId, { insumo_id, cantidad, costo_unitario, referencia }) {
+    static async registrarEntrada(tenantId, { insumo_id, cantidad, costo_unitario, referencia, proveedor_id, documento_referencia }) {
         const insumo = await InsumoRepository.findById(insumo_id, tenantId);
         if (!insumo) throw new Error('Insumo no encontrado');
         const cant = parseFloat(cantidad);
@@ -50,8 +50,8 @@ class InventarioService {
         try {
             await conn.beginTransaction();
             await conn.query(
-                `INSERT INTO movimientos_inventario (tenant_id, insumo_id, tipo, cantidad, costo_unitario, referencia) VALUES (?, ?, 'entrada', ?, ?, ?)`,
-                [tenantId, insumo_id, cant, costo, referencia || null]
+                `INSERT INTO movimientos_inventario (tenant_id, insumo_id, proveedor_id, tipo, cantidad, costo_unitario, referencia, documento_referencia) VALUES (?, ?, ?, 'entrada', ?, ?, ?, ?)`,
+                [tenantId, insumo_id, proveedor_id || null, cant, costo, referencia || null, documento_referencia || null]
             );
             const stockActual = parseFloat(insumo.stock_actual) || 0;
             const costoActual = insumo.costo_promedio != null ? parseFloat(insumo.costo_promedio) : null;

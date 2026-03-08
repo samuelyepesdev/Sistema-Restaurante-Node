@@ -54,6 +54,9 @@
                                     <button type="button" class="btn-icon btn-icon-a"
                                         onclick="abrirAjuste(<%= i.id %>, '<%= i.nombre.replace(/'/g, " \\'") %>')"
                                         title="Ajuste"><i class="bi bi-sliders"></i></button>
+                                    <button type="button" class="btn-icon btn-icon-m"
+                                        onclick="verMovimientos(<%= i.id %>, '<%= i.nombre.replace(/'/g, " \\'") %>')"
+                                        title="Historial"><i class="bi bi-clock-history"></i></button>
                                 </div>
                             </td>
                             <% } %>
@@ -98,7 +101,7 @@
                             Number(i.stock_minimo).toLocaleString('es-CO', { minimumFractionDigits: 2 }) %></span>
                     <span class="badge bg-light text-dark border">Costo prom: <%= i.costo_promedio !=null ? '$' +
                             Number(i.costo_promedio).toLocaleString('es-CO', { minimumFractionDigits: 2 }) : '-' %>
-                            </span>
+                    </span>
                 </div>
                 <% if (user && user.permisos && user.permisos.includes('inventario.editar')) { %>
                     <div class="btn-group btn-group-sm ms-2" role="group">

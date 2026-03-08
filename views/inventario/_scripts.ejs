@@ -3,6 +3,42 @@
     function abrirEntrada(id, nombre) { document.getElementById('entradaInsumoId').value = id; document.getElementById('entradaInsumoNombre').textContent = nombre; document.getElementById('entradaCantidad').value = ''; document.getElementById('entradaCosto').value = ''; document.getElementById('entradaRef').value = ''; new bootstrap.Modal(document.getElementById('modalEntrada')).show(); }
     function abrirSalida(id, nombre, disp) { document.getElementById('salidaInsumoId').value = id; document.getElementById('salidaInsumoNombre').textContent = nombre; document.getElementById('salidaDisponible').textContent = disp; document.getElementById('salidaCantidad').value = ''; document.getElementById('salidaRef').value = ''; new bootstrap.Modal(document.getElementById('modalSalida')).show(); }
     function abrirAjuste(id, nombre) { document.getElementById('ajusteInsumoId').value = id; document.getElementById('ajusteInsumoNombre').textContent = nombre; document.getElementById('ajusteCantidad').value = ''; document.getElementById('ajusteRef').value = 'Ajuste manual'; new bootstrap.Modal(document.getElementById('modalAjuste')).show(); }
+
+    async function verMovimientos(id, nombre) {
+        document.getElementById('movInsumoNombre').textContent = nombre;
+        const tbody = document.getElementById('tbodyMovimientos');
+        const loading = document.getElementById('movimientosCargando');
+        tbody.innerHTML = '';
+        loading.style.display = 'block';
+        new bootstrap.Modal(document.getElementById('modalMovimientos')).show();
+
+        try {
+            const r = await fetch(base + '/api/movimientos?insumo_id=' + id);
+            const movs = await r.json();
+            tbody.innerHTML = '';
+            if (!movs || movs.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" class="text-center py-3">No hay movimientos registrados.</td></tr>';
+            } else {
+                movs.forEach(m => {
+                    const row = document.createElement('tr');
+                    const color = m.tipo === 'entrada' ? 'text-success' : (m.tipo === 'salida' ? 'text-danger' : 'text-primary');
+                    const signo = m.tipo === 'entrada' ? '+' : (m.tipo === 'salida' ? '-' : '');
+                    row.innerHTML = `
+                        <td class="ps-3 small">${new Date(m.created_at).toLocaleString()}</td>
+                        <td><span class="badge ${m.tipo === 'entrada' ? 'bg-success' : (m.tipo === 'salida' ? 'bg-danger' : 'bg-primary')}">${m.tipo.toUpperCase()}</span></td>
+                        <td class="text-end fw-bold ${color}">${signo}${parseFloat(m.cantidad).toLocaleString('es-CO')}</td>
+                        <td class="small">${m.documento_referencia || m.referencia || '-'}</td>
+                        <td class="small">${m.proveedor_nombre || '-'}</td>
+                    `;
+                    tbody.appendChild(row);
+                });
+            }
+        } catch (e) {
+            tbody.innerHTML = '<tr><td colspan="5" class="text-center text-danger py-3">Error al cargar historial.</td></tr>';
+        } finally {
+            loading.style.display = 'none';
+        }
+    }
     document.getElementById('btnCrearInsumo').addEventListener('click', async () => {
         const fCodigo = document.getElementById('nuevoCodigo');
         const fNombre = document.getElementById('nuevoNombre');
@@ -19,7 +55,8 @@
             cantidad_compra: parseFloat(document.getElementById('nuevoCantidadCompra').value) || 1,
             precio_compra: parseFloat(document.getElementById('nuevoPrecioCompra').value) || 0,
             stock_minimo: parseFloat(document.getElementById('nuevoStockMinimo').value) || 0,
-            stock_inicial: parseFloat(document.getElementById('nuevoStockInicial').value) || 0
+            stock_inicial: parseFloat(document.getElementById('nuevoStockInicial').value) || 0,
+            proveedor_id: document.getElementById('nuevoProveedorId').value || null
         };
         let valid = true;
         [fCodigo, fNombre].forEach(f => {
@@ -91,10 +128,24 @@
             return;
         }
         fCant.classList.remove('is-invalid');
+        const provId = document.getElementById('entradaProveedorId').value;
+        const nFactura = document.getElementById('entradaFactura').value;
         const btn = document.getElementById('btnConfirmarEntrada');
         setLoading(btn, true);
         try {
-            const r = await fetch(base + '/api/movimientos/entrada', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ insumo_id: id, cantidad, costo_unitario: costo ? parseFloat(costo) : null, referencia: ref || null }), credentials: 'same-origin' });
+            const r = await fetch(base + '/api/movimientos/entrada', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    insumo_id: id,
+                    cantidad,
+                    costo_unitario: costo ? parseFloat(costo) : null,
+                    referencia: ref || null,
+                    proveedor_id: provId || null,
+                    documento_referencia: nFactura || null
+                }),
+                credentials: 'same-origin'
+            });
             if (r.ok) {
                 bootstrap.Modal.getOrCreateInstance(document.getElementById('modalEntrada')).hide();
                 await Swal.fire({ icon: 'success', title: 'Entrada registrada', timer: 1200, showConfirmButton: false });

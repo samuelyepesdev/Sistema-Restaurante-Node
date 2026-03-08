@@ -6,11 +6,17 @@ const db = require('../../config/database');
 
 class MovimientoInventarioRepository {
     static async create(tenantId, data) {
-        const { insumo_id, tipo, cantidad, costo_unitario, referencia } = data;
+        const { insumo_id, tipo, cantidad, costo_unitario, referencia, proveedor_id, documento_referencia } = data;
         const [result] = await db.query(
-            `INSERT INTO movimientos_inventario (tenant_id, insumo_id, tipo, cantidad, costo_unitario, referencia)
-             VALUES (?, ?, ?, ?, ?, ?)`,
-            [tenantId, insumo_id, tipo, cantidad, costo_unitario != null ? costo_unitario : null, referencia || null]
+            `INSERT INTO movimientos_inventario (tenant_id, insumo_id, tipo, cantidad, costo_unitario, referencia, proveedor_id, documento_referencia)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+            [
+                tenantId, insumo_id, tipo, cantidad,
+                costo_unitario != null ? costo_unitario : null,
+                referencia || null,
+                proveedor_id || null,
+                documento_referencia || null
+            ]
         );
         return result.insertId;
     }
@@ -27,9 +33,11 @@ class MovimientoInventarioRepository {
 
     static async findByTenant(tenantId, filters = {}) {
         let sql = `
-            SELECT m.*, i.nombre AS insumo_nombre, i.codigo AS insumo_codigo, i.unidad_base
+            SELECT m.*, i.nombre AS insumo_nombre, i.codigo AS insumo_codigo, i.unidad_base,
+                   p.nombre AS proveedor_nombre
             FROM movimientos_inventario m
             INNER JOIN insumos i ON i.id = m.insumo_id AND i.tenant_id = m.tenant_id
+            LEFT JOIN proveedores p ON p.id = m.proveedor_id
             WHERE m.tenant_id = ?
         `;
         const params = [tenantId];

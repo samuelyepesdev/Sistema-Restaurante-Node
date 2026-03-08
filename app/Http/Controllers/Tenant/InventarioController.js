@@ -13,8 +13,13 @@ class InventarioController {
             const insumos = await InventarioService.listInsumos(tenantId, {});
             const resumen = await InventarioService.getResumenValorizacion(tenantId);
 
-            const temaCat = await TemaRepository.findByName('CATEGORIAS DE INSUMO', tenantId);
-            const temaUni = await TemaRepository.findByName('UNIDADES DE COMPRA', tenantId);
+            const [temaCat, temaUni] = await Promise.all([
+                TemaRepository.findByName('CATEGORIAS DE INSUMO', tenantId),
+                TemaRepository.findByName('UNIDADES DE COMPRA', tenantId)
+            ]);
+            const ProveedorService = require('../../../../services/Tenant/ProveedorService');
+            const proveedores = await ProveedorService.getAll(tenantId);
+
             let categoriasInsumo = [], unidadesCompra = [];
             if (temaCat) categoriasInsumo = await ParametroService.getByTemaId(temaCat.id, tenantId);
             if (temaUni) unidadesCompra = await ParametroService.getByTemaId(temaUni.id, tenantId);
@@ -26,7 +31,8 @@ class InventarioController {
                 resumen: resumen || {},
                 allowedByPlan: res.locals.allowedByPlan || {},
                 categoriasInsumo,
-                unidadesCompra
+                unidadesCompra,
+                proveedores: proveedores || []
             });
         } catch (e) {
             console.error('Error inventario:', e);
@@ -116,7 +122,8 @@ class InventarioController {
                     insumo_id: id,
                     cantidad: stock_inicial,
                     costo_unitario: costo_unitario,
-                    referencia: 'Stock inicial'
+                    referencia: 'Stock inicial',
+                    proveedor_id: req.body.proveedor_id || null
                 });
             }
 

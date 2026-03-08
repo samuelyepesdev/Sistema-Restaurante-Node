@@ -9,10 +9,12 @@ class InsumoRepository {
     static async findAll(tenantId, filters = {}) {
         let sql = `SELECT i.*, 
                           pc.name AS categoria_nombre, 
-                          pu.name AS unidad_medida_nombre 
+                          pu.name AS unidad_medida_nombre,
+                          prov.nombre AS proveedor_nombre 
                    FROM insumos i
                    LEFT JOIN parametros pc ON i.categoria_id = pc.id
                    LEFT JOIN parametros pu ON i.unidad_medida_id = pu.id
+                   LEFT JOIN proveedores prov ON i.proveedor_id = prov.id
                    WHERE i.tenant_id = ?`;
         const params = [tenantId];
         if (filters.q && filters.q.trim()) {
@@ -33,10 +35,12 @@ class InsumoRepository {
         const [rows] = await db.query(
             `SELECT i.*, 
                     pc.name AS categoria_nombre, 
-                    pu.name AS unidad_medida_nombre 
+                    pu.name AS unidad_medida_nombre,
+                    prov.nombre AS proveedor_nombre 
              FROM insumos i
              LEFT JOIN parametros pc ON i.categoria_id = pc.id
              LEFT JOIN parametros pu ON i.unidad_medida_id = pu.id
+             LEFT JOIN proveedores prov ON i.proveedor_id = prov.id
              WHERE i.id = ? AND i.tenant_id = ?`,
             [id, tenantId]
         );
@@ -55,14 +59,14 @@ class InsumoRepository {
     }
 
     static async create(tenantId, data) {
-        const { codigo, nombre, unidad_compra, cantidad_compra, precio_compra, unidad_base, stock_minimo, categoria_id, unidad_medida_id } = data;
+        const { codigo, nombre, unidad_compra, cantidad_compra, precio_compra, unidad_base, stock_minimo, categoria_id, unidad_medida_id, proveedor_id } = data;
         const [result] = await db.query(
-            `INSERT INTO insumos (tenant_id, codigo, nombre, unidad_compra, cantidad_compra, precio_compra, unidad_base, stock_minimo, categoria_id, unidad_medida_id)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            `INSERT INTO insumos (tenant_id, codigo, nombre, unidad_compra, cantidad_compra, precio_compra, unidad_base, stock_minimo, categoria_id, unidad_medida_id, proveedor_id)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
             [
                 tenantId, codigo, nombre, unidad_compra || 'UND', parseFloat(cantidad_compra) || 1, parseFloat(precio_compra) || 0,
                 (unidad_base && String(unidad_base).trim()) || 'g', parseFloat(stock_minimo) || 0,
-                categoria_id || null, unidad_medida_id || null
+                categoria_id || null, unidad_medida_id || null, proveedor_id || null
             ]
         );
         return result.insertId;
@@ -71,7 +75,7 @@ class InsumoRepository {
     static async update(id, tenantId, data) {
         const fields = [];
         const params = [];
-        const allowed = ['codigo', 'nombre', 'unidad_compra', 'cantidad_compra', 'precio_compra', 'unidad_base', 'stock_minimo', 'categoria_id', 'unidad_medida_id'];
+        const allowed = ['codigo', 'nombre', 'unidad_compra', 'cantidad_compra', 'precio_compra', 'unidad_base', 'stock_minimo', 'categoria_id', 'unidad_medida_id', 'proveedor_id'];
         for (const key of allowed) {
             if (data[key] !== undefined) {
                 if (key === 'cantidad_compra' || key === 'precio_compra' || key === 'stock_minimo') {
