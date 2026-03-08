@@ -66,7 +66,8 @@
                                                                     <% } %>
 
                                                                         <% if (nav.can.inventario &&
-                                                                            !nav.can.proveedores) { %>
+                                                                            !nav.can.proveedores && !nav.can.recetas) {
+                                                                            %>
                                                                             <li class="nav-item"><a class="nav-link"
                                                                                     href="/inventario"><i
                                                                                         class="bi bi-boxes"></i>Inventario</a>
@@ -82,88 +83,101 @@
                                                                                             data-bs-toggle="dropdown"><i
                                                                                                 class="bi bi-grid"></i>Más</a>
                                                                                         <ul class="dropdown-menu">
-                                                                                            <% if (nav.can.recetas) { %>
+                                                                                            <% if (nav.can.recetas ||
+                                                                                                (nav.can.inventario &&
+                                                                                                (nav.can.proveedores ||
+                                                                                                nav.can.recetas))) { %>
                                                                                                 <li>
                                                                                                     <h6
                                                                                                         class="dropdown-header">
                                                                                                         Producción
                                                                                                     </h6>
                                                                                                 </li>
-                                                                                                <li><a class="dropdown-item"
-                                                                                                        href="/recetas"><i
-                                                                                                            class="bi bi-journal-text text-success"></i>Recetas</a>
-                                                                                                </li>
-                                                                                                <% } %>
-                                                                                                    <% if
-                                                                                                        (nav.can.recetas
-                                                                                                        &&
-                                                                                                        (nav.can.eventos
-                                                                                                        ||
-                                                                                                        nav.can.analitica
-                                                                                                        ||
-                                                                                                        nav.can.whatsapp))
-                                                                                                        { %>
-                                                                                                        <li>
-                                                                                                            <hr
-                                                                                                                class="dropdown-divider">
-                                                                                                        </li>
-                                                                                                        <% } %>
-                                                                                                            <% if
-                                                                                                                (nav.can.proveedores) { %>
-                                                                                                                 <li><a class="dropdown-item"
-                                                                                                                         href="/proveedores"><i
-                                                                                                                            class="bi bi-truck text-primary"></i>Proveedores</a>
-                                                                                                                </li>
+                                                                                                <% if
+                                                                                                    (nav.can.inventario
+                                                                                                    &&
+                                                                                                    (nav.can.proveedores
+                                                                                                    || nav.can.recetas))
+                                                                                                    { %>
+                                                                                                    <li><a class="dropdown-item"
+                                                                                                            href="/inventario"><i
+                                                                                                                class="bi bi-boxes text-info"></i>Inventario</a>
+                                                                                                    </li>
+                                                                                                    <% } %>
+                                                                                                        <% if
+                                                                                                            (nav.can.recetas)
+                                                                                                            { %>
+                                                                                                            <li><a class="dropdown-item"
+                                                                                                                    href="/recetas"><i
+                                                                                                                        class="bi bi-journal-text text-success"></i>Recetas</a>
+                                                                                                            </li>
+                                                                                                            <% } %>
                                                                                                                 <% } %>
+
                                                                                                                     <% if
-                                                                                                                        (nav.can.eventos
-                                                                                                                        ||
-                                                                                                                        nav.can.analitica
-                                                                                                                        ||
-                                                                                                                        nav.can.whatsapp)
+                                                                                                                        (nav.can.proveedores)
                                                                                                                         {
                                                                                                                         %>
-                                                                                                                        <li>
-                                                                                                                            <h6
-                                                                                                                                class="dropdown-header">
-                                                                                                                                Canales
-                                                                                                                                y
-                                                                                                                                Análisis
-                                                                                                                            </h6>
+                                                                                                                        <li><a class="dropdown-item"
+                                                                                                                                href="/proveedores"><i
+                                                                                                                                    class="bi bi-truck text-primary"></i>Proveedores</a>
                                                                                                                         </li>
-                                                                                                                        <% if
-                                                                                                                            (nav.can.whatsapp)
-                                                                                                                            {
+                                                                                                                        <% }
                                                                                                                             %>
-                                                                                                                            <li><a class="dropdown-item"
-                                                                                                                                    href="/whatsapp"><i
-                                                                                                                                        class="bi bi-whatsapp text-success"></i>WhatsApp
-                                                                                                                                    Bot</a>
-                                                                                                                            </li>
-                                                                                                                            <% }
+
+                                                                                                                            <% if
+                                                                                                                                (nav.can.analitica
+                                                                                                                                ||
+                                                                                                                                nav.can.whatsapp
+                                                                                                                                ||
+                                                                                                                                nav.can.eventos)
+                                                                                                                                {
                                                                                                                                 %>
+                                                                                                                                <li>
+                                                                                                                                    <hr
+                                                                                                                                        class="dropdown-divider">
+                                                                                                                                </li>
+                                                                                                                                <li>
+                                                                                                                                    <h6
+                                                                                                                                        class="dropdown-header">
+                                                                                                                                        Canales
+                                                                                                                                        y
+                                                                                                                                        Análisis
+                                                                                                                                    </h6>
+                                                                                                                                </li>
                                                                                                                                 <% if
-                                                                                                                                    (nav.can.eventos)
+                                                                                                                                    (nav.can.whatsapp)
                                                                                                                                     {
                                                                                                                                     %>
                                                                                                                                     <li><a class="dropdown-item"
-                                                                                                                                            href="/eventos"><i
-                                                                                                                                                class="bi bi-calendar-event"></i>Eventos</a>
+                                                                                                                                            href="/whatsapp"><i
+                                                                                                                                                class="bi bi-whatsapp text-success"></i>WhatsApp
+                                                                                                                                            Bot</a>
                                                                                                                                     </li>
                                                                                                                                     <% }
                                                                                                                                         %>
                                                                                                                                         <% if
-                                                                                                                                            (nav.can.analitica)
+                                                                                                                                            (nav.can.eventos)
                                                                                                                                             {
                                                                                                                                             %>
                                                                                                                                             <li><a class="dropdown-item"
-                                                                                                                                                    href="/analitica"><i
-                                                                                                                                                        class="bi bi-graph-up-arrow text-info"></i>Analítica</a>
+                                                                                                                                                    href="/eventos"><i
+                                                                                                                                                        class="bi bi-calendar-event"></i>Eventos</a>
                                                                                                                                             </li>
                                                                                                                                             <% }
                                                                                                                                                 %>
-                                                                                                                                                <% }
+                                                                                                                                                <% if
+                                                                                                                                                    (nav.can.analitica)
+                                                                                                                                                    {
                                                                                                                                                     %>
+                                                                                                                                                    <li><a class="dropdown-item"
+                                                                                                                                                            href="/analitica"><i
+                                                                                                                                                                class="bi bi-graph-up-arrow text-info"></i>Analítica</a>
+                                                                                                                                                    </li>
+                                                                                                                                                    <% }
+                                                                                                                                                        %>
+                                                                                                                                                        <% }
+                                                                                                                                                            %>
                                                                                         </ul>
                                                                                     </li>
                                                                                     <% } %>
