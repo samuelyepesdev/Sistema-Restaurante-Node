@@ -38,7 +38,8 @@ class WhatsAppController {
     static async connect(req, res) {
         try {
             const tenantId = req.tenant.id;
-            await WhatsAppService.initializeClient(tenantId);
+            const { phoneNumber } = req.body || {};
+            await WhatsAppService.initializeClient(tenantId, phoneNumber);
             res.json({ message: 'Proceso de conexión iniciado' });
         } catch (error) {
             console.error('Error en WhatsAppController.connect:', error);
@@ -52,7 +53,7 @@ class WhatsAppController {
     static async status(req, res) {
         try {
             const tenantId = req.tenant.id;
-            const [rows] = await db.query('SELECT estado, last_qr FROM whatsapp_configs WHERE tenant_id = ?', [tenantId]);
+            const [rows] = await db.query('SELECT estado, last_qr, last_pairing_code FROM whatsapp_configs WHERE tenant_id = ?', [tenantId]);
             res.json(rows[0] || { estado: 'desconectado' });
         } catch (error) {
             res.status(500).json({ error: 'Error obteniendo estado' });

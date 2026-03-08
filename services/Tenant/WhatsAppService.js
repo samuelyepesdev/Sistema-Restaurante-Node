@@ -14,17 +14,17 @@ class WhatsAppService {
     /**
      * Inicializa un cliente para un tenant específico
      */
-    async initializeClient(tenantId) {
+    async initializeClient(tenantId, phoneNumber = null) {
         if (this.clients.has(tenantId) || this.initializing.has(tenantId)) {
             console.log(`[WhatsApp] Init omitido para Tenant ${tenantId} (Ya en proceso o conectado)`);
             return;
         }
         this.initializing.add(tenantId);
 
-        console.log(`[WhatsApp] Inicializando cliente para Tenant ${tenantId}`);
+        console.log(`[WhatsApp] Inicializando cliente para Tenant ${tenantId} ${phoneNumber ? '(Con código)' : '(Con QR)'}`);
 
-        // Actualizar estado inmediatamente a esperando_qr (sin código aún)
-        await db.query('UPDATE whatsapp_configs SET estado = ?, last_qr = NULL WHERE tenant_id = ?',
+        // Actualizar estado inmediatamente a esperando_qr 
+        await db.query('UPDATE whatsapp_configs SET estado = ?, last_qr = NULL, last_pairing_code = NULL WHERE tenant_id = ?',
             ['esperando_qr', tenantId]);
 
         const client = new Client({
@@ -34,18 +34,50 @@ class WhatsAppService {
             }),
             puppeteer: {
                 headless: true,
-                args: ['--no-sandbox', '--disable-setuid-sandbox']
+                args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-gpu']
             }
         });
 
+        let codeSent = false;
         client.on('qr', async (qr) => {
             console.log(`[WhatsApp] QR recibido para Tenant ${tenantId}`);
             const qrBase64 = await qrcode.toDataURL(qr);
             this.qrCodes.set(tenantId, qrBase64);
 
-            // Actualizar estado en DB
             await db.query('UPDATE whatsapp_configs SET estado = ?, last_qr = ? WHERE tenant_id = ?',
                 ['esperando_qr', qrBase64, tenantId]);
+
+            // Si el usuario pidió código de emparejamiento, lo solicitamos una sola vez cuando el QR esté listo
+            if (phoneNumber && !codeSent) {
+                codeSent = true;
+                const num = phoneNumber.replace(/\D/g, '');
+
+                // Aumentamos el retraso a 15 segundos para dar tiempo a que Puppeteer inyecte los scripts necesarios
+                setTimeout(async () => {
+                    try {
+                        console.log(`[WhatsApp] Solicitando Pairing Code para ${num} (Intento 1)...`);
+                        const code = await client.requestPairingCode(num);
+                        console.log(`[WhatsApp] Pairing Code para ${tenantId}: ${code}`);
+                        await db.query('UPDATE whatsapp_configs SET last_pairing_code = ? WHERE tenant_id = ?',
+                            [code, tenantId]);
+                    } catch (err) {
+                        console.error('[WhatsApp] Error en Intento 1 de Pairing Code:', err.message);
+                        // Reintento rápido después de 5 segundos si falló por carga
+                        setTimeout(async () => {
+                            try {
+                                console.log(`[WhatsApp] Reintentando Pairing Code para ${num}...`);
+                                const code = await client.requestPairingCode(num);
+                                await db.query('UPDATE whatsapp_configs SET last_pairing_code = ? WHERE tenant_id = ?',
+                                    [code, tenantId]);
+                            } catch (err2) {
+                                console.error('[WhatsApp] Error definitivo en Pairing Code:', err2.message);
+                                // No bloqueamos codeSent para que el usuario pueda intentar de nuevo si refresca
+                                codeSent = false;
+                            }
+                        }, 5000);
+                    }
+                }, 15000);
+            }
         });
 
         client.on('ready', async () => {
@@ -54,14 +86,14 @@ class WhatsAppService {
             this.clients.set(tenantId, client);
             this.initializing.delete(tenantId);
 
-            await db.query('UPDATE whatsapp_configs SET estado = ?, last_qr = NULL WHERE tenant_id = ?',
+            await db.query('UPDATE whatsapp_configs SET estado = ?, last_qr = NULL, last_pairing_code = NULL WHERE tenant_id = ?',
                 ['conectado', tenantId]);
         });
 
         client.on('disconnected', async (reason) => {
             console.log(`[WhatsApp] Cliente desconectado para Tenant ${tenantId}: ${reason}`);
             this.clients.delete(tenantId);
-            await db.query('UPDATE whatsapp_configs SET estado = ?, last_qr = NULL WHERE tenant_id = ?',
+            await db.query('UPDATE whatsapp_configs SET estado = ?, last_qr = NULL, last_pairing_code = NULL WHERE tenant_id = ?',
                 ['desconectado', tenantId]);
         });
 
@@ -79,8 +111,7 @@ class WhatsAppService {
             console.error(`[WhatsApp] Error inicializando cliente para Tenant ${tenantId}:`, error);
             this.initializing.delete(tenantId);
 
-            // Si falla el arranque, volver a estado desconectado para que el usuario pueda intentar de nuevo
-            await db.query('UPDATE whatsapp_configs SET estado = ?, last_qr = NULL WHERE tenant_id = ?',
+            await db.query('UPDATE whatsapp_configs SET estado = ?, last_qr = NULL, last_pairing_code = NULL WHERE tenant_id = ?',
                 ['desconectado', tenantId]);
         }
     }

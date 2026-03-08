@@ -86,10 +86,38 @@
                     </div>
 
                     <div id="actionButtons" class="mt-4">
-                        <button id="btnConnect" class="btn btn-success px-4 py-2 fw-bold">
-                            <i class="bi bi-plug-fill me-2"></i>Iniciar Conexión
-                        </button>
-                        <button id="btnCancel" class="btn btn-outline-secondary px-4 py-2 fw-bold d-none"
+                        <div id="connectOptions" class="card border-0 shadow-sm rounded-4 p-4 mx-auto"
+                            style="max-width: 500px;">
+                            <h6 class="fw-bold mb-3">Elige cómo conectar:</h6>
+                            <div class="d-grid gap-3">
+                                <button id="btnConnect" class="btn btn-success py-2 fw-bold">
+                                    <i class="bi bi-qr-code me-2"></i>Conectar con Código QR
+                                </button>
+
+                                <div class="hr-text text-muted my-1">O también</div>
+
+                                <div class="input-group">
+                                    <span class="input-group-text bg-white border-end-0 text-muted">+</span>
+                                    <input type="number" id="pairingPhone" class="form-control border-start-0"
+                                        placeholder="Número de teléfono (con código de país ej: 57312...)">
+                                    <button id="btnConnectCode" class="btn btn-primary fw-bold">
+                                        Vincular con Código
+                                    </button>
+                                </div>
+                                <div class="form-text text-start mt-0">
+                                    <i class="bi bi-info-circle me-1"></i>Ingresa el número oficial de tu restaurante.
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="pairingCodeContainer" class="qr-container d-none">
+                            <h5 class="mb-3">Código de Vinculación</h5>
+                            <div class="display-4 fw-bold text-primary mb-3" id="pairingCodeDisplay"></div>
+                            <p class="mb-3">En tu celular ve a <b>WhatsApp > Dispositivos vinculados > Vincular un
+                                    dispositivo > Vincular con número de teléfono</b> e ingresa el código de arriba.</p>
+                        </div>
+
+                        <button id="btnCancel" class="btn btn-outline-secondary px-4 py-2 mt-4 fw-bold d-none"
                             onclick="desconectar()">
                             <i class="bi bi-x-circle me-2"></i>Cancelar / Reiniciar
                         </button>
@@ -132,38 +160,47 @@
         <script>
             let pollingInterval;
 
-            function updateUI(status, qr) {
+            function updateUI(status, qr, pairingCode) {
                 const $badge = $('#statusBadge');
                 const $text = $('#statusText');
                 const $qrContainer = $('#qrContainer');
+                const $pairingContainer = $('#pairingCodeContainer');
                 const $connectedContainer = $('#connectedContainer');
                 const $btnConnect = $('#btnConnect');
+                const $options = $('#connectOptions');
 
                 $badge.removeClass('status-connected status-disconnected status-waiting');
                 $qrContainer.addClass('d-none');
+                $pairingContainer.addClass('d-none');
                 $connectedContainer.addClass('d-none');
-                $btnConnect.prop('disabled', false).removeClass('d-none');
+                $btnConnect.prop('disabled', false);
+                $options.addClass('d-none');
                 $('#btnCancel').addClass('d-none');
 
                 if (status === 'conectado') {
                     $badge.addClass('status-connected');
                     $text.text('Conectado');
                     $connectedContainer.removeClass('d-none');
-                    $btnConnect.addClass('d-none');
                     $('#btnCancel').removeClass('d-none').text('Desconectar');
                 } else if (status === 'esperando_qr') {
                     $badge.addClass('status-waiting');
-                    $text.text('Esperando escaneo');
-                    if (qr) {
+                    $text.text('Esperando vinculación');
+
+                    if (pairingCode && pairingCode.trim() !== '') {
+                        $('#pairingCodeDisplay').text(pairingCode);
+                        $pairingContainer.removeClass('d-none');
+                    } else if (qr) {
                         $('#qrImage').attr('src', qr);
                         $qrContainer.removeClass('d-none');
+                    } else {
+                        // Mostramos spinner o algo mientras genera
+                        $badge.html('<span class="spinner-border spinner-border-sm me-2"></span>Generando...');
                     }
-                    $btnConnect.prop('disabled', true).text('Procesando...');
                     $('#btnCancel').removeClass('d-none').text('Cancelar / Reiniciar');
                 } else {
                     $badge.addClass('status-disconnected');
                     $text.text('Desconectado');
-                    $btnConnect.text('Iniciar Conexión');
+                    $options.removeClass('d-none');
                 }
             }
 
@@ -171,7 +208,7 @@
                 try {
                     const res = await fetch('/whatsapp/status');
                     const data = await res.json();
-                    updateUI(data.estado, data.last_qr);
+                    updateUI(data.estado, data.last_qr, data.last_pairing_code);
                 } catch (e) {
                     console.error('Error al verificar estado', e);
                 }
@@ -187,7 +224,31 @@
                     }
                 } catch (e) {
                     Swal.fire('Error', 'No se pudo iniciar la conexión', 'error');
-                    $(this).prop('disabled', false).text('Iniciar Conexión');
+                    $(this).prop('disabled', false).html('<i class="bi bi-qr-code me-2"></i>Conectar con Código QR');
+                }
+            });
+
+            $('#btnConnectCode').click(async function () {
+                const phone = $('#pairingPhone').val();
+                if (!phone || phone.length < 8) {
+                    Swal.fire('Atención', 'Ingresa tu número de teléfono con código de país (ej: 573123456789)', 'warning');
+                    return;
+                }
+
+                $(this).prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-2"></span>Iniciando...');
+                try {
+                    const res = await fetch('/whatsapp/connect', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ phoneNumber: phone })
+                    });
+                    if (res.ok) {
+                        Swal.fire('Iniciado', 'Estamos generando tu código de vinculación...', 'info');
+                        if (!pollingInterval) pollingInterval = setInterval(checkStatus, 3000);
+                    }
+                } catch (e) {
+                    Swal.fire('Error', 'No se pudo iniciar la conexión', 'error');
+                    $(this).prop('disabled', false).text('Vincular con Código');
                 }
             });
 
