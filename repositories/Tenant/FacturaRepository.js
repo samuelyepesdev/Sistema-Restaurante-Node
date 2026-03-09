@@ -87,9 +87,16 @@ class FacturaRepository {
             const numero = (rowsNum && rowsNum[0] && rowsNum[0].siguiente) || 1;
             const fechaEmisionUtc = new Date().toISOString().slice(0, 19).replace('T', ' ');
 
+            // Buscar sesión de caja abierta para vincular la venta
+            const [sesiones] = await connection.query(
+                'SELECT id FROM caja_sesiones WHERE tenant_id = ? AND estado = "abierta" LIMIT 1',
+                [tenantId]
+            );
+            const cajaSesionId = sesiones.length > 0 ? sesiones[0].id : null;
+
             const [result] = await connection.query(
-                'INSERT INTO facturas (tenant_id, numero, cliente_id, total, forma_pago, evento_id, fecha) VALUES (?, ?, ?, ?, ?, ?, ?)',
-                [tenantId, numero, facturaData.cliente_id, facturaData.total, facturaData.forma_pago, evento_id, fechaEmisionUtc]
+                'INSERT INTO facturas (tenant_id, numero, cliente_id, total, forma_pago, evento_id, fecha, caja_sesion_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+                [tenantId, numero, facturaData.cliente_id, facturaData.total, facturaData.forma_pago, evento_id, fechaEmisionUtc, cajaSesionId]
             );
 
             const factura_id = result.insertId;

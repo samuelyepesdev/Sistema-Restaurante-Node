@@ -504,9 +504,17 @@ class MesasController {
                 );
                 const numeroFactura = (rowsNum && rowsNum[0] && rowsNum[0].siguiente) || 1;
                 const fechaEmisionUtc = new Date().toISOString().slice(0, 19).replace('T', ' ');
+
+                // Buscar sesión de caja abierta para vincular la venta
+                const [sesiones] = await connection.query(
+                    'SELECT id FROM caja_sesiones WHERE tenant_id = ? AND estado = "abierta" LIMIT 1',
+                    [tenantId]
+                );
+                const cajaSesionId = sesiones.length > 0 ? sesiones[0].id : null;
+
                 const [facturaInsert] = await connection.query(
-                    `INSERT INTO facturas (tenant_id, numero, cliente_id, total, forma_pago, propina, fecha) VALUES (?, ?, ?, ?, ?, ?, ?)`,
-                    [tenantId, numeroFactura, cliente_id, totalConPropina, forma_pago, propina, fechaEmisionUtc]
+                    `INSERT INTO facturas (tenant_id, numero, cliente_id, total, forma_pago, propina, fecha, caja_sesion_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+                    [tenantId, numeroFactura, cliente_id, totalConPropina, forma_pago, propina, fechaEmisionUtc, cajaSesionId]
                 );
                 const facturaId = facturaInsert.insertId;
 

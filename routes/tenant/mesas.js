@@ -12,7 +12,7 @@ router.get('/', MesasController.index);
 router.get('/listar', MesasController.list);
 
 // POST /mesas/crear - Crear mesa
-router.post('/crear', requirePermission('mesas.crear'), BaseRequest.validate(StoreMesaRequest), MesasController.store);
+router.post('/crear', requirePermission('mesas.gestionar'), BaseRequest.validate(StoreMesaRequest), MesasController.store);
 
 // PUT /mesas/:mesaId - Editar mesa
 router.put('/:mesaId', requirePermission('mesas.editar'), BaseRequest.validate(StoreMesaRequest), MesasController.update);
