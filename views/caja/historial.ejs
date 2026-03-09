@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Historial de Caja - <%= tenant.nombre %>
+    </title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="/css/modulos/caja.css">
+</head>
+
+<body class="bg-light">
+    <%- include('../partials/navbar', { user: user, tenant: tenant }) %>
+
+        <div class="container py-4">
+            <div class="row mb-4 align-items-center">
+                <div class="col-md-6">
+                    <h2 class="fw-bold"><i class="bi bi-journal-check me-2 text-primary"></i>Historial de Turnos</h2>
+                    <p class="text-muted">Registro de sesiones cerradas y arqueos realizados.</p>
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <a href="/caja" class="btn btn-outline-primary rounded-pill">
+                        <i class="bi bi-wallet2 me-2"></i>Ir a Caja Actual
+                    </a>
+                </div>
+            </div>
+
+            <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="bg-light">
+                                <tr class="small text-muted">
+                                    <th class="ps-4">Fecha Cierre</th>
+                                    <th>Usuario</th>
+                                    <th>Caja Inicial</th>
+                                    <th>Esperado (Teórico)</th>
+                                    <th>Contado (Real)</th>
+                                    <th>Diferencia</th>
+                                    <th class="text-center">Estado</th>
+                                    <th class="text-end pe-4">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <% if (sesiones.length===0) { %>
+                                    <tr>
+                                        <td colspan="8" class="text-center py-5 text-muted">
+                                            <i class="bi bi-info-circle me-1"></i> No hay turnos cerrados registrados.
+                                        </td>
+                                    </tr>
+                                    <% } %>
+                                        <% sesiones.forEach(sesion=> { %>
+                                            <tr>
+                                                <td class="ps-4">
+                                                    <div class="fw-bold">
+                                                        <%= new Date(sesion.fecha_cierre).toLocaleDateString() %>
+                                                    </div>
+                                                    <div class="small text-muted">
+                                                        <%= new Date(sesion.fecha_cierre).toLocaleTimeString() %>
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    <div class="d-flex align-items-center">
+                                                        <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-2"
+                                                            style="width: 32px; height: 32px; font-size: 12px;">
+                                                            <%= (sesion.usuario_nombre || 'U' ).charAt(0).toUpperCase()
+                                                                %>
+                                                        </div>
+                                                        <%= sesion.usuario_nombre %>
+                                                    </div>
+                                                </td>
+                                                <td>$<%= new Intl.NumberFormat('es-CO').format(sesion.monto_inicial) %>
+                                                </td>
+                                                <td class="fw-bold">$<%= new
+                                                        Intl.NumberFormat('es-CO').format(sesion.monto_final_teorico) %>
+                                                </td>
+                                                <td class="fw-bold text-primary">$<%= new
+                                                        Intl.NumberFormat('es-CO').format(sesion.monto_final_real) %>
+                                                </td>
+                                                <td>
+                                                    <% const dif=parseFloat(sesion.diferencia || 0); %>
+                                                        <% if (dif===0) { %>
+                                                            <span class="text-success small fw-bold"><i
+                                                                    class="bi bi-check-circle-fill me-1"></i>Cuadra</span>
+                                                            <% } else if (dif> 0) { %>
+                                                                <span class="text-info small fw-bold">+$<%= new
+                                                                        Intl.NumberFormat('es-CO').format(dif) %>
+                                                                        (Sobrante)</span>
+                                                                <% } else { %>
+                                                                    <span class="text-danger small fw-bold">-$<%= new
+                                                                            Intl.NumberFormat('es-CO').format(Math.abs(dif))
+                                                                            %> (Faltante)</span>
+                                                                    <% } %>
+                                                </td>
+                                                <td class="text-center">
+                                                    <span class="badge bg-secondary rounded-pill px-3">CERRADO</span>
+                                                </td>
+                                                <td class="text-end pe-4">
+                                                    <button class="btn btn-sm btn-light rounded-pill px-3"
+                                                        onclick="verNotas('<%= (sesion.notas || "").replace(/['\r\n]/g, " ") %>')">
+                                                        <i class="bi bi-chat-left-text"></i>
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                            <% }) %>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+        <script>
+            function verNotas(notas) {
+                if (!notas || notas === 'null') {
+                    Swal.fire('Sin notas', 'No se registraron comentarios para este turno.', 'info');
+                    return;
+                }
+                Swal.fire({
+                    title: 'Notas del Turno',
+                    text: notas,
+                    icon: 'info',
+                    confirmButtonText: 'Cerrar',
+                    confirmButtonColor: '#6366f1'
+                });
+            }
+        </script>
+</body>
+
+</html>

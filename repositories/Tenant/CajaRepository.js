@@ -26,16 +26,46 @@ class CajaRepository {
      * Cierra una sesión de caja calculando totales
      */
     static async cerrarSesion(sesionId, tenantId, montoFinalReal, notas) {
-        // En un paso real, aquí calcularíamos ventas desde tabla facturas, etc.
+        // Calcular el teórico justo antes de cerrar
+        const [ventas] = await db.query(`SELECT SUM(total) as total FROM facturas WHERE caja_sesion_id = ?`, [sesionId]);
+        const [entradas] = await db.query(`SELECT SUM(monto) as total FROM caja_movimientos WHERE sesion_id = ? AND tipo = 'entrada'`, [sesionId]);
+        const [salidas] = await db.query(`SELECT SUM(monto) as total FROM caja_movimientos WHERE sesion_id = ? AND tipo = 'salida'`, [sesionId]);
+        const [sesion] = await db.query(`SELECT monto_inicial FROM caja_sesiones WHERE id = ?`, [sesionId]);
+
+        const base = parseFloat(sesion[0]?.monto_inicial || 0);
+        const v = parseFloat(ventas[0]?.total || 0);
+        const e = parseFloat(entradas[0]?.total || 0);
+        const s = parseFloat(salidas[0]?.total || 0);
+        const teorico = base + v + e - s;
+        const diferencia = montoFinalReal - teorico;
+
         const sql = `
             UPDATE caja_sesiones 
-            SET monto_final_real = ?, 
+            SET monto_final_teorico = ?,
+                monto_final_real = ?,
+                diferencia = ?,
                 notas = CONCAT(IFNULL(notas, ''), '\n', ?),
                 estado = 'cerrada',
                 fecha_cierre = CURRENT_TIMESTAMP
             WHERE id = ? AND tenant_id = ?
         `;
-        await db.query(sql, [montoFinalReal, notas, sesionId, tenantId]);
+        await db.query(sql, [teorico, montoFinalReal, diferencia, notas, sesionId, tenantId]);
+    }
+
+    /**
+     * Obtiene el historial de sesiones cerradas
+     */
+    static async getHistorial(tenantId, limit = 50) {
+        const sql = `
+            SELECT s.*, u.nombre_completo as usuario_nombre
+            FROM caja_sesiones s
+            JOIN usuarios u ON s.usuario_id = u.id
+            WHERE s.tenant_id = ? AND s.estado = 'cerrada'
+            ORDER BY s.fecha_cierre DESC
+            LIMIT ?
+        `;
+        const [rows] = await db.query(sql, [tenantId, limit]);
+        return rows;
     }
 
     /**

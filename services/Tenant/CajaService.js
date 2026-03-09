@@ -41,6 +41,10 @@ class CajaService {
             data.motivo
         );
     }
+
+    static async getHistorial(tenantId) {
+        return await CajaRepository.getHistorial(tenantId);
+    }
 }
 
 module.exports = CajaService;

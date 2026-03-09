@@ -50,6 +50,21 @@ class CajaController {
             res.status(400).json({ error: error.message });
         }
     }
+
+    static async historial(req, res) {
+        try {
+            const tenantId = req.tenant.id;
+            const sesiones = await CajaService.getHistorial(tenantId);
+            res.render('caja/historial', {
+                sesiones,
+                user: req.user,
+                tenant: req.tenant
+            });
+        } catch (error) {
+            console.error('Error al cargar historial de caja:', error);
+            res.status(500).render('errors/generic', { error });
+        }
+    }
 }
 
 module.exports = CajaController;
