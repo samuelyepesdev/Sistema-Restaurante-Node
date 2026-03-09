@@ -135,14 +135,19 @@ async function abrirFacturas(id, nombre) {
 
 async function cargarFacturas(proveedorId) {
     const tbody = document.getElementById('listaFacturasCuerpo');
+    const containerMovil = document.getElementById('listaFacturasMovil');
     const msgVacio = document.getElementById('sinFacturasMsg');
+
     tbody.innerHTML = '<tr><td colspan="5" class="text-center py-3"><div class="spinner-border spinner-border-sm text-primary"></div> Cargando...</td></tr>';
+    if (containerMovil) containerMovil.innerHTML = '<div class="text-center py-3"><div class="spinner-border spinner-border-sm text-primary"></div></div>';
 
     try {
         const res = await fetch(`/proveedores/${proveedorId}/facturas`);
         const facturas = await res.json();
 
         tbody.innerHTML = '';
+        if (containerMovil) containerMovil.innerHTML = '';
+
         if (!facturas || facturas.length === 0) {
             msgVacio.classList.remove('d-none');
             return;
@@ -152,6 +157,8 @@ async function cargarFacturas(proveedorId) {
         facturas.forEach(f => {
             const fecha = f.fecha_emision ? new Date(f.fecha_emision).toLocaleDateString() : 'N/A';
             const monto = new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP' }).format(f.monto_total);
+
+            // Render para Escritorio (Tabla)
             const tr = document.createElement('tr');
             tr.innerHTML = `
                 <td class="small">${fecha}</td>
@@ -169,9 +176,38 @@ async function cargarFacturas(proveedorId) {
                 </td>
             `;
             tbody.appendChild(tr);
+
+            // Render para Móvil (Cards compactas)
+            if (containerMovil) {
+                const card = `
+                    <div class="card border-0 bg-light mb-2 rounded-3 shadow-sm">
+                        <div class="card-body p-2 px-3">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <span class="small text-muted">${fecha}</span>
+                                <span class="fw-bold text-success">${monto}</span>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div class="small fw-bold text-dark">
+                                    <i class="bi bi-file-earmark-text me-1"></i>${f.numero_factura || 'S/N'}
+                                </div>
+                                <div class="btn-group">
+                                    <a href="/proveedores/facturas/${f.id}/ver" target="_blank" class="btn btn-sm btn-white border shadow-sm px-3">
+                                        <i class="bi bi-eye text-primary"></i>
+                                    </a>
+                                    <button class="btn btn-sm btn-white border shadow-sm px-3 ms-1" onclick="eliminarFactura(${f.id}, ${proveedorId})">
+                                        <i class="bi bi-trash text-danger"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                containerMovil.insertAdjacentHTML('beforeend', card);
+            }
         });
     } catch (error) {
         tbody.innerHTML = '<tr><td colspan="5" class="text-center text-danger">Error al cargar facturas</td></tr>';
+        if (containerMovil) containerMovil.innerHTML = '<div class="text-center text-danger small">Error al cargar</div>';
     }
 }
 
