@@ -1,4 +1,5 @@
 const ProveedorService = require('../../../../services/Tenant/ProveedorService');
+const ProveedorFacturaService = require('../../../../services/Tenant/ProveedorFacturaService');
 
 class ProveedoresController {
     // GET /proveedores
@@ -61,6 +62,70 @@ class ProveedoresController {
             const tenantId = req.tenant?.id;
             const result = await ProveedorService.delete(parseInt(req.params.id), tenantId);
             res.json(result);
+        } catch (error) {
+            res.status(400).json({ error: error.message });
+        }
+    }
+
+    // --- FACTURAS DE PROVEEDORES ---
+
+    // GET /proveedores/:id/facturas
+    static async listFacturas(req, res) {
+        try {
+            const tenantId = req.tenant?.id;
+            const facturas = await ProveedorFacturaService.listByProveedor(tenantId, parseInt(req.params.id));
+            res.json(facturas);
+        } catch (error) {
+            res.status(500).json({ error: error.message });
+        }
+    }
+
+    // POST /proveedores/:id/facturas
+    static async storeFactura(req, res) {
+        try {
+            const tenantId = req.tenant?.id;
+            const proveedorId = parseInt(req.params.id);
+            if (!req.file) throw new Error('No se subió ningún archivo');
+
+            const data = {
+                proveedor_id: proveedorId,
+                numero_factura: req.body.numero_factura,
+                fecha_emision: req.body.fecha_emision,
+                monto_total: req.body.monto_total,
+                archivo_nombre: req.file.originalname,
+                archivo_contenido: req.file.buffer,
+                archivo_tipo: req.file.mimetype,
+                archivo_size: req.file.size,
+                notas: req.body.notas
+            };
+
+            const id = await ProveedorFacturaService.create(tenantId, data);
+            res.status(201).json({ id, message: 'Factura cargada correctamente' });
+        } catch (error) {
+            res.status(400).json({ error: error.message });
+        }
+    }
+
+    // GET /proveedores/facturas/:facturaId/ver
+    static async showFactura(req, res) {
+        try {
+            const tenantId = req.tenant?.id;
+            const factura = await ProveedorFacturaService.getById(parseInt(req.params.facturaId), tenantId);
+
+            res.setHeader('Content-Type', factura.archivo_tipo);
+            res.setHeader('Content-Disposition', `inline; filename="${factura.archivo_nombre}"`);
+            res.send(factura.archivo_contenido);
+        } catch (error) {
+            res.status(404).json({ error: error.message });
+        }
+    }
+
+    // DELETE /proveedores/facturas/:facturaId
+    static async destroyFactura(req, res) {
+        try {
+            const tenantId = req.tenant?.id;
+            await ProveedorFacturaService.delete(parseInt(req.params.facturaId), tenantId);
+            res.json({ success: true, message: 'Factura eliminada' });
         } catch (error) {
             res.status(400).json({ error: error.message });
         }

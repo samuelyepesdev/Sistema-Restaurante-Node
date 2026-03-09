@@ -52,13 +52,17 @@
                             </td>
                             <td class="text-end pe-4">
                                 <div class="btn-group shadow-sm">
-                                    <button class="btn btn-white btn-sm" onclick="editProveedor(<%= p.id %>)"
+                                    <button class="btn btn-white btn-sm btn-facturas" data-id="<%= p.id %>"
+                                        data-nombre="<%= p.nombre %>" title="Facturas">
+                                        <i class="bi bi-receipt text-success"></i>
+                                    </button>
+                                    <button class="btn btn-white btn-sm btn-editar" data-id="<%= p.id %>"
                                         title="Editar">
                                         <i class="bi bi-pencil-square text-primary"></i>
                                     </button>
-                                    <button class="btn btn-white btn-sm text-danger"
-                                        onclick="deleteProveedor(<%= p.id %>)" title="Eliminar">
-                                        <i class="bi bi-trash"></i>
+                                    <button class="btn btn-white btn-sm btn-eliminar" data-id="<%= p.id %>"
+                                        title="Eliminar">
+                                        <i class="bi bi-trash text-danger"></i>
                                     </button>
                                 </div>
                             </td>
