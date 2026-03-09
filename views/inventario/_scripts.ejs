@@ -2,7 +2,15 @@
     const base = '/inventario';
     function abrirEntrada(id, nombre) { document.getElementById('entradaInsumoId').value = id; document.getElementById('entradaInsumoNombre').textContent = nombre; document.getElementById('entradaCantidad').value = ''; document.getElementById('entradaCosto').value = ''; document.getElementById('entradaRef').value = ''; new bootstrap.Modal(document.getElementById('modalEntrada')).show(); }
     function abrirSalida(id, nombre, disp) { document.getElementById('salidaInsumoId').value = id; document.getElementById('salidaInsumoNombre').textContent = nombre; document.getElementById('salidaDisponible').textContent = disp; document.getElementById('salidaCantidad').value = ''; document.getElementById('salidaRef').value = ''; new bootstrap.Modal(document.getElementById('modalSalida')).show(); }
-    function abrirAjuste(id, nombre) { document.getElementById('ajusteInsumoId').value = id; document.getElementById('ajusteInsumoNombre').textContent = nombre; document.getElementById('ajusteCantidad').value = ''; document.getElementById('ajusteRef').value = 'Ajuste manual'; new bootstrap.Modal(document.getElementById('modalAjuste')).show(); }
+    function abrirAjuste(id, nombre, disp) {
+        document.getElementById('ajusteInsumoId').value = id;
+        document.getElementById('ajusteInsumoNombre').textContent = nombre;
+        document.getElementById('ajusteDisponible').textContent = disp;
+        document.getElementById('ajusteCantidad').value = '';
+        document.getElementById('ajusteRef').value = 'Ajuste manual';
+        document.getElementById('adjSuma').checked = true;
+        new bootstrap.Modal(document.getElementById('modalAjuste')).show();
+    }
 
     async function verMovimientos(id, nombre) {
         document.getElementById('movInsumoNombre').textContent = nombre;
@@ -191,19 +199,36 @@
     });
     document.getElementById('btnConfirmarAjuste').addEventListener('click', async () => {
         const id = document.getElementById('ajusteInsumoId').value;
-        const cantidad = parseFloat(document.getElementById('ajusteCantidad').value);
+        let cantidad = parseFloat(document.getElementById('ajusteCantidad').value);
         const ref = document.getElementById('ajusteRef').value;
+        const typo = document.querySelector('input[name="ajusteTipo"]:checked').value;
         const fCant = document.getElementById('ajusteCantidad');
-        if (!cantidad || cantidad === 0 || isNaN(cantidad)) {
+
+        if (!cantidad || cantidad <= 0 || isNaN(cantidad)) {
             fCant.classList.add('is-invalid');
-            Swal.fire({ icon: 'warning', title: 'Cantidad requerida', text: 'Ingresa un valor positivo (suma) o negativo (resta)', timer: 2000, showConfirmButton: false });
+            Swal.fire({ icon: 'warning', title: 'Cantidad requerida', text: 'Ingresa un valor mayor a 0', timer: 2000, showConfirmButton: false });
             return;
         }
+
+        // Si el tipo es resta, convertir a negativo
+        if (typo === 'resta') {
+            cantidad = cantidad * -1;
+        }
+
         fCant.classList.remove('is-invalid');
         const btn = document.getElementById('btnConfirmarAjuste');
         setLoading(btn, true);
         try {
-            const r = await fetch(base + '/api/movimientos/ajuste', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ insumo_id: id, cantidad, referencia: ref || 'Ajuste manual' }), credentials: 'same-origin' });
+            const r = await fetch(base + '/api/movimientos/ajuste', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    insumo_id: id,
+                    cantidad,
+                    referencia: ref || 'Ajuste manual'
+                }),
+                credentials: 'same-origin'
+            });
             if (r.ok) {
                 bootstrap.Modal.getOrCreateInstance(document.getElementById('modalAjuste')).hide();
                 await Swal.fire({ icon: 'success', title: 'Ajuste aplicado', timer: 1200, showConfirmButton: false });
