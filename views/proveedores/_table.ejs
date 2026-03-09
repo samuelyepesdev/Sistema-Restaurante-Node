@@ -1,12 +1,11 @@
-<div class="table-responsive">
+<!-- Vista para Escritorio -->
+<div class="table-responsive d-none d-lg-block">
     <table class="table table-hover align-middle mb-0">
         <thead class="bg-light">
             <tr>
-                <th class="ps-4">Nombre</th>
-                <th>NIT / Doc</th>
+                <th class="ps-4">Nombre / Empresa</th>
+                <th>NIT / Documento</th>
                 <th>Contacto</th>
-                <th>Teléfono</th>
-                <th>Email</th>
                 <th>Estado</th>
                 <th class="text-end pe-4">Acciones</th>
             </tr>
@@ -14,7 +13,7 @@
         <tbody>
             <% if (proveedores.length===0) { %>
                 <tr>
-                    <td colspan="7" class="text-center py-5 text-muted">
+                    <td colspan="5" class="text-center py-5 text-muted">
                         <i class="bi bi-inbox display-4 d-block mb-3"></i>
                         No hay proveedores registrados aún.
                     </td>
@@ -23,24 +22,30 @@
                     <% proveedores.forEach(p=> { %>
                         <tr id="row-<%= p.id %>">
                             <td class="ps-4">
-                                <div class="fw-bold text-dark">
-                                    <%= p.nombre %>
+                                <div class="d-flex align-items-center">
+                                    <div class="avatar-circle me-3">
+                                        <%= p.nombre.charAt(0).toUpperCase() %>
+                                    </div>
+                                    <div>
+                                        <div class="fw-bold text-dark">
+                                            <%= p.nombre %>
+                                        </div>
+                                        <div class="small text-muted">
+                                            <%= p.direccion || 'Sin dirección' %>
+                                        </div>
+                                    </div>
                                 </div>
-                                <div class="small text-muted">
-                                    <%= p.direccion || 'Sin dirección' %>
+                            </td>
+                            <td><span class="text-muted">
+                                    <%= p.nit || 'N/A' %>
+                                </span></td>
+                            <td>
+                                <div class="small"><i class="bi bi-person me-1"></i>
+                                    <%= p.contacto || 'N/A' %>
                                 </div>
-                            </td>
-                            <td>
-                                <%= p.nit || 'N/A' %>
-                            </td>
-                            <td>
-                                <%= p.contacto || 'N/A' %>
-                            </td>
-                            <td>
-                                <%= p.telefono || 'N/A' %>
-                            </td>
-                            <td>
-                                <%= p.email || 'N/A' %>
+                                <div class="small text-primary"><i class="bi bi-telephone me-1"></i>
+                                    <%= p.telefono || 'N/A' %>
+                                </div>
                             </td>
                             <td>
                                 <% if (p.activo) { %>
@@ -71,4 +76,80 @@
                             <% } %>
         </tbody>
     </table>
+</div>
+
+<!-- Vista para Móvil (Cards) -->
+<div class="d-lg-none">
+    <% if (proveedores.length===0) { %>
+        <div class="text-center py-5 text-muted">
+            <i class="bi bi-inbox display-4 d-block mb-3"></i>
+            No hay proveedores registrados.
+        </div>
+        <% } else { %>
+            <div class="p-3">
+                <% proveedores.forEach(p=> { %>
+                    <div class="card border mb-3 rounded-4 shadow-sm overflow-hidden" id="card-<%= p.id %>">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-start mb-3">
+                                <div class="d-flex align-items-center">
+                                    <div class="avatar-circle-sm me-2">
+                                        <%= p.nombre.charAt(0).toUpperCase() %>
+                                    </div>
+                                    <div>
+                                        <h6 class="mb-0 fw-bold text-dark">
+                                            <%= p.nombre %>
+                                        </h6>
+                                        <span class="small text-muted">NIT: <%= p.nit || 'N/A' %></span>
+                                    </div>
+                                </div>
+                                <% if (p.activo) { %>
+                                    <span class="badge bg-success-subtle text-success rounded-pill">Activo</span>
+                                    <% } else { %>
+                                        <span class="badge bg-danger-subtle text-danger rounded-pill">Inactivo</span>
+                                        <% } %>
+                            </div>
+
+                            <div class="row g-2 mb-3">
+                                <div class="col-6">
+                                    <div class="small text-muted mb-1">Contacto</div>
+                                    <div class="small fw-medium text-dark text-truncate"><i
+                                            class="bi bi-person me-1 text-muted"></i>
+                                        <%= p.contacto || 'N/A' %>
+                                    </div>
+                                </div>
+                                <div class="col-6 text-end">
+                                    <div class="small text-muted mb-1">Teléfono</div>
+                                    <div class="small fw-medium text-primary"><i
+                                            class="bi bi-telephone me-1 text-muted"></i>
+                                        <%= p.telefono || 'N/A' %>
+                                    </div>
+                                </div>
+                                <div class="col-12 mt-2">
+                                    <div class="small text-muted mb-1">Email</div>
+                                    <div class="small fw-medium text-dark text-truncate"><i
+                                            class="bi bi-envelope me-1 text-muted"></i>
+                                        <%= p.email || 'N/A' %>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="border-top pt-3 d-flex justify-content-between gap-2">
+                                <button class="btn btn-light-success btn-sm flex-grow-1 py-2 btn-facturas"
+                                    data-id="<%= p.id %>" data-nombre="<%= p.nombre %>">
+                                    <i class="bi bi-receipt me-1"></i> Facturas
+                                </button>
+                                <button class="btn btn-light-primary btn-sm flex-grow-1 py-2 btn-editar"
+                                    data-id="<%= p.id %>">
+                                    <i class="bi bi-pencil me-1"></i> Editar
+                                </button>
+                                <button class="btn btn-light-danger btn-sm flex-grow-1 py-2 btn-eliminar"
+                                    data-id="<%= p.id %>">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <% }) %>
+            </div>
+            <% } %>
 </div>

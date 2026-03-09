@@ -42,10 +42,10 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Delegación de eventos para la tabla
-    const table = document.querySelector('table');
-    if (table) {
-        table.addEventListener('click', (e) => {
+    // Delegación de eventos para la tabla y tarjetas móvil
+    const container = document.getElementById('proveedoresContainer');
+    if (container) {
+        container.addEventListener('click', (e) => {
             const btnFacturas = e.target.closest('.btn-facturas');
             const btnEditar = e.target.closest('.btn-editar');
             const btnEliminar = e.target.closest('.btn-eliminar');

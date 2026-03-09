@@ -30,3 +30,52 @@
 .bg-danger-subtle {
     background-color: #f8d7da !important;
 }
+
+/* Avatares */
+.avatar-circle,
+.avatar-circle-sm {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #eef2ff;
+    color: #6366f1;
+    font-weight: 700;
+    border-radius: 50%;
+}
+
+.avatar-circle {
+    width: 45px;
+    height: 45px;
+    font-size: 1.1rem;
+}
+
+.avatar-circle-sm {
+    width: 35px;
+    height: 35px;
+    font-size: 0.9rem;
+}
+
+/* Botones Light Móvil */
+.btn-light-success {
+    background-color: #d1e7dd;
+    color: #0f5132;
+    border: none;
+}
+
+.btn-light-primary {
+    background-color: #cfe2ff;
+    color: #084298;
+    border: none;
+}
+
+.btn-light-danger {
+    background-color: #f8d7da;
+    color: #842029;
+    border: none;
+}
+
+.btn-light-success:active,
+.btn-light-primary:active,
+.btn-light-danger:active {
+    opacity: 0.8;
+}

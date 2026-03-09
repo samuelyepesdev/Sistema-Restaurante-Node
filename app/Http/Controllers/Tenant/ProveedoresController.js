@@ -6,7 +6,7 @@ class ProveedoresController {
     static async index(req, res) {
         try {
             const tenantId = req.tenant?.id;
-            if (!tenantId) return res.status(403).render('errors/internal', { error: { message: 'Contexto de tenant no disponible' } });
+            if (!tenantId) return res.status(403).render('errors/generic', { error: { message: 'Contexto de tenant no disponible' } });
 
             const proveedores = await ProveedorService.getAll(tenantId);
 
@@ -17,7 +17,7 @@ class ProveedoresController {
             });
         } catch (error) {
             console.error('Error al obtener proveedores:', error);
-            res.status(500).render('errors/internal', {
+            res.status(500).render('errors/generic', {
                 error: { message: 'Error al obtener proveedores' }
             });
         }
