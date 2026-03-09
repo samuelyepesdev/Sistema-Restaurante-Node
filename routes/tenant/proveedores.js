@@ -24,6 +24,7 @@ router.get('/', requirePermission('proveedores.ver'), ProveedoresController.inde
 router.get('/:id', requirePermission('proveedores.ver'), ProveedoresController.show);
 router.post('/', requirePermission('proveedores.editar'), ProveedoresController.store);
 router.put('/:id', requirePermission('proveedores.editar'), ProveedoresController.update);
+router.get('/:id/historial-costos', requirePermission('proveedores.ver'), ProveedoresController.getHistorialCostos);
 router.delete('/:id', requirePermission('proveedores.editar'), ProveedoresController.destroy);
 
 // --- Rutas de Facturas de Proveedores ---

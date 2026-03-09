@@ -1,5 +1,6 @@
 const ProveedorService = require('../../../../services/Tenant/ProveedorService');
 const ProveedorFacturaService = require('../../../../services/Tenant/ProveedorFacturaService');
+const ProveedorReporteRepository = require('../../../../repositories/Tenant/ProveedorReporteRepository');
 
 class ProveedoresController {
     // GET /proveedores
@@ -128,6 +129,19 @@ class ProveedoresController {
             res.json({ success: true, message: 'Factura eliminada' });
         } catch (error) {
             res.status(400).json({ error: error.message });
+        }
+    }
+
+    // --- REPORTES Y ESTADÍSTICAS ---
+
+    // GET /proveedores/:id/historial-costos
+    static async getHistorialCostos(req, res) {
+        try {
+            const tenantId = req.tenant?.id;
+            const history = await ProveedorReporteRepository.getHistorialCostos(tenantId, parseInt(req.params.id));
+            res.json(history);
+        } catch (error) {
+            res.status(500).json({ error: error.message });
         }
     }
 }

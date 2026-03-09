@@ -61,6 +61,10 @@
                                         data-nombre="<%= p.nombre %>" title="Facturas">
                                         <i class="bi bi-receipt text-success"></i>
                                     </button>
+                                    <button class="btn btn-white btn-sm btn-historial" data-id="<%= p.id %>"
+                                        data-nombre="<%= p.nombre %>" title="Historial de Costos">
+                                        <i class="bi bi-graph-up text-info"></i>
+                                    </button>
                                     <button class="btn btn-white btn-sm btn-editar" data-id="<%= p.id %>"
                                         title="Editar">
                                         <i class="bi bi-pencil-square text-primary"></i>
@@ -133,10 +137,14 @@
                                 </div>
                             </div>
 
-                            <div class="border-top pt-3 d-flex justify-content-between gap-2">
+                            <div class="border-top pt-3 d-flex flex-wrap justify-content-between gap-2">
                                 <button class="btn btn-light-success btn-sm flex-grow-1 py-2 btn-facturas"
                                     data-id="<%= p.id %>" data-nombre="<%= p.nombre %>">
                                     <i class="bi bi-receipt me-1"></i> Facturas
+                                </button>
+                                <button class="btn btn-light-info btn-sm flex-grow-1 py-2 btn-historial"
+                                    data-id="<%= p.id %>" data-nombre="<%= p.nombre %>">
+                                    <i class="bi bi-graph-up me-1"></i> Historial
                                 </button>
                                 <button class="btn btn-light-primary btn-sm flex-grow-1 py-2 btn-editar"
                                     data-id="<%= p.id %>">

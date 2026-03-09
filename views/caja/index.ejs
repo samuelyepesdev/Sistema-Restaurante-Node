@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Control de Caja - <%= tenant.nombre %>
+    </title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="/css/modulos/caja.css">
+</head>
+
+<body class="bg-light">
+    <%- include('../partials/navbar', { user: user, tenant: tenant }) %>
+
+        <div class="container py-4">
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <h2 class="fw-bold"><i class="bi bi-wallet2 me-2 text-primary"></i>Control de Caja</h2>
+                    <p class="text-muted">Gestión de turnos, arqueos y base inicial.</p>
+                </div>
+            </div>
+
+            <% if (!estado.abierta) { %>
+                <!-- Pantalla de Caja Cerrada -->
+                <div class="row justify-content-center py-5">
+                    <div class="col-md-6 text-center">
+                        <div class="card border-0 shadow-lg rounded-4 p-4">
+                            <div class="display-1 text-muted mb-4"><i class="bi bi-door-closed"></i></div>
+                            <h3 class="fw-bold">Turno Cerrado</h3>
+                            <p class="text-muted mb-4">Para comenzar a registrar ventas y movimientos, debes abrir el
+                                turno de caja con una base inicial.</p>
+
+                            <form id="formAbrirCaja">
+                                <div class="mb-3 text-start">
+                                    <label class="form-label fw-bold small text-muted">Monto Inicial (Base)</label>
+                                    <div class="input-group input-group-lg">
+                                        <span
+                                            class="input-group-text bg-white border-end-0 text-success fw-bold">$</span>
+                                        <input type="number" step="0.01"
+                                            class="form-control border-start-0 ps-0 fw-bold" name="monto_inicial"
+                                            placeholder="0.00" required autofocus>
+                                    </div>
+                                </div>
+                                <div class="mb-4 text-start">
+                                    <label class="form-label fw-bold small text-muted">Notas de apertura
+                                        (Opcional)</label>
+                                    <textarea class="form-control rounded-3" name="notas" rows="2"
+                                        placeholder="Ej: Recibido por Samuel..."></textarea>
+                                </div>
+                                <button type="submit" class="btn btn-primary btn-lg w-100 rounded-pill shadow-sm py-3">
+                                    <i class="bi bi-unlock me-2"></i>Abrir Turno de Caja
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                <% } else { %>
+                    <!-- Pantalla de Caja Abierta -->
+                    <div class="row g-4">
+                        <!-- Estado Actual -->
+                        <div class="col-lg-8">
+                            <div class="card border-0 shadow-sm rounded-4 mb-4 overflow-hidden">
+                                <div class="card-header bg-primary text-white py-3 border-0">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <h5 class="mb-0 fw-bold"><i class="bi bi-clock-history me-2"></i>Turno Activo
+                                        </h5>
+                                        <span class="badge bg-white text-primary rounded-pill px-3">ABIERTA</span>
+                                    </div>
+                                </div>
+                                <div class="card-body p-4">
+                                    <div class="row g-3">
+                                        <div class="col-md-4">
+                                            <div class="p-3 bg-light rounded-4 text-center h-100">
+                                                <div class="text-muted small mb-1">Caja Inicial</div>
+                                                <div class="h4 fw-bold mb-0">$<%= new
+                                                        Intl.NumberFormat('es-CO').format(estado.sesion.monto_inicial)
+                                                        %>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div
+                                                class="p-3 bg-light rounded-4 text-center h-100 border border-success border-opacity-25">
+                                                <div class="text-success small mb-1">Ventas Acumuladas</div>
+                                                <div class="h4 fw-bold mb-0">$<%= new
+                                                        Intl.NumberFormat('es-CO').format(estado.sesion.ventas) %>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div
+                                                class="p-3 bg-light rounded-4 text-center h-100 border border-danger border-opacity-25">
+                                                <div class="text-danger small mb-1">Efectivo en Caja (Teórico)</div>
+                                                <div class="h4 fw-bold mb-0">$<%= new
+                                                        Intl.NumberFormat('es-CO').format(estado.sesion.monto_final_teorico)
+                                                        %>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="mt-4 pt-4 border-top">
+                                        <div class="d-flex flex-wrap gap-2">
+                                            <button class="btn btn-success rounded-pill px-4 py-2"
+                                                data-bs-toggle="modal" data-bs-target="#modalMovimiento"
+                                                onclick="setTipoMov('entrada')">
+                                                <i class="bi bi-plus-circle me-1"></i> Entrada de Dinero
+                                            </button>
+                                            <button class="btn btn-outline-danger rounded-pill px-4 py-2"
+                                                data-bs-toggle="modal" data-bs-target="#modalMovimiento"
+                                                onclick="setTipoMov('salida')">
+                                                <i class="bi bi-dash-circle me-1"></i> Gasto / Salida
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="card border-0 shadow-sm rounded-4">
+                                <div class="card-header bg-white border-0 py-3">
+                                    <h6 class="mb-0 fw-bold">Detalles del Turno</h6>
+                                </div>
+                                <div class="card-body p-0">
+                                    <div class="table-responsive">
+                                        <table class="table table-hover align-middle mb-0">
+                                            <thead class="bg-light">
+                                                <tr class="small text-muted">
+                                                    <th class="ps-4">Apertura</th>
+                                                    <th>Usuario</th>
+                                                    <th>Ventas</th>
+                                                    <th>Mvs. Manuales</th>
+                                                    <th class="text-end pe-4">Total</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr>
+                                                    <td class="ps-4">
+                                                        <div class="fw-bold">
+                                                            <%= new
+                                                                Date(estado.sesion.fecha_apertura).toLocaleTimeString()
+                                                                %>
+                                                        </div>
+                                                        <div class="small text-muted">
+                                                            <%= new
+                                                                Date(estado.sesion.fecha_apertura).toLocaleDateString()
+                                                                %>
+                                                        </div>
+                                                    </td>
+                                                    <td>
+                                                        <%= user.nombre %>
+                                                    </td>
+                                                    <td class="text-success fw-bold">+$<%= new
+                                                            Intl.NumberFormat('es-CO').format(estado.sesion.ventas) %>
+                                                    </td>
+                                                    <td>
+                                                        <div class="small text-success">+$<%= new
+                                                                Intl.NumberFormat('es-CO').format(estado.sesion.entradas)
+                                                                %>
+                                                        </div>
+                                                        <div class="small text-danger">-$<%= new
+                                                                Intl.NumberFormat('es-CO').format(estado.sesion.salidas)
+                                                                %>
+                                                        </div>
+                                                    </td>
+                                                    <td class="text-end pe-4 fw-bold h5">
+                                                        $<%= new
+                                                            Intl.NumberFormat('es-CO').format(estado.sesion.monto_final_teorico)
+                                                            %>
+                                                    </td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Acciones de Cierre -->
+                        <div class="col-lg-4">
+                            <div class="card border-0 shadow-sm rounded-4 sticky-top" style="top: 1rem;">
+                                <div class="card-body p-4 text-center">
+                                    <h5 class="fw-bold mb-3">Arqueo y Cierre</h5>
+                                    <p class="text-muted small">Al finalizar el día, cuenta el efectivo físico y
+                                        compáralo con el total del sistema.</p>
+
+                                    <form id="formCerrarCaja" data-id="<%= estado.sesion.id %>">
+                                        <div class="mb-3 text-start">
+                                            <label class="form-label small fw-bold">Efectivo Físico Contado</label>
+                                            <div class="input-group">
+                                                <span class="input-group-text bg-white">$</span>
+                                                <input type="number" step="0.01" name="monto_final_real"
+                                                    class="form-control fw-bold" required placeholder="0.00">
+                                            </div>
+                                        </div>
+                                        <div class="mb-4 text-start">
+                                            <label class="form-label small fw-bold">Notas de cierre</label>
+                                            <textarea class="form-control" name="notas" rows="3"
+                                                placeholder="Ej: Todo cuadra perfecto..."></textarea>
+                                        </div>
+                                        <button type="submit" class="btn btn-danger w-100 rounded-pill py-3 fw-bold">
+                                            <i class="bi bi-lock-fill me-2"></i>Cerrar Turno de Caja
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <% } %>
+        </div>
+
+        <!-- Modales -->
+        <div class="modal fade" id="modalMovimiento" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content border-0 shadow rounded-4">
+                    <form id="formMovimiento" data-id="<%= estado.abierta ? estado.sesion.id : '' %>">
+                        <div class="modal-header border-0">
+                            <h5 class="modal-title fw-bold" id="titleMov">Registrar Movimiento</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                            <input type="hidden" name="tipo" id="tipoMov">
+                            <div class="mb-3">
+                                <label class="form-label small fw-bold">Monto</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">$</span>
+                                    <input type="number" step="0.01" name="monto" class="form-control" required>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label small fw-bold">Motivo / Descripción</label>
+                                <input type="text" name="motivo" class="form-control"
+                                    placeholder="Ej: Compra de hielo, Pago propina..." required>
+                            </div>
+                        </div>
+                        <div class="modal-footer border-0">
+                            <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button>
+                            <button type="submit" class="btn btn-primary px-4">Guardar</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+        <script src="/js/modulos/caja.js"></script>
+</body>
+
+</html>

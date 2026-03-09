@@ -1,0 +1,36 @@
+/* Caja Styles */
+.rounded-4 {
+    border-radius: 1rem !important;
+}
+
+.input-group-text {
+    border-color: #dee2e6;
+}
+
+.card {
+    transition: transform 0.2s;
+}
+
+.bg-primary {
+    background: linear-gradient(135deg, #4e73df 0%, #224abe 100%) !important;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #4e73df 0%, #224abe 100%);
+    border: none;
+}
+
+.btn-primary:hover {
+    background: linear-gradient(135deg, #224abe 0%, #4e73df 100%);
+}
+
+.sticky-top {
+    z-index: 1020;
+}
+
+@media (max-width: 991.98px) {
+    .sticky-top {
+        position: relative !important;
+        top: 0 !important;
+    }
+}

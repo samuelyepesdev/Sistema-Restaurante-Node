@@ -44,7 +44,10 @@ const PERMISSION_TO_MODULE = {
     'proveedores.ver': 'inventario',
     'proveedores.editar': 'inventario',
     'whatsapp.ver': 'configuracion',
-    'whatsapp.ajustes': 'configuracion'
+    'whatsapp.ajustes': 'configuracion',
+    'caja.ver': 'caja',
+    'caja.abrir_cerrar': 'caja',
+    'caja.movimientos': 'caja'
 };
 
 // Módulos que se usan en navbar / rutas (para allowedByPlan)
@@ -53,7 +56,7 @@ const PERMISSION_TO_MODULE = {
 const PLAN_MODULES = [
     'dashboard', 'productos', 'clientes', 'mesas', 'cocina', 'ventas', 'configuracion',
     'inventario', 'recetas', 'eventos', 'analitica', 'prediccion_ml',
-    'plantillas', 'importar_exportar', 'costeo'
+    'plantillas', 'importar_exportar', 'costeo', 'caja'
 ];
 
 /**

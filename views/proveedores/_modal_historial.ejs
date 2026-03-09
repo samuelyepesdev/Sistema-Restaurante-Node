@@ -1,0 +1,58 @@
+<div class="modal fade" id="modalHistorialCostos" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-fullscreen-sm-down">
+        <div class="modal-content border-0 shadow rounded-4">
+            <div class="modal-header border-0 pb-0">
+                <div class="d-flex align-items-center">
+                    <div class="icon-box bg-light-info text-info me-3 rounded-circle p-2"
+                        style="width: 45px; height: 45px; display: flex; align-items: center; justify-content: center;">
+                        <i class="bi bi-graph-up"></i>
+                    </div>
+                    <div>
+                        <h5 class="modal-title fw-bold mb-0">Historial de Costos</h5>
+                        <p class="text-muted small mb-0" id="historialProveedorNombre"></p>
+                    </div>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+
+            <div class="modal-body">
+                <div class="alert alert-info border-0 rounded-4 mb-4 small">
+                    <i class="bi bi-info-circle me-2"></i>
+                    Aquí puedes ver la variación de precios de los insumos comprados a este proveedor.
+                </div>
+
+                <div class="table-responsive" style="max-height: 400px;">
+                    <table class="table table-hover align-middle border-top">
+                        <thead class="bg-light sticky-top">
+                            <tr>
+                                <th class="small py-2">Fecha</th>
+                                <th class="small py-2">Insumo</th>
+                                <th class="text-end small py-2">Cant.</th>
+                                <th class="text-end small py-2">Costo Unit.</th>
+                                <th class="text-end small py-2">Subtotal</th>
+                            </tr>
+                        </thead>
+                        <tbody id="listaHistorialCuerpo">
+                            <!-- Se llena vía JS -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <div id="sinHistorialMsg" class="text-center py-5 d-none">
+                    <i class="bi bi-calendar-x display-4 text-muted mb-3 d-block"></i>
+                    <p class="text-muted">No se registran compras directas a este proveedor en el inventario.</p>
+                </div>
+            </div>
+
+            <div class="modal-footer border-0">
+                <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Cerrar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .bg-light-info {
+        background-color: rgba(13, 202, 240, 0.1) !important;
+    }
+</style>

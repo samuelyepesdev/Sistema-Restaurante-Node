@@ -47,6 +47,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (container) {
         container.addEventListener('click', (e) => {
             const btnFacturas = e.target.closest('.btn-facturas');
+            const btnHistorial = e.target.closest('.btn-historial');
             const btnEditar = e.target.closest('.btn-editar');
             const btnEliminar = e.target.closest('.btn-eliminar');
 
@@ -54,6 +55,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 const id = btnFacturas.dataset.id;
                 const nombre = btnFacturas.dataset.nombre;
                 abrirFacturas(id, nombre);
+            } else if (btnHistorial) {
+                const id = btnHistorial.dataset.id;
+                const nombre = btnHistorial.dataset.nombre;
+                abrirHistorial(id, nombre);
             } else if (btnEditar) {
                 const id = btnEditar.dataset.id;
                 editProveedor(id);
@@ -64,6 +69,51 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 });
+
+const modalHistorial = new bootstrap.Modal(document.getElementById('modalHistorialCostos'));
+
+async function abrirHistorial(id, nombre) {
+    document.getElementById('historialProveedorNombre').innerText = nombre;
+    await cargarHistorial(id);
+    modalHistorial.show();
+}
+
+async function cargarHistorial(proveedorId) {
+    const tbody = document.getElementById('listaHistorialCuerpo');
+    const msgVacio = document.getElementById('sinHistorialMsg');
+    tbody.innerHTML = '<tr><td colspan="5" class="text-center py-3"><div class="spinner-border spinner-border-sm text-primary"></div> Cargando historial...</td></tr>';
+
+    try {
+        const res = await fetch(`/proveedores/${proveedorId}/historial-costos`);
+        const data = await res.json();
+
+        tbody.innerHTML = '';
+        if (!data || data.length === 0) {
+            msgVacio.classList.remove('d-none');
+            return;
+        }
+
+        msgVacio.classList.add('d-none');
+        data.forEach(h => {
+            const fecha = new Date(h.fecha).toLocaleDateString();
+            const monto = new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP' }).format(h.costo_unitario);
+            const subtotal = new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP' }).format(h.subtotal);
+
+            const tr = `
+                <tr>
+                    <td class="small">${fecha}</td>
+                    <td class="fw-medium">${h.insumo}</td>
+                    <td class="text-end">${parseFloat(h.cantidad).toFixed(2)}</td>
+                    <td class="text-end fw-bold">${monto}</td>
+                    <td class="text-end text-muted">${subtotal}</td>
+                </tr>
+            `;
+            tbody.insertAdjacentHTML('beforeend', tr);
+        });
+    } catch (error) {
+        tbody.innerHTML = '<tr><td colspan="5" class="text-center text-danger">Error al cargar historial</td></tr>';
+    }
+}
 
 function resetForm() {
     document.getElementById('modalTitle').innerText = 'Nuevo Proveedor';
