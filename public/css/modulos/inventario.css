@@ -186,12 +186,19 @@ h1.h4 {
 .inventario-card {
     background: #fff;
     border-radius: 18px;
-    padding: 1.25rem;
+    padding: 1rem;
     margin-bottom: 1rem;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
     border: 1px solid #f1f5f9;
     position: relative;
     overflow: hidden;
+    transition: transform 0.2s ease;
+}
+
+@media (min-width: 576px) {
+    .inventario-card {
+        padding: 1.25rem;
+    }
 }
 
 .inventario-card::before {
@@ -209,10 +216,28 @@ h1.h4 {
 }
 
 .inventario-card .titulo {
-    font-size: 1.1rem;
+    font-size: 1rem;
     font-weight: 700;
     color: #1e293b;
-    margin-bottom: 0.25rem;
+    margin-bottom: 0.15rem;
+    line-height: 1.2;
+}
+
+@media (min-width: 576px) {
+    .inventario-card .titulo {
+        font-size: 1.1rem;
+    }
+}
+
+.inventario-card .btn-sm {
+    font-size: 0.75rem;
+    padding: 0.5rem 0.4rem;
+    font-weight: 600;
+}
+
+.inventario-card .badge {
+    font-size: 0.7rem;
+    padding: 0.4rem 0.6rem;
 }
 
 /* Animación de pulso para stock crítico */
