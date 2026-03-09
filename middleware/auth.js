@@ -59,7 +59,7 @@ function requireRole(...allowedRoles) {
             if (req.xhr || req.headers.accept?.indexOf('json') > -1) {
                 return res.status(403).json({ error: 'No tiene permisos para acceder a este recurso' });
             }
-            return res.status(403).render('error', {
+            return res.status(403).render('errors/generic', {
                 error: { message: 'No tiene permisos para acceder a esta página' }
             });
         }
@@ -87,7 +87,7 @@ function requirePermission(...requiredPermissions) {
             if (req.xhr || req.headers.accept?.indexOf('json') > -1) {
                 return res.status(403).json({ error: 'No tiene permisos para realizar esta acción' });
             }
-            return res.status(403).render('error', {
+            return res.status(403).render('errors/generic', {
                 error: { message: 'No tiene permisos para realizar esta acción' }
             });
         }

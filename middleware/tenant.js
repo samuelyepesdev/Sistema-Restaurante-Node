@@ -38,7 +38,7 @@ async function attachTenantContext(req, res, next) {
                 if (req.xhr || req.headers.accept?.indexOf('json') > -1) {
                     return res.status(403).json({ error: 'No hay tenant configurado' });
                 }
-                return res.status(403).render('error', { error: { message: 'No hay tenant configurado' } });
+                return res.status(403).render('errors/generic', { error: { message: 'No hay tenant configurado' } });
             }
             tenantId = defaultTenant.id;
             req.user.tenant_id = tenantId;
@@ -73,7 +73,7 @@ async function attachTenantContext(req, res, next) {
         if (req.xhr || req.headers.accept?.indexOf('json') > -1) {
             return res.status(500).json({ error: 'Error al cargar contexto del tenant' });
         }
-        res.status(500).render('error', { error: { message: 'Error al cargar contexto del tenant' } });
+        res.status(500).render('errors/generic', { error: { message: 'Error al cargar contexto del tenant' } });
     }
 }
 

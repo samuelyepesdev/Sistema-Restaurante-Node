@@ -22,7 +22,7 @@ function requirePlanFeature(featureSlug) {
             if (req.xhr || (req.headers.accept && req.headers.accept.indexOf('json') > -1)) {
                 return res.status(403).json({ error: 'Tu plan no incluye esta función. Contacta al administrador para actualizar.' });
             }
-            return res.status(403).render('error', { error: { message: 'Tu plan no incluye esta función. Contacta al administrador para actualizar.' } });
+            return res.status(403).render('errors/generic', { error: { message: 'Tu plan no incluye esta función. Contacta al administrador para actualizar.' } });
         }
         const plan = tenant.plan || null;
         const planIncludes = planHasModule(plan, featureSlug);
@@ -38,7 +38,7 @@ function requirePlanFeature(featureSlug) {
         if (req.xhr || (req.headers.accept && req.headers.accept.indexOf('json') > -1)) {
             return res.status(403).json({ error: 'Tu plan no incluye esta función. Contacta al administrador para actualizar.' });
         }
-        return res.status(403).render('error', { error: { message: 'Tu plan no incluye esta función. Contacta al administrador para actualizar.' } });
+        return res.status(403).render('errors/generic', { error: { message: 'Tu plan no incluye esta función. Contacta al administrador para actualizar.' } });
     };
 }
 
