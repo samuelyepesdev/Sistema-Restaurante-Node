@@ -1307,19 +1307,19 @@ $(function () {
 
   // Clicks en tarjetas de mesa
   let currentMesaEstado = null;
-  $('#gridMesas').on('click', '.btnAbrirPedido', function () {
+  $('.grid-mesas').on('click', '.btnAbrirPedido', function () {
     const card = $(this).closest('.card');
     const mesaId = card.data('mesa-id');
-    const titulo = card.find('.card-title').text().replace('Mesa ', '');
+    const titulo = card.find('.text-primary').text().trim();
     currentMesaEstado = card.data('mesa-estado') || 'libre';
     abrirPedido(mesaId, titulo);
   });
 
   // Liberar mesa desde tarjeta
-  $('#gridMesas').on('click', '.btnLiberarMesa', async function () {
+  $('.grid-mesas').on('click', '.btnLiberarMesa', async function () {
     const card = $(this).closest('.card');
     const mesaId = card.data('mesa-id');
-    const mesaNum = card.find('.card-title').text().replace('Mesa ', '');
+    const mesaNum = card.find('.text-primary').text().trim();
     const ok = await Swal.fire({ title: `Liberar mesa ${mesaNum}?`, text: 'Solo si no tiene items activos', icon: 'warning', showCancelButton: true, confirmButtonText: 'Sí, liberar' });
     if (!ok.isConfirmed) return;
     try {
@@ -1347,16 +1347,16 @@ $(function () {
   });
 
   // Ver pedido: reutiliza abrirPedido (recupera si existe, o crea si no)
-  $('#gridMesas').on('click', '.btnVerPedido', function () {
+  $('.grid-mesas').on('click', '.btnVerPedido', function () {
     const card = $(this).closest('.card');
     const mesaId = card.data('mesa-id');
-    const titulo = card.find('.card-title').text().replace('Mesa ', '');
+    const titulo = card.find('.text-primary').text().trim();
     currentMesaEstado = card.data('mesa-estado') || 'libre';
     abrirPedido(mesaId, titulo);
   });
 
   // Editar mesa (número y descripción)
-  $('#gridMesas').on('click', '.btnEditarMesa', async function () {
+  $('.grid-mesas').on('click', '.btnEditarMesa', async function () {
     const card = $(this).closest('.card');
     const mesaId = card.data('mesa-id');
     const numeroActual = $(this).data('mesa-numero');
@@ -1393,7 +1393,7 @@ $(function () {
   });
 
   // Eliminar mesa definitiva (nuevo permiso mesas.eliminar)
-  $('#gridMesas').on('click', '.btnEliminarMesa', async function () {
+  $('.grid-mesas').on('click', '.btnEliminarMesa', async function () {
     const card = $(this).closest('.card');
     const mesaId = card.data('mesa-id');
     const mesaNum = card.find('.text-primary').text().trim(); // Selector corregido para obtener el número

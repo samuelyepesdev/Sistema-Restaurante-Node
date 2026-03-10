@@ -51,6 +51,25 @@ class CocinaController {
             res.status(500).json({ error: 'Error al actualizar estado' });
         }
     }
+
+    // PUT /cocina/preparar-lote
+    static async updateGroupEstado(req, res) {
+        try {
+            const tenantId = req.tenant?.id;
+            if (!tenantId) return res.status(403).json({ error: 'Contexto de tenant no disponible' });
+
+            const { productoNombre, nota, estado } = req.body || {};
+            if (!productoNombre || !estado) {
+                return res.status(400).json({ error: 'productoNombre y estado son requeridos' });
+            }
+
+            const result = await CocinaService.updateGroupEstado(tenantId, productoNombre, nota, estado);
+            res.json(result);
+        } catch (error) {
+            console.error('Error al actualizar lote en cocina:', error);
+            res.status(500).json({ error: 'Error al actualizar lote' });
+        }
+    }
 }
 
 module.exports = CocinaController;

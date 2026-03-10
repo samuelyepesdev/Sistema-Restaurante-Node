@@ -48,6 +48,34 @@ class CocinaRepository {
         );
         return result;
     }
+
+    /**
+     * Update state for all items of a product (and note) that are in 'enviado' state
+     */
+    static async updateGroupEstado(tenantId, productoNombre, nota, estado) {
+        const timestampField = estado === 'preparando' ? 'preparado_at' : 'listo_at';
+
+        let query = `
+            UPDATE pedido_items pi
+            INNER JOIN pedidos p ON pi.pedido_id = p.id
+            INNER JOIN productos pr ON pi.producto_id = pr.id
+            SET pi.estado = ?, pi.${timestampField} = NOW()
+            WHERE p.tenant_id = ? 
+              AND pr.nombre = ?
+              AND pi.estado = 'enviado'
+        `;
+        const params = [estado, tenantId, productoNombre];
+
+        if (nota) {
+            query += " AND pi.nota = ?";
+            params.push(nota);
+        } else {
+            query += " AND (pi.nota IS NULL OR pi.nota = '')";
+        }
+
+        const [result] = await db.query(query, params);
+        return result;
+    }
 }
 
 module.exports = CocinaRepository;

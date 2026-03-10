@@ -11,4 +11,7 @@ router.get('/cola', CocinaController.getQueue);
 // API Estado item
 router.put('/item/:id/estado', CocinaController.updateItemEstado);
 
+// API Lote
+router.put('/preparar-lote', CocinaController.updateGroupEstado);
+
 module.exports = router;
