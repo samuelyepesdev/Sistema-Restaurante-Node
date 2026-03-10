@@ -171,3 +171,7 @@ body {
         margin-bottom: 0 !important;
     }
 }
+.bg-danger-light { background-color: rgba(220, 53, 69, 0.08) !important; }
+.btn-xs { padding: 0.2rem 0.4rem; font-size: 0.7rem; }
+.variaciones-list { max-height: 250px; overflow-y: auto; }
+@media (max-width: 576px) { .btn-preparar-lote { padding: 0.4rem 0.2rem !important; font-size: 0.7rem !important; } }

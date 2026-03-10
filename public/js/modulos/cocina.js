@@ -192,14 +192,13 @@ $(function () {
         }
 
         // Agrupación de primer nivel por Nombre de Producto
-        const resumenProductos = new Map(); // producto_nombre -> { total, pendientesTotal, unidades, variaciones: Map(nota -> {total, pendientes}) }
+        const resumenProductos = new Map(); // producto_nombre -> { total, pendientesTotal, unidades, variaciones: Map(nota -> {total, enviado, preparando}) }
 
         items.forEach(it => {
             const nombre = it.producto_nombre;
             if (!resumenProductos.has(nombre)) {
                 resumenProductos.set(nombre, {
                     total: 0,
-                    pendientesTotal: 0,
                     unidades: new Set(),
                     variaciones: new Map()
                 });
@@ -207,16 +206,16 @@ $(function () {
 
             const pData = resumenProductos.get(nombre);
             pData.total += Number(it.cantidad);
-            if (it.estado === 'enviado') pData.pendientesTotal += Number(it.cantidad);
             pData.unidades.add(it.unidad_medida || 'UND');
 
             const notaKey = it.nota || '';
             if (!pData.variaciones.has(notaKey)) {
-                pData.variaciones.set(notaKey, { total: 0, pendientes: 0 });
+                pData.variaciones.set(notaKey, { total: 0, enviado: 0, preparando: 0 });
             }
             const vData = pData.variaciones.get(notaKey);
             vData.total += Number(it.cantidad);
-            if (it.estado === 'enviado') vData.pendientes += Number(it.cantidad);
+            if (it.estado === 'enviado') vData.enviado += Number(it.cantidad);
+            if (it.estado === 'preparando') vData.preparando += Number(it.cantidad);
         });
 
         let html = `
@@ -250,20 +249,37 @@ $(function () {
                 const isNota = !!nota;
 
                 html += `
-                    <div class="mb-2 p-1 rounded ${isNota ? 'bg-danger-subtle' : 'bg-white border-light'}" style="font-size: 0.75rem;">
+                    <div class="mb-2 p-1 rounded ${isNota ? 'bg-danger-light border border-danger' : 'bg-white border-light'} shadow-none" style="font-size: 0.75rem;">
                         <div class="d-flex justify-content-between align-items-center mb-1">
-                            <span class="${isNota ? 'text-danger fw-bold' : 'text-muted'}">${label}: <strong>${vData.total}</strong></span>
+                            <span class="${isNota ? 'text-danger fw-bold' : 'text-muted'}" style="line-height: 1.1;">${label}</span>
+                            <span class="badge ${isNota ? 'bg-danger' : 'bg-primary'} badge-pill" style="font-size: 0.7rem;">${vData.total}</span>
                         </div>
-                        ${vData.pendientes > 0 ? `
-                            <button class="btn btn-xs btn-primary w-100 py-1 btn-preparar-lote" 
+                        
+                        <div class="d-flex flex-column flex-sm-row gap-1">
+                        ${vData.enviado > 0 ? `
+                            <button class="btn btn-xs btn-primary flex-fill px-1 py-1 btn-preparar-lote" 
                                 data-nombre="${pNombre}" 
                                 data-nota="${nota}"
-                                style="font-size: 0.65rem;">
-                                <i class="bi bi-play-fill"></i> Iniciar (${vData.pendientes})
+                                data-estado="preparando"
+                                title="Iniciar preparación">
+                                <i class="bi bi-play-fill"></i> Iniciar (${vData.enviado})
                             </button>
-                        ` : `
-                            <div class="text-success x-small text-center"><i class="bi bi-check2"></i> En proceso</div>
-                        `}
+                        ` : ''}
+
+                        ${vData.preparando > 0 ? `
+                            <button class="btn btn-xs btn-success flex-fill px-1 py-1 btn-preparar-lote" 
+                                data-nombre="${pNombre}" 
+                                data-nota="${nota}"
+                                data-estado="listo"
+                                title="Marcar todos como listos">
+                                <i class="bi bi-check-all"></i> Listo (${vData.preparando})
+                            </button>
+                        ` : ''}
+                        </div>
+
+                        ${vData.enviado === 0 && vData.preparando === 0 ? `
+                            <div class="text-success x-small text-center pt-1" style="font-size: 0.65rem;"><i class="bi bi-check2-all"></i> Todo listo</div>
+                        ` : ''}
                     </div>
                 `;
             });
@@ -291,7 +307,9 @@ $(function () {
         const btn = $(this);
         const productoNombre = btn.data('nombre');
         const nota = btn.data('nota');
+        const estado = btn.data('estado'); // nuevo: tomamos el estado del botón (preparando o listo)
 
+        const oldHtml = btn.html();
         btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span>');
 
         try {
@@ -301,7 +319,7 @@ $(function () {
                 body: JSON.stringify({
                     productoNombre,
                     nota,
-                    estado: 'preparando'
+                    estado
                 })
             });
 
@@ -309,8 +327,8 @@ $(function () {
             await cargarCola();
         } catch (error) {
             console.error('Error batch:', error);
-            alert('Error al preparar el lote');
-            btn.prop('disabled', false).html('<i class="bi bi-play-fill"></i> Preparar');
+            alert('Error al actualizar el lote');
+            btn.prop('disabled', false).html(oldHtml);
         }
     });
 

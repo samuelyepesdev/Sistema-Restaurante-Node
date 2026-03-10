@@ -55,6 +55,10 @@ class CocinaRepository {
     static async updateGroupEstado(tenantId, productoNombre, nota, estado) {
         const timestampField = estado === 'preparando' ? 'preparado_at' : 'listo_at';
 
+        // Si el objetivo es 'listo', podemos actualizar tanto lo que está 'enviado' como 'preparando'.
+        // Si el objetivo es 'preparando', solo lo que está 'enviado'.
+        const currentStates = estado === 'preparando' ? ['enviado'] : ['enviado', 'preparando'];
+
         let query = `
             UPDATE pedido_items pi
             INNER JOIN pedidos p ON pi.pedido_id = p.id
@@ -62,11 +66,12 @@ class CocinaRepository {
             SET pi.estado = ?, pi.${timestampField} = NOW()
             WHERE p.tenant_id = ? 
               AND pr.nombre = ?
-              AND pi.estado = 'enviado'
+              AND pi.estado IN (?)
         `;
-        const params = [estado, tenantId, productoNombre];
 
-        if (nota) {
+        const params = [estado, tenantId, productoNombre, currentStates];
+
+        if (nota && nota !== '') {
             query += " AND pi.nota = ?";
             params.push(nota);
         } else {
