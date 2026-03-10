@@ -182,9 +182,6 @@ $(function () {
         }
     }
 
-    /**
-     * Render the prep summary (totals to prepare)
-     */
     function renderResumen(items) {
         const container = $('#resumenCocina');
         if (container.length === 0) return;
@@ -194,63 +191,85 @@ $(function () {
             return;
         }
 
-        // Aggregate by product and note
-        const resumen = new Map();
+        // Agrupación de primer nivel por Nombre de Producto
+        const resumenProductos = new Map(); // producto_nombre -> { total, pendientesTotal, unidades, variaciones: Map(nota -> {total, pendientes}) }
+
         items.forEach(it => {
-            // Se agrupa por nombre de producto y la nota (si existe)
-            const key = `${it.producto_nombre}|${it.nota || ''}`;
-            if (!resumen.has(key)) {
-                resumen.set(key, {
-                    nombre: it.producto_nombre,
-                    nota: it.nota,
+            const nombre = it.producto_nombre;
+            if (!resumenProductos.has(nombre)) {
+                resumenProductos.set(nombre, {
                     total: 0,
-                    pendientes: 0, // items en estado 'enviado'
-                    unidades: new Set()
+                    pendientesTotal: 0,
+                    unidades: new Set(),
+                    variaciones: new Map()
                 });
             }
-            const data = resumen.get(key);
-            data.total += Number(it.cantidad);
-            if (it.estado === 'enviado') {
-                data.pendientes += Number(it.cantidad);
+
+            const pData = resumenProductos.get(nombre);
+            pData.total += Number(it.cantidad);
+            if (it.estado === 'enviado') pData.pendientesTotal += Number(it.cantidad);
+            pData.unidades.add(it.unidad_medida || 'UND');
+
+            const notaKey = it.nota || '';
+            if (!pData.variaciones.has(notaKey)) {
+                pData.variaciones.set(notaKey, { total: 0, pendientes: 0 });
             }
-            data.unidades.add(it.unidad_medida || 'UND');
+            const vData = pData.variaciones.get(notaKey);
+            vData.total += Number(it.cantidad);
+            if (it.estado === 'enviado') vData.pendientes += Number(it.cantidad);
         });
 
         let html = `
             <div class="card shadow-sm border-0 border-start border-4 border-primary">
-                <div class="card-header bg-white py-3">
+                <div class="card-header bg-white py-2">
                     <h5 class="card-title mb-0 fw-bold text-primary">
-                        <i class="bi bi-list-check me-2"></i>Totales a preparar (Resumen)
+                        <i class="bi bi-list-check me-2"></i>Totales Consolidados
                     </h5>
                 </div>
-                <div class="card-body bg-light px-2">
+                <div class="card-body bg-light px-2 py-2">
                     <div class="row row-cols-2 row-cols-md-3 row-cols-lg-4 g-2">
         `;
 
-        resumen.forEach((data) => {
-            const unidadStr = Array.from(data.unidades).join('/');
+        resumenProductos.forEach((pData, pNombre) => {
+            const unidadStr = Array.from(pData.unidades).join('/');
+
             html += `
                 <div class="col">
                     <div class="card h-100 border-0 shadow-sm resumen-item">
-                        <div class="card-body p-3">
-                            <div class="d-flex justify-content-between align-items-center mb-2">
-                                <span class="h2 fw-bold text-primary mb-0">${data.total}</span>
-                                <span class="badge bg-secondary">${unidadStr}</span>
+                        <div class="card-body p-2">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <span class="h2 fw-bold text-primary mb-0">${pData.total}</span>
+                                <span class="badge bg-secondary" style="font-size: 0.6rem;">${unidadStr}</span>
                             </div>
-                            <h6 class="fw-bold mb-1">${data.nombre}</h6>
-                            ${data.nota ? `<div class="badge bg-danger text-wrap text-start w-100 mb-2" style="font-size: 0.75rem;">${data.nota}</div>` : '<div class="small text-muted mb-2">Estándar</div>'}
-                            
-                            ${data.pendientes > 0 ? `
-                                <button class="btn btn-sm btn-primary w-100 mt-1 btn-preparar-lote" 
-                                    data-nombre="${data.nombre}" 
-                                    data-nota="${data.nota || ''}">
-                                    <i class="bi bi-play-fill"></i> Preparar (${data.pendientes})
-                                </button>
-                            ` : `
-                                <div class="text-center small text-success fw-bold mt-1">
-                                    <i class="bi bi-check-circle"></i> Todos en preparación
-                                </div>
-                            `}
+                            <h6 class="fw-bold mb-2 text-dark border-bottom pb-1">${pNombre}</h6>
+                            <div class="variaciones-list">
+            `;
+
+            pData.variaciones.forEach((vData, nota) => {
+                const label = nota || 'Estándar';
+                const isNota = !!nota;
+
+                html += `
+                    <div class="mb-2 p-1 rounded ${isNota ? 'bg-danger-subtle' : 'bg-white border-light'}" style="font-size: 0.75rem;">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <span class="${isNota ? 'text-danger fw-bold' : 'text-muted'}">${label}: <strong>${vData.total}</strong></span>
+                        </div>
+                        ${vData.pendientes > 0 ? `
+                            <button class="btn btn-xs btn-primary w-100 py-1 btn-preparar-lote" 
+                                data-nombre="${pNombre}" 
+                                data-nota="${nota}"
+                                style="font-size: 0.65rem;">
+                                <i class="bi bi-play-fill"></i> Iniciar (${vData.pendientes})
+                            </button>
+                        ` : `
+                            <div class="text-success x-small text-center"><i class="bi bi-check2"></i> En proceso</div>
+                        `}
+                    </div>
+                `;
+            });
+
+            html += `
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -265,6 +284,7 @@ $(function () {
 
         container.append(html);
     }
+
 
     // Evento para preparar lote
     $(document).on('click', '.btn-preparar-lote', async function () {
