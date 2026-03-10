@@ -17,11 +17,15 @@ class StoreTenantRequest extends BaseRequest {
                 .notEmpty().withMessage('El correo electrónico es obligatorio')
                 .isEmail().withMessage('Correo electrónico inválido'),
 
-            body('slug')
-                .if(body().custom((_, { req }) => req.method === 'POST'))
-                .notEmpty().withMessage('El slug es obligatorio')
-                .matches(/^[a-z0-9-]+$/).withMessage('El slug solo puede contener letras minúsculas, números y guiones')
-                .isLength({ max: 50 }).withMessage('El slug no puede exceder 50 caracteres'),
+            body('slug').custom((value, { req }) => {
+                if (req.method === 'POST' && (!value || value.trim() === '')) {
+                    throw new Error('El slug es obligatorio');
+                }
+                if (value && !/^[a-z0-9-]+$/.test(value)) {
+                    throw new Error('El slug solo puede contener letras minúsculas, números y guiones');
+                }
+                return true;
+            }),
 
             body('plan_id')
                 .optional({ checkFalsy: true })
