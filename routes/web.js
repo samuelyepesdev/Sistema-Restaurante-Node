@@ -35,6 +35,7 @@ const perfilRoutes = require('./tenant/perfil');
 const whatsappRoutes = require('./tenant/whatsapp');
 const proveedoresRoutes = require('./tenant/proveedores');
 const cajaRoutes = require('./tenant/caja');
+const NotificationController = require('../app/Http/Controllers/Tenant/NotificationController');
 
 // --- RUTAS PÚBLICAS Y AUTH ---
 router.use('/auth', authRoutes);
@@ -68,6 +69,9 @@ router.use('/api/facturas', requireAuthWithTenant, requirePlanFeature('ventas'),
 router.use('/api/mesas', requireAuthWithTenant, requirePlanFeature('mesas'), requirePermission('mesas.ver'), mesasRoutes);
 router.use('/api/cocina', requireAuthWithTenant, requirePlanFeature('cocina'), requirePermission('cocina.ver'), cocinaRoutes);
 router.use('/api/dashboard', requireAuthWithTenant, requirePlanFeature('dashboard'), dashboardRoutes);
+
+// --- RUTA DE NOTIFICACIONES (SSE) ---
+router.get('/api/notifications/subscribe', requireAuthWithTenant, NotificationController.subscribe);
 
 // --- RUTAS DE SUPERADMIN ---
 router.use('/admin/dashboard', requireAuth, adminDashboardRoutes);

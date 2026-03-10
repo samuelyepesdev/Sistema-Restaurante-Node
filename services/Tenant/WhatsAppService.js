@@ -3,12 +3,14 @@ const qrcode = require('qrcode');
 const db = require('../../config/database');
 const path = require('path');
 const fs = require('fs');
+const EventEmitter = require('events');
 
 class WhatsAppService {
     constructor() {
         this.clients = new Map(); // client_id -> WhatsApp Client
         this.qrCodes = new Map(); // tenant_id -> QR Base64
         this.initializing = new Set(); // tenant_id -> boolean
+        this.events = new EventEmitter();
     }
 
     /**
@@ -470,6 +472,9 @@ class WhatsAppService {
             [tenantId, phone]);
 
         console.log(`[WhatsApp] SE CREÓ PEDIDO #${pedidoId} en Mesa ${mesaId} para Tenant ${tenantId}`);
+
+        // Emitir evento para notificaciones en tiempo real
+        this.events.emit('orderCreated', { tenantId, pedidoId, mesaId });
     }
 }
 

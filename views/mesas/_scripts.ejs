@@ -74,4 +74,55 @@
             }
         });
     });
+
+    // Real-time notifications for new orders (WhatsApp)
+    (function () {
+        if (!!window.EventSource) {
+            const source = new EventSource('/api/notifications/subscribe');
+
+            source.addEventListener('message', function (e) {
+                try {
+                    const data = JSON.parse(e.data);
+                    if (data.event === 'orderCreated') {
+                        console.log('Nuevo pedido detectado:', data);
+
+                        // Notificación visual opcional con SweetAlert2
+                        const Toast = Swal.mixin({
+                            toast: true,
+                            position: 'top-end',
+                            showConfirmButton: false,
+                            timer: 3000,
+                            timerProgressBar: true
+                        });
+
+                        Toast.fire({
+                            icon: 'info',
+                            title: 'Nuevo pedido de WhatsApp',
+                            text: 'Recargando mesas...'
+                        });
+
+                        // Recargar la página después de un pequeño delay para que el usuario vea el toast
+                        setTimeout(() => {
+                            window.location.reload();
+                        }, 1500);
+                    }
+                } catch (err) {
+                    console.error('Error procesando notificación:', err);
+                }
+            }, false);
+
+            source.addEventListener('error', function (e) {
+                if (e.readyState == EventSource.CLOSED) {
+                    console.log('SSE connection closed');
+                } else {
+                    console.error('SSE error:', e);
+                }
+            }, false);
+
+            // Cerrar conexión al salir de la página
+            window.addEventListener('beforeunload', () => {
+                source.close();
+            });
+        }
+    })();
 </script>
