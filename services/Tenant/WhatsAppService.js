@@ -167,9 +167,41 @@ class WhatsAppService {
         }
 
         if (body === 'cancelar') {
+            // 1. Limpiar estado de conversación actual (carrito pendiente)
             await db.query('UPDATE whatsapp_conversations SET current_state = "welcome", pending_order_data = NULL WHERE tenant_id = ? AND customer_phone = ?',
                 [tenantId, from]);
-            await msg.reply('Pedido cancelado correctamente. Escribe *HOLA* para empezar de nuevo.');
+
+            // 2. Intentar buscar un pedido ACTIVO que se haya hecho recientemente desde este número
+            // Buscamos por la mesa virtual asociada a este número
+            const tableNumber = `WA-${from.substring(from.length - 4)}`;
+            const [activeOrders] = await db.query(
+                `SELECT p.id, p.mesa_id, p.estado 
+                 FROM pedidos p 
+                 JOIN mesas m ON p.mesa_id = m.id 
+                 WHERE p.tenant_id = ? AND m.numero = ? AND p.estado NOT IN ('cerrado', 'cancelado')
+                 ORDER BY p.created_at DESC LIMIT 1`,
+                [tenantId, tableNumber]
+            );
+
+            if (activeOrders.length > 0) {
+                const pedido = activeOrders[0];
+
+                // Cancelar el pedido y sus items
+                await db.query('UPDATE pedidos SET estado = "cancelado" WHERE id = ?', [pedido.id]);
+                await db.query('UPDATE pedido_items SET estado = "cancelado" WHERE pedido_id = ?', [pedido.id]);
+
+                // Liberar la mesa virtual
+                await db.query('UPDATE mesas SET estado = "libre", descripcion = NULL WHERE id = ?', [pedido.mesa_id]);
+
+                console.log(`[WhatsApp] PEDIDO #${pedido.id} CANCELADO por el cliente ${from}`);
+
+                // Notificar a cocina/mesas vía SSE para que desaparezca de las pantallas
+                this.events.emit('orderCreated', { tenantId, pedidoId: pedido.id, mesaId: pedido.mesa_id, action: 'cancelled' });
+
+                await msg.reply('Tu pedido activo ha sido cancelado. Si ya estaba en preparación, el personal ha sido notificado. 👋');
+            } else {
+                await msg.reply('Pedido (carrito) cancelado. Escribe *HOLA* para empezar de nuevo.');
+            }
             return;
         }
 

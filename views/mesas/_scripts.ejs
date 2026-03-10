@@ -84,27 +84,29 @@
                 try {
                     const data = JSON.parse(e.data);
                     if (data.event === 'orderCreated') {
-                        console.log('Nuevo pedido detectado:', data);
+                        console.log('Evento de pedido detectado:', data);
+
+                        const isCancelled = data.action === 'cancelled';
 
                         // Notificación visual opcional con SweetAlert2
                         const Toast = Swal.mixin({
                             toast: true,
                             position: 'top-end',
                             showConfirmButton: false,
-                            timer: 3000,
+                            timer: 4000,
                             timerProgressBar: true
                         });
 
                         Toast.fire({
-                            icon: 'info',
-                            title: 'Nuevo pedido de WhatsApp',
-                            text: 'Recargando mesas...'
+                            icon: isCancelled ? 'warning' : 'info',
+                            title: isCancelled ? 'Pedido Cancelado' : 'Nuevo pedido de WhatsApp',
+                            text: isCancelled ? `El pedido #${data.pedidoId} ha sido cancelado por el cliente.` : 'Recargando mesas...'
                         });
 
-                        // Recargar la página después de un pequeño delay para que el usuario vea el toast
+                        // Recargar la página para limpiar las mesas
                         setTimeout(() => {
                             window.location.reload();
-                        }, 1500);
+                        }, 2000);
                     }
                 } catch (err) {
                     console.error('Error procesando notificación:', err);

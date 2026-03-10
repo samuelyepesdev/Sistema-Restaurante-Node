@@ -175,3 +175,5 @@ body {
 .btn-xs { padding: 0.2rem 0.4rem; font-size: 0.7rem; }
 .variaciones-list { max-height: 250px; overflow-y: auto; }
 @media (max-width: 576px) { .btn-preparar-lote { padding: 0.4rem 0.2rem !important; font-size: 0.7rem !important; } }
+
+@media (max-width: 576px) { .mesa-card .card-header { padding: 0.4rem 0.6rem !important; font-size: 0.85rem !important; } .mesa-card .card-body { padding: 0.4rem !important; } .item-card { margin-bottom: 0.5rem !important; border-radius: 0.4rem !important; } .producto { font-size: 0.9rem !important; } }

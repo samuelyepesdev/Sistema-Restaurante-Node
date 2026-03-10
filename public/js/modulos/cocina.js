@@ -378,8 +378,43 @@ $(function () {
         }
     });
 
-    // Auto-refresh every 5 seconds
+    // Real-time notifications (SSE)
+    (function () {
+        if (!!window.EventSource) {
+            const source = new EventSource('/api/notifications/subscribe');
+
+            source.addEventListener('message', function (e) {
+                try {
+                    const data = JSON.parse(e.data);
+                    if (data.event === 'orderCreated') {
+                        console.log('Evento de cocina detectado:', data);
+
+                        // Si es una cancelación, mostrar alerta específica
+                        if (data.action === 'cancelled') {
+                            const Toast = Swal.mixin({
+                                toast: true, position: 'top-end', showConfirmButton: false, timer: 4000
+                            });
+                            Toast.fire({
+                                icon: 'warning',
+                                title: 'Pedido Cancelado',
+                                text: `El pedido #${data.pedidoId} ha sido cancelado.`
+                            });
+                        }
+
+                        // En cualquier caso (nuevo o cancelado), refrescar la cola inmediatamente
+                        cargarCola();
+                    }
+                } catch (err) {
+                    console.error('Error SSE Cocina:', err);
+                }
+            }, false);
+
+            window.addEventListener('beforeunload', () => source.close());
+        }
+    })();
+
+    // Auto-refresh every 5 seconds (fallback)
     cargarCola();
-    setInterval(cargarCola, 5000);
+    setInterval(cargarCola, 30000); // Aumentamos a 30s ya que tenemos SSE
     activarTabDesdeQuery();
 });
