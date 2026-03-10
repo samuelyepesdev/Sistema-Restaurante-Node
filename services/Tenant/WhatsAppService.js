@@ -124,23 +124,22 @@ class WhatsAppService {
     async handleIncomingMessage(tenantId, msg) {
         const from = msg.from; // Teléfono del cliente
 
-        // Normalizar texto: quitar acentos y pasar a minúsculas
+        // 1. FILTROS DE SEGURIDAD (Ignorar basura, estados, grupos y bots)
+        if (from.includes('@broadcast') || from.includes('@lid') || from.endsWith('@g.us')) {
+            return; // Silencio total para estados, listas de difusión y grupos
+        }
+
         const rawBody = msg.body || '';
         const body = rawBody.trim().toLowerCase()
             .normalize("NFD").replace(/[\u0300-\u036f]/g, "") // Quitar acentos
             .replace(/\.$/, '');
 
-        console.log(`[WhatsApp] Mensaje RECIBIDO de ${from} (Tenant ${tenantId}): "${msg.body}" -> Normalizado: "${body}"`);
-
-        // SEGURIDAD: Solo permitir chats individuales (evitar grupos)
-        // @c.us es estándar, pero algunas cuentas de empresa usan otros formatos.
-        // Lo importante es NO responder en grupos (@g.us)
-        if (from.endsWith('@g.us')) {
-            console.log(`[WhatsApp] Ignorando mensaje de grupo: ${from}`);
-            return;
+        if (!body || body.length === 0) {
+            return; // No responder a mensajes vacíos (stickers, señales internas, etc)
         }
 
-        if (from.includes('@broadcast')) return; // Ignorar estados
+        // Solo logueamos si pasó los filtros iniciales
+        console.log(`[WhatsApp] Mensaje RECIBIDO de ${from} (Tenant ${tenantId}): "${msg.body}"`);
 
 
         // 1. Obtener Configuración y Conversación
