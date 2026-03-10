@@ -17,7 +17,7 @@ class NotificationController {
         res.setHeader('Connection', 'keep-alive');
         res.flushHeaders();
 
-        console.log(`[SSE] Cliente suscrito para Tenant ${tenantId}`);
+        // console.log(`[SSE] Cliente suscrito para Tenant ${tenantId}`);
 
         // Callback para cuando se crea un pedido
         const onOrderCreated = (data) => {
@@ -33,7 +33,7 @@ class NotificationController {
 
         // Limpiar al cerrar la conexión
         req.on('close', () => {
-            console.log(`[SSE] Cliente desconectado para Tenant ${tenantId}`);
+            // console.log(`[SSE] Cliente desconectado para Tenant ${tenantId}`);
             WhatsAppService.events.removeListener('orderCreated', onOrderCreated);
         });
 

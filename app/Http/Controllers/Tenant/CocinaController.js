@@ -6,7 +6,24 @@ class CocinaController {
         try {
             const tenantId = req.tenant?.id;
             if (!tenantId) return res.status(403).render('errors/internal', { error: { message: 'Contexto de tenant no disponible' } });
-            const items = await CocinaService.getQueue(tenantId);
+
+            let items = await CocinaService.getQueue(tenantId);
+
+            // Filtrado por permisos
+            if (req.user && req.user.rol !== 'admin') {
+                const canSeeAll = req.user.permisos?.includes('cocina.ver_todo');
+                const canSeeReady = req.user.permisos?.includes('cocina.ver_listos');
+
+                if (!canSeeAll) {
+                    // Si no puede ver todo, le quitamos lo que no esté listo
+                    items = items.filter(it => it.estado === 'listo');
+                }
+                if (!canSeeReady && !canSeeAll) {
+                    // Si no puede ver listos ni todo, pues nada (aunque debería tener al menos uno si entró aquí)
+                    items = [];
+                }
+            }
+
             res.render('cocina/index', {
                 items: items || [],
                 user: req.user,
@@ -25,7 +42,22 @@ class CocinaController {
         try {
             const tenantId = req.tenant?.id;
             if (!tenantId) return res.status(403).json({ error: 'Contexto de tenant no disponible' });
-            const items = await CocinaService.getQueue(tenantId);
+
+            let items = await CocinaService.getQueue(tenantId);
+
+            // Filtrado por permisos
+            if (req.user && req.user.rol !== 'admin') {
+                const canSeeAll = req.user.permisos?.includes('cocina.ver_todo');
+                const canSeeReady = req.user.permisos?.includes('cocina.ver_listos');
+
+                if (!canSeeAll) {
+                    items = items.filter(it => it.estado === 'listo');
+                }
+                if (!canSeeReady && !canSeeAll) {
+                    items = [];
+                }
+            }
+
             res.json(items);
         } catch (error) {
             console.error('Error al obtener cola:', error);

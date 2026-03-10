@@ -32,6 +32,8 @@ const PERMISSIONS = {
 
     // Kitchen
     COCINA_VER: 'cocina.ver',
+    COCINA_VER_TODO: 'cocina.ver_todo',
+    COCINA_VER_LISTOS: 'cocina.ver_listos',
     COCINA_GESTIONAR: 'cocina.gestionar',
 
     // Invoices
@@ -74,7 +76,7 @@ const PERMISSION_SECTIONS = {
     Productos: ['productos.ver', 'productos.crear', 'productos.editar', 'productos.eliminar', 'productos.importar'],
     Clientes: ['clientes.ver', 'clientes.crear', 'clientes.editar', 'clientes.eliminar'],
     Mesas: ['mesas.ver', 'mesas.gestionar', 'mesas.editar'],
-    Cocina: ['cocina.ver', 'cocina.gestionar'],
+    Cocina: ['cocina.ver', 'cocina.ver_todo', 'cocina.ver_listos', 'cocina.gestionar'],
     Facturas: ['facturas.crear', 'facturas.ver'],
     Ventas: ['ventas.ver', 'ventas.exportar'],
     Configuración: ['configuracion.ver', 'configuracion.editar'],
