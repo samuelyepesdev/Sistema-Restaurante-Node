@@ -159,10 +159,17 @@ class WhatsAppService {
             conversation = { current_state: 'welcome' };
         }
 
-        // 2. Comandos globales (Reset)
+        // 2. Comandos globales (Reset / Cancel)
         if (body === 'menu' || body === 'hola' || body === 'inicio') {
             await this.updateConversationState(tenantId, from, 'selecting_category');
             await this.sendCategories(tenantId, msg);
+            return;
+        }
+
+        if (body === 'cancelar') {
+            await db.query('UPDATE whatsapp_conversations SET current_state = "welcome", pending_order_data = NULL WHERE tenant_id = ? AND customer_phone = ?',
+                [tenantId, from]);
+            await msg.reply('Pedido cancelado correctamente. Escribe *HOLA* para empezar de nuevo.');
             return;
         }
 
@@ -224,11 +231,30 @@ class WhatsAppService {
 
                         let resMsg = `✅ *${selectedP.nombre}* añadido.\n\n`;
                         resMsg += '*Tu pedido:*\n';
-                        cartData.cart.forEach(item => resMsg += `- ${item.nombre}\n`);
-                        resMsg += '\nEscribe otro número para añadir más, *MENU* para ver otras categorías, o *PEDIR* para finalizar.';
+                        cartData.cart.forEach((item, i) => resMsg += `${i + 1}. ${item.nombre}\n`);
+                        resMsg += '\nEscribe otro número para añadir más, "QUITAR [n]" para eliminar uno, *MENU* para otras categorías, o *PEDIR* para finalizar.';
                         await msg.reply(resMsg);
                     } else {
                         await msg.reply('Número de producto no válido.');
+                    }
+                } else if (body.startsWith('quitar ')) {
+                    const removeIdx = parseInt(body.replace('quitar ', '')) - 1;
+                    if (!isNaN(removeIdx) && cartData.cart && cartData.cart[removeIdx]) {
+                        const removed = cartData.cart.splice(removeIdx, 1)[0];
+                        await db.query('UPDATE whatsapp_conversations SET pending_order_data = ? WHERE tenant_id = ? AND customer_phone = ?',
+                            [JSON.stringify(cartData), tenantId, from]);
+
+                        let resMsg = `❌ *${removed.nombre}* eliminado del carrito.\n\n`;
+                        if (cartData.cart.length > 0) {
+                            resMsg += '*Tu pedido actual:*\n';
+                            cartData.cart.forEach((item, i) => resMsg += `${i + 1}. ${item.nombre}\n`);
+                            resMsg += '\nEscribe otro número para añadir, "QUITAR [n]" para eliminar, o *PEDIR* para finalizar.';
+                        } else {
+                            resMsg += 'Tu carrito está vacío ahora. Elige algo del menú.';
+                        }
+                        await msg.reply(resMsg);
+                    } else {
+                        await msg.reply('Número de item no válido para quitar. Ejemplo: "QUITAR 1"');
                     }
                 } else if (body === 'pedir') {
                     if (!cartData.cart || cartData.cart.length === 0) {
@@ -238,7 +264,7 @@ class WhatsAppService {
                     await msg.reply('¿Cómo prefieres tu pedido?\n\n1. 🛵 *Domicilio*\n2. 🥡 *Para recoger / En local*');
                     await this.updateConversationState(tenantId, from, 'selecting_order_type');
                 } else {
-                    await msg.reply('Opción no válida. Escribe el número del producto o *PEDIR* para terminar.');
+                    await msg.reply('Opción no válida. Escribe el número del producto, "QUITAR [n]" para eliminar uno, o *PEDIR* para terminar.');
                 }
                 break;
 

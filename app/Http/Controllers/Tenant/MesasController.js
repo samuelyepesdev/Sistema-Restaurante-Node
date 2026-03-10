@@ -355,7 +355,8 @@ class MesasController {
             const check = await InventarioService.checkStockParaProducto(tenantId, producto_id, parseFloat(cantidad) || 1);
             if (!check.ok) {
                 const msg = (check.faltantes || []).map(f => `${f.insumo_nombre}: requiere ${f.requerido} ${f.unidad_base}, disponible ${f.disponible}`).join('; ');
-                return res.status(400).json({ error: 'No hay stock suficiente para este producto. ' + msg });
+                console.warn('[Inventario] Vendiendo sin stock suficiente: ' + msg);
+                // No bloqueamos la venta, permitimos stock negativo
             }
             const subtotal = Number(cantidad) * Number(precio);
             const [pedidoRow] = await db.query('SELECT mesa_id FROM pedidos WHERE id = ? AND tenant_id = ?', [pedidoId, tenantId]);

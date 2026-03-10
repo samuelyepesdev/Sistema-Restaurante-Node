@@ -83,7 +83,9 @@ class InventarioService {
         const cant = parseFloat(cantidad);
         if (cant <= 0) throw new Error('La cantidad debe ser mayor a 0');
         const stockActual = parseFloat(insumo.stock_actual) || 0;
-        if (stockActual < cant) throw new Error(`Stock insuficiente para ${insumo.nombre}. Disponible: ${stockActual}`);
+        if (stockActual < cant) {
+            console.warn(`[Inventario] Stock insuficiente para ${insumo.nombre}. Disponible: ${stockActual}, Requerido: ${cant}. Se permitirá stock negativo.`);
+        }
         const conn = await db.getConnection();
         try {
             await conn.beginTransaction();
