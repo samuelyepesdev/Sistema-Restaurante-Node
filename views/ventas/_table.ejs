@@ -97,6 +97,51 @@
                                             <% } %>
                         </tbody>
                     </table>
+
+                    <% if (isHoy) { let subTotalEfectivo=0; let subTotalTransferencia=0; listaVentas.forEach(v=> {
+                        const fp = (v.forma_pago || '').toLowerCase();
+                        if (fp === 'efectivo') subTotalEfectivo += Number(v.total || 0);
+                        if (fp === 'transferencia') subTotalTransferencia += Number(v.total || 0);
+                        });
+                        let subTotalGeneral = subTotalEfectivo + subTotalTransferencia;
+                        %>
+                        <!-- Resumen de Hoy en Cards (Fuera de la tabla, solo en Ventas de Hoy) -->
+                        <div class="resumen-hoy-cards row g-3 mt-1 mb-4">
+                            <div class="col-md-4">
+                                <div class="card border-0 shadow-sm" style="border-radius: 12px;">
+                                    <div class="card-body p-3">
+                                        <div class="text-muted small text-uppercase fw-bold mb-1"
+                                            style="font-size: 0.7rem;">Efectivo del Día</div>
+                                        <div class="h5 mb-0 fw-bold">$<%= subTotalEfectivo.toLocaleString('es-CO', {
+                                                minimumFractionDigits: 2 }) %>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card border-0 shadow-sm" style="border-radius: 12px;">
+                                    <div class="card-body p-3">
+                                        <div class="text-muted small text-uppercase fw-bold mb-1"
+                                            style="font-size: 0.7rem;">Transferencia del Día</div>
+                                        <div class="h5 mb-0 fw-bold">$<%= subTotalTransferencia.toLocaleString('es-CO',
+                                                { minimumFractionDigits: 2 }) %>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card border-0 shadow-sm" style="border-radius: 12px;">
+                                    <div class="card-body p-3">
+                                        <div class="text-primary small text-uppercase fw-bold mb-1"
+                                            style="font-size: 0.7rem;">Total del Día</div>
+                                        <div class="h5 mb-0 fw-bold text-primary">$<%=
+                                                subTotalGeneral.toLocaleString('es-CO', { minimumFractionDigits: 2 }) %>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <% } %>
     </div>
     <% }; %>
 
