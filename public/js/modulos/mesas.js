@@ -1392,6 +1392,38 @@ $(function () {
     }
   });
 
+  // Eliminar mesa definitiva (nuevo permiso mesas.eliminar)
+  $('#gridMesas').on('click', '.btnEliminarMesa', async function () {
+    const card = $(this).closest('.card');
+    const mesaId = card.data('mesa-id');
+    const mesaNum = card.find('.text-primary').text().trim(); // Selector corregido para obtener el número
+
+    const result = await Swal.fire({
+      title: '¿Confirmar eliminación?',
+      text: `Se eliminará la Mesa ${mesaNum} permanentemente. Esta acción no se puede deshacer.`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Sí, eliminar mesa',
+      cancelButtonText: 'Cancelar',
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#3085d6'
+    });
+
+    if (!result.isConfirmed) return;
+
+    try {
+      Swal.fire({ title: 'Eliminando...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+      const r = await fetch(`/api/mesas/${mesaId}`, { method: 'DELETE' });
+      const data = await r.json();
+
+      if (!r.ok) throw new Error(data.error || 'No se pudo eliminar la mesa');
+
+      Swal.fire({ icon: 'success', title: 'Mesa eliminada', text: 'La mesa ha sido borrada del sistema.', timer: 2000 }).then(() => location.reload());
+    } catch (err) {
+      Swal.fire({ icon: 'error', title: 'Error', text: err.message });
+    }
+  });
+
   // Crear nueva mesa (rápida) - descripción obligatoria
   $('#btnNuevaMesa').on('click', async function () {
     const { value: numero } = await Swal.fire({ title: 'Número de mesa', input: 'text', showCancelButton: true, inputValidator: v => !v?.trim() ? 'El número es obligatorio' : null });

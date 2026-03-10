@@ -751,6 +751,40 @@ class MesasController {
             res.status(500).json({ error: 'Error al asociar cliente' });
         }
     }
+
+    // DELETE /mesas/:mesaId
+    static async destroy(req, res) {
+        try {
+            const tenantId = req.tenant?.id;
+            if (!tenantId) return res.status(403).json({ error: 'Contexto de tenant no disponible' });
+
+            const mesaId = req.params.mesaId;
+
+            // Verificar si la mesa tiene pedidos activos
+            const [pedidos] = await db.query(
+                `SELECT id FROM pedidos WHERE mesa_id = ? AND estado NOT IN ('cerrado', 'cancelado') LIMIT 1`,
+                [mesaId]
+            );
+
+            if (pedidos.length > 0) {
+                return res.status(400).json({ error: 'No se puede eliminar la mesa porque tiene un pedido activo.' });
+            }
+
+            const [result] = await db.query(
+                'DELETE FROM mesas WHERE id = ? AND tenant_id = ?',
+                [mesaId, tenantId]
+            );
+
+            if (result.affectedRows === 0) {
+                return res.status(404).json({ error: 'Mesa no encontrada' });
+            }
+
+            res.json({ success: true, message: 'Mesa eliminada correctamente.' });
+        } catch (error) {
+            console.error('Error al eliminar mesa:', error);
+            res.status(500).json({ error: 'Error al eliminar la mesa' });
+        }
+    }
 }
 
 module.exports = MesasController;

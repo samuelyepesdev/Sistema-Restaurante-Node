@@ -43,14 +43,18 @@
                     </td>
                     <td class="text-center">
                         <div class="action-buttons">
-                            <button class="btn btn-sm btn-outline-primary me-1" data-cliente-id="<%= cliente.id %>"
-                                data-action="editar" title="Editar">
-                                <i class="bi bi-pencil"></i>
-                            </button>
-                            <button class="btn btn-sm btn-outline-danger" data-cliente-id="<%= cliente.id %>"
-                                data-action="eliminar" title="Eliminar">
-                                <i class="bi bi-trash"></i>
-                            </button>
+                            <% if (user && user.permisos && user.permisos.includes('clientes.editar')) { %>
+                                <button class="btn btn-sm btn-outline-primary me-1" data-cliente-id="<%= cliente.id %>"
+                                    data-action="editar" title="Editar">
+                                    <i class="bi bi-pencil"></i>
+                                </button>
+                                <% } %>
+                                    <% if (user && user.permisos && user.permisos.includes('clientes.eliminar')) { %>
+                                        <button class="btn btn-sm btn-outline-danger"
+                                            data-cliente-id="<%= cliente.id %>" data-action="eliminar" title="Eliminar">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                        <% } %>
                         </div>
                     </td>
                 </tr>
@@ -90,12 +94,17 @@
             </div>
 
             <div class="cliente-actions">
-                <button class="btn btn-outline-primary" data-cliente-id="<%= cliente.id %>" data-action="editar">
-                    <i class="bi bi-pencil me-1"></i> Editar
-                </button>
-                <button class="btn btn-outline-danger" data-cliente-id="<%= cliente.id %>" data-action="eliminar">
-                    <i class="bi bi-trash me-1"></i> Borrar
-                </button>
+                <% if (user && user.permisos && user.permisos.includes('clientes.editar')) { %>
+                    <button class="btn btn-outline-primary" data-cliente-id="<%= cliente.id %>" data-action="editar">
+                        <i class="bi bi-pencil me-1"></i> Editar
+                    </button>
+                    <% } %>
+                        <% if (user && user.permisos && user.permisos.includes('clientes.eliminar')) { %>
+                            <button class="btn btn-outline-danger" data-cliente-id="<%= cliente.id %>"
+                                data-action="eliminar">
+                                <i class="bi bi-trash me-1"></i> Borrar
+                            </button>
+                            <% } %>
             </div>
         </div>
         <% }); %>

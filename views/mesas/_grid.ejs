@@ -52,6 +52,7 @@
                                                 <i class="bi bi-unlock me-1"></i>Liberar
                                             </button>
                                             <% } %>
+
                                                 <% if (user && user.permisos && user.permisos.includes('mesas.editar'))
                                                     { %>
                                                     <button class="btn btn-outline-secondary btn-sec btnEditarMesa"
@@ -61,6 +62,15 @@
                                                         <i class="bi bi-pencil"></i>
                                                     </button>
                                                     <% } %>
+
+                                                        <% if (user && user.permisos &&
+                                                            user.permisos.includes('mesas.eliminar')) { %>
+                                                            <button
+                                                                class="btn btn-outline-danger btn-sec btnEliminarMesa"
+                                                                title="Eliminar mesa definitiva">
+                                                                <i class="bi bi-trash"></i>
+                                                            </button>
+                                                            <% } %>
                                     </div>
                     </div>
                 </div>

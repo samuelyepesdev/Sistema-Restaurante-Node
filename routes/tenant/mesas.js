@@ -60,4 +60,7 @@ router.put('/:mesaId/liberar', MesasController.liberarMesa);
 // PUT /mesas/pedidos/:pedidoId/cliente - Cliente del pedido
 router.put('/pedidos/:pedidoId/cliente', MesasController.updatePedidoCliente);
 
+// DELETE /mesas/:mesaId - Eliminar mesa definitiva
+router.delete('/:mesaId', requirePermission('mesas.eliminar'), MesasController.destroy);
+
 module.exports = router;
