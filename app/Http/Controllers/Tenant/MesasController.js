@@ -273,9 +273,11 @@ class MesasController {
             if (pedidos.length === 0) return res.status(404).json({ error: 'Pedido no encontrado' });
             const pedido = pedidos[0];
             const [items] = await db.query(`
-                SELECT i.*, p.nombre AS producto_nombre 
+                SELECT i.*, 
+                       COALESCE(p.nombre, s.nombre) AS producto_nombre 
                 FROM pedido_items i
-                JOIN productos p ON p.id = i.producto_id
+                LEFT JOIN productos p ON p.id = i.producto_id
+                LEFT JOIN servicios s ON s.id = i.servicio_id
                 WHERE i.pedido_id = ?
                 ORDER BY i.created_at ASC
             `, [pedidoId]);
@@ -371,6 +373,40 @@ class MesasController {
         } catch (error) {
             console.error('Error al agregar item:', error);
             res.status(500).json({ error: 'Error al agregar item' });
+        }
+    }
+
+    // POST /mesas/pedidos/:pedidoId/servicios
+    static async addService(req, res) {
+        try {
+            const tenantId = req.tenant?.id;
+            if (!tenantId) return res.status(403).json({ error: 'Contexto de tenant no disponible' });
+
+            const pedidoId = req.params.pedidoId;
+            const { servicio_id, cantidad, precio, nota } = req.body || {};
+            
+            if (!servicio_id || !cantidad || !precio) {
+                return res.status(400).json({ error: 'servicio_id, cantidad y precio son requeridos' });
+            }
+
+            const subtotal = Number(cantidad) * Number(precio);
+            const [pedidoRow] = await db.query('SELECT mesa_id FROM pedidos WHERE id = ? AND tenant_id = ?', [pedidoId, tenantId]);
+            if (pedidoRow.length === 0) return res.status(404).json({ error: 'Pedido no encontrado' });
+            
+            const mesaId = pedidoRow[0].mesa_id;
+
+            const [result] = await db.query(
+                `INSERT INTO pedido_items (tenant_id, pedido_id, servicio_id, es_servicio, cantidad, unidad_medida, precio_unitario, subtotal, estado, nota)
+                 VALUES (?, ?, ?, 1, ?, 'SERV', ?, ?, 'listo', ?)` ,
+                [tenantId, pedidoId, servicio_id, cantidad, precio, subtotal, nota || null]
+            );
+
+            if (mesaId) await db.query("UPDATE mesas SET estado = 'ocupada' WHERE id = ? AND tenant_id = ?", [mesaId, tenantId]);
+            
+            res.status(201).json({ id: result.insertId });
+        } catch (error) {
+            console.error('Error al agregar servicio:', error);
+            res.status(500).json({ error: 'Error al agregar servicio' });
         }
     }
 
@@ -493,7 +529,16 @@ class MesasController {
                     const subtotal = Math.round(cant * precioUnit * (1 - desc) * 100) / 100;
                     const precioUnitFactura = desc > 0 ? Math.round(precioUnit * (1 - desc) * 100) / 100 : precioUnit;
                     total += subtotal;
-                    return { producto_id: i.producto_id, cantidad: cant, precio_unitario: precioUnitFactura, unidad_medida: i.unidad_medida || 'UND', subtotal, descuento_porcentaje: desc > 0 ? pct : null };
+                    return { 
+                        producto_id: i.producto_id, 
+                        servicio_id: i.servicio_id,
+                        es_servicio: i.es_servicio,
+                        cantidad: cant, 
+                        precio_unitario: precioUnitFactura, 
+                        unidad_medida: i.unidad_medida || 'UND', 
+                        subtotal, 
+                        descuento_porcentaje: desc > 0 ? pct : null 
+                    };
                 });
                 total = Math.round(total * 100) / 100;
                 const propina = Math.max(0, parseFloat(propinaBody != null ? propinaBody : pedido.propina) || 0);
@@ -519,15 +564,28 @@ class MesasController {
                 );
                 const facturaId = facturaInsert.insertId;
 
-                const detallesValuesFinal = lineasFactura.map(l => [facturaId, l.producto_id, l.cantidad, l.precio_unitario, l.unidad_medida, l.subtotal, l.descuento_porcentaje]);
+                const detallesValuesFinal = lineasFactura.map(l => [
+                    facturaId, 
+                    l.producto_id, 
+                    l.servicio_id,
+                    l.es_servicio,
+                    l.cantidad, 
+                    l.precio_unitario, 
+                    l.unidad_medida, 
+                    l.subtotal, 
+                    l.descuento_porcentaje
+                ]);
+
                 await connection.query(
-                    `INSERT INTO detalle_factura (factura_id, producto_id, cantidad, precio_unitario, unidad_medida, subtotal, descuento_porcentaje) VALUES ?`,
+                    `INSERT INTO detalle_factura (factura_id, producto_id, servicio_id, es_servicio, cantidad, precio_unitario, unidad_medida, subtotal, descuento_porcentaje) VALUES ?`,
                     [detallesValuesFinal]
                 );
 
                 for (const l of lineasFactura) {
                     try {
-                        await InventarioService.descontarPorReceta(tenantId, l.producto_id, l.cantidad, 'factura_' + facturaId);
+                        if (!l.es_servicio && l.producto_id) {
+                            await InventarioService.descontarPorReceta(tenantId, l.producto_id, l.cantidad, 'factura_' + facturaId);
+                        }
                     } catch (invErr) {
                         console.error('Error al descontar inventario por receta:', invErr);
                     }

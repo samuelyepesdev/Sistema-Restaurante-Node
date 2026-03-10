@@ -93,13 +93,18 @@
             </div>
             <div class="row g-2 mb-2">
                 <div class="col-6">
-                    <button type="button" id="btnAplicarDescuentoMesa" class="btn btn-outline-primary w-100"><i
-                            class="bi bi-percent me-1"></i>Aplicar descuento</button>
+                    <button type="button" id="btnAplicarDescuentoMesa" class="btn btn-outline-primary w-100 mt-2"><i
+                            class="bi bi-percent me-1"></i>Descuento</button>
                 </div>
                 <div class="col-6">
-                    <button type="button" id="btnPropinaMesa" class="btn btn-outline-success w-100"><i
+                    <button type="button" id="btnPropinaMesa" class="btn btn-outline-success w-100 mt-2"><i
                             class="bi bi-cash-stack me-1"></i>Propina</button>
                 </div>
+            </div>
+            <div class="d-grid gap-2 mb-3">
+                <button type="button" id="btnAgregarServicioMesa" class="btn btn-outline-info w-100">
+                    <i class="bi bi-truck me-1"></i>Agregar Servicio
+                </button>
             </div>
             <div class="d-grid gap-2">
                 <button id="btnMoverMesa" class="btn btn-outline-secondary"><i
@@ -335,6 +340,26 @@
                 <button type="button" class="btn btn-success" id="btnConfirmarPago" disabled>
                     <i class="bi bi-check-lg me-2"></i>Confirmar Pago
                 </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Seleccionar Servicio -->
+<div class="modal fade" id="modalServiciosMesa" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header bg-light border-0 py-3">
+                <h6 class="modal-title fw-bold"><i class="bi bi-truck me-2"></i>Servicios Disponibles</h6>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-0">
+                <div id="listaServiciosDisponibles" class="list-group list-group-flush" style="max-height: 400px; overflow-y: auto;">
+                    <div class="text-center py-4 text-muted">
+                        <div class="spinner-border spinner-border-sm text-primary mb-2"></div>
+                        <br><small>Cargando servicios...</small>
+                    </div>
+                </div>
             </div>
         </div>
     </div>

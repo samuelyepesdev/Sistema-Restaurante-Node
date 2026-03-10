@@ -18,7 +18,9 @@ class VentaRepository {
             SELECT f.id, f.numero, DATE_FORMAT(f.fecha, '%Y-%m-%d %H:%i:%s') AS fecha, f.cliente_id, f.forma_pago, f.total, f.evento_id,
                    c.nombre AS cliente_nombre,
                    e.nombre AS evento_nombre,
-                   CASE WHEN f.evento_id IS NOT NULL THEN CONCAT('Evento: ', e.nombre) ELSE 'Venta diaria' END AS tipo_venta
+                   CASE WHEN f.evento_id IS NOT NULL THEN CONCAT('Evento: ', e.nombre) ELSE 'Venta diaria' END AS tipo_venta,
+                   (SELECT COALESCE(SUM(df.subtotal), 0) FROM detalle_factura df JOIN servicios s ON s.id = df.servicio_id WHERE df.factura_id = f.id AND df.es_servicio = 1 AND s.es_externo = 1) AS total_servicios_externos,
+                   (SELECT COALESCE(SUM(df.subtotal), 0) FROM detalle_factura df WHERE df.factura_id = f.id AND (df.es_servicio = 0 OR df.es_servicio IS NULL)) AS total_productos
             FROM facturas f
             LEFT JOIN clientes c ON f.cliente_id = c.id
             LEFT JOIN eventos e ON f.evento_id = e.id

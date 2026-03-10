@@ -35,7 +35,12 @@ const perfilRoutes = require('./tenant/perfil');
 const whatsappRoutes = require('./tenant/whatsapp');
 const proveedoresRoutes = require('./tenant/proveedores');
 const cajaRoutes = require('./tenant/caja');
+const serviciosRoutes = require('./tenant/servicios');
 const NotificationController = require('../app/Http/Controllers/Tenant/NotificationController');
+
+// ...
+router.use('/servicios', requireAuthWithTenant, serviciosRoutes);
+router.use('/api/servicios', requireAuthWithTenant, serviciosRoutes);
 
 // --- RUTAS PÚBLICAS Y AUTH ---
 router.use('/auth', authRoutes);

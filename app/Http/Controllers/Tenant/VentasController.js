@@ -27,21 +27,31 @@ class VentasController {
                 VentaService.getWithFilters(tenantId, filters),
                 VentaService.getTablesReadyToPay(tenantId)
             ]);
-            let totalEfectivo = 0, totalTransferencia = 0, totalGeneral = 0;
+            let totalEfectivo = 0, totalTransferencia = 0, totalGeneral = 0, totalServiciosExternos = 0;
             (ventas || []).forEach(function (v) {
-                const t = Number(v.total) || 0;
-                totalGeneral += t;
+                const totalFactura = Number(v.total) || 0;
+                const totalExternos = Number(v.total_servicios_externos) || 0;
+                const netSale = totalFactura - totalExternos;
+
+                totalGeneral += netSale; // Solo sumamos la venta neta (productos)
+                totalServiciosExternos += totalExternos;
+
                 const fp = String(v.forma_pago || '').toLowerCase().trim();
-                if (fp === 'efectivo') totalEfectivo += t; else if (fp === 'transferencia') totalTransferencia += t;
+                // Proporcionalmente asignamos a efectivo/transf
+                if (fp === 'efectivo') totalEfectivo += netSale; 
+                else if (fp === 'transferencia') totalTransferencia += netSale;
+                
                 v.fechaISO = toFechaISOUtc(v.fecha);
             });
+
             res.render('ventas/index', {
                 ventas,
                 mesasListas: mesasListas || [],
                 eventoFiltro,
                 totalEfectivo,
                 totalTransferencia,
-                totalGeneral,
+                totalGeneral, // Ahora es el total de solo productos
+                totalServiciosExternos,
                 user: req.user,
                 tenant: req.tenant,
                 allowedByPlan: res.locals.allowedByPlan || {}

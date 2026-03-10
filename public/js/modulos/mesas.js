@@ -1460,6 +1460,79 @@ $(function () {
         }
       });
     }
+
+  // --- SERVICIOS ---
+  const modalServicios = new bootstrap.Modal('#modalServiciosMesa');
+
+  $('#btnAgregarServicioMesa').on('click', async function() {
+    if (!pedidoActual || !pedidoActual.id) return;
+    modalServicios.show();
+    await cargarServiciosDisponibles();
+  });
+
+  async function cargarServiciosDisponibles() {
+    try {
+      const container = $('#listaServiciosDisponibles');
+      container.html('<div class="text-center py-4"><div class="spinner-border spinner-border-sm text-primary"></div></div>');
+      
+      const r = await fetch('/api/servicios/lista');
+      const servicios = await r.json();
+      
+      container.empty();
+      if (servicios.length === 0) {
+        container.html('<div class="p-4 text-center text-muted small">No hay servicios activos</div>');
+        return;
+      }
+
+      servicios.forEach(s => {
+        container.append(`
+          <button type="button" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center py-3 btn-seleccionar-servicio" 
+                  data-id="${s.id}" data-precio="${s.precio}" data-nombre="${s.nombre}">
+            <div>
+              <div class="fw-bold">${s.nombre}</div>
+              <div class="text-muted small">${s.descripcion || ''}</div>
+            </div>
+            <div class="badge bg-primary rounded-pill">$${Number(s.precio).toLocaleString()}</div>
+          </button>
+        `);
+      });
+    } catch (e) {
+      console.error(e);
+      $('#listaServiciosDisponibles').html('<div class="p-4 text-center text-danger small">Error al cargar servicios</div>');
+    }
+  }
+
+  $(document).on('click', '.btn-seleccionar-servicio', async function() {
+    const id = $(this).data('id');
+    const precio = $(this).data('precio');
+    const nombre = $(this).data('nombre');
+    
+    try {
+      modalServicios.hide();
+      Utils.showLoading('Agregando servicio...');
+      
+      const r = await fetch(`/api/mesas/pedidos/${pedidoActual.id}/servicios`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          servicio_id: id,
+          cantidad: 1,
+          precio: precio,
+          nota: 'Servicio agregado'
+        })
+      });
+
+      const data = await r.json();
+      Utils.hideLoading();
+
+      if (!r.ok) throw new Error(data.error || 'Error al agregar servicio');
+      
+      await cargarPedido(pedidoActual.id);
+      AlertManager.success(`Servicio "${nombre}" agregado`);
+    } catch (e) {
+      Utils.hideLoading();
+      AlertManager.error(e.message);
+    }
   });
 });
 
