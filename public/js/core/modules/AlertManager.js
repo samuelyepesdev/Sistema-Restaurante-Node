@@ -82,6 +82,14 @@ class AlertManager {
             this.showBootstrapAlert(message, type, document.body, duration);
         }
     }
+
+    /**
+     * Aliases for toast notifications
+     */
+    static success(message, duration = 3000) { this.toast(message, 'success', duration); }
+    static error(message, duration = 3000) { this.toast(message, 'error', duration); }
+    static warning(message, duration = 3000) { this.toast(message, 'warning', duration); }
+    static info(message, duration = 3000) { this.toast(message, 'info', duration); }
 }
 
 // Export for use in modules

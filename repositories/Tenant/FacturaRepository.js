@@ -104,17 +104,19 @@ class FacturaRepository {
             // Insert invoice details (incl. descuento_porcentaje y precio_original para mostrar en factura impresa)
             const detallesValues = facturaData.productos.map(p => [
                 factura_id,
-                p.producto_id,
+                p.producto_id || null,
+                p.servicio_id || null,
+                p.es_servicio ? 1 : 0,
                 p.cantidad,
                 p.precio,
                 p.precio_original || p.precio, // Guardar precio original (catálogo)
-                p.unidad,
+                p.unidad || (p.es_servicio ? 'SERV' : 'UND'),
                 p.subtotal,
                 (p.descuento_porcentaje != null && p.descuento_porcentaje > 0) ? p.descuento_porcentaje : null
             ]);
 
             await connection.query(
-                'INSERT INTO detalle_factura (factura_id, producto_id, cantidad, precio_unitario, precio_original, unidad_medida, subtotal, descuento_porcentaje) VALUES ?',
+                'INSERT INTO detalle_factura (factura_id, producto_id, servicio_id, es_servicio, cantidad, precio_unitario, precio_original, unidad_medida, subtotal, descuento_porcentaje) VALUES ?',
                 [detallesValues]
             );
 

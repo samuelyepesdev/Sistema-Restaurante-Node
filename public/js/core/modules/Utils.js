@@ -99,6 +99,31 @@ class Utils {
             missing
         };
     }
+
+    /**
+     * Show loading overlay using SweetAlert2
+     * @param {string} title - Loading message
+     */
+    static showLoading(title = 'Cargando...') {
+        if (typeof Swal !== 'undefined') {
+            Swal.fire({
+                title: title,
+                allowOutsideClick: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+        }
+    }
+
+    /**
+     * Hide loading overlay
+     */
+    static hideLoading() {
+        if (typeof Swal !== 'undefined') {
+            Swal.close();
+        }
+    }
 }
 
 // Export for use in modules

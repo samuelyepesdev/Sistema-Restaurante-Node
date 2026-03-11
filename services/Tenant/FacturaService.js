@@ -21,10 +21,12 @@ class FacturaService {
         }
 
         for (const p of productos) {
-            const check = await InventarioService.checkStockParaProducto(tenantId, p.producto_id, parseFloat(p.cantidad) || 1);
-            if (!check.ok) {
-                const msg = (check.faltantes || []).map(f => `${f.insumo_nombre}: requiere ${f.requerido} ${f.unidad_base}, disponible ${f.disponible}`).join('; ');
-                throw new Error('No hay stock suficiente para realizar esta venta. ' + msg);
+            if (!p.es_servicio && p.producto_id) {
+                const check = await InventarioService.checkStockParaProducto(tenantId, p.producto_id, parseFloat(p.cantidad) || 1);
+                if (!check.ok) {
+                    const msg = (check.faltantes || []).map(f => `${f.insumo_nombre}: requiere ${f.requerido} ${f.unidad_base}, disponible ${f.disponible}`).join('; ');
+                    throw new Error('No hay stock suficiente para realizar esta venta. ' + msg);
+                }
             }
         }
 
@@ -39,7 +41,9 @@ class FacturaService {
         const facturaId = result.insertId;
         for (const p of productos) {
             try {
-                await InventarioService.descontarPorReceta(tenantId, p.producto_id, parseFloat(p.cantidad) || 1, 'factura_' + facturaId);
+                if (!p.es_servicio && p.producto_id) {
+                    await InventarioService.descontarPorReceta(tenantId, p.producto_id, parseFloat(p.cantidad) || 1, 'factura_' + facturaId);
+                }
             } catch (err) {
                 console.error('Error al descontar inventario por receta:', err);
             }
