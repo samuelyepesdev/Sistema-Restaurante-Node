@@ -38,7 +38,7 @@ $(function () {
         <tr>
           <td class="td-producto">${(it.producto_nombre || it.nombre || it.producto_id) + descBadge}</td>
           <td class="text-center">${cantidad}</td>
-          <td class="text-end">${formatear(precio)}</td>
+          <td class="text-end d-none d-sm-table-cell">${formatear(precio)}</td>
           <td class="text-end td-subtotal">${formatear(subtotal)}</td>
           <td class="text-center">
             <div class="btn-group-item">

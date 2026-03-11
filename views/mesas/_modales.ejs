@@ -27,8 +27,8 @@
 
 <!-- Offcanvas Pedido -->
 <div class="offcanvas offcanvas-end" tabindex="-1" id="canvasPedido" style="width: 420px">
-    <div class="offcanvas-header">
-        <h5 class="offcanvas-title">Pedido mesa <span id="pedidoMesa"></span></h5>
+    <div class="offcanvas-header py-3 px-3 border-bottom bg-light">
+        <h5 class="offcanvas-title fw-bold text-primary"><i class="bi bi-receipt-cutoff me-2"></i>Mesa <span id="pedidoMesa"></span></h5>
         <div class="d-flex align-items-center gap-2">
             <button type="button" id="btnMoverMesaHeader" class="btn btn-outline-secondary btn-sm"
                 data-bs-toggle="tooltip" title="Mover a otra mesa">
@@ -39,21 +39,21 @@
     </div>
     <div class="offcanvas-body d-flex flex-column pt-3">
         <!-- Fila Superior: Buscador de Producto y Cliente Compacto -->
-        <div class="row g-2 mb-3">
-            <div class="col-8 position-relative">
+        <div class="row g-2 mb-2">
+            <div class="col-7 col-sm-8 position-relative">
                 <div class="input-group input-group-sm mb-0 shadow-sm border rounded-pill overflow-hidden">
-                    <span class="input-group-text bg-white border-0 ps-3"><i
+                    <span class="input-group-text bg-white border-0 ps-2"><i
                             class="bi bi-search text-primary"></i></span>
-                    <input id="buscarProductoMesa" class="form-control border-0 py-2" placeholder="Cargar producto...">
+                    <input id="buscarProductoMesa" class="form-control border-0 py-2" placeholder="Producto...">
                 </div>
                 <div id="resultadosProductoMesa" class="list-group search-results-premium" style="display: none;"></div>
             </div>
-            <div class="col-4">
+            <div class="col-5 col-sm-4">
                 <button
                     class="btn btn-sm btn-outline-primary rounded-pill w-100 h-100 d-flex align-items-center justify-content-center py-2"
                     id="btnBuscarClienteMesa" title="Cambiar cliente">
                     <i class="bi bi-person-fill me-1"></i>
-                    <span class="text-truncate" style="max-width: 60px;" id="btnClienteTexto">Final</span>
+                    <span class="text-truncate" style="max-width: 50px;" id="btnClienteTexto">Final</span>
                 </button>
             </div>
         </div>
@@ -73,9 +73,9 @@
                     <tr>
                         <th>Producto</th>
                         <th class="text-center">Cant</th>
-                        <th class="text-end">P. unit.</th>
+                        <th class="text-end d-none d-sm-table-cell">P. unit.</th>
                         <th class="text-end">Subtotal</th>
-                        <th class="text-center" style="width: 100px;">Acciones</th>
+                        <th class="text-center" style="width: 80px;">Acciones</th>
                     </tr>
                 </thead>
                 <tbody id="tbodyItems"></tbody>
@@ -92,27 +92,30 @@
                 <span id="propinaMonto">$0</span>
             </div>
             <div class="row g-2 mb-2">
-                <div class="col-6">
-                    <button type="button" id="btnAplicarDescuentoMesa" class="btn btn-outline-primary w-100 mt-2"><i
-                            class="bi bi-percent me-1"></i>Descuento</button>
+                <div class="col-6 col-sm-3">
+                    <button type="button" id="btnAplicarDescuentoMesa" class="btn btn-sm btn-outline-primary w-100" title="Descuento">
+                        <i class="bi bi-percent"></i> <span class="d-none d-sm-inline">Desc.</span>
+                    </button>
                 </div>
-                <div class="col-6">
-                    <button type="button" id="btnPropinaMesa" class="btn btn-outline-success w-100 mt-2"><i
-                            class="bi bi-cash-stack me-1"></i>Propina</button>
+                <div class="col-6 col-sm-3">
+                    <button type="button" id="btnPropinaMesa" class="btn btn-sm btn-outline-success w-100" title="Propina">
+                        <i class="bi bi-cash-stack"></i> <span class="d-none d-sm-inline">Propina</span>
+                    </button>
                 </div>
-            </div>
-            <div class="d-grid gap-2 mb-3">
-                <button type="button" id="btnAgregarServicioMesa" class="btn btn-outline-info w-100">
-                    <i class="bi bi-truck me-1"></i>Agregar Servicio
-                </button>
+                <div class="col-6 col-sm-3">
+                    <button type="button" id="btnAgregarServicioMesa" class="btn btn-sm btn-outline-info w-100" title="Servicio">
+                        <i class="bi bi-truck"></i> <span class="d-none d-sm-inline">Serv.</span>
+                    </button>
+                </div>
+                <div class="col-6 col-sm-3">
+                    <button id="btnMoverMesa" class="btn btn-sm btn-outline-secondary w-100" title="Mover">
+                        <i class="bi bi-arrow-left-right"></i> <span class="d-none d-sm-inline">Mover</span>
+                    </button>
+                </div>
             </div>
             <div class="d-grid gap-2">
-                <button id="btnMoverMesa" class="btn btn-outline-secondary"><i
-                        class="bi bi-arrow-left-right me-1"></i>Mover a mesa</button>
-                <button id="btnEnviarCocina" class="btn btn-warning"><i class="bi bi-send me-1"></i>Enviar a
-                    cocina</button>
-                <button id="btnFacturarPedido" class="btn btn-success"><i
-                        class="bi bi-cash-coin me-1"></i>Facturar</button>
+                <button id="btnEnviarCocina" class="btn btn-warning py-2 fw-bold"><i class="bi bi-send me-1"></i>Enviar a Cocina</button>
+                <button id="btnFacturarPedido" class="btn btn-success py-2 fw-bold"><i class="bi bi-cash-coin me-1"></i>Facturar</button>
             </div>
         </div>
     </div>

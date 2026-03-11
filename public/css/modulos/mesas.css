@@ -195,6 +195,46 @@ body {
 }
 
 /* Responsive para pantallas muy pequeñas (320px - 375px) */
+@media (max-width: 576px) {
+    #canvasPedido {
+        width: 100% !important;
+        max-width: 100vw !important;
+    }
+
+    .table-pedido-mesas th,
+    .table-pedido-mesas td {
+        padding: 0.5rem 0.25rem !important;
+        font-size: 0.85rem;
+    }
+
+    .td-producto {
+        max-width: 110px;
+        font-size: 0.8rem;
+    }
+
+    .btn-group-item .btn {
+        padding: 0.2rem 0.4rem;
+        font-size: 0.75rem;
+    }
+
+    /* Ajuste para el grid de botones auxiliares */
+    .row.g-2.mb-2 .col-6 {
+        margin-bottom: 2px;
+    }
+
+    /* Espaciado más compacto en el cuerpo */
+    .offcanvas-body {
+        padding: 0.75rem !important;
+    }
+
+    /* Refuerzo para botones principales */
+    #btnEnviarCocina, #btnFacturarPedido {
+        padding-top: 0.75rem !important;
+        padding-bottom: 0.75rem !important;
+        font-size: 1rem !important;
+    }
+}
+
 @media (max-width: 400px) {
     .mesa-num {
         font-size: 1.2rem;
