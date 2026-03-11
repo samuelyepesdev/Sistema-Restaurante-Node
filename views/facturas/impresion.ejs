@@ -88,7 +88,7 @@
                             <div class="producto-detalles" style="padding-left: 0;">
                                 <div class="producto-nombre"
                                     style="margin: 0; font-weight: bold; font-size: 1.2em; flex: 3; text-transform: uppercase;">
-                                    <%= item.producto_nombre %>
+                                    <%= item.producto_nombre %> <%= item.es_servicio ? '(SERVICIO)' : '' %>
                                 </div>
                                 <div class="producto-total"
                                     style="text-align: right; flex: 1; font-weight: bold; font-size: 1.2em;">

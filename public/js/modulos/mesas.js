@@ -1460,6 +1460,7 @@ $(function () {
         }
       });
     }
+  });
 
   // --- SERVICIOS ---
   const modalServicios = new bootstrap.Modal('#modalServiciosMesa');

@@ -47,9 +47,10 @@ module.exports = function navbarLocals(req, res, next) {
                 whatsappAjustes: hp('whatsapp.ajustes') && cs('configuracion'),
                 proveedores: hp('proveedores.ver') && cs('inventario'),
                 caja: hp('caja.ver') && cs('caja'),
+                servicios: hp('servicios.ver'),
             };
 
-            const hasMas = can.recetas || can.eventos || can.analitica || can.whatsapp || can.proveedores;
+            const hasMas = can.recetas || can.eventos || can.analitica || can.whatsapp || can.proveedores || can.servicios;
 
             let primaryColor = '#6366f1';
             let bgStart = '#1e3a5f';

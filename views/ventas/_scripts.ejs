@@ -54,8 +54,9 @@
                     var precio = Number(producto.precio) || 0;
                     var subtotal = Number(producto.subtotal) || 0;
                     totalGeneral += subtotal;
+                    const serviceBadge = producto.es_servicio ? ' <span class="badge bg-info text-dark" style="font-size: 0.6rem;">Servicio</span>' : '';
                     tbody.append('<tr>' +
-                        '<td><div class="fw-medium">' + (producto.nombre || '') + '</div>' +
+                        '<td><div class="fw-medium">' + (producto.nombre || '') + serviceBadge + '</div>' +
                         '<div class="d-block d-md-none small text-muted">A $' + fmtNum(precio) + ' / ' + (producto.unidad || 'N/A') + '</div></td>' +
                         '<td class="text-end align-middle">' + fmtNum(cantidad) + '</td>' +
                         '<td class="d-none d-md-table-cell align-middle">' + (producto.unidad || 'N/A') + '</td>' +
@@ -169,24 +170,40 @@
     // Función para calcular el total general (formato miles es-CO)
     function fmtMoneda(n) { return (Number(n) || 0).toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
     function calcularTotales() {
-        let total = 0, tef = 0, ttr = 0;
+        let totalNeto = 0, tefNeto = 0, ttrNeto = 0, totalExt = 0;
         document.querySelectorAll('.venta-row').forEach(tr => {
             const totalEl = tr.querySelector('.total-cell');
+            if (!totalEl) return;
+            
+            const neto = Number(totalEl.dataset.neto || 0);
+            const externo = Number(totalEl.dataset.externo || 0);
             const formaEl = tr.querySelector('.forma-pago-cell');
             const forma = formaEl ? formaEl.innerText.trim().toLowerCase() : '';
-            const val = Number(totalEl?.dataset.total || 0);
-            total += val;
-            if (forma === 'efectivo') tef += val; else if (forma === 'transferencia') ttr += val;
+            
+            totalNeto += neto;
+            totalExt += externo;
+            
+            if (forma === 'efectivo') tefNeto += neto; 
+            else if (forma === 'transferencia') ttrNeto += neto;
         });
-        document.getElementById('totalGeneral').textContent = '$' + fmtMoneda(total);
-        document.getElementById('totalEfectivo').textContent = '$' + fmtMoneda(tef);
-        document.getElementById('totalTransferencia').textContent = '$' + fmtMoneda(ttr);
-        var rE = document.getElementById('totalEfectivoResumen');
-        var rT = document.getElementById('totalTransferenciaResumen');
-        var rG = document.getElementById('totalGeneralResumen');
-        if (rE) rE.textContent = '$' + fmtMoneda(tef);
-        if (rT) rT.textContent = '$' + fmtMoneda(ttr);
-        if (rG) rG.textContent = '$' + fmtMoneda(total);
+        
+        const elNeto = document.getElementById('totalGeneral');
+        const elEfectivo = document.getElementById('totalEfectivo');
+        const elTransf = document.getElementById('totalTransferencia');
+        const elExt = document.getElementById('totalServiciosExternos'); // Si existiera un ID específico, pero lo manejamos por clases o refs
+
+        if (elNeto) elNeto.textContent = '$' + fmtMoneda(totalNeto);
+        if (elEfectivo) elEfectivo.textContent = '$' + fmtMoneda(tefNeto);
+        if (elTransf) elTransf.textContent = '$' + fmtMoneda(ttrNeto);
+        
+        // Actualizar los elementos de la vista de resumen (si existen)
+        var resE = document.getElementById('totalEfectivoResumen');
+        var resT = document.getElementById('totalTransferenciaResumen');
+        var resG = document.getElementById('totalGeneralResumen');
+        
+        if (resE) resE.textContent = '$' + fmtMoneda(tefNeto);
+        if (resT) resT.textContent = '$' + fmtMoneda(ttrNeto);
+        if (resG) resG.textContent = '$' + fmtMoneda(totalNeto);
     }
 
     // Calcular total al cargar la página

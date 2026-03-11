@@ -155,9 +155,11 @@ class FacturaRepository {
      */
     static async getDetailsByFacturaId(facturaId) {
         const [detalles] = await db.query(`
-            SELECT d.*, p.nombre as producto_nombre
+            SELECT d.*, 
+                   COALESCE(p.nombre, s.nombre) as producto_nombre
             FROM detalle_factura d
-            JOIN productos p ON d.producto_id = p.id
+            LEFT JOIN productos p ON d.producto_id = p.id
+            LEFT JOIN servicios s ON d.servicio_id = s.id
             WHERE d.factura_id = ?
         `, [facturaId]);
         return detalles;
@@ -184,9 +186,12 @@ class FacturaRepository {
 
         const factura = facturas[0];
         const [productos] = await db.query(`
-            SELECT d.cantidad, d.precio_unitario, d.unidad_medida, d.subtotal, p.nombre 
+            SELECT d.cantidad, d.precio_unitario, d.unidad_medida, d.subtotal, 
+                   COALESCE(p.nombre, s.nombre) as nombre,
+                   d.es_servicio
             FROM detalle_factura d 
-            JOIN productos p ON d.producto_id = p.id 
+            LEFT JOIN productos p ON d.producto_id = p.id 
+            LEFT JOIN servicios s ON d.servicio_id = s.id
             WHERE d.factura_id = ?
         `, [id]);
 
@@ -208,9 +213,10 @@ class FacturaRepository {
             productos: productos.map(p => ({
                 nombre: p.nombre || '',
                 cantidad: parseFloat(p.cantidad || 0),
-                unidad: p.unidad_medida || '',
+                unidad: p.unidad_medida || (p.es_servicio ? 'SVG' : ''),
                 precio: parseFloat(p.precio_unitario || 0),
-                subtotal: parseFloat(p.subtotal || 0)
+                subtotal: parseFloat(p.subtotal || 0),
+                es_servicio: !!p.es_servicio
             }))
         };
     }
