@@ -16,7 +16,11 @@ module.exports = function navbarLocals(req, res, next) {
             const ap = res.locals.allowedByPlan || {};
 
             const cs = (mod) => !mod || ap[mod] === true;
-            const hp = (p) => !!(user && Array.isArray(user.permisos) && user.permisos.includes(p));
+            const hp = (p) => !!(user && (
+                String(user.rol || '').toLowerCase() === 'admin' || 
+                String(user.rol || '').toLowerCase() === 'superadmin' || 
+                (Array.isArray(user.permisos) && user.permisos.includes(p))
+            ));
 
             const isSuperadmin = !!(user && String(user.rol || '').toLowerCase() === 'superadmin');
 
