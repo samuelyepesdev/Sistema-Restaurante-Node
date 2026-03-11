@@ -4,125 +4,211 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestión de Servicios</title>
+    <title>Gestión de Servicios | <%= tenant.nombre_comercial %></title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
-    <style>
-        .page-title { font-size: 1.25rem; }
-        .card { border: none; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
-        .card-header { background: white; border-bottom: 1px solid #edf2f7; padding: 1.25rem; border-radius: 12px 12px 0 0 !important; }
-        .badge-externo { background-color: #e2e8f0; color: #4a5568; }
-        .badge-activo { background-color: #c6f6d5; color: #22543d; }
-        .badge-inactivo { background-color: #fed7d7; color: #822727; }
-    </style>
+    <link rel="stylesheet" href="/css/modulos/servicios.css">
 </head>
 
 <body>
     <%- include('../partials/navbar', { user, tenant }) %>
 
-    <div class="container py-4">
-        <div class="card">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <div class="page-title fw-bold">
-                    <i class="bi bi-briefcase-fill me-2 text-primary"></i>Catálogo de Servicios
-                </div>
-                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalServicio">
-                    <i class="bi bi-plus-lg me-1"></i>Nuevo Servicio
-                </button>
+    <div class="container py-5 mt-3">
+        <!-- Header Section -->
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-3">
+            <div>
+                <h1 class="page-title mb-1">Catálogo de Servicios</h1>
+                <p class="text-muted mb-0">Gestiona domicilios, propinas y otros servicios no inventariables.</p>
             </div>
-            <div class="card-body">
-                <div class="table-responsive">
-                    <table class="table table-hover align-middle">
-                        <thead class="table-light">
-                            <tr>
-                                <th>Nombre</th>
-                                <th>Descripción</th>
-                                <th>Precio</th>
-                                <th>Tipo</th>
-                                <th>Estado</th>
-                                <th class="text-end">Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <% if (servicios.length === 0) { %>
-                                <tr>
-                                    <td colspan="6" class="text-center py-4 text-muted">No hay servicios registrados</td>
-                                </tr>
-                            <% } else { %>
-                                <% servicios.forEach(s => { %>
-                                    <tr>
-                                        <td class="fw-bold"><%= s.nombre %></td>
-                                        <td class="text-muted small"><%= s.descripcion || '-' %></td>
-                                        <td class="fw-bold">$<%= Number(s.precio).toLocaleString() %></td>
-                                        <td>
-                                            <span class="badge badge-externo">
-                                                <%= s.es_externo ? 'Externo (No suma venta)' : 'Propio' %>
-                                            </span>
-                                        </td>
-                                        <td>
-                                            <span class="badge <%= s.activo ? 'badge-activo' : 'badge-inactivo' %>">
-                                                <%= s.activo ? 'Activo' : 'Inactivo' %>
-                                            </span>
-                                        </td>
-                                        <td class="text-end">
-                                            <button class="btn btn-sm btn-outline-info me-1 btn-edit" 
-                                                    data-servicio='<%= JSON.stringify(s) %>'>
-                                                <i class="bi bi-pencil"></i>
-                                            </button>
-                                            <button class="btn btn-sm btn-outline-danger btn-delete" 
-                                                    data-id="<%= s.id %>" data-nombre="<%= s.nombre %>">
-                                                <i class="bi bi-trash"></i>
-                                            </button>
-                                        </td>
-                                    </tr>
-                                <% }) %>
-                            <% } %>
-                        </tbody>
-                    </table>
+            <button class="btn btn-primary px-4 py-2 rounded-pill shadow-sm" data-bs-toggle="modal" data-bs-target="#modalServicio">
+                <i class="bi bi-plus-lg me-2"></i>Nuevo Servicio
+            </button>
+        </div>
+
+        <!-- Stats Grid -->
+        <div class="stats-container">
+            <div class="stat-card shadow-sm">
+                <div class="stat-icon bg-primary text-white">
+                    <i class="bi bi-briefcase"></i>
                 </div>
+                <div>
+                    <div class="stat-value"><%= servicios.length %></div>
+                    <div class="stat-label">Total Servicios</div>
+                </div>
+            </div>
+            <div class="stat-card shadow-sm">
+                <div class="stat-icon bg-info text-white">
+                    <i class="bi bi-truck"></i>
+                </div>
+                <div>
+                    <div class="stat-value"><%= servicios.filter(s => s.es_externo).length %></div>
+                    <div class="stat-label">Servicios Externos</div>
+                </div>
+            </div>
+            <div class="stat-card shadow-sm">
+                <div class="stat-icon bg-success text-white">
+                    <i class="bi bi-check2-circle"></i>
+                </div>
+                <div>
+                    <div class="stat-value"><%= servicios.filter(s => s.activo).length %></div>
+                    <div class="stat-label">Servicios Activos</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content Card -->
+        <div class="card-premium">
+            <div class="card-header-premium border-0 d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+                <div class="search-container flex-grow-1">
+                    <i class="bi bi-search search-icon"></i>
+                    <input type="text" id="buscarServicio" class="form-control search-input" placeholder="Buscar por nombre o descripción...">
+                </div>
+                <!-- Optional: Filter Actions -->
+            </div>
+            
+            <div class="table-responsive">
+                <table class="table table-premium align-middle" id="tablaServicios">
+                    <thead>
+                        <tr>
+                            <th>Servicio</th>
+                            <th>Tipo / Cobertura</th>
+                            <th>Precio Sugerido</th>
+                            <th>Estado</th>
+                            <th class="text-end">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% if (servicios.length === 0) { %>
+                            <tr>
+                                <td colspan="5" class="text-center py-5">
+                                    <div class="py-4">
+                                        <i class="bi bi-inbox fs-1 text-muted d-block mb-3"></i>
+                                        <p class="text-muted fw-medium">No se encontraron servicios registrados.</p>
+                                        <button class="btn btn-sm btn-outline-primary rounded-pill mt-2" data-bs-toggle="modal" data-bs-target="#modalServicio">
+                                            Crear mi primer servicio
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        <% } else { %>
+                            <% servicios.forEach(s => { %>
+                                <tr class="servicio-row">
+                                    <td data-label="Servicio">
+                                        <div class="d-flex align-items-center">
+                                            <div class="stat-icon bg-light text-primary border me-3" style="width: 40px; height: 40px; font-size: 1rem;">
+                                                <i class="bi <%= s.es_externo ? 'bi-truck' : 'bi-lightning-charge' %>"></i>
+                                            </div>
+                                            <div>
+                                                <div class="fw-bold fs-6 text-dark"><%= s.nombre %></div>
+                                                <div class="text-muted x-small" style="font-size: 0.75rem;"><%= s.descripcion || 'Sin descripción adicional' %></div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td data-label="Tipo / Cobertura">
+                                        <% if (s.es_externo) { %>
+                                            <span class="badge-premium badge-info-soft">
+                                                <i class="bi bi-box-arrow-up-right"></i> Externo (Gasto)
+                                            </span>
+                                        <% } else { %>
+                                            <span class="badge-premium badge-success-soft">
+                                                <i class="bi bi-house-door"></i> Propio (Ingreso)
+                                            </span>
+                                        <% } %>
+                                    </td>
+                                    <td data-label="Precio Sugerido">
+                                        <div class="fw-bold text-dark">$<%= Number(s.precio).toLocaleString('es-CO') %></div>
+                                    </td>
+                                    <td data-label="Estado">
+                                        <% if (s.activo) { %>
+                                            <span class="badge-premium badge-success-soft">
+                                                <i class="bi bi-check-circle-fill"></i> Activo
+                                            </span>
+                                        <% } else { %>
+                                            <span class="badge-premium badge-danger-soft">
+                                                <i class="bi bi-x-circle-fill"></i> Inactivo
+                                            </span>
+                                        <% } %>
+                                    </td>
+                                    <td class="text-end">
+                                        <div class="d-flex justify-content-end gap-2">
+                                            <button class="btn btn-sm btn-light border btn-edit shadow-sm" 
+                                                    data-servicio='<%= JSON.stringify(s) %>'
+                                                    title="Editar servicio">
+                                                <i class="bi bi-pencil text-primary"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-light border btn-delete shadow-sm" 
+                                                    data-id="<%= s.id %>" data-nombre="<%= s.nombre %>"
+                                                    title="Eliminar">
+                                                <i class="bi bi-trash text-danger"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            <% }) %>
+                        <% } %>
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>
 
-    <!-- Modal Formulario -->
+    <!-- Modal Formulario Mejorado -->
     <div class="modal fade" id="modalServicio" tabindex="-1">
-        <div class="modal-dialog">
-            <form id="formServicio" action="/servicios" method="POST">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="modalTitle">Nuevo Servicio</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        <div class="modal-dialog modal-dialog-centered">
+            <form id="formServicio" action="/servicios" method="POST" class="w-100">
+                <div class="modal-content modal-content-premium">
+                    <div class="modal-header modal-header-premium d-flex align-items-center border-0">
+                        <div class="bg-primary text-white rounded-3 p-3 me-3" style="width: 45px; height: 45px; display: flex; align-items: center; justify-content: center;">
+                            <i class="bi bi-briefcase fs-4"></i>
+                        </div>
+                        <div>
+                            <h5 class="modal-title fw-bold mb-0" id="modalTitle">Nuevo Servicio</h5>
+                            <p class="text-muted small mb-0">Configure los detalles del servicio.</p>
+                        </div>
+                        <button type="button" class="btn-close ms-auto" data-bs-dismiss="modal"></button>
                     </div>
-                    <div class="modal-body">
+                    <div class="modal-body p-4">
                         <input type="hidden" id="service_id" name="id">
-                        <div class="mb-3">
-                            <label class="form-label">Nombre del Servicio</label>
-                            <input type="text" class="form-control" name="nombre" id="nombre" required placeholder="Ej: Domicilio Externo">
+                        
+                        <div class="mb-4">
+                            <label class="form-label form-label-premium">Nombre del Servicio</label>
+                            <input type="text" class="form-control form-control-premium" name="nombre" id="nombre" required placeholder="Ej: Domicilio Externo">
                         </div>
-                        <div class="mb-3">
-                            <label class="form-label">Descripción (Opcional)</label>
-                            <textarea class="form-control" name="descripcion" id="descripcion" rows="2"></textarea>
+                        
+                        <div class="mb-4">
+                            <label class="form-label form-label-premium">Descripción Corta</label>
+                            <textarea class="form-control form-control-premium" name="descripcion" id="descripcion" rows="2" placeholder="Detalles visibles en la factura..."></textarea>
                         </div>
-                        <div class="mb-3">
-                            <label class="form-label">Precio al Cliente</label>
-                            <div class="input-group">
-                                <span class="input-group-text">$</span>
-                                <input type="number" step="0.01" class="form-control" name="precio" id="precio" required>
+                        
+                        <div class="row g-3 mb-4">
+                            <div class="col-12">
+                                <label class="form-label form-label-premium">Precio al Cliente</label>
+                                <div class="input-group">
+                                    <span class="input-group-text border-end-0 bg-transparent text-muted">$</span>
+                                    <input type="number" step="0.01" class="form-control form-control-premium border-start-0 ps-0" name="precio" id="precio" required placeholder="0.00">
+                                </div>
                             </div>
                         </div>
-                        <div class="mb-3 form-check form-switch">
-                            <input class="form-check-input" type="checkbox" name="es_externo" id="es_externo" checked>
-                            <label class="form-check-label">Servicio Externo (Costo = Precio, Ganancia 0)</label>
-                            <div class="form-text text-danger">⚠️ Los servicios externos no se sumarán al volumen de ventas netas de productos en los reportes de ganancia.</div>
+
+                        <div class="p-3 rounded-4 bg-light border mb-4">
+                            <div class="form-check form-switch mb-1">
+                                <input class="form-check-input" type="checkbox" name="es_externo" id="es_externo" checked>
+                                <label class="form-check-label fw-bold" for="es_externo">Servicio Externo</label>
+                            </div>
+                            <p class="x-small text-muted mb-0" style="font-size: 0.75rem;">
+                                <i class="bi bi-info-circle me-1"></i>
+                                Los servicios externos se marcan como "gasto" y no suman a la ganancia neta en reportes diarios.
+                            </p>
                         </div>
+
                         <div class="form-check form-switch">
                             <input class="form-check-input" type="checkbox" name="activo" id="activo" checked>
-                            <label class="form-check-label">Servicio Activo</label>
+                            <label class="form-check-label" for="activo">Habilitar servicio para venta</label>
                         </div>
                     </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                        <button type="submit" class="btn btn-primary">Guardar Servicio</button>
+                    <div class="modal-footer modal-footer-premium border-0 pt-0">
+                        <button type="button" class="btn btn-light px-4" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-primary px-4 rounded-pill shadow-sm">Guardar Cambios</button>
                     </div>
                 </div>
             </form>
@@ -138,12 +224,23 @@
             const modal = new bootstrap.Modal('#modalServicio');
             const form = $('#formServicio');
 
+            // live search
+            $('#buscarServicio').on('keyup', function() {
+                const value = $(this).val().toLowerCase();
+                $("#tablaServicios tbody .servicio-row").filter(function() {
+                    $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1)
+                });
+            });
+
             // Reset modal on close
             $('#modalServicio').on('hidden.bs.modal', function () {
                 form[0].reset();
                 form.attr('action', '/servicios');
                 $('#modalTitle').text('Nuevo Servicio');
                 $('#service_id').val('');
+                // checkbox default
+                $('#es_externo').prop('checked', true);
+                $('#activo').prop('checked', true);
             });
 
             // Edit button handler
@@ -166,13 +263,17 @@
                 const nombre = $(this).data('nombre');
                 
                 Swal.fire({
-                    title: '¿Estás seguro?',
-                    text: `Vas a eliminar el servicio "${nombre}". Esta acción no se puede deshacer.`,
+                    title: '¿Eliminar servicio?',
+                    text: `Vas a retirar "${nombre}" del catálogo. Esta acción no se puede deshacer.`,
                     icon: 'warning',
                     showCancelButton: true,
-                    confirmButtonColor: '#d33',
+                    confirmButtonColor: '#ef4444',
+                    cancelButtonColor: '#64748b',
                     confirmButtonText: 'Sí, eliminar',
-                    cancelButtonText: 'Cancelar'
+                    cancelButtonText: 'Cancelar',
+                    customClass: {
+                        popup: 'rounded-4 shadow-lg'
+                    }
                 }).then((result) => {
                     if (result.isConfirmed) {
                         const deleteForm = $('<form>', {
