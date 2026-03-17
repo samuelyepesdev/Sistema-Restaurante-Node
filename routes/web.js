@@ -27,6 +27,7 @@ const adminSistemaRoutes = require('./admin/sistema');
 const adminPlanesRoutes = require('./admin/planes');
 const adminPermisosRoutes = require('./admin/permisos');
 const adminVentasRoutes = require('./admin/ventas');
+const adminSoporteRoutes = require('./admin/soporte');
 const adminDashboardRoutes = require('./admin/dashboard');
 const eventosRoutes = require('./tenant/eventos');
 const inventarioRoutes = require('./tenant/inventario');
@@ -36,6 +37,7 @@ const whatsappRoutes = require('./tenant/whatsapp');
 const proveedoresRoutes = require('./tenant/proveedores');
 const cajaRoutes = require('./tenant/caja');
 const serviciosRoutes = require('./tenant/servicios');
+const soporteTenantRoutes = require('./tenant/soporte');
 const NotificationController = require('../app/Http/Controllers/Tenant/NotificationController');
 
 // ...
@@ -66,6 +68,7 @@ router.use('/analitica', requireAuthWithTenant, requirePlanFeature('analitica'),
 router.use('/whatsapp', requireAuthWithTenant, requirePlanFeature('configuracion'), requirePermission('whatsapp.ver'), whatsappRoutes);
 router.use('/costeo', requireAuth, restrictSuperadminToAdmin, costeoTenantContext, requirePlanFeature('costeo'), costeoRoutes);
 router.use('/caja', requireAuthWithTenant, requirePermission('caja.ver'), cajaRoutes);
+router.use('/soporte', requireAuthWithTenant, soporteTenantRoutes);
 
 // --- RUTAS API ---
 router.use('/api/productos', requireAuthWithTenant, requirePlanFeature('productos'), requirePermission('productos.ver'), productosRoutes);
@@ -85,5 +88,6 @@ router.use('/admin/sistema', requireAuth, adminSistemaRoutes);
 router.use('/admin/planes', requireAuth, adminPlanesRoutes);
 router.use('/admin/permisos', requireAuth, adminPermisosRoutes);
 router.use('/admin/ventas', requireAuth, adminVentasRoutes);
+router.use('/admin/soporte', requireAuth, adminSoporteRoutes);
 
 module.exports = router;

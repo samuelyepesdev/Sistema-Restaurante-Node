@@ -20,6 +20,9 @@
         <li class="nav-item"><a
                 class="nav-link <%= (typeof currentAdminPage!=='undefined'&&currentAdminPage==='ventas')?'active':'' %>"
                 href="/admin/ventas"><i class="bi bi-trash"></i>Ventas</a></li>
+        <li class="nav-item"><a
+                class="nav-link <%= (typeof currentAdminPage!=='undefined'&&currentAdminPage==='soporte')?'active':'' %>"
+                href="/admin/soporte"><i class="bi bi-headset"></i>Soporte</a></li>
         <% if (nav.can.whatsapp) { %>
             <li class="nav-item"><a class="nav-link" href="/whatsapp"><i
                         class="bi bi-whatsapp text-success"></i>WhatsApp</a></li>
@@ -210,6 +213,13 @@
                                                                                                                 class="bi bi-gear"></i>Config</a>
                                                                                                     </li>
                                                                                                     <% } %>
+
+                                                                                                    <li
+                                                                                                        class="nav-item">
+                                                                                                        <a class="nav-link"
+                                                                                                            href="/soporte"><i
+                                                                                                                class="bi bi-headset"></i>Soporte</a>
+                                                                                                    </li>
 
                                                                                                         <% } %>
 </ul>
