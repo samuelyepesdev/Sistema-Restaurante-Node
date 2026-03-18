@@ -37,7 +37,9 @@ $(function () {
       tbody.append(`
         <tr>
           <td class="td-producto">${(it.producto_nombre || it.nombre || it.producto_id) + descBadge}</td>
-          <td class="text-center">${cantidad}</td>
+          <td class="text-center">
+            <input type="number" class="form-control form-control-sm text-center input-cantidad-item" data-item-id="${it.id}" value="${cantidad}" min="1" style="width: 70px; margin: 0 auto;">
+          </td>
           <td class="text-end d-none d-sm-table-cell">${formatear(precio)}</td>
           <td class="text-end td-subtotal">${formatear(subtotal)}</td>
           <td class="text-center">
@@ -60,6 +62,21 @@ $(function () {
   $(document).on('click', '.btn-mas-item', async function () {
     const id = $(this).data('item-id');
     const cant = Number($(this).data('cantidad')) + 1;
+    try {
+      const r = await fetch(`/api/mesas/items/${id}/cantidad`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ cantidad: cant }) });
+      const data = await r.json();
+      if (!r.ok) throw new Error(data.error || 'Error');
+      await cargarPedido(pedidoActual.id);
+    } catch (e) { Swal.fire({ icon: 'error', title: e.message }); }
+  });
+
+  $(document).on('change', '.input-cantidad-item', async function () {
+    const id = $(this).data('item-id');
+    const cant = parseInt($(this).val(), 10);
+    if (isNaN(cant) || cant <= 0) {
+      $(this).val(1);
+      return;
+    }
     try {
       const r = await fetch(`/api/mesas/items/${id}/cantidad`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ cantidad: cant }) });
       const data = await r.json();

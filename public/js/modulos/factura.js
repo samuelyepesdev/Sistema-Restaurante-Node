@@ -180,9 +180,9 @@ $(document).ready(function () {
             totalFactura += it.subtotal;
             tbody.append(`<tr>
                 <td>${it.nombre} ${it.descuento_porcentaje > 0 ? `<span class="badge bg-success">-${it.descuento_porcentaje}%</span>` : ''}</td>
-                <td class="text-center">
+                <td class="text-center text-nowrap">
                     <button class="btn btn-sm btn-outline-secondary" onclick="cambiarCant(${idx},-1)"><i class="bi bi-dash"></i></button>
-                    <span class="mx-2">${it.cantidad}</span>
+                    <input type="number" class="form-control form-control-sm text-center d-inline-block mx-1" style="width: 70px;" value="${it.cantidad}" onchange="setCant(${idx}, this.value)" min="1">
                     <button class="btn btn-sm btn-outline-secondary" onclick="cambiarCant(${idx},1)"><i class="bi bi-plus"></i></button>
                 </td>
                 <td>${it.unidad}</td>
@@ -206,7 +206,7 @@ $(document).ready(function () {
                 <div class="fw-bold small">${it.nombre}</div>
                 <div class="d-flex align-items-center gap-2 my-1">
                     <button class="btn btn-sm btn-outline-secondary" onclick="cambiarCant(${idx},-1)"><i class="bi bi-dash"></i></button>
-                    <span class="small">${it.cantidad}</span>
+                    <input type="number" class="form-control form-control-sm text-center d-inline-block" style="width: 60px;" value="${it.cantidad}" onchange="setCant(${idx}, this.value)" min="1">
                     <button class="btn btn-sm btn-outline-secondary" onclick="cambiarCant(${idx},1)"><i class="bi bi-plus"></i></button>
                 </div>
                 <div class="small text-muted">Unit. $${it.precio.toLocaleString('es-CO')} | Sub. $${it.subtotal.toLocaleString('es-CO')}</div>
@@ -223,6 +223,17 @@ $(document).ready(function () {
         const it = productosFactura[idx];
         it.cantidad = Math.max(0, it.cantidad + c);
         if (it.cantidad === 0) productosFactura.splice(idx, 1);
+        actualizarTablaProductos();
+    };
+
+    window.setCant = (idx, val) => {
+        const it = productosFactura[idx];
+        const v = parseInt(val, 10);
+        if (isNaN(v) || v <= 0) {
+            it.cantidad = 1;
+        } else {
+            it.cantidad = v;
+        }
         actualizarTablaProductos();
     };
 
