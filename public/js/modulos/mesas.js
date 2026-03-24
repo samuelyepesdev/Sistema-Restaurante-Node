@@ -39,10 +39,10 @@ $(function () {
 
       const descBadge = (descuentosPorItem[it.id] != null && descuentosPorItem[it.id] > 0)
         ? ' <span class="badge bg-success">-' + descuentosPorItem[it.id] + '%</span>' : '';
-      const badgePagado = it.pagado ? ' <span class="badge bg-success ms-1">Pagado</span>' : '';
+      const badgePagado = it.pagado ? '<br><span class="badge bg-success mt-1"><i class="bi bi-check2-circle me-1"></i>Pagado</span>' : '';
 
       const buttonsHtml = it.pagado
-        ? `<div class="text-success small fw-bold">Pagado</div>`
+        ? `<div class="text-success text-center px-1" title="Este ítem ya está pago"><i class="bi bi-check2-all fs-5"></i></div>`
         : `<div class="btn-group btn-group-sm">
              <button type="button" class="btn btn-outline-secondary btn-menos-item" data-item-id="${it.id}" data-cantidad="${cantidad}"><i class="bi bi-dash"></i></button>
              <button type="button" class="btn btn-outline-secondary btn-mas-item" data-item-id="${it.id}" data-cantidad="${cantidad}"><i class="bi bi-plus"></i></button>
@@ -50,16 +50,16 @@ $(function () {
            </div>`;
 
       const inputHtml = it.pagado
-        ? `<div class="text-center text-muted fw-bold">${cantidad}</div>`
+        ? `<div class="text-center text-muted fw-bold d-flex align-items-center justify-content-center" style="height: 31px;">${cantidad}</div>`
         : `<input type="number" class="form-control form-control-sm text-center input-cantidad-item" data-item-id="${it.id}" value="${cantidad}" min="1" style="width: 70px; margin: 0 auto;">`;
 
       tbody.append(`
         <tr>
-          <td class="td-producto">${(it.producto_nombre || it.nombre || it.producto_id) + descBadge + badgePagado}</td>
-          <td class="text-center">${inputHtml}</td>
-          <td class="text-end d-none d-sm-table-cell">${formatear(precio)}</td>
-          <td class="text-end td-subtotal">${it.pagado ? '<del class="text-muted">' + formatear(subtotal) + '</del>' : formatear(subtotal)}</td>
-          <td class="text-center">${buttonsHtml}</td>
+          <td class="td-producto align-middle">${(it.producto_nombre || it.nombre || it.producto_id) + descBadge + badgePagado}</td>
+          <td class="text-center align-middle">${inputHtml}</td>
+          <td class="text-end d-none d-sm-table-cell align-middle">${formatear(precio)}</td>
+          <td class="text-end td-subtotal align-middle">${it.pagado ? '<span class="text-muted text-decoration-line-through small">' + formatear(subtotal) + '</span>' : formatear(subtotal)}</td>
+          <td class="text-center align-middle">${buttonsHtml}</td>
         </tr>
       `);
     });
