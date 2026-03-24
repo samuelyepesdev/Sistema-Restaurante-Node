@@ -43,11 +43,10 @@ $(function () {
 
       const buttonsHtml = it.pagado
         ? `<div class="text-success small fw-bold">Pagado</div>`
-        : `<div class="btn-group-item">
-             <button type="button" class="btn btn-sm btn-outline-secondary btn-menos-item" data-item-id="${it.id}" data-cantidad="${cantidad}" title="Quitar"><i class="bi bi-dash"></i></button>
-             <button type="button" class="btn btn-sm btn-outline-secondary btn-mas-item" data-item-id="${it.id}" data-cantidad="${cantidad}" title="Agregar"><i class="bi bi-plus"></i></button>
-             <button type="button" class="btn btn-sm btn-outline-success btn-pagar-item" data-item-id="${it.id}" title="Pagar Item"><i class="bi bi-cash"></i></button>
-             <button type="button" class="btn btn-sm btn-outline-danger btn-eliminar-item" data-idx="${idx}" data-item-id="${it.id}" title="Eliminar"><i class="bi bi-trash"></i></button>
+        : `<div class="btn-group btn-group-sm">
+             <button type="button" class="btn btn-outline-secondary btn-menos-item" data-item-id="${it.id}" data-cantidad="${cantidad}"><i class="bi bi-dash"></i></button>
+             <button type="button" class="btn btn-outline-secondary btn-mas-item" data-item-id="${it.id}" data-cantidad="${cantidad}"><i class="bi bi-plus"></i></button>
+             <button type="button" class="btn btn-outline-danger btn-eliminar-item" data-idx="${idx}" data-item-id="${it.id}"><i class="bi bi-trash"></i></button>
            </div>`;
 
       const inputHtml = it.pagado
@@ -122,40 +121,6 @@ $(function () {
       await cargarPedido(pedidoActual.id);
       Swal.fire({ icon: 'success', title: 'Item eliminado' });
     } catch (e) { Swal.fire({ icon: 'error', title: e.message }); }
-  });
-
-  $(document).on('click', '.btn-pagar-item', async function () {
-    const itemId = $(this).data('item-id');
-    const inputOptions = {
-        'efectivo': 'Efectivo',
-        'transferencia': 'Transferencia'
-    };
-    
-    const { value: formaPago } = await Swal.fire({
-      title: 'Pagar Item Individual',
-      text: 'Seleccione método de pago:',
-      input: 'radio',
-      inputOptions,
-      inputValidator: (value) => {
-        if (!value) return 'Debe elegir un método';
-      },
-      showCancelButton: true,
-      confirmButtonText: 'Confirmar Pago',
-      cancelButtonText: 'Cancelar'
-    });
-
-    if (formaPago) {
-      try {
-        const r = await fetch(`/api/mesas/items/${itemId}/pagar`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ forma_pago: formaPago })
-        });
-        if (!r.ok) { const d = await r.json(); throw new Error(d.error || 'Error al pagar item'); }
-        await cargarPedido(pedidoActual.id);
-        Swal.fire({ icon: 'success', title: 'Producto pagado', timer: 1500, showConfirmButton: false });
-      } catch (e) { Swal.fire({ icon: 'error', title: e.message }); }
-    }
   });
 
   // Cargar pedido por mesa
@@ -820,13 +785,12 @@ $(function () {
               
               Swal.fire({
                   icon: 'success',
-                  title: '¡Mesa facturada!',
-                  text: 'Generando registro final...',
-                  showConfirmButton: true
+                  title: 'Listo',
+                  html: '<p><strong>Factura #' + (dataF.numero != null ? dataF.numero : dataF.factura_id) + '</strong> generada correctamente.</p>',
+                  confirmButtonText: 'Cerrar'
               }).then(() => {
                  canvas.hide();
                  refreshMesas();
-                 window.open(`/facturas/${dataF.factura_id}/ticket`, '_blank', 'width=400,height=600');
               });
           } catch(errF) {
               Swal.fire({ icon: 'error', title: errF.message });
@@ -850,10 +814,14 @@ $(function () {
               const dataF = await reqFactura.json();
               if (!reqFactura.ok) throw new Error(dataF.error || 'Error al facturar');
               
-              Swal.fire({ icon: 'success', title: '¡Facturado sin costo!', showConfirmButton: true }).then(() => {
+              Swal.fire({
+                  icon: 'success',
+                  title: 'Listo',
+                  html: '<p><strong>Factura #' + (dataF.numero != null ? dataF.numero : dataF.factura_id) + '</strong> generada (sin costo).</p>',
+                  confirmButtonText: 'Cerrar'
+              }).then(() => {
                  canvas.hide();
                  refreshMesas();
-                 window.open(`/facturas/${dataF.factura_id}/ticket`, '_blank', 'width=400,height=600');
               });
           } catch(errF) {
               Swal.fire({ icon: 'error', title: errF.message });
@@ -864,8 +832,72 @@ $(function () {
 
 
 
-      // Mostrar modal de pago (total incluye propina)
-      await mostrarModalPago(totalConPropinaFacturar, clienteIdFacturar);
+      // Mostrar modal de decisión si hay cosas pendientes que valen > 0
+      if (checkPendientes) {
+          const result = await Swal.fire({
+              title: 'Opciones de Facturación',
+              text: '¿Cómo desea facturar?',
+              showDenyButton: true,
+              showCancelButton: true,
+              confirmButtonText: 'Mesa Completa',
+              denyButtonText: 'Por Producto',
+              cancelButtonText: 'Cancelar',
+              confirmButtonColor: '#198754',
+              denyButtonColor: '#0d6efd'
+          });
+
+          if (result.isConfirmed) {
+              await mostrarModalPago(totalConPropinaFacturar, clienteIdFacturar);
+          } else if (result.isDenied) {
+              const inputOptions = {};
+              items.forEach(it => {
+                  if (!it.pagado) {
+                      const cantidad = Number(it.cantidad || 0);
+                      const precio = Number((it.precio_unitario != null ? it.precio_unitario : it.precio) || 0);
+                      const subtotal = subtotalConDescuento(cantidad, precio, it.id);
+                      inputOptions[it.id] = (it.producto_nombre || it.nombre || it.producto_id) + ' - ' + formatear(subtotal);
+                  }
+              });
+              const { value: itemId } = await Swal.fire({
+                   title: 'Seleccione el producto a pagar',
+                   input: 'radio',
+                   inputOptions: inputOptions,
+                   inputValidator: (value) => { if (!value) return 'Debe elegir un producto'; },
+                   showCancelButton: true,
+                   confirmButtonText: 'Siguiente',
+                   cancelButtonText: 'Cancelar'
+              });
+
+              if (itemId) {
+                   const inputPagoOptions = { 'efectivo': 'Efectivo', 'transferencia': 'Transferencia' };
+                   const { value: formaPago } = await Swal.fire({
+                       title: 'Pagar Item Individual',
+                       text: 'Seleccione método de pago para este ítem:',
+                       input: 'radio',
+                       inputOptions: inputPagoOptions,
+                       inputValidator: (value) => { if (!value) return 'Debe elegir un método'; },
+                       showCancelButton: true,
+                       confirmButtonText: 'Confirmar Pago',
+                       cancelButtonText: 'Cancelar'
+                   });
+                   if (formaPago) {
+                       try {
+                           const r = await fetch(`/api/mesas/items/${itemId}/pagar`, {
+                               method: 'PUT',
+                               headers: { 'Content-Type': 'application/json' },
+                               body: JSON.stringify({ forma_pago: formaPago })
+                           });
+                           if (!r.ok) { const d = await r.json(); throw new Error(d.error || 'Error al pagar item'); }
+                           await cargarPedido(pedidoActual.id);
+                           Swal.fire({ icon: 'success', title: 'Producto pagado correctamente', timer: 1500, showConfirmButton: false });
+                       } catch(e) { Swal.fire({ icon: 'error', title: e.message }); }
+                   }
+              }
+          }
+      } else {
+          // Si por alguna razón pasó todas las validaciones sin pendientes.
+          await mostrarModalPago(totalConPropinaFacturar, clienteIdFacturar);
+      }
     } catch (err) {
       Swal.fire({ icon: 'error', title: err.message });
     }
