@@ -121,6 +121,16 @@
                     <div><strong>Forma de Pago:</strong>
                         <%= factura.forma_pago.charAt(0).toUpperCase() + factura.forma_pago.slice(1) %>
                     </div>
+                    <% if (factura.forma_pago === 'mixto') { %>
+                        <div style="margin-top: 5px; font-size: 0.9em; text-align: left; display: inline-block;">
+                            <% if (Number(factura.monto_efectivo) > 0) { %>
+                                <div><i class="bi bi-cash"></i> Efectivo: $<%= Number(factura.monto_efectivo).toLocaleString('es-CO') %></div>
+                            <% } %>
+                            <% if (Number(factura.monto_transferencia) > 0) { %>
+                                <div><i class="bi bi-bank"></i> Transf.: $<%= Number(factura.monto_transferencia).toLocaleString('es-CO') %></div>
+                            <% } %>
+                        </div>
+                    <% } %>
                     <% if (config.qr_src) { %>
                         <div class="mt-3 mb-3">
                             <img src="<%= config.qr_src %>" alt="QR para transferencia" style="max-width: 150px;">

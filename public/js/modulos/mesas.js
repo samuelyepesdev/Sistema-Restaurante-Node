@@ -26,33 +26,45 @@ $(function () {
   function renderItems() {
     const tbody = $('#tbodyItems');
     tbody.empty();
-    let total = 0;
+    let totalRestante = 0;
+    
     items.forEach((it, idx) => {
       const cantidad = Number(it.cantidad || 0);
       const precio = Number((it.precio_unitario != null ? it.precio_unitario : it.precio) || 0);
       const subtotal = subtotalConDescuento(cantidad, precio, it.id);
-      total += subtotal;
+      
+      if (!it.pagado) {
+        totalRestante += subtotal;
+      }
+
       const descBadge = (descuentosPorItem[it.id] != null && descuentosPorItem[it.id] > 0)
         ? ' <span class="badge bg-success">-' + descuentosPorItem[it.id] + '%</span>' : '';
+      const badgePagado = it.pagado ? ' <span class="badge bg-success ms-1">Pagado</span>' : '';
+
+      const buttonsHtml = it.pagado
+        ? `<div class="text-success small fw-bold">Pagado</div>`
+        : `<div class="btn-group-item">
+             <button type="button" class="btn btn-sm btn-outline-secondary btn-menos-item" data-item-id="${it.id}" data-cantidad="${cantidad}" title="Quitar"><i class="bi bi-dash"></i></button>
+             <button type="button" class="btn btn-sm btn-outline-secondary btn-mas-item" data-item-id="${it.id}" data-cantidad="${cantidad}" title="Agregar"><i class="bi bi-plus"></i></button>
+             <button type="button" class="btn btn-sm btn-outline-success btn-pagar-item" data-item-id="${it.id}" title="Pagar Item"><i class="bi bi-cash"></i></button>
+             <button type="button" class="btn btn-sm btn-outline-danger btn-eliminar-item" data-idx="${idx}" data-item-id="${it.id}" title="Eliminar"><i class="bi bi-trash"></i></button>
+           </div>`;
+
+      const inputHtml = it.pagado
+        ? `<div class="text-center text-muted fw-bold">${cantidad}</div>`
+        : `<input type="number" class="form-control form-control-sm text-center input-cantidad-item" data-item-id="${it.id}" value="${cantidad}" min="1" style="width: 70px; margin: 0 auto;">`;
+
       tbody.append(`
         <tr>
-          <td class="td-producto">${(it.producto_nombre || it.nombre || it.producto_id) + descBadge}</td>
-          <td class="text-center">
-            <input type="number" class="form-control form-control-sm text-center input-cantidad-item" data-item-id="${it.id}" value="${cantidad}" min="1" style="width: 70px; margin: 0 auto;">
-          </td>
+          <td class="td-producto">${(it.producto_nombre || it.nombre || it.producto_id) + descBadge + badgePagado}</td>
+          <td class="text-center">${inputHtml}</td>
           <td class="text-end d-none d-sm-table-cell">${formatear(precio)}</td>
-          <td class="text-end td-subtotal">${formatear(subtotal)}</td>
-          <td class="text-center">
-            <div class="btn-group-item">
-              <button type="button" class="btn btn-sm btn-outline-secondary btn-menos-item" data-item-id="${it.id}" data-cantidad="${cantidad}" title="Quitar"><i class="bi bi-dash"></i></button>
-              <button type="button" class="btn btn-sm btn-outline-secondary btn-mas-item" data-item-id="${it.id}" data-cantidad="${cantidad}" title="Agregar"><i class="bi bi-plus"></i></button>
-              <button type="button" class="btn btn-sm btn-outline-danger btn-eliminar-item" data-idx="${idx}" data-item-id="${it.id}" title="Eliminar"><i class="bi bi-trash"></i></button>
-            </div>
-          </td>
+          <td class="text-end td-subtotal">${it.pagado ? '<del class="text-muted">' + formatear(subtotal) + '</del>' : formatear(subtotal)}</td>
+          <td class="text-center">${buttonsHtml}</td>
         </tr>
       `);
     });
-    const totalConPropina = total + propinaPedido;
+    const totalConPropina = totalRestante + propinaPedido;
     $('#totalPedido').text(formatear(totalConPropina));
     $('#propinaLinea').toggleClass('d-none', propinaPedido <= 0);
     $('#propinaMonto').text(formatear(propinaPedido));
@@ -110,6 +122,40 @@ $(function () {
       await cargarPedido(pedidoActual.id);
       Swal.fire({ icon: 'success', title: 'Item eliminado' });
     } catch (e) { Swal.fire({ icon: 'error', title: e.message }); }
+  });
+
+  $(document).on('click', '.btn-pagar-item', async function () {
+    const itemId = $(this).data('item-id');
+    const inputOptions = {
+        'efectivo': 'Efectivo',
+        'transferencia': 'Transferencia'
+    };
+    
+    const { value: formaPago } = await Swal.fire({
+      title: 'Pagar Item Individual',
+      text: 'Seleccione método de pago:',
+      input: 'radio',
+      inputOptions,
+      inputValidator: (value) => {
+        if (!value) return 'Debe elegir un método';
+      },
+      showCancelButton: true,
+      confirmButtonText: 'Confirmar Pago',
+      cancelButtonText: 'Cancelar'
+    });
+
+    if (formaPago) {
+      try {
+        const r = await fetch(`/api/mesas/items/${itemId}/pagar`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ forma_pago: formaPago })
+        });
+        if (!r.ok) { const d = await r.json(); throw new Error(d.error || 'Error al pagar item'); }
+        await cargarPedido(pedidoActual.id);
+        Swal.fire({ icon: 'success', title: 'Producto pagado', timer: 1500, showConfirmButton: false });
+      } catch (e) { Swal.fire({ icon: 'error', title: e.message }); }
+    }
   });
 
   // Cargar pedido por mesa
@@ -732,20 +778,19 @@ $(function () {
 
       // Calcular total del pedido con descuentos aplicados (temporales para esta venta) + propina
       let totalPedido = 0;
+      let checkPendientes = false;
+
       items.forEach(it => {
-        const cantidad = Number(it.cantidad || 0);
-        const precio = Number((it.precio_unitario != null ? it.precio_unitario : it.precio) || 0);
-        const subtotal = subtotalConDescuento(cantidad, precio, it.id);
-        totalPedido += subtotal;
+        if (!it.pagado) {
+            const cantidad = Number(it.cantidad || 0);
+            const precio = Number((it.precio_unitario != null ? it.precio_unitario : it.precio) || 0);
+            const subtotal = subtotalConDescuento(cantidad, precio, it.id);
+            totalPedido += subtotal;
+            checkPendientes = true;
+        }
       });
       const totalConPropinaFacturar = totalPedido + propinaPedido;
 
-      if (totalPedido <= 0) {
-        Swal.fire({ icon: 'warning', title: 'El total del pedido es cero' });
-        return;
-      }
-
-      // Usar cliente seleccionado o el consumidor final predeterminado
       let clienteIdFacturar = clienteActual.id;
 
       if (!clienteIdFacturar) {
@@ -756,6 +801,68 @@ $(function () {
         }
         clienteIdFacturar = clienteDefault.id;
       }
+
+      if (!checkPendientes && totalConPropinaFacturar <= 0) {
+          // Todo fue pagado individualmente y no hay propina pendiente. Generar factura automáticamente.
+          try {
+              const reqFactura = await fetch(`/api/mesas/pedidos/${pedidoActual.id}/facturar`, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                      cliente_id: clienteIdFacturar,
+                      forma_pago: 'efectivo', // dummy, as the remaining amount is 0
+                      descuentos: descuentosPorItem,
+                      propina: propinaPedido
+                  })
+              });
+              const dataF = await reqFactura.json();
+              if (!reqFactura.ok) throw new Error(dataF.error || 'Error al facturar');
+              
+              Swal.fire({
+                  icon: 'success',
+                  title: '¡Mesa facturada!',
+                  text: 'Generando registro final...',
+                  showConfirmButton: true
+              }).then(() => {
+                 canvas.hide();
+                 refreshMesas();
+                 window.open(`/facturas/${dataF.factura_id}/ticket`, '_blank', 'width=400,height=600');
+              });
+          } catch(errF) {
+              Swal.fire({ icon: 'error', title: errF.message });
+          }
+          return;
+      }
+
+      if (checkPendientes && totalConPropinaFacturar <= 0) {
+          // Hay items pero valen 0 (ej: regalo o descuento 100%). Procedemos.
+          try {
+              const reqFactura = await fetch(`/api/mesas/pedidos/${pedidoActual.id}/facturar`, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                      cliente_id: clienteIdFacturar,
+                      forma_pago: 'efectivo', // by default
+                      descuentos: descuentosPorItem,
+                      propina: propinaPedido
+                  })
+              });
+              const dataF = await reqFactura.json();
+              if (!reqFactura.ok) throw new Error(dataF.error || 'Error al facturar');
+              
+              Swal.fire({ icon: 'success', title: '¡Facturado sin costo!', showConfirmButton: true }).then(() => {
+                 canvas.hide();
+                 refreshMesas();
+                 window.open(`/facturas/${dataF.factura_id}/ticket`, '_blank', 'width=400,height=600');
+              });
+          } catch(errF) {
+              Swal.fire({ icon: 'error', title: errF.message });
+          }
+          return;
+      }
+
+
+
 
       // Mostrar modal de pago (total incluye propina)
       await mostrarModalPago(totalConPropinaFacturar, clienteIdFacturar);

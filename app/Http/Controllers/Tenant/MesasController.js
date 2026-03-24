@@ -529,6 +529,37 @@ class MesasController {
         }
     }
 
+    // PUT /mesas/items/:itemId/pagar
+    static async pagarItem(req, res) {
+        try {
+            const tenantId = req.tenant?.id;
+            if (!tenantId) return res.status(403).json({ error: 'Contexto de tenant no disponible' });
+
+            const itemId = req.params.itemId;
+            const { forma_pago } = req.body || {};
+            
+            if (!forma_pago || !['efectivo', 'transferencia'].includes(forma_pago)) {
+                return res.status(400).json({ error: 'forma_pago requerida y debe ser efectivo o transferencia' });
+            }
+
+            const [rows] = await db.query(
+                'SELECT pi.id FROM pedido_items pi INNER JOIN pedidos p ON pi.pedido_id = p.id WHERE pi.id = ? AND p.tenant_id = ?',
+                [itemId, tenantId]
+            );
+            if (rows.length === 0) return res.status(404).json({ error: 'Item no encontrado' });
+
+            await db.query(
+                `UPDATE pedido_items SET pagado = 1, forma_pago = ? WHERE id = ?`,
+                [forma_pago, itemId]
+            );
+
+            res.json({ message: 'Item pagado correctamente' });
+        } catch (error) {
+            console.error('Error al pagar item individual:', error);
+            res.status(500).json({ error: 'Error al pagar item individual' });
+        }
+    }
+
     // POST /mesas/pedidos/:pedidoId/facturar
     static async facturarPedido(req, res) {
         const tenantId = req.tenant?.id;
@@ -557,6 +588,9 @@ class MesasController {
                 if (items.length === 0) throw new Error('Pedido sin items');
 
                 let total = 0;
+                let montoEfectivo = 0;
+                let montoTransferencia = 0;
+
                 const lineasFactura = items.map(i => {
                     const cant = Number(i.cantidad || 0);
                     const precioUnit = Number(i.precio_unitario || 0);
@@ -565,6 +599,16 @@ class MesasController {
                     const subtotal = Math.round(cant * precioUnit * (1 - desc) * 100) / 100;
                     const precioUnitFactura = desc > 0 ? Math.round(precioUnit * (1 - desc) * 100) / 100 : precioUnit;
                     total += subtotal;
+
+                    // Compute distribution of payment
+                    if (i.pagado) {
+                        if (i.forma_pago === 'efectivo') montoEfectivo += subtotal;
+                        else if (i.forma_pago === 'transferencia') montoTransferencia += subtotal;
+                    } else {
+                        if (forma_pago === 'efectivo') montoEfectivo += subtotal;
+                        else if (forma_pago === 'transferencia') montoTransferencia += subtotal;
+                    }
+
                     return { 
                         producto_id: i.producto_id, 
                         servicio_id: i.servicio_id,
@@ -579,6 +623,18 @@ class MesasController {
                 total = Math.round(total * 100) / 100;
                 const propina = Math.max(0, parseFloat(propinaBody != null ? propinaBody : pedido.propina) || 0);
                 const totalConPropina = Math.round((total + propina) * 100) / 100;
+
+                // Propina will be added to the overall selected forma_pago of the invoice
+                if (forma_pago === 'efectivo') montoEfectivo += propina;
+                else if (forma_pago === 'transferencia') montoTransferencia += propina;
+
+                montoEfectivo = Math.round(montoEfectivo * 100) / 100;
+                montoTransferencia = Math.round(montoTransferencia * 100) / 100;
+
+                let formaPagoFinal = forma_pago;
+                if (montoEfectivo > 0 && montoTransferencia > 0) formaPagoFinal = 'mixto';
+                else if (montoEfectivo > 0) formaPagoFinal = 'efectivo';
+                else if (montoTransferencia > 0) formaPagoFinal = 'transferencia';
 
                 const [rowsNum] = await connection.query(
                     'SELECT COALESCE(MAX(numero), 0) + 1 AS siguiente FROM facturas WHERE tenant_id = ?',
@@ -595,8 +651,8 @@ class MesasController {
                 const cajaSesionId = sesiones.length > 0 ? sesiones[0].id : null;
 
                 const [facturaInsert] = await connection.query(
-                    `INSERT INTO facturas (tenant_id, numero, cliente_id, total, forma_pago, propina, fecha, caja_sesion_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-                    [tenantId, numeroFactura, cliente_id, totalConPropina, forma_pago, propina, fechaEmisionUtc, cajaSesionId]
+                    `INSERT INTO facturas (tenant_id, numero, cliente_id, total, forma_pago, monto_efectivo, monto_transferencia, propina, fecha, caja_sesion_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                    [tenantId, numeroFactura, cliente_id, totalConPropina, formaPagoFinal, montoEfectivo, montoTransferencia, propina, fechaEmisionUtc, cajaSesionId]
                 );
                 const facturaId = facturaInsert.insertId;
 

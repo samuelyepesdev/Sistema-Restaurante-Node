@@ -42,6 +42,9 @@ router.post('/pedidos/:pedidoId/servicios', MesasController.addService);
 // DELETE /mesas/items/:itemId - Eliminar item
 router.delete('/items/:itemId', MesasController.destroyItem);
 
+// PUT /mesas/items/:itemId/pagar - Pagar item individual
+router.put('/items/:itemId/pagar', MesasController.pagarItem);
+
 // PUT /mesas/items/:itemId/enviar - Enviar a cocina
 router.put('/items/:itemId/enviar', MesasController.enviarItem);
 
