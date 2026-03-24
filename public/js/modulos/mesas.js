@@ -151,7 +151,13 @@ $(function () {
       clienteActual = { id: null, nombre: 'Consumidor Final' };
     }
     actualizarUICliente();
-    if (items.length > 0) currentMesaEstado = 'ocupada';
+    
+    if (items.length > 0) {
+      currentMesaEstado = 'ocupada';
+    } else {
+      currentMesaEstado = 'libre';
+    }
+
     const $btnLiberar = $('#btnLiberarMesaHeader');
     if ($btnLiberar.length) $btnLiberar.prop('disabled', currentMesaEstado === 'libre').toggleClass('d-none', currentMesaEstado === 'libre');
     // No resetear descuentos aquí: se conservan para que al facturar se envíen. Solo se resetean al abrir otra mesa (abrirPedido).
