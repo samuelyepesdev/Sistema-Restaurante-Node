@@ -102,11 +102,11 @@ class CajaRepository {
         const [salidas] = await db.query(`SELECT SUM(monto) as total FROM caja_movimientos WHERE sesion_id = ? AND tipo = 'salida'`, [sesionId]);
 
         return {
-            ventas_efectivo: ventasEfectivo[0].total || 0,
-            ventas_transferencia: ventasTransferencia[0].total || 0,
-            ventas: ventas[0].total || 0,
-            entradas: entradas[0].total || 0,
-            salidas: salidas[0].total || 0
+            ventas_efectivo: parseFloat(ventasEfectivo[0]?.total || 0),
+            ventas_transferencia: parseFloat(ventasTransferencia[0]?.total || 0),
+            ventas: parseFloat(ventas[0]?.total || 0),
+            entradas: parseFloat(entradas[0]?.total || 0),
+            salidas: parseFloat(salidas[0]?.total || 0)
         };
     }
 }
