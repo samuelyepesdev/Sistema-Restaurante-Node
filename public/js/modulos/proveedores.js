@@ -274,19 +274,23 @@ document.getElementById('formCargarFactura').addEventListener('submit', async fu
     try {
         const res = await fetch(`/proveedores/${proveedorId}/facturas`, {
             method: 'POST',
-            body: formData
+            body: formData,
+            headers: {
+                'Accept': 'application/json'
+            }
         });
 
-        const data = await res.json();
-        if (res.ok) {
-            Swal.fire({ icon: 'success', title: '¡Éxito!', text: data.message, timer: 1500, showConfirmButton: false });
-            this.reset();
-            await cargarFacturas(proveedorId);
-        } else {
-            Swal.fire('Error', data.error || 'No se pudo subir el archivo', 'error');
+        if (!res.ok) {
+            const errData = await res.json().catch(() => ({ error: 'Error del servidor (' + res.status + ')' }));
+            throw new Error(errData.error || 'No se pudo subir el archivo');
         }
+
+        const data = await res.json();
+        Swal.fire({ icon: 'success', title: '¡Éxito!', text: data.message, timer: 1500, showConfirmButton: false });
+        this.reset();
+        await cargarFacturas(proveedorId);
     } catch (error) {
-        Swal.fire('Error', 'Error de red o archivo demasiado grande', 'error');
+        Swal.fire('Error', error.message || 'Error de red o archivo demasiado grande', 'error');
     } finally {
         btn.disabled = false;
         btn.innerHTML = originalHtml;
