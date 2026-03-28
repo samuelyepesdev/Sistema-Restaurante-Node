@@ -86,10 +86,18 @@
                 Swal.fire({ icon: 'success', title: 'Datos Guardados', timer: 1500, showConfirmButton: false })
                     .then(() => { if (type === 'general') window.location.reload(); });
             } else {
-                Swal.fire({ icon: 'error', title: 'Error al actualizar datos' });
+                let errText = 'Error en el servidor';
+                const textResp = await resp.text();
+                try {
+                    const parsed = JSON.parse(textResp);
+                    errText = parsed.error || parsed.message || JSON.stringify(parsed);
+                } catch (e) {
+                    errText = textResp;
+                }
+                Swal.fire({ icon: 'error', title: 'Error', text: errText || 'Error al actualizar datos' });
             }
         } catch (e) {
-            Swal.fire({ icon: 'error', title: 'Error de conexión' });
+            Swal.fire({ icon: 'error', title: 'Error Capturado', text: e.message });
         }
     }
 

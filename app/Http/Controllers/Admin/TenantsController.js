@@ -101,7 +101,7 @@ class TenantsController {
             }
         } catch (error) {
             console.error('Error al actualizar tenant:', error);
-            res.status(400).send(error.message);
+            res.status(400).json({ error: error.message, stack: error.stack });
         }
     }
 

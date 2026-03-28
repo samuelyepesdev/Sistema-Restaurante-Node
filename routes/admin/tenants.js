@@ -5,6 +5,7 @@ const { ROLES } = require('../../utils/constants');
 const authService = require('../../services/Shared/AuthService');
 const BaseRequest = require('../../app/Http/Requests/BaseRequest');
 const StoreTenantRequest = require('../../app/Http/Requests/Admin/StoreTenantRequest');
+const UpdateTenantRequest = require('../../app/Http/Requests/Admin/UpdateTenantRequest');
 
 // Middleware de seguridad para el módulo admin
 router.use((req, res, next) => {
@@ -18,7 +19,7 @@ router.use((req, res, next) => {
 // Tenants list & creation
 router.get('/', TenantsController.index);
 router.post('/', BaseRequest.validate(StoreTenantRequest), TenantsController.store);
-router.put('/:id', BaseRequest.validate(StoreTenantRequest), TenantsController.update);
+router.put('/:id', BaseRequest.validate(UpdateTenantRequest), TenantsController.update);
 router.delete('/:id', TenantsController.destroy);
 router.post('/:id/status', TenantsController.updateStatus);
 router.post('/:id/seed-categorias', TenantsController.seedCategorias);
