@@ -26,34 +26,70 @@
         </div>
 
         <!-- Stats Grid -->
-        <div class="stats-container">
+        <div class="stats-container mb-4" style="grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));">
             <div class="stat-card shadow-sm">
                 <div class="stat-icon bg-primary text-white">
                     <i class="bi bi-briefcase"></i>
                 </div>
                 <div>
-                    <div class="stat-value"><%= servicios.length %></div>
-                    <div class="stat-label">Total Servicios</div>
+                    <div class="stat-value"><%= servicios.filter(s => s.activo).length %> <span class="text-muted fs-6">/ <%= servicios.length %></span></div>
+                    <div class="stat-label">Activos / Total</div>
                 </div>
             </div>
             <div class="stat-card shadow-sm">
                 <div class="stat-icon bg-info text-white">
-                    <i class="bi bi-truck"></i>
+                    <i class="bi bi-cart-check"></i>
                 </div>
                 <div>
-                    <div class="stat-value"><%= servicios.filter(s => s.es_externo).length %></div>
-                    <div class="stat-label">Servicios Externos</div>
+                    <div class="stat-value"><%= stats.cantidad_usos %></div>
+                    <div class="stat-label">Veces Utilizados</div>
                 </div>
             </div>
             <div class="stat-card shadow-sm">
                 <div class="stat-icon bg-success text-white">
-                    <i class="bi bi-check2-circle"></i>
+                    <i class="bi bi-currency-dollar"></i>
                 </div>
                 <div>
-                    <div class="stat-value"><%= servicios.filter(s => s.activo).length %></div>
-                    <div class="stat-label">Servicios Activos</div>
+                    <div class="stat-value">$<%= Number(stats.dinero_generado).toLocaleString('es-CO') %></div>
+                    <div class="stat-label">Dinero Movido</div>
                 </div>
             </div>
+            <div class="stat-card shadow-sm">
+                <div class="stat-icon bg-warning text-dark">
+                    <i class="bi bi-star"></i>
+                </div>
+                <div>
+                    <div class="stat-value text-truncate" style="font-size: 1.25rem; max-width: 140px;" title="<%= stats.mas_usados.length ? stats.mas_usados[0].nombre : 'Ninguno' %>">
+                        <%= stats.mas_usados.length ? stats.mas_usados[0].nombre : 'Ninguno' %>
+                    </div>
+                    <div class="stat-label">Servicio más popular</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mb-4 g-4">
+            <% if (stats.mas_usados.length > 0) { %>
+            <div class="col-md-12">
+                <div class="card-premium h-100 border-0 p-3 shadow-sm bg-white rounded-4">
+                    <div class="card-header-premium border-0 pb-2">
+                        <h6 class="fw-bold m-0 text-dark"><i class="bi bi-graph-up-arrow text-primary me-2"></i>Top 5 Servicios Más Utilizados</h6>
+                    </div>
+                    <div class="d-flex flex-wrap gap-3">
+                        <% stats.mas_usados.forEach((m) => { %>
+                            <div class="p-3 border rounded-3 bg-light flex-fill" style="min-width: 200px;">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <span class="fw-bold text-dark text-truncate"><%= m.nombre %></span>
+                                    <span class="badge bg-primary text-white rounded-pill"><%= m.veces_usado %> usos</span>
+                                </div>
+                                <div class="text-success small fw-medium mt-2">
+                                    <i class="bi bi-cash me-1"></i>$<%= Number(m.dinero_generado).toLocaleString('es-CO') %> generados
+                                </div>
+                            </div>
+                        <% }) %>
+                    </div>
+                </div>
+            </div>
+            <% } %>
         </div>
 
         <!-- Main Content Card -->

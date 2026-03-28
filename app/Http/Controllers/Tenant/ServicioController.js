@@ -15,9 +15,11 @@ class ServicioController {
             const tenantId = req.tenant?.id;
             const filters = { q: req.query.q };
             const servicios = await ServicioRepository.findAll(tenantId, filters);
+            const stats = await ServicioRepository.getEstadisticas(tenantId);
             
             res.render('servicios/index', {
                 servicios,
+                stats,
                 q: req.query.q || '',
                 user: req.user,
                 tenant: req.tenant,

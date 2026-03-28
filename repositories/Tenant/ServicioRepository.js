@@ -74,6 +74,52 @@ class ServicioRepository {
         const [result] = await db.query('DELETE FROM servicios WHERE id = ? AND tenant_id = ?', [id, tenantId]);
         return result;
     }
+
+    static async getEstadisticas(tenantId) {
+        const stats = {
+            cantidad_usos: 0,
+            dinero_generado: 0,
+            mas_usados: []
+        };
+
+        try {
+            // Global usage stats
+            const sqlGlobal = `
+                SELECT 
+                    SUM(df.cantidad) as cantidad_usos,
+                    SUM(df.precio_unitario * df.cantidad) as dinero_generado
+                FROM detalle_factura df
+                JOIN facturas f ON df.factura_id = f.id
+                WHERE f.tenant_id = ? AND df.es_servicio = 1 AND f.estado != 'anulada'
+            `;
+            const [globalResult] = await db.query(sqlGlobal, [tenantId]);
+            if (globalResult[0]) {
+                stats.cantidad_usos = parseFloat(globalResult[0].cantidad_usos) || 0;
+                stats.dinero_generado = parseFloat(globalResult[0].dinero_generado) || 0;
+            }
+
+            // Most used services
+            const sqlPopulares = `
+                SELECT 
+                    s.nombre,
+                    SUM(df.cantidad) as veces_usado,
+                    SUM(df.precio_unitario * df.cantidad) as dinero_generado
+                FROM detalle_factura df
+                JOIN facturas f ON df.factura_id = f.id
+                JOIN servicios s ON df.servicio_id = s.id
+                WHERE f.tenant_id = ? AND df.es_servicio = 1 AND f.estado != 'anulada'
+                GROUP BY s.id, s.nombre
+                ORDER BY veces_usado DESC
+                LIMIT 5
+            `;
+            const [popularesResult] = await db.query(sqlPopulares, [tenantId]);
+            stats.mas_usados = popularesResult;
+        } catch (e) {
+            console.error('Error calculando estadisticas de servicios:', e);
+        }
+
+        return stats;
+    }
 }
 
 module.exports = ServicioRepository;
