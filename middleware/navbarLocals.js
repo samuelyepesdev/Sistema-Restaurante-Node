@@ -49,7 +49,7 @@ module.exports = function navbarLocals(req, res, next) {
                 perfil: hp('perfil.ver'),
                 whatsapp: hp('whatsapp.ver') && cs('configuracion'),
                 whatsappAjustes: hp('whatsapp.ajustes') && cs('configuracion'),
-                proveedores: hp('proveedores.ver') && cs('inventario'),
+                proveedores: hp('proveedores.ver') && cs('proveedores'),
                 caja: hp('caja.ver') && cs('caja'),
                 servicios: hp('servicios.ver') && cs('servicios'),
             };

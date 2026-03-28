@@ -41,13 +41,17 @@ const PERMISSION_TO_MODULE = {
     'eventos.editar': 'eventos',
     'eventos.eliminar': 'eventos',
     'ventas_evento.realizar': 'eventos',
-    'proveedores.ver': 'inventario',
-    'proveedores.editar': 'inventario',
+    'proveedores.ver': 'proveedores',
+    'proveedores.editar': 'proveedores',
     'whatsapp.ver': 'configuracion',
     'whatsapp.ajustes': 'configuracion',
     'caja.ver': 'caja',
     'caja.abrir_cerrar': 'caja',
-    'caja.movimientos': 'caja'
+    'caja.movimientos': 'caja',
+    'servicios.ver': 'servicios',
+    'servicios.crear': 'servicios',
+    'servicios.editar': 'servicios',
+    'servicios.eliminar': 'servicios'
 };
 
 // Módulos que se usan en navbar / rutas (para allowedByPlan)
@@ -56,7 +60,7 @@ const PERMISSION_TO_MODULE = {
 const PLAN_MODULES = [
     'dashboard', 'productos', 'clientes', 'mesas', 'cocina', 'ventas', 'configuracion',
     'inventario', 'recetas', 'eventos', 'analitica', 'prediccion_ml',
-    'plantillas', 'importar_exportar', 'costeo', 'caja'
+    'plantillas', 'importar_exportar', 'costeo', 'caja', 'servicios', 'proveedores'
 ];
 
 /**
