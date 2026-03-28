@@ -98,6 +98,21 @@ class EventoRepository {
         );
         return rows;
     }
+
+    /** 
+     * Obtiene los eventos que están en curso hoy, o que comenzarán en los próximos "dias" días.
+     */
+    static async getProximosEventos(tenantId, dias = 8) {
+        const [rows] = await db.query(
+            `SELECT id, nombre, fecha_inicio, fecha_fin, descripcion, tipo 
+             FROM eventos 
+             WHERE tenant_id = ? AND activo = 1 
+             AND (fecha_inicio <= DATE_ADD(CURDATE(), INTERVAL ? DAY) AND fecha_fin >= CURDATE())
+             ORDER BY fecha_inicio ASC`,
+            [tenantId, dias]
+        );
+        return rows;
+    }
 }
 
 module.exports = EventoRepository;
