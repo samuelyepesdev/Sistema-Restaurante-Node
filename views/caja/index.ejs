@@ -38,21 +38,25 @@
                                 turno de caja con una base inicial.</p>
 
                             <form id="formAbrirCaja">
-                                <div class="mb-3 text-start">
-                                    <label class="form-label fw-bold small text-muted">Monto Inicial (Base)</label>
-                                    <div class="input-group input-group-lg">
-                                        <span
-                                            class="input-group-text bg-white border-end-0 text-success fw-bold">$</span>
-                                        <input type="number" step="0.01"
-                                            class="form-control border-start-0 ps-0 fw-bold" name="monto_inicial"
-                                            placeholder="0.00" required autofocus>
+                                <div class="row gx-2">
+                                    <div class="col-6 mb-3 text-start">
+                                        <label class="form-label fw-bold small text-muted"><i class="bi bi-cash me-1"></i>Base Efectivo (Físico)</label>
+                                        <div class="input-group input-group-lg">
+                                            <span class="input-group-text bg-white border-end-0 text-success fw-bold">$</span>
+                                            <input type="number" step="0.01" class="form-control border-start-0 ps-0 fw-bold" name="monto_inicial_efectivo" placeholder="0.00" required autofocus>
+                                        </div>
+                                    </div>
+                                    <div class="col-6 mb-3 text-start">
+                                        <label class="form-label fw-bold small text-muted"><i class="bi bi-bank me-1"></i>Base Transferencias</label>
+                                        <div class="input-group input-group-lg">
+                                            <span class="input-group-text bg-white border-end-0 text-primary fw-bold">$</span>
+                                            <input type="number" step="0.01" class="form-control border-start-0 ps-0 fw-bold" name="monto_inicial_transferencia" placeholder="0.00" value="0" required>
+                                        </div>
                                     </div>
                                 </div>
                                 <div class="mb-4 text-start">
-                                    <label class="form-label fw-bold small text-muted">Notas de apertura
-                                        (Opcional)</label>
-                                    <textarea class="form-control rounded-3" name="notas" rows="2"
-                                        placeholder="Ej: Recibido por Samuel..."></textarea>
+                                    <label class="form-label fw-bold small text-muted">Notas de apertura (Opcional)</label>
+                                    <textarea class="form-control rounded-3" name="notas" rows="2" placeholder="Ej: Recibido por Samuel..."></textarea>
                                 </div>
                                 <button type="submit" class="btn btn-primary btn-lg w-100 rounded-pill shadow-sm py-3">
                                     <i class="bi bi-unlock me-2"></i>Abrir Turno de Caja
@@ -75,32 +79,57 @@
                                     </div>
                                 </div>
                                 <div class="card-body p-4">
+                                    <!-- Sección de Resumen Agrupado -->
                                     <div class="row g-3">
-                                        <div class="col-md-4">
-                                            <div class="p-3 bg-light rounded-4 text-center h-100">
-                                                <div class="text-muted small mb-1">Caja Inicial</div>
-                                                <div class="h4 fw-bold mb-0">$<%= new
-                                                        Intl.NumberFormat('es-CO').format(estado.sesion.monto_inicial)
-                                                        %>
+                                        <div class="col-md-6">
+                                            <!-- Tarjeta Efectivo -->
+                                            <div class="card bg-success bg-opacity-10 border-success border-opacity-25 h-100 shadow-sm rounded-4">
+                                                <div class="card-body">
+                                                    <h6 class="text-success fw-bold mb-3"><i class="bi bi-cash-stack me-2"></i>Dinero Físico (Efectivo)</h6>
+                                                    <div class="d-flex justify-content-between mb-2">
+                                                        <span class="text-muted small">Caja Fuerte / Base:</span>
+                                                        <span class="fw-bold">$<%= new Intl.NumberFormat('es-CO').format(estado.sesion.monto_inicial_efectivo) %></span>
+                                                    </div>
+                                                    <div class="d-flex justify-content-between mb-2">
+                                                        <span class="text-muted small">Ventas (Efectivo):</span>
+                                                        <span class="fw-bold text-success">+$<%= new Intl.NumberFormat('es-CO').format(estado.sesion.ventas_efectivo) %></span>
+                                                    </div>
+                                                    <div class="d-flex justify-content-between mb-2">
+                                                        <span class="text-muted small">Mvs. Manuales:</span>
+                                                        <span class="fw-bold"><span class="text-success">+<%= estado.sesion.entradas %></span> | <span class="text-danger">-<%= estado.sesion.salidas %></span></span>
+                                                    </div>
+                                                    <hr class="text-success opacity-25">
+                                                    <div class="d-flex justify-content-between align-items-center">
+                                                        <span class="fw-bold text-success">Efectivo en Caja:</span>
+                                                        <span class="h4 fw-bold text-success mb-0">$<%= new Intl.NumberFormat('es-CO').format(estado.sesion.monto_final_teorico_efectivo) %></span>
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
-                                        <div class="col-md-4">
-                                            <div
-                                                class="p-3 bg-light rounded-4 text-center h-100 border border-success border-opacity-25">
-                                                <div class="text-success small mb-1">Ventas Acumuladas</div>
-                                                <div class="h4 fw-bold mb-0">$<%= new
-                                                        Intl.NumberFormat('es-CO').format(estado.sesion.ventas) %>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div class="col-md-4">
-                                            <div
-                                                class="p-3 bg-light rounded-4 text-center h-100 border border-danger border-opacity-25">
-                                                <div class="text-danger small mb-1">Efectivo en Caja (Teórico)</div>
-                                                <div class="h4 fw-bold mb-0">$<%= new
-                                                        Intl.NumberFormat('es-CO').format(estado.sesion.monto_final_teorico)
-                                                        %>
+
+                                        <div class="col-md-6">
+                                            <!-- Tarjeta Bancos/Transferencias -->
+                                            <div class="card bg-primary bg-opacity-10 border-primary border-opacity-25 h-100 shadow-sm rounded-4">
+                                                <div class="card-body">
+                                                    <h6 class="text-primary fw-bold mb-3"><i class="bi bi-bank me-2"></i>Medios Digitales (Transferencias)</h6>
+                                                    <div class="d-flex justify-content-between mb-2">
+                                                        <span class="text-muted small">Saldo Inicial:</span>
+                                                        <span class="fw-bold">$<%= new Intl.NumberFormat('es-CO').format(estado.sesion.monto_inicial_transferencia) %></span>
+                                                    </div>
+                                                    <div class="d-flex justify-content-between mb-2">
+                                                        <span class="text-muted small">Ventas (Transferencias):</span>
+                                                        <span class="fw-bold text-primary">+$<%= new Intl.NumberFormat('es-CO').format(estado.sesion.ventas_transferencia) %></span>
+                                                    </div>
+                                                    <!-- Se espacio para que quede parejo a nivel de altura sino pones algo aquí -->
+                                                    <div class="d-flex justify-content-between mb-2 invisible">
+                                                        <span class="text-muted small">...</span>
+                                                        <span class="fw-bold">...</span>
+                                                    </div>
+                                                    <hr class="text-primary opacity-25">
+                                                    <div class="d-flex justify-content-between align-items-center">
+                                                        <span class="fw-bold text-primary">Saldo en Bancos:</span>
+                                                        <span class="h4 fw-bold text-primary mb-0">$<%= new Intl.NumberFormat('es-CO').format(estado.sesion.monto_final_teorico_transferencia) %></span>
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
@@ -134,9 +163,9 @@
                                                 <tr class="small text-muted">
                                                     <th class="ps-4">Apertura</th>
                                                     <th>Usuario</th>
-                                                    <th>Ventas</th>
-                                                    <th>Mvs. Manuales</th>
-                                                    <th class="text-end pe-4">Total</th>
+                                                    <th>Total Ventas</th>
+                                                    <th>Total Mvs.</th>
+                                                    <th class="text-end pe-4">Total General</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
@@ -158,6 +187,7 @@
                                                     </td>
                                                     <td class="text-success fw-bold">+$<%= new
                                                             Intl.NumberFormat('es-CO').format(estado.sesion.ventas) %>
+                                                        <br><small class="text-muted">Ef: <%= estado.sesion.ventas_efectivo %> | Tr: <%= estado.sesion.ventas_transferencia %></small>
                                                     </td>
                                                     <td>
                                                         <div class="small text-success">+$<%= new
@@ -192,20 +222,21 @@
 
                                     <form id="formCerrarCaja" data-id="<%= estado.sesion.id %>">
                                         <div class="mb-3 text-start">
-                                            <label class="form-label small fw-bold">Efectivo Físico Contado</label>
+                                            <label class="form-label small fw-bold"><i class="bi bi-cash me-1"></i>Efectivo Físico Contado</label>
                                             <div class="input-group">
                                                 <span class="input-group-text bg-white">$</span>
                                                 <input type="number" step="0.01" name="monto_final_real"
-                                                    class="form-control fw-bold" required placeholder="0.00">
+                                                    class="form-control fw-bold fs-5 text-success" required placeholder="0.00" value="<%= estado.sesion.monto_final_teorico_efectivo %>">
                                             </div>
+                                            <div class="form-text text-muted small">Cuenta todos los billetes/monedas reales.</div>
                                         </div>
                                         <div class="mb-4 text-start">
                                             <label class="form-label small fw-bold">Notas de cierre</label>
                                             <textarea class="form-control" name="notas" rows="3"
                                                 placeholder="Ej: Todo cuadra perfecto..."></textarea>
                                         </div>
-                                        <button type="submit" class="btn btn-danger w-100 rounded-pill py-3 fw-bold">
-                                            <i class="bi bi-lock-fill me-2"></i>Cerrar Turno de Caja
+                                        <button type="submit" class="btn btn-danger w-100 rounded-pill py-3 fw-bold shadow-sm">
+                                            <i class="bi bi-lock-fill me-2"></i>Cerrar Turno
                                         </button>
                                     </form>
                                 </div>

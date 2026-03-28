@@ -56,21 +56,17 @@
                                         <% } %>
                             </td>
                             <td class="text-end pe-4">
-                                <div class="btn-group shadow-sm">
-                                    <button class="btn btn-white btn-sm btn-facturas" data-id="<%= p.id %>"
-                                        data-nombre="<%= p.nombre %>" title="Facturas">
-                                        <i class="bi bi-receipt text-success"></i>
+                                <div class="d-flex justify-content-end gap-2">
+                                    <button class="btn btn-outline-success btn-sm btn-facturas rounded-pill px-3" data-id="<%= p.id %>" data-nombre="<%= p.nombre %>" title="Ver Compras al Proveedor">
+                                        <i class="bi bi-cart-check me-1"></i> Compras
                                     </button>
-                                    <button class="btn btn-white btn-sm btn-historial" data-id="<%= p.id %>"
-                                        data-nombre="<%= p.nombre %>" title="Historial de Costos">
-                                        <i class="bi bi-graph-up text-info"></i>
+                                    <button class="btn btn-outline-info btn-sm btn-historial rounded-pill px-3" data-id="<%= p.id %>" data-nombre="<%= p.nombre %>" title="Ver Historial de Precios">
+                                        <i class="bi bi-tag me-1"></i> Precios
                                     </button>
-                                    <button class="btn btn-white btn-sm btn-editar" data-id="<%= p.id %>"
-                                        title="Editar">
+                                    <button class="btn btn-light btn-sm btn-editar rounded-pill px-3" data-id="<%= p.id %>" title="Editar">
                                         <i class="bi bi-pencil-square text-primary"></i>
                                     </button>
-                                    <button class="btn btn-white btn-sm btn-eliminar" data-id="<%= p.id %>"
-                                        title="Eliminar">
+                                    <button class="btn btn-light btn-sm btn-eliminar rounded-pill px-3" data-id="<%= p.id %>" title="Eliminar">
                                         <i class="bi bi-trash text-danger"></i>
                                     </button>
                                 </div>
@@ -138,15 +134,15 @@
                             </div>
 
                             <div class="border-top pt-3 d-flex flex-wrap justify-content-between gap-2">
-                                <button class="btn btn-light-success btn-sm flex-grow-1 py-2 btn-facturas"
+                                <button class="btn btn-light-success btn-sm flex-grow-1 py-2 btn-facturas rounded-pill"
                                     data-id="<%= p.id %>" data-nombre="<%= p.nombre %>">
-                                    <i class="bi bi-receipt me-1"></i> Facturas
+                                    <i class="bi bi-cart-check me-1"></i> Compras
                                 </button>
-                                <button class="btn btn-light-info btn-sm flex-grow-1 py-2 btn-historial"
+                                <button class="btn btn-light-info btn-sm flex-grow-1 py-2 btn-historial rounded-pill"
                                     data-id="<%= p.id %>" data-nombre="<%= p.nombre %>">
-                                    <i class="bi bi-graph-up me-1"></i> Historial
+                                    <i class="bi bi-tag me-1"></i> Precios
                                 </button>
-                                <button class="btn btn-light-primary btn-sm flex-grow-1 py-2 btn-editar"
+                                <button class="btn btn-light-primary btn-sm flex-grow-1 py-2 btn-editar rounded-pill"
                                     data-id="<%= p.id %>">
                                     <i class="bi bi-pencil me-1"></i> Editar
                                 </button>

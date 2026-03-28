@@ -13,12 +13,13 @@ class CajaRepository {
     /**
      * Abre un nuevo turno/sesión de caja
      */
-    static async abrirSesion(tenantId, usuarioId, montoInicial, notas) {
+    static async abrirSesion(tenantId, usuarioId, montoEfectivo, montoTransferencia, notas) {
+        const montoInicial = (parseFloat(montoEfectivo) || 0) + (parseFloat(montoTransferencia) || 0);
         const sql = `
-            INSERT INTO caja_sesiones (tenant_id, usuario_id, monto_inicial, notas, estado, fecha_apertura)
-            VALUES (?, ?, ?, ?, 'abierta', CURRENT_TIMESTAMP)
+            INSERT INTO caja_sesiones (tenant_id, usuario_id, monto_inicial_efectivo, monto_inicial_transferencia, monto_inicial, notas, estado, fecha_apertura)
+            VALUES (?, ?, ?, ?, ?, ?, 'abierta', CURRENT_TIMESTAMP)
         `;
-        const [result] = await db.query(sql, [tenantId, usuarioId, montoInicial, notas]);
+        const [result] = await db.query(sql, [tenantId, usuarioId, montoEfectivo, montoTransferencia, montoInicial, notas]);
         return result.insertId;
     }
 
@@ -26,18 +27,25 @@ class CajaRepository {
      * Cierra una sesión de caja calculando totales
      */
     static async cerrarSesion(sesionId, tenantId, montoFinalReal, notas) {
-        // Calcular el teórico justo antes de cerrar
-        const [ventas] = await db.query(`SELECT SUM(total) as total FROM facturas WHERE caja_sesion_id = ?`, [sesionId]);
+        // Calcular el teórico justo antes de cerrar (Efectivo)
+        const [ventasEf] = await db.query(`SELECT SUM(monto_efectivo) as total FROM facturas WHERE caja_sesion_id = ?`, [sesionId]);
         const [entradas] = await db.query(`SELECT SUM(monto) as total FROM caja_movimientos WHERE sesion_id = ? AND tipo = 'entrada'`, [sesionId]);
         const [salidas] = await db.query(`SELECT SUM(monto) as total FROM caja_movimientos WHERE sesion_id = ? AND tipo = 'salida'`, [sesionId]);
-        const [sesion] = await db.query(`SELECT monto_inicial FROM caja_sesiones WHERE id = ?`, [sesionId]);
+        const [sesion] = await db.query(`SELECT monto_inicial_efectivo, monto_inicial_transferencia, monto_inicial FROM caja_sesiones WHERE id = ?`, [sesionId]);
 
-        const base = parseFloat(sesion[0]?.monto_inicial || 0);
-        const v = parseFloat(ventas[0]?.total || 0);
+        const baseEf = parseFloat(sesion[0]?.monto_inicial_efectivo || 0);
+        const vEf = parseFloat(ventasEf[0]?.total || 0);
         const e = parseFloat(entradas[0]?.total || 0);
         const s = parseFloat(salidas[0]?.total || 0);
-        const teorico = base + v + e - s;
-        const diferencia = montoFinalReal - teorico;
+        
+        // Teórico solo de efectivo
+        const teoricoEf = baseEf + vEf + e - s;
+        const diferencia = montoFinalReal - teoricoEf;
+
+        // También guardar el total final de todo (efectivo + transf)
+        const [ventasTotales] = await db.query(`SELECT SUM(total) as total FROM facturas WHERE caja_sesion_id = ?`, [sesionId]);
+        const vTot = parseFloat(ventasTotales[0]?.total || 0);
+        const teoricoTotal = parseFloat(sesion[0]?.monto_inicial || 0) + vTot + e - s;
 
         const sql = `
             UPDATE caja_sesiones 
@@ -49,7 +57,7 @@ class CajaRepository {
                 fecha_cierre = CURRENT_TIMESTAMP
             WHERE id = ? AND tenant_id = ?
         `;
-        await db.query(sql, [teorico, montoFinalReal, diferencia, notas, sesionId, tenantId]);
+        await db.query(sql, [teoricoTotal, montoFinalReal + (teoricoTotal - teoricoEf), diferencia, notas, sesionId, tenantId]);
     }
 
     /**
@@ -85,12 +93,17 @@ class CajaRepository {
      */
     static async getEstadisticasSesion(sesionId) {
         // Sumar ventas
+        const [ventasEfectivo] = await db.query(`SELECT SUM(monto_efectivo) as total FROM facturas WHERE caja_sesion_id = ?`, [sesionId]);
+        const [ventasTransferencia] = await db.query(`SELECT SUM(monto_transferencia) as total FROM facturas WHERE caja_sesion_id = ?`, [sesionId]);
         const [ventas] = await db.query(`SELECT SUM(total) as total FROM facturas WHERE caja_sesion_id = ?`, [sesionId]);
+        
         // Sumar movimientos manuales
         const [entradas] = await db.query(`SELECT SUM(monto) as total FROM caja_movimientos WHERE sesion_id = ? AND tipo = 'entrada'`, [sesionId]);
         const [salidas] = await db.query(`SELECT SUM(monto) as total FROM caja_movimientos WHERE sesion_id = ? AND tipo = 'salida'`, [sesionId]);
 
         return {
+            ventas_efectivo: ventasEfectivo[0].total || 0,
+            ventas_transferencia: ventasTransferencia[0].total || 0,
             ventas: ventas[0].total || 0,
             entradas: entradas[0].total || 0,
             salidas: salidas[0].total || 0

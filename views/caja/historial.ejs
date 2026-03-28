@@ -36,8 +36,8 @@
                                     <th class="ps-4">Fecha Cierre</th>
                                     <th>Usuario</th>
                                     <th>Caja Inicial</th>
-                                    <th>Esperado (Teórico)</th>
-                                    <th>Contado (Real)</th>
+                                    <th>EF. Esperado</th>
+                                    <th class="text-success">EF. Contado</th>
                                     <th>Diferencia</th>
                                     <th class="text-center">Estado</th>
                                     <th class="text-end pe-4">Acciones</th>
@@ -71,12 +71,15 @@
                                                         <%= sesion.usuario_nombre %>
                                                     </div>
                                                 </td>
-                                                <td>$<%= new Intl.NumberFormat('es-CO').format(sesion.monto_inicial) %>
+                                                <td>
+                                                    <div class="fw-bold">$<%= new Intl.NumberFormat('es-CO').format(sesion.monto_inicial) %></div>
+                                                    <div class="small text-muted">Ef: <%= sesion.monto_inicial_efectivo %> | Tr: <%= sesion.monto_inicial_transferencia %></div>
                                                 </td>
-                                                <td class="fw-bold">$<%= new
-                                                        Intl.NumberFormat('es-CO').format(sesion.monto_final_teorico) %>
+                                                <td class="text-muted">
+                                                    Calculado al cierre...
+                                                    <div class="small">(Total Sist: $<%= new Intl.NumberFormat('es-CO').format(sesion.monto_final_teorico) %>)</div>
                                                 </td>
-                                                <td class="fw-bold text-primary">$<%= new
+                                                <td class="fw-bold text-success">$<%= new
                                                         Intl.NumberFormat('es-CO').format(sesion.monto_final_real) %>
                                                 </td>
                                                 <td>

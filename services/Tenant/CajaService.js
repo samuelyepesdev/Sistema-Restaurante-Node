@@ -6,13 +6,18 @@ class CajaService {
         if (!sesion) return { abierta: false };
 
         const stats = await CajaRepository.getEstadisticasSesion(sesion.id);
-        const montoTeorico = parseFloat(sesion.monto_inicial) + parseFloat(stats.ventas) + parseFloat(stats.entradas) - parseFloat(stats.salidas);
+        
+        const teoricoEfectivo = parseFloat(sesion.monto_inicial_efectivo) + parseFloat(stats.ventas_efectivo) + parseFloat(stats.entradas) - parseFloat(stats.salidas);
+        const teoricoTransferencia = parseFloat(sesion.monto_inicial_transferencia) + parseFloat(stats.ventas_transferencia);
+        const montoTeorico = teoricoEfectivo + teoricoTransferencia;
 
         return {
             abierta: true,
             sesion: {
                 ...sesion,
                 ...stats,
+                monto_final_teorico_efectivo: teoricoEfectivo,
+                monto_final_teorico_transferencia: teoricoTransferencia,
                 monto_final_teorico: montoTeorico
             }
         };
@@ -22,8 +27,9 @@ class CajaService {
         const abierta = await CajaRepository.getSesionAbierta(tenantId);
         if (abierta) throw new Error('Ya existe un turno abierto');
 
-        const monto = parseFloat(data.monto_inicial) || 0;
-        return await CajaRepository.abrirSesion(tenantId, usuarioId, monto, data.notas);
+        const efectivo = parseFloat(data.monto_inicial_efectivo) || 0;
+        const transferencia = parseFloat(data.monto_inicial_transferencia) || 0;
+        return await CajaRepository.abrirSesion(tenantId, usuarioId, efectivo, transferencia, data.notas);
     }
 
     static async cerrarCaja(tenantId, sesionId, data) {
