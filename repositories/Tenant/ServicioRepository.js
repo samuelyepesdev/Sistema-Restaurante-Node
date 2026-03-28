@@ -90,7 +90,7 @@ class ServicioRepository {
                     SUM(df.precio_unitario * df.cantidad) as dinero_generado
                 FROM detalle_factura df
                 JOIN facturas f ON df.factura_id = f.id
-                WHERE f.tenant_id = ? AND df.es_servicio = 1 AND f.estado != 'anulada'
+                WHERE f.tenant_id = ? AND df.es_servicio = 1
             `;
             const [globalResult] = await db.query(sqlGlobal, [tenantId]);
             if (globalResult[0]) {
@@ -107,7 +107,7 @@ class ServicioRepository {
                 FROM detalle_factura df
                 JOIN facturas f ON df.factura_id = f.id
                 JOIN servicios s ON df.servicio_id = s.id
-                WHERE f.tenant_id = ? AND df.es_servicio = 1 AND f.estado != 'anulada'
+                WHERE f.tenant_id = ? AND df.es_servicio = 1
                 GROUP BY s.id, s.nombre
                 ORDER BY veces_usado DESC
                 LIMIT 5
