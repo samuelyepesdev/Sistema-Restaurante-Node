@@ -51,7 +51,7 @@ module.exports = function navbarLocals(req, res, next) {
                 whatsappAjustes: hp('whatsapp.ajustes') && cs('configuracion'),
                 proveedores: hp('proveedores.ver') && cs('inventario'),
                 caja: hp('caja.ver') && cs('caja'),
-                servicios: hp('servicios.ver'),
+                servicios: hp('servicios.ver') && cs('servicios'),
             };
 
             const hasMas = can.recetas || can.eventos || can.analitica || can.whatsapp || can.proveedores || can.servicios;
