@@ -1,14 +1,22 @@
 const StatsService = require('../../../../services/Tenant/StatsService');
 const StatsRepository = require('../../../../repositories/Tenant/StatsRepository');
 const ReporteMensualService = require('../../../../services/Tenant/ReporteMensualService');
+const EventoRepository = require('../../../../repositories/Tenant/EventoRepository');
 
 class DashboardController {
     // GET /dashboard
     static async index(req, res) {
         try {
+            const tenantId = req.tenant?.id;
+            let proximosEventos = [];
+            if (tenantId) {
+                proximosEventos = await EventoRepository.getProximosEventos(tenantId, 8);
+            }
+
             res.render('dashboard/index', {
                 user: req.user,
-                tenant: req.tenant
+                tenant: req.tenant,
+                proximosEventos
             });
         } catch (error) {
             console.error('Error al cargar dashboard:', error);

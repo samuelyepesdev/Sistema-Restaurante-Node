@@ -27,6 +27,60 @@
                     <% } %>
             </div>
 
+            <!-- Alertas de Eventos -->
+            <% if (typeof proximosEventos !== 'undefined' && proximosEventos.length > 0) { %>
+                <div class="row mb-4">
+                    <div class="col-12">
+                        <div class="card border-0 shadow-sm rounded-4" style="background: linear-gradient(135deg, #f0fdf4 0%, #e0f2fe 100%);">
+                            <div class="card-body p-4">
+                                <h5 class="fw-bold text-dark mb-3"><i class="bi bi-bell-fill text-warning me-2"></i>Notificaciones de Eventos Principales</h5>
+                                <div class="row g-3">
+                                    <% 
+                                    // Truco para Timezones: forzamos el T00:00:00 para evitar que el GMT-5 eche un d?a atr?s.
+                                    const formatYMD = (d) => typeof d === 'string' ? d.split('T')[0] : d.toISOString().split('T')[0];
+                                    const parseLocalDate = (dStr) => new Date(formatYMD(dStr) + 'T00:00:00');
+                                    
+                                    const hoyStr = new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().split('T')[0];
+                                    const todayMidnight = new Date(hoyStr + 'T00:00:00');
+                                    
+                                    proximosEventos.forEach(ev => { 
+                                        const inicioStr = formatYMD(ev.fecha_inicio);
+                                        const finStr = formatYMD(ev.fecha_fin);
+                                        const fInicio = parseLocalDate(ev.fecha_inicio);
+                                        
+                                        const estaEnCursoHoy = (hoyStr >= inicioStr && hoyStr <= finStr);
+                                    %>
+                                        <div class="col-md-6 col-xxl-4 event-card-item" data-nombre="<%= ev.nombre %>" data-curso="<%= estaEnCursoHoy %>" data-inicio="<%= inicioStr %>">
+                                            <div class="p-3 bg-white rounded-4 border-start border-4 <%= estaEnCursoHoy ? 'border-primary' : 'border-info' %> shadow-sm h-100">
+                                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                                    <h6 class="fw-bold mb-0 text-dark text-truncate" style="max-width: 70%;" title="<%= ev.nombre %>"><%= ev.nombre %></h6>
+                                                    <% if (estaEnCursoHoy) { %>
+                                                        <span class="badge bg-primary rounded-pill"><i class="bi bi-stars me-1"></i>¡HOY!</span>
+                                                    <% } else { %>
+                                                        <%
+                                                            const diffTime = Math.abs(fInicio - todayMidnight);
+                                                            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                                                        %>
+                                                        <span class="badge bg-info text-dark rounded-pill">En <%= diffDays %> días</span>
+                                                    <% } %>
+                                                </div>
+                                                <p class="small text-muted mb-2">
+                                                    <i class="bi bi-calendar3 me-1"></i>
+                                                    <%= inicioStr %> <% if (inicioStr !== finStr) { %> al <%= finStr %> <% } %>
+                                                </p>
+                                                <% if (ev.descripcion) { %>
+                                                    <p class="small text-secondary mb-0 text-truncate" title="<%= ev.descripcion %>"><%= ev.descripcion %></p>
+                                                <% } %>
+                                            </div>
+                                        </div>
+                                    <% }); %>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            <% } %>
+
             <!-- Filtros de fecha -->
             <div class="filter-section">
                 <div class="row g-2 align-items-end">
@@ -158,6 +212,59 @@
             <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
             <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
             <script src="/js/modulos/dashboard.js"></script>
+
+            <!-- Script para Modal de Eventos -->
+            <% if (typeof proximosEventos !== 'undefined' && proximosEventos.length > 0) { %>
+            <script>
+                document.addEventListener('DOMContentLoaded', function() {
+                    // Prevenir mostrar repetidas veces el mismo día (guardamos cache en sessionStorage)
+                    if (!sessionStorage.getItem('eventosMotrados')) {
+                        const eventosHoy = [];
+                        const eventosProx = [];
+                        
+                        document.querySelectorAll('.event-card-item').forEach(el => {
+                            const nombre = el.getAttribute('data-nombre');
+                            const enCurso = el.getAttribute('data-curso') === 'true';
+                            const fecha = el.getAttribute('data-inicio');
+                            
+                            if (enCurso) eventosHoy.push(nombre);
+                            else eventosProx.push(`${nombre} (${fecha})`);
+                        });
+                        
+                        let htmlContent = '<div class="text-start mt-3">';
+                        if (eventosHoy.length > 0) {
+                            htmlContent += '<h5 class="text-primary fw-bold mb-2"><i class="bi bi-calendar-event me-2"></i>Eventos de ¡HOY!</h5>';
+                            htmlContent += '<ul class="list-group mb-3">';
+                            eventosHoy.forEach(e => htmlContent += `<li class="list-group-item bg-light border-primary border-start border-4"><strong>${e}</strong></li>`);
+                            htmlContent += '</ul>';
+                        }
+                        
+                        if (eventosProx.length > 0) {
+                            htmlContent += '<h5 class="text-info fw-bold mb-2 pt-2"><i class="bi bi-calendar-plus me-2"></i>Próximamente</h5>';
+                            htmlContent += '<ul class="list-group">';
+                            eventosProx.forEach(e => htmlContent += `<li class="list-group-item bg-light">${e}</li>`);
+                            htmlContent += '</ul>';
+                        }
+                        htmlContent += '</div>';
+
+                        Swal.fire({
+                            title: '<strong>¡Recordatorio de Eventos!</strong>',
+                            icon: 'info',
+                            html: htmlContent,
+                            showCloseButton: true,
+                            focusConfirm: false,
+                            confirmButtonText: '<i class="bi bi-check-lg"></i> ¡Entendido!',
+                            confirmButtonColor: '#2563eb',
+                            customClass: {
+                                popup: 'rounded-4'
+                            }
+                        });
+                        
+                        sessionStorage.setItem('eventosMotrados', 'true');
+                    }
+                });
+            </script>
+            <% } %>
 </body>
 
 </html>

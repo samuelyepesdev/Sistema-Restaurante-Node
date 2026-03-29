@@ -27,6 +27,7 @@ class DashboardController {
                        COUNT(f.id) AS facturas
                 FROM tenants t
                 LEFT JOIN facturas f ON f.tenant_id = t.id
+                    AND f.evento_id IS NULL
                     AND DATE(CONVERT_TZ(f.fecha, '+00:00', '-05:00')) = ?
                 WHERE t.activo = 1
                 GROUP BY t.id, t.nombre
