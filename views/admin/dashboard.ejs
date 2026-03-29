@@ -39,7 +39,8 @@
             const chartData = {
                 ventasDiarias: <%- JSON.stringify((stats && stats.ventasDiariasMes) || []) %>,
                 ventasDiariasAnt: <%- JSON.stringify((stats && stats.ventasDiariasMesAnterior) || []) %>,
-                ventasPorTenant: <%- JSON.stringify((stats && stats.ventasDiariasPorTenant) || []) %>
+                ventasPorTenant: <%- JSON.stringify((stats && stats.ventasDiariasPorTenant) || []) %>,
+                ventasEventos: <%- JSON.stringify((stats && stats.ventasEventosDiariasMes) || []) %>
             };
         </script>
 

@@ -201,8 +201,8 @@ class TenantService {
         const [usuariosRow] = await db.query(`
             SELECT COUNT(*) AS total FROM usuarios WHERE tenant_id IS NOT NULL
         `);
-        const [facturasRows] = await db.query(`SELECT COUNT(*) AS cnt FROM facturas`);
-        const [ventasMontoRows] = await db.query(`SELECT COALESCE(SUM(total), 0) AS total FROM facturas`);
+        const [facturasRows] = await db.query(`SELECT COUNT(*) AS cnt FROM facturas WHERE evento_id IS NULL`);
+        const [ventasMontoRows] = await db.query(`SELECT COALESCE(SUM(total), 0) AS total FROM facturas WHERE evento_id IS NULL`);
         const [productosRows] = await db.query(`SELECT COUNT(*) AS cnt FROM productos WHERE tenant_id IS NOT NULL`);
         const [clientesRows] = await db.query(`SELECT COUNT(*) AS cnt FROM clientes WHERE tenant_id IS NOT NULL`);
         const [mesasRows] = await db.query(`SELECT COUNT(*) AS cnt FROM mesas WHERE tenant_id IS NOT NULL`);
@@ -234,7 +234,7 @@ class TenantService {
         const [ventasDiaRows] = await db.query(`
             SELECT DATE(CONVERT_TZ(fecha, '+00:00', '-05:00')) AS fecha, SUM(total) as total
             FROM facturas
-            WHERE DATE(CONVERT_TZ(fecha, '+00:00', '-05:00')) BETWEEN ? AND ?
+            WHERE evento_id IS NULL AND DATE(CONVERT_TZ(fecha, '+00:00', '-05:00')) BETWEEN ? AND ?
             GROUP BY fecha
             ORDER BY fecha ASC
         `, [mesInicioStr, hoyColombia]);
@@ -254,6 +254,29 @@ class TenantService {
             });
         }
 
+        const [ventasEventosDiaRows] = await db.query(`
+            SELECT DATE(CONVERT_TZ(fecha, '+00:00', '-05:00')) AS fecha, SUM(total) as total
+            FROM facturas
+            WHERE evento_id IS NOT NULL AND DATE(CONVERT_TZ(fecha, '+00:00', '-05:00')) BETWEEN ? AND ?
+            GROUP BY fecha
+            ORDER BY fecha ASC
+        `, [mesInicioStr, hoyColombia]);
+
+        const ventasEventosPorFecha = {};
+        ventasEventosDiaRows.forEach(r => {
+            const f = (r.fecha instanceof Date) ? r.fecha.toISOString().split('T')[0] : String(r.fecha || '').substring(0, 10);
+            ventasEventosPorFecha[f] = parseFloat(r.total || 0);
+        });
+
+        const ventasEventosDiariasMes = [];
+        for (let i = 1; i <= diaHoy; i++) {
+            const fechaStr = `${parts[0]}-${parts[1]}-${String(i).padStart(2, '0')}`;
+            ventasEventosDiariasMes.push({
+                fecha: fechaStr,
+                total: ventasEventosPorFecha[fechaStr] || 0
+            });
+        }
+
         // Ventas del mes anterior diarias
         let mesAnteriorY = parseInt(parts[0], 10);
         let mesAnteriorM = parseInt(parts[1], 10) - 1;
@@ -268,7 +291,7 @@ class TenantService {
         const [ventasDiaAntRows] = await db.query(`
             SELECT DATE(CONVERT_TZ(fecha, '+00:00', '-05:00')) AS fecha, SUM(total) as total
             FROM facturas
-            WHERE DATE(CONVERT_TZ(fecha, '+00:00', '-05:00')) BETWEEN ? AND ?
+            WHERE evento_id IS NULL AND DATE(CONVERT_TZ(fecha, '+00:00', '-05:00')) BETWEEN ? AND ?
             GROUP BY fecha
             ORDER BY fecha ASC
         `, [mesAnteriorInicioStr, mesAnteriorFinStr]);
@@ -305,7 +328,7 @@ class TenantService {
             SELECT t.nombre AS tenant_nombre, DATE(CONVERT_TZ(f.fecha, '+00:00', '-05:00')) AS fecha, SUM(f.total) as total
             FROM facturas f
             JOIN tenants t ON f.tenant_id = t.id
-            WHERE DATE(CONVERT_TZ(f.fecha, '+00:00', '-05:00')) BETWEEN ? AND ?
+            WHERE f.evento_id IS NULL AND DATE(CONVERT_TZ(f.fecha, '+00:00', '-05:00')) BETWEEN ? AND ?
             GROUP BY f.tenant_id, fecha
             ORDER BY fecha ASC
         `, [mesInicioStr, hoyColombia]);
@@ -337,6 +360,7 @@ class TenantService {
             SELECT t.nombre AS tenant_nombre, COALESCE(SUM(f.total), 0) AS total, COUNT(f.id) AS facturas
             FROM tenants t
             LEFT JOIN facturas f ON f.tenant_id = t.id
+                AND f.evento_id IS NULL
                 AND DATE(CONVERT_TZ(f.fecha, '+00:00', '-05:00')) = ?
             WHERE t.activo = 1
             GROUP BY t.id, t.nombre
@@ -369,6 +393,7 @@ class TenantService {
             restaurantesUltimos30Dias: parseInt(rowVal(recientesRow?.[0]) || 0, 10),
             historicoRegistro: historicoRows || [],
             ventasDiariasMes,
+            ventasEventosDiariasMes,
             ventasDiariasMesAnterior,
             ventasDiariasPorTenant,
             ventasHoyPorTenant,

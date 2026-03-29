@@ -173,6 +173,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
         const ctxVentasAnt = document.getElementById('chartVentasMesAnterior');
         if (ctxVentasAnt) createLineChart(ctxVentasAnt, chartData.ventasDiariasAnt, 'Ventas Totales Ant. ($)', '#858796');
+
+        const ctxVentasEventos = document.getElementById('chartVentasEventos');
+        if (ctxVentasEventos) createLineChart(ctxVentasEventos, chartData.ventasEventos, 'Ventas de Eventos ($)', '#f6c23e');
     }
 
     // ─── AUTO-REFRESH: Actualiza cards de "Ventas de Hoy" cada 60 segundos ────
