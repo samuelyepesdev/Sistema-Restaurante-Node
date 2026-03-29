@@ -100,8 +100,7 @@ const formatYMD = (d) => {
                     <% if (!eventos || eventos.length===0) { %>
                         <tr>
                             <td colspan="<%= (user && user.permisos && (user.permisos.includes('eventos.editar') || user.permisos.includes('eventos.eliminar'))) ? 8 : 7 %>"
-                                class="text-muted text-center py-4">No hay eventos. Crea uno para asociar ventas. Los
-                                permanentes se incluyen en la analítica; los ocasionales no.</td>
+                                class="text-muted text-center py-4">No hay eventos. Crea uno para asociar ventas (sus estadísticas se mantendrán aisladas de la venta diaria).</td>
                         </tr>
                         <% } %>
         </tbody>

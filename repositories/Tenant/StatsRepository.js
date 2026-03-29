@@ -23,7 +23,7 @@ class StatsRepository {
      * @returns {Promise<number>} Total sales amount
      */
     static async getTotalSales(tenantId, filters = {}) {
-        let query = 'SELECT COALESCE(SUM(total), 0) AS total FROM facturas WHERE tenant_id = ?';
+        let query = 'SELECT COALESCE(SUM(total), 0) AS total FROM facturas WHERE tenant_id = ? AND evento_id IS NULL';
         const params = [tenantId];
 
         if (filters.desde && filters.hasta) {
@@ -45,7 +45,7 @@ class StatsRepository {
         const hoy = getFechaColombia();
         const [rows] = await db.query(
             `SELECT COALESCE(SUM(total), 0) AS total, COUNT(*) AS cantidad
-             FROM facturas WHERE tenant_id = ? AND DATE(CONVERT_TZ(fecha, '+00:00', '-05:00')) = ?`,
+             FROM facturas WHERE tenant_id = ? AND evento_id IS NULL AND DATE(CONVERT_TZ(fecha, '+00:00', '-05:00')) = ?`,
             [tenantId, hoy]
         );
         const r = rows[0] || {};
@@ -69,7 +69,7 @@ class StatsRepository {
 
         const [rows] = await db.query(
             `SELECT COALESCE(SUM(total), 0) AS total, COUNT(*) AS cantidad
-             FROM facturas WHERE tenant_id = ? AND DATE(CONVERT_TZ(fecha, '+00:00', '-05:00')) BETWEEN ? AND ?`,
+             FROM facturas WHERE tenant_id = ? AND evento_id IS NULL AND DATE(CONVERT_TZ(fecha, '+00:00', '-05:00')) BETWEEN ? AND ?`,
             [tenantId, mesInicioStr, hoy] // Hasta hoy, o podríamos usar LAST_DAY pero hoy es seguro porque es el máximo que hay facturado en el mes actual
         );
         const r = rows[0] || {};
@@ -86,7 +86,7 @@ class StatsRepository {
      * @returns {Promise<number>} Total invoices count
      */
     static async getTotalInvoices(tenantId, filters = {}) {
-        let query = 'SELECT COUNT(*) AS total FROM facturas WHERE tenant_id = ?';
+        let query = 'SELECT COUNT(*) AS total FROM facturas WHERE tenant_id = ? AND evento_id IS NULL';
         const params = [tenantId];
 
         if (filters.desde && filters.hasta) {
@@ -108,7 +108,7 @@ class StatsRepository {
         let query = `
             SELECT forma_pago, COUNT(*) AS cantidad, SUM(total) AS total
             FROM facturas
-            WHERE tenant_id = ?
+            WHERE tenant_id = ? AND evento_id IS NULL
         `;
         const params = [tenantId];
 
@@ -148,7 +148,7 @@ class StatsRepository {
             INNER JOIN productos p ON df.producto_id = p.id
             LEFT JOIN categorias c ON p.categoria_id = c.id
             INNER JOIN facturas f ON df.factura_id = f.id
-            WHERE f.tenant_id = ?
+            WHERE f.tenant_id = ? AND f.evento_id IS NULL
         `;
         const params = [tenantId];
 
@@ -193,7 +193,7 @@ class StatsRepository {
             INNER JOIN productos p ON df.producto_id = p.id
             LEFT JOIN categorias c ON p.categoria_id = c.id
             INNER JOIN facturas f ON df.factura_id = f.id
-            WHERE f.tenant_id = ?
+            WHERE f.tenant_id = ? AND f.evento_id IS NULL
         `;
         const params = [tenantId];
 
@@ -234,7 +234,7 @@ class StatsRepository {
             INNER JOIN productos p ON df.producto_id = p.id
             LEFT JOIN categorias c ON p.categoria_id = c.id
             INNER JOIN facturas f ON df.factura_id = f.id
-            WHERE f.tenant_id = ?
+            WHERE f.tenant_id = ? AND f.evento_id IS NULL
         `;
         const params = [tenantId];
 
@@ -288,7 +288,7 @@ class StatsRepository {
                 COUNT(*) AS cantidad_facturas,
                 SUM(total) AS total_ventas
             FROM facturas
-            WHERE tenant_id = ?
+            WHERE tenant_id = ? AND evento_id IS NULL
               AND CONVERT_TZ(fecha, '+00:00', '-05:00') >= DATE_SUB(CONVERT_TZ(NOW(), '+00:00', '-05:00'), INTERVAL ? DAY)
             GROUP BY DATE(CONVERT_TZ(fecha, '+00:00', '-05:00'))
             ORDER BY fecha ASC
@@ -324,7 +324,7 @@ class StatsRepository {
               AND f.fecha >= DATE_FORMAT(DATE_SUB(CURDATE(), INTERVAL ? MONTH), '%Y-%m-01')
         `;
         if (options.excludeEventos) {
-            query += ` AND (f.evento_id IS NULL OR EXISTS (SELECT 1 FROM eventos e WHERE e.id = f.evento_id AND e.tenant_id = f.tenant_id AND e.tipo = 'permanente'))`;
+            query += ` AND f.evento_id IS NULL`;
         }
         query += `
             GROUP BY YEAR(f.fecha), MONTH(f.fecha)
