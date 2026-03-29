@@ -12,7 +12,7 @@ const StatsRepository = require('../../repositories/Tenant/StatsRepository');
  * @returns {Promise<Object>} { meses, totalGeneral, cantidadFacturas }
  */
 async function getResumenUltimosMeses(tenantId, months = 3) {
-    const meses = await StatsRepository.getMonthlySales(tenantId, months);
+    const meses = await StatsRepository.getMonthlySales(tenantId, months, { excludeEventos: true });
     const totalGeneral = meses.reduce((s, m) => s + m.total_ventas, 0);
     const cantidadFacturas = meses.reduce((s, m) => s + m.cantidad_facturas, 0);
     return {
