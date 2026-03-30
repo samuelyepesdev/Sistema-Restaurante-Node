@@ -12,12 +12,23 @@ const { ROLES } = require('../../utils/constants');
 
 /**
  * Obtiene los nombres de permisos que implica un plan (según sus módulos).
+ * Si el plan es Premium o Definitivo, devuelve todos los permisos.
  * @param {Object|null} plan - Plan con .caracteristicas (array de slugs)
  * @returns {string[]}
  */
 function getPermissionNamesForPlan(plan) {
-    if (!plan || !Array.isArray(plan.caracteristicas)) return [];
+    if (!plan) return [];
+    const isPremium = plan.slug === 'premium' || plan.slug === 'definitivo' || (plan.nombre && (plan.nombre.toLowerCase().includes('premium') || plan.nombre.toLowerCase().includes('definitivo')));
+    
+    if (isPremium) {
+        const { PERMISSION_TO_MODULE } = require('../../utils/planPermissions');
+        return Object.keys(PERMISSION_TO_MODULE);
+    }
+
+    if (!Array.isArray(plan.caracteristicas)) return [];
+    
     const names = new Set();
+    const { getPermissionNamesForModule } = require('../../utils/planPermissions');
     for (const moduleSlug of plan.caracteristicas) {
         const perms = getPermissionNamesForModule(moduleSlug);
         perms.forEach(p => names.add(p));
