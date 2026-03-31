@@ -3,7 +3,8 @@ const FacturaRepository = require('../../../../repositories/Tenant/FacturaReposi
 const InventarioService = require('../../../../services/Tenant/InventarioService');
 const CategoryService = require('../../../../services/Admin/CategoryService');
 const ProductRepository = require('../../../../repositories/Tenant/ProductRepository');
-
+const AbrirPedidoService = require('../../../../services/Tenant/Mesas/AbrirPedidoService');
+const FacturarPedidoService = require('../../../../services/Tenant/Mesas/FacturarPedidoService');
 class MesasController {
     // GET /mesas
     static async index(req, res) {
@@ -211,48 +212,31 @@ class MesasController {
 
     // POST /mesas/abrir
     static async abrirPedido(req, res) {
-        const tenantId = req.tenant?.id;
-        if (!tenantId) return res.status(403).json({ error: 'Contexto de tenant no disponible' });
-
-        const { mesa_id, cliente_id, notas } = req.body || {};
-        if (!mesa_id) return res.status(400).json({ error: 'mesa_id requerido' });
         try {
-            const connection = await db.getConnection();
-            try {
-                await connection.beginTransaction();
-                const [mesas] = await connection.query('SELECT id FROM mesas WHERE id = ? AND tenant_id = ?', [mesa_id, tenantId]);
-                if (mesas.length === 0) {
-                    await connection.rollback();
-                    connection.release();
-                    return res.status(404).json({ error: 'Mesa no encontrada' });
-                }
+            const tenantId = req.tenant?.id;
+            if (!tenantId) return res.status(403).json({ error: 'Contexto de tenant no disponible' });
 
-                const [existentes] = await connection.query(
-                    `SELECT * FROM pedidos WHERE mesa_id = ? AND estado NOT IN ('cerrado','cancelado') LIMIT 1`,
-                    [mesa_id]
-                );
-                if (existentes.length > 0) {
-                    await connection.commit();
-                    connection.release();
-                    return res.json({ pedido: existentes[0] });
-                }
+            const { mesa_id, cliente_id, notas } = req.body || {};
+            if (!mesa_id) return res.status(400).json({ error: 'El ID de la mesa es requerido' });
 
-                const [insert] = await connection.query(
-                    `INSERT INTO pedidos (tenant_id, mesa_id, cliente_id, estado, total, notas) VALUES (?, ?, ?, 'abierto', 0, ?)`,
-                    [tenantId, mesa_id, cliente_id || null, notas || null]
-                );
+            // 🌟 1. Delegamos las transacciones al ACTION. (SRP / MVC correcto)
+            const pedido = await AbrirPedidoService.execute({
+                tenantId,
+                mesa_id,
+                cliente_id,
+                notas
+            });
 
-                await connection.commit();
-                connection.release();
-                res.status(201).json({ pedido: { id: insert.insertId, mesa_id, cliente_id: cliente_id || null, estado: 'abierto', total: 0, notas: notas || null } });
-            } catch (error) {
-                await connection.rollback();
-                connection.release();
-                throw error;
-            }
+            // 🌐 2. El controlador solo retorna la respuesta HTTP final.
+            return res.status(201).json({ pedido });
+
         } catch (error) {
-            console.error('Error al abrir pedido:', error);
-            res.status(500).json({ error: 'Error al abrir pedido' });
+            console.error('Error al abrir pedido:', error.message);
+            // 🐛 3. Manejo de Errores controlado por la nomenclatura del Servicio
+            if (error.message === 'Mesa no encontrada') {
+                return res.status(404).json({ error: error.message });
+            }
+            return res.status(500).json({ error: 'Fallo interno al intentar abrir el pedido en base de datos' });
         }
     }
 
@@ -562,141 +546,37 @@ class MesasController {
 
     // POST /mesas/pedidos/:pedidoId/facturar
     static async facturarPedido(req, res) {
-        const tenantId = req.tenant?.id;
-        if (!tenantId) return res.status(403).json({ error: 'Contexto de tenant no disponible' });
-
-        const pedidoId = req.params.pedidoId;
-        const { cliente_id, forma_pago, descuentos, propina: propinaBody } = req.body || {};
-        if (!cliente_id) return res.status(400).json({ error: 'cliente_id requerido para facturar' });
-        if (!forma_pago) return res.status(400).json({ error: 'forma_pago requerido' });
-        const descuentosMap = descuentos && typeof descuentos === 'object' ? descuentos : {};
         try {
-            const connection = await db.getConnection();
-            try {
-                await connection.beginTransaction();
+            const tenantId = req.tenant?.id;
+            if (!tenantId) return res.status(403).json({ error: 'Contexto de tenant no disponible' });
 
-                await FacturaRepository.acomodarNumeracionSiFalta(connection, tenantId);
+            const pedidoId = req.params.pedidoId;
+            const { cliente_id, forma_pago, descuentos, propina: propinaBody } = req.body || {};
+            
+            if (!cliente_id) return res.status(400).json({ error: 'El ID de cliente es requerido para facturar' });
+            if (!forma_pago) return res.status(400).json({ error: 'La forma de pago es requerida' });
+            
+            const descuentosMap = descuentos && typeof descuentos === 'object' ? descuentos : {};
 
-                const [pedidos] = await connection.query('SELECT * FROM pedidos WHERE id = ? AND tenant_id = ? FOR UPDATE', [pedidoId, tenantId]);
-                if (pedidos.length === 0) throw new Error('Pedido no encontrado');
-                const pedido = pedidos[0];
+            // 🌟 1. Delegar todo el SQL y Cálculos pesados (SRP)
+            const resultado = await FacturarPedidoService.execute({
+                tenantId,
+                pedidoId,
+                cliente_id,
+                forma_pago,
+                descuentosMap,
+                propinaBody
+            });
 
-                const [items] = await connection.query(
-                    `SELECT * FROM pedido_items WHERE pedido_id = ? AND estado <> 'cancelado'`,
-                    [pedidoId]
-                );
-                if (items.length === 0) throw new Error('Pedido sin items');
+            // 🌐 2. Devolver JSON Bonito
+            return res.status(201).json(resultado);
 
-                let total = 0;
-                let montoEfectivo = 0;
-                let montoTransferencia = 0;
-
-                const lineasFactura = items.map(i => {
-                    const cant = Number(i.cantidad || 0);
-                    const precioUnit = Number(i.precio_unitario || 0);
-                    const pct = descuentosMap[String(i.id)] != null ? Number(descuentosMap[String(i.id)]) : 0;
-                    const desc = Math.min(100, Math.max(0, pct)) / 100;
-                    const subtotal = Math.round(cant * precioUnit * (1 - desc) * 100) / 100;
-                    const precioUnitFactura = desc > 0 ? Math.round(precioUnit * (1 - desc) * 100) / 100 : precioUnit;
-                    total += subtotal;
-
-                    // Compute distribution of payment
-                    if (i.pagado) {
-                        if (i.forma_pago === 'efectivo') montoEfectivo += subtotal;
-                        else if (i.forma_pago === 'transferencia') montoTransferencia += subtotal;
-                    } else {
-                        if (forma_pago === 'efectivo') montoEfectivo += subtotal;
-                        else if (forma_pago === 'transferencia') montoTransferencia += subtotal;
-                    }
-
-                    return { 
-                        producto_id: i.producto_id, 
-                        servicio_id: i.servicio_id,
-                        es_servicio: i.es_servicio,
-                        cantidad: cant, 
-                        precio_unitario: precioUnitFactura, 
-                        unidad_medida: i.unidad_medida || 'UND', 
-                        subtotal, 
-                        descuento_porcentaje: desc > 0 ? pct : null 
-                    };
-                });
-                total = Math.round(total * 100) / 100;
-                const propina = Math.max(0, parseFloat(propinaBody != null ? propinaBody : pedido.propina) || 0);
-                const totalConPropina = Math.round((total + propina) * 100) / 100;
-
-                // Propina will be added to the overall selected forma_pago of the invoice
-                if (forma_pago === 'efectivo') montoEfectivo += propina;
-                else if (forma_pago === 'transferencia') montoTransferencia += propina;
-
-                montoEfectivo = Math.round(montoEfectivo * 100) / 100;
-                montoTransferencia = Math.round(montoTransferencia * 100) / 100;
-
-                let formaPagoFinal = forma_pago;
-                if (montoEfectivo > 0 && montoTransferencia > 0) formaPagoFinal = 'mixto';
-                else if (montoEfectivo > 0) formaPagoFinal = 'efectivo';
-                else if (montoTransferencia > 0) formaPagoFinal = 'transferencia';
-
-                const [rowsNum] = await connection.query(
-                    'SELECT COALESCE(MAX(numero), 0) + 1 AS siguiente FROM facturas WHERE tenant_id = ?',
-                    [tenantId]
-                );
-                const numeroFactura = (rowsNum && rowsNum[0] && rowsNum[0].siguiente) || 1;
-                const fechaEmisionUtc = new Date().toISOString().slice(0, 19).replace('T', ' ');
-
-                // Buscar sesión de caja abierta para vincular la venta
-                const [sesiones] = await connection.query(
-                    'SELECT id FROM caja_sesiones WHERE tenant_id = ? AND estado = "abierta" LIMIT 1',
-                    [tenantId]
-                );
-                const cajaSesionId = sesiones.length > 0 ? sesiones[0].id : null;
-
-                const [facturaInsert] = await connection.query(
-                    `INSERT INTO facturas (tenant_id, numero, cliente_id, total, forma_pago, monto_efectivo, monto_transferencia, propina, fecha, caja_sesion_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-                    [tenantId, numeroFactura, cliente_id, totalConPropina, formaPagoFinal, montoEfectivo, montoTransferencia, propina, fechaEmisionUtc, cajaSesionId]
-                );
-                const facturaId = facturaInsert.insertId;
-
-                const detallesValuesFinal = lineasFactura.map(l => [
-                    facturaId, 
-                    l.producto_id, 
-                    l.servicio_id,
-                    l.es_servicio,
-                    l.cantidad, 
-                    l.precio_unitario, 
-                    l.unidad_medida, 
-                    l.subtotal, 
-                    l.descuento_porcentaje
-                ]);
-
-                await connection.query(
-                    `INSERT INTO detalle_factura (factura_id, producto_id, servicio_id, es_servicio, cantidad, precio_unitario, unidad_medida, subtotal, descuento_porcentaje) VALUES ?`,
-                    [detallesValuesFinal]
-                );
-
-                for (const l of lineasFactura) {
-                    try {
-                        if (!l.es_servicio && l.producto_id) {
-                            await InventarioService.descontarPorReceta(tenantId, l.producto_id, l.cantidad, 'factura_' + facturaId);
-                        }
-                    } catch (invErr) {
-                        console.error('Error al descontar inventario por receta:', invErr);
-                    }
-                }
-
-                await connection.query(`UPDATE pedidos SET estado = 'cerrado', total = ? WHERE id = ?`, [totalConPropina, pedidoId]);
-                await connection.query(`UPDATE mesas SET estado = 'libre' WHERE id = ?`, [pedido.mesa_id]);
-
-                await connection.commit();
-                connection.release();
-                res.status(201).json({ factura_id: facturaId, numero: numeroFactura });
-            } catch (error) {
-                await connection.rollback();
-                connection.release();
-                throw error;
-            }
         } catch (error) {
-            console.error('Error en facturación desde pedido:', error);
-            res.status(500).json({ error: error.message || 'Error al facturar pedido' });
+            console.error('Error en facturación desde pedido:', error.message);
+            if (error.message === 'Pedido no encontrado' || error.message === 'Pedido sin items') {
+                return res.status(404).json({ error: error.message });
+            }
+            return res.status(500).json({ error: error.message || 'Error al facturar pedido' });
         }
     }
 
