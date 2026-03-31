@@ -64,12 +64,27 @@ app.use(navbarLocals);
 app.use('/static', express.static(path.join(__dirname, 'public')));
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Headers de seguridad y CORS
+// Seguridad: Limitador de peticiones (Rate Limit General para prevenir DDoS básico)
+const rateLimit = require('express-rate-limit');
+const limiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutos
+    max: 1000, // Límite de 1000 peticiones por ventana por IP (general)
+    message: { error: 'Demasiadas peticiones desde esta IP, por favor intente más tarde.' }
+});
+app.use(limiter);
+
+// Headers de seguridad y CORS estricto
 app.use((req, res, next) => {
     res.setHeader('X-Content-Type-Options', 'nosniff');
     res.setHeader('X-Frame-Options', 'SAMEORIGIN');
     res.setHeader('X-XSS-Protection', '1; mode=block');
-    res.setHeader('Access-Control-Allow-Origin', '*');
+    
+    // Solo permitir CORS al dominio de producción o de desarrollo (no global '*')
+    const allowedOrigin = process.env.APP_URL || process.env.FRONTEND_URL || '';
+    if (allowedOrigin && req.headers.origin === allowedOrigin) {
+        res.setHeader('Access-Control-Allow-Origin', allowedOrigin);
+    }
+    
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
     next();
