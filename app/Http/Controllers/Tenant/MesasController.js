@@ -9,6 +9,9 @@ const FacturarPedidoService = require('../../../../services/Tenant/Mesas/Factura
 const MoverPedidoService = require('../../../../services/Tenant/Mesas/MoverPedidoService');
 const MoverItemsService = require('../../../../services/Tenant/Mesas/MoverItemsService');
 const LiberarMesaService = require('../../../../services/Tenant/Mesas/LiberarMesaService');
+const AgregarItemService = require('../../../../services/Tenant/Mesas/AgregarItemService');
+const AgregarServicioService = require('../../../../services/Tenant/Mesas/AgregarServicioService');
+const EliminarItemService = require('../../../../services/Tenant/Mesas/EliminarItemService');
 class MesasController {
     // GET /mesas
     static async index(req, res) {
@@ -263,32 +266,19 @@ class MesasController {
             if (!tenantId) return res.status(403).json({ error: 'Contexto de tenant no disponible' });
 
             const pedidoId = req.params.pedidoId;
-            const [pedidos] = await db.query('SELECT id FROM pedidos WHERE id = ? AND tenant_id = ?', [pedidoId, tenantId]);
-            if (pedidos.length === 0) return res.status(404).json({ error: 'Pedido no encontrado' });
-
             const { producto_id, cantidad, unidad, precio, nota } = req.body || {};
-            if (!producto_id || !cantidad || !precio) {
-                return res.status(400).json({ error: 'producto_id, cantidad y precio son requeridos' });
-            }
-            const check = await InventarioService.checkStockParaProducto(tenantId, producto_id, parseFloat(cantidad) || 1);
-            if (!check.ok) {
-                const msg = (check.faltantes || []).map(f => `${f.insumo_nombre}: requiere ${f.requerido} ${f.unidad_base}, disponible ${f.disponible}`).join('; ');
-                console.warn('[Inventario] Vendiendo sin stock suficiente: ' + msg);
-                // No bloqueamos la venta, permitimos stock negativo
-            }
-            const subtotal = Number(cantidad) * Number(precio);
-            const [pedidoRow] = await db.query('SELECT mesa_id FROM pedidos WHERE id = ? AND tenant_id = ?', [pedidoId, tenantId]);
-            const mesaId = pedidoRow && pedidoRow[0] && pedidoRow[0].mesa_id;
-            const [result] = await db.query(
-                `INSERT INTO pedido_items (tenant_id, pedido_id, producto_id, cantidad, unidad_medida, precio_unitario, subtotal, estado, nota)
-                 VALUES (?, ?, ?, ?, ?, ?, ?, 'pendiente', ?)` ,
-                [tenantId, pedidoId, producto_id, cantidad, unidad || 'UND', precio, subtotal, nota || null]
-            );
-            if (mesaId) await db.query("UPDATE mesas SET estado = 'ocupada' WHERE id = ? AND tenant_id = ?", [mesaId, tenantId]);
-            res.status(201).json({ id: result.insertId });
+            
+            const resultado = await AgregarItemService.execute({ 
+                tenantId, pedidoId, producto_id, cantidad, unidad, precio, nota 
+            });
+            return res.status(201).json(resultado);
+
         } catch (error) {
-            console.error('Error al agregar item:', error);
-            res.status(500).json({ error: 'Error al agregar item' });
+            console.error('Error al agregar item:', error.message);
+            if (error.message === 'Pedido no encontrado') {
+                return res.status(404).json({ error: error.message });
+            }
+            return res.status(400).json({ error: error.message || 'Error al agregar item' });
         }
     }
 
@@ -301,28 +291,17 @@ class MesasController {
             const pedidoId = req.params.pedidoId;
             const { servicio_id, cantidad, precio, nota } = req.body || {};
             
-            if (!servicio_id || !cantidad || !precio) {
-                return res.status(400).json({ error: 'servicio_id, cantidad y precio son requeridos' });
-            }
+            const resultado = await AgregarServicioService.execute({ 
+                tenantId, pedidoId, servicio_id, cantidad, precio, nota 
+            });
+            return res.status(201).json(resultado);
 
-            const subtotal = Number(cantidad) * Number(precio);
-            const [pedidoRow] = await db.query('SELECT mesa_id FROM pedidos WHERE id = ? AND tenant_id = ?', [pedidoId, tenantId]);
-            if (pedidoRow.length === 0) return res.status(404).json({ error: 'Pedido no encontrado' });
-            
-            const mesaId = pedidoRow[0].mesa_id;
-
-            const [result] = await db.query(
-                `INSERT INTO pedido_items (tenant_id, pedido_id, servicio_id, es_servicio, cantidad, unidad_medida, precio_unitario, subtotal, estado, nota)
-                 VALUES (?, ?, ?, 1, ?, 'SERV', ?, ?, 'listo', ?)` ,
-                [tenantId, pedidoId, servicio_id, cantidad, precio, subtotal, nota || null]
-            );
-
-            if (mesaId) await db.query("UPDATE mesas SET estado = 'ocupada' WHERE id = ? AND tenant_id = ?", [mesaId, tenantId]);
-            
-            res.status(201).json({ id: result.insertId });
         } catch (error) {
-            console.error('Error al agregar servicio:', error);
-            res.status(500).json({ error: 'Error al agregar servicio' });
+            console.error('Error al agregar servicio:', error.message);
+            if (error.message === 'Pedido no encontrado') {
+                return res.status(404).json({ error: error.message });
+            }
+            return res.status(400).json({ error: error.message || 'Error al agregar servicio' });
         }
     }
 
@@ -333,53 +312,15 @@ class MesasController {
             if (!tenantId) return res.status(403).json({ error: 'Contexto de tenant no disponible' });
 
             const itemId = req.params.itemId;
-            const connection = await db.getConnection();
-            try {
-                await connection.beginTransaction();
+            const resultado = await EliminarItemService.execute({ tenantId, itemId });
 
-                const [rows] = await connection.query(
-                    'SELECT pi.id, p.id as pedido_id, p.mesa_id FROM pedido_items pi INNER JOIN pedidos p ON pi.pedido_id = p.id WHERE pi.id = ? AND p.tenant_id = ? FOR UPDATE',
-                    [itemId, tenantId]
-                );
-                
-                if (rows.length === 0) {
-                    await connection.rollback();
-                    connection.release();
-                    return res.status(404).json({ error: 'Item no encontrado' });
-                }
-
-                const { pedido_id, mesa_id } = rows[0];
-                await connection.query('DELETE FROM pedido_items WHERE id = ?', [itemId]);
-
-                // Validar si la mesa se queda sin productos en ese pedido
-                const [restantes] = await connection.query(
-                    'SELECT COUNT(*) as cnt FROM pedido_items WHERE pedido_id = ?',
-                    [pedido_id]
-                );
-
-                if (restantes[0].cnt === 0) {
-                    await connection.query("UPDATE pedidos SET estado = 'cancelado' WHERE id = ?", [pedido_id]);
-                    const [abiertos] = await connection.query(
-                        "SELECT COUNT(*) as cnt FROM pedidos WHERE mesa_id = ? AND estado NOT IN ('cerrado','cancelado')",
-                        [mesa_id]
-                    );
-                    if (abiertos[0].cnt === 0) {
-                        await connection.query("UPDATE mesas SET estado = 'libre' WHERE id = ?", [mesa_id]);
-                    }
-                }
-
-                await connection.commit();
-                connection.release();
-
-                res.json({ message: 'Item eliminado y estado de mesa validado' });
-            } catch (error) {
-                await connection.rollback();
-                connection.release();
-                throw error;
-            }
+            return res.json(resultado);
         } catch (error) {
-            console.error('Error al eliminar item:', error);
-            res.status(500).json({ error: 'Error al eliminar item' });
+            console.error('Error al eliminar item:', error.message);
+            if (error.message === 'Item no encontrado') {
+                return res.status(404).json({ error: error.message });
+            }
+            return res.status(500).json({ error: 'Error interno al eliminar item' });
         }
     }
 
