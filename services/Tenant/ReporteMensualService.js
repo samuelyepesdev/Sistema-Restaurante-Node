@@ -4,6 +4,7 @@ const puppeteer = require('puppeteer');
 const MailerService = require('../Shared/MailerService');
 const StatsRepository = require('../../repositories/Tenant/StatsRepository');
 const TenantService = require('../Admin/TenantService');
+const WhatsAppService = require('./WhatsAppService');
 
 function formatMoney(amount) {
     return new Intl.NumberFormat('es-CO', {
@@ -49,7 +50,7 @@ class ReporteMensualService {
         const topProductos = await StatsRepository.getTopProducts(tenant.id, 5, { desde: firstDay, hasta: lastDayStr });
         const porCategoria = await StatsRepository.getSalesByCategory(tenant.id, { desde: firstDay, hasta: lastDayStr });
 
-        const templatePath = path.join(__dirname, '../views/reportes/mensual.ejs');
+        const templatePath = path.join(__dirname, '../../views/reportes/mensual.ejs');
         const data = {
             tenant,
             mes: mesNombre.toUpperCase(),
@@ -88,7 +89,31 @@ class ReporteMensualService {
                     content: pdfBuffer
                 }]
             });
-            return { ...mailResult, emailValido: to };
+
+            let waSent = false;
+            // WhatsApp Notification
+            if (tenant.telefono) {
+                try {
+                    const filename = `Reporte_${data.mes.replace(/ /g, '_')}_${tenant.nombre.replace(/ /g, '_')}.pdf`;
+                    const caption = `Hola *${tenant.nombre}*! 👋\n\nAquí tienes el resumen de ventas de *${data.mes}*.\n\n_Tu Sistema Ecl-Fruver_`;
+
+                    // Intentamos enviar desde el propio bot del tenant si está conectado
+                    waSent = await WhatsAppService.sendMediaMessage(tenant.id, tenant.telefono, pdfBuffer, filename, caption);
+
+                    // Si no tiene bot conectado, intentamos desde el tenantPrincipal (id 1)
+                    if (!waSent && tenant.id !== 1) {
+                         waSent = await WhatsAppService.sendMediaMessage(1, tenant.telefono, pdfBuffer, filename, caption);
+                    }
+
+                    if (waSent) {
+                        console.log(`[WhatsApp] Reporte mensual enviado a ${tenant.nombre} (${tenant.telefono})`);
+                    }
+                } catch (waError) {
+                    console.error('[WhatsApp] Error enviando reporte mensual:', waError.message);
+                }
+            }
+
+            return { ...mailResult, emailValido: to, whatsappEnviado: waSent };
         } catch (mailError) {
             console.error('Error enviando el correo desde ReporteMensual:', mailError);
             throw mailError;

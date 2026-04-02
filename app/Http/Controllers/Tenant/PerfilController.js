@@ -1,5 +1,6 @@
 const TenantService = require('../../../../services/Admin/TenantService');
 const StatsService = require('../../../../services/Tenant/StatsService');
+const ReporteMensualService = require('../../../../services/Tenant/ReporteMensualService');
 
 class PerfilController {
     // GET /perfil
@@ -48,6 +49,29 @@ class PerfilController {
         } catch (error) {
             console.error('Error actualizando perfil:', error);
             res.status(500).json({ success: false, message: error.message });
+        }
+    }
+
+    // POST /perfil/test-report
+    static async testReport(req, res) {
+        try {
+            const tenant = req.tenant;
+            console.log(`Solicitud de reporte de prueba para ${tenant.nombre}...`);
+            
+            // Enviamos el reporte del mes actual como prueba
+            const result = await ReporteMensualService.generarYEnviar(tenant, { testMesActual: true });
+
+            let msg = 'Reporte de prueba enviado con éxito vía Email.';
+            if (result.whatsappEnviado) {
+                msg += ' ¡También llegó a tu WhatsApp!';
+            } else if (tenant.telefono) {
+                msg += ' **Nota:** No se pudo enviar por WhatsApp. Asegúrate de que el bot de tu negocio o el bot principal estén conectados.';
+            }
+
+            res.json({ success: true, message: msg, whatsapp: result.whatsappEnviado });
+        } catch (error) {
+            console.error('Error enviando reporte de prueba:', error);
+            res.status(500).json({ success: false, message: 'Error enviando reporte: ' + error.message });
         }
     }
 }

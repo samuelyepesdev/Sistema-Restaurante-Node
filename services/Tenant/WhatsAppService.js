@@ -1,4 +1,4 @@
-const { Client, LocalAuth } = require('whatsapp-web.js');
+const { Client, LocalAuth, MessageMedia } = require('whatsapp-web.js');
 const qrcode = require('qrcode');
 const db = require('../../config/database');
 const path = require('path');
@@ -530,8 +530,39 @@ class WhatsAppService {
 
         console.log(`[WhatsApp] SE CREÓ PEDIDO #${pedidoId} en Mesa ${mesaId} para Tenant ${tenantId}`);
 
-        // Emitir evento para notificaciones en tiempo real
+    // Emitir evento para notificaciones en tiempo real
         this.events.emit('orderCreated', { tenantId, pedidoId, mesaId });
+    }
+
+    /**
+     * Envía un mensaje de texto simple.
+     */
+    async sendMessage(tenantId, to, text) {
+        const client = this.clients.get(tenantId);
+        if (!client) {
+            console.error(`[WhatsApp] No hay cliente para Tenant ${tenantId}`);
+            return false;
+        }
+        const formattedTo = to.includes('@c.us') ? to : `${to.replace(/\D/g, '')}@c.us`;
+        await client.sendMessage(formattedTo, text);
+        return true;
+    }
+
+    /**
+     * Envía un archivo/media.
+     */
+    async sendMediaMessage(tenantId, to, buffer, filename, caption = '') {
+        const client = this.clients.get(tenantId);
+        if (!client) {
+            console.error(`[WhatsApp] No hay cliente para Tenant ${tenantId}`);
+            return false;
+        }
+
+        const formattedTo = to.includes('@c.us') ? to : `${to.replace(/\D/g, '')}@c.us`;
+        const media = new MessageMedia('application/pdf', buffer.toString('base64'), filename);
+
+        await client.sendMessage(formattedTo, media, { caption });
+        return true;
     }
 }
 
