@@ -85,13 +85,21 @@
     });
 
     async function testReport() {
-        const btn = event.currentTarget;
+        const btn = event ? event.currentTarget : document.querySelector('button[onclick="testReport()"]');
         const originalHtml = btn.innerHTML;
+        
+        const mes = document.getElementById('reportMonth').value;
+        const anio = document.getElementById('reportYear').value;
+
         btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Enviando...';
         btn.disabled = true;
 
         try {
-            const response = await fetch('/perfil/test-report', { method: 'POST' });
+            const response = await fetch('/perfil/test-report', { 
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ mes, anio })
+            });
             const result = await response.json();
 
             if (result.success) {
@@ -101,7 +109,11 @@
                     text: result.message
                 });
             } else {
-                throw new Error(result.message);
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Atención',
+                    text: result.message
+                });
             }
         } catch (error) {
             Swal.fire({

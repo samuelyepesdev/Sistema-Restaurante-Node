@@ -56,12 +56,18 @@ class PerfilController {
     static async testReport(req, res) {
         try {
             const tenant = req.tenant;
-            console.log(`Solicitud de reporte de prueba para ${tenant.nombre}...`);
+            const { mes, anio } = req.body;
             
-            // Enviamos el reporte del mes actual como prueba
-            const result = await ReporteMensualService.generarYEnviar(tenant, { testMesActual: true });
+            console.log(`Solicitud de reporte ${mes || 'actual'}/${anio || ''} para ${tenant.nombre}...`);
+            
+            // Enviamos el reporte especificado (o el actual como fallback de prueba)
+            const result = await ReporteMensualService.generarYEnviar(tenant, { 
+                mes: mes, 
+                anio: anio,
+                testMesActual: (!mes && !anio) 
+            });
 
-            let msg = 'Reporte de prueba enviado con éxito vía Email.';
+            let msg = `Reporte de ${mes ? 'mes solicitado' : 'mes actual'} enviado con éxito vía Email.`;
             if (result.whatsappEnviado) {
                 msg += ' ¡También llegó a tu WhatsApp!';
             } else if (tenant.telefono) {

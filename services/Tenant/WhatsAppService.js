@@ -535,34 +535,57 @@ class WhatsAppService {
     }
 
     /**
+     * Formatea un número para WhatsApp (específico para Colombia si tiene 10 dígitos)
+     */
+    formatPhone(phone) {
+        if (!phone) return null;
+        let cleaned = phone.replace(/\D/g, '');
+        // Si tiene 10 dígitos y no empieza por 57, asumimos que es Colombia
+        if (cleaned.length === 10 && !cleaned.startsWith('57')) {
+            cleaned = '57' + cleaned;
+        }
+        return cleaned.includes('@c.us') ? cleaned : `${cleaned}@c.us`;
+    }
+
+    /**
      * Envía un mensaje de texto simple.
      */
     async sendMessage(tenantId, to, text) {
-        const client = this.clients.get(tenantId);
+        const client = this.getClient(tenantId);
         if (!client) {
             console.error(`[WhatsApp] No hay cliente para Tenant ${tenantId}`);
             return false;
         }
-        const formattedTo = to.includes('@c.us') ? to : `${to.replace(/\D/g, '')}@c.us`;
-        await client.sendMessage(formattedTo, text);
-        return true;
+        try {
+            const formattedTo = this.formatPhone(to);
+            await client.sendMessage(formattedTo, text);
+            return true;
+        } catch (error) {
+            console.error(`[WhatsApp] Error enviando mensaje a ${to}:`, error.message);
+            return false;
+        }
     }
 
     /**
      * Envía un archivo/media.
      */
     async sendMediaMessage(tenantId, to, buffer, filename, caption = '') {
-        const client = this.clients.get(tenantId);
+        const client = this.getClient(tenantId);
         if (!client) {
             console.error(`[WhatsApp] No hay cliente para Tenant ${tenantId}`);
             return false;
         }
 
-        const formattedTo = to.includes('@c.us') ? to : `${to.replace(/\D/g, '')}@c.us`;
-        const media = new MessageMedia('application/pdf', buffer.toString('base64'), filename);
+        try {
+            const formattedTo = this.formatPhone(to);
+            const media = new MessageMedia('application/pdf', buffer.toString('base64'), filename);
 
-        await client.sendMessage(formattedTo, media, { caption });
-        return true;
+            await client.sendMessage(formattedTo, media, { caption });
+            return true;
+        } catch (error) {
+            console.error(`[WhatsApp] Error enviando media a ${to}:`, error.message);
+            return false;
+        }
     }
 }
 
