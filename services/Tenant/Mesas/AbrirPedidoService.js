@@ -1,0 +1,54 @@
+const db = require('../../../config/database');
+
+class AbrirPedidoService {
+    /**
+     * @description Inicia un nuevo pedido de facturación en una mesa de forma transaccional.
+     */
+    static async execute({ tenantId, mesa_id, cliente_id, notas }) {
+        const connection = await db.getConnection();
+        try {
+            await connection.beginTransaction();
+
+            const [mesas] = await connection.query('SELECT id FROM mesas WHERE id = ? AND tenant_id = ?', [mesa_id, tenantId]);
+            if (mesas.length === 0) {
+                throw new Error('Mesa no encontrada');
+            }
+
+            const [existentes] = await connection.query(
+                `SELECT * FROM pedidos WHERE mesa_id = ? AND estado NOT IN ('cerrado','cancelado') LIMIT 1`,
+                [mesa_id]
+            );
+            
+            if (existentes.length > 0) {
+                await connection.commit();
+                return existentes[0];
+            }
+
+            const [insert] = await connection.query(
+                `INSERT INTO pedidos (tenant_id, mesa_id, cliente_id, estado, total, notas) VALUES (?, ?, ?, 'abierto', 0, ?)`,
+                [tenantId, mesa_id, cliente_id || null, notas || null]
+            );
+
+            await connection.query("UPDATE mesas SET estado = 'ocupada' WHERE id = ?", [mesa_id]);
+
+            await connection.commit();
+            
+            return { 
+                id: insert.insertId, 
+                mesa_id, 
+                cliente_id: cliente_id || null, 
+                estado: 'abierto', 
+                total: 0, 
+                notas: notas || null 
+            };
+            
+        } catch (error) {
+            await connection.rollback();
+            throw error;
+        } finally {
+            connection.release();
+        }
+    }
+}
+
+module.exports = AbrirPedidoService;

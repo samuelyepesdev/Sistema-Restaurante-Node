@@ -1,5 +1,6 @@
 const TenantService = require('../../../../services/Admin/TenantService');
 const StatsService = require('../../../../services/Tenant/StatsService');
+const ReporteMensualService = require('../../../../services/Tenant/ReporteMensualService');
 
 class PerfilController {
     // GET /perfil
@@ -48,6 +49,42 @@ class PerfilController {
         } catch (error) {
             console.error('Error actualizando perfil:', error);
             res.status(500).json({ success: false, message: error.message });
+        }
+    }
+
+    // POST /perfil/test-report
+    static async testReport(req, res) {
+        try {
+            const tenant = req.tenant;
+            const { mes, anio } = req.body;
+            
+            console.log(`Solicitud de reporte ${mes || 'actual'}/${anio || ''} para ${tenant.nombre}...`);
+            
+            // Enviamos el reporte especificado (o el actual como fallback de prueba)
+            const result = await ReporteMensualService.generarYEnviar(tenant, { 
+                mes: mes, 
+                anio: anio,
+                testMesActual: (!mes && !anio) 
+            });
+
+            let msg = `Reporte de ${mes ? 'mes solicitado' : 'mes actual'} enviado con éxito vía Email.`;
+            if (result.whatsappEnviado) {
+                msg += ' ¡También llegó a tu WhatsApp!';
+            } else if (tenant.telefono) {
+                msg += ' **Nota:** No se pudo enviar por WhatsApp. Asegúrate de que el bot de tu negocio o el bot principal estén conectados.';
+            }
+
+            res.json({ 
+                success: true, 
+                message: msg, 
+                whatsapp: result.whatsappEnviado,
+                // Forzamos conversión a Buffer de Node para asegurar un Base64 limpio
+                pdfBase64: result.pdfBuffer ? Buffer.from(result.pdfBuffer).toString('base64') : null,
+                fileName: `Reporte_${mes || 'Actual'}_${anio || ''}.pdf`
+            });
+        } catch (error) {
+            console.error('Error enviando reporte de prueba:', error);
+            res.status(500).json({ success: false, message: 'Error enviando reporte: ' + error.message });
         }
     }
 }

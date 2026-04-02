@@ -3,7 +3,15 @@ const FacturaRepository = require('../../../../repositories/Tenant/FacturaReposi
 const InventarioService = require('../../../../services/Tenant/InventarioService');
 const CategoryService = require('../../../../services/Admin/CategoryService');
 const ProductRepository = require('../../../../repositories/Tenant/ProductRepository');
-
+const CrearMesasMasivasService = require('../../../../services/Tenant/Mesas/CrearMesasMasivasService');
+const AbrirPedidoService = require('../../../../services/Tenant/Mesas/AbrirPedidoService');
+const FacturarPedidoService = require('../../../../services/Tenant/Mesas/FacturarPedidoService');
+const MoverPedidoService = require('../../../../services/Tenant/Mesas/MoverPedidoService');
+const MoverItemsService = require('../../../../services/Tenant/Mesas/MoverItemsService');
+const LiberarMesaService = require('../../../../services/Tenant/Mesas/LiberarMesaService');
+const AgregarItemService = require('../../../../services/Tenant/Mesas/AgregarItemService');
+const AgregarServicioService = require('../../../../services/Tenant/Mesas/AgregarServicioService');
+const EliminarItemService = require('../../../../services/Tenant/Mesas/EliminarItemService');
 class MesasController {
     // GET /mesas
     static async index(req, res) {
@@ -123,136 +131,47 @@ class MesasController {
 
             const { cantidad, prefijo } = req.body || {};
 
-            if (!cantidad || cantidad < 1 || cantidad > 100) {
-                return res.status(400).json({ error: 'La cantidad debe estar entre 1 y 100' });
-            }
+            // 🌟 Delegar la responsabilidad compleja de matrices al Action / Service
+            const resultado = await CrearMesasMasivasService.execute({ tenantId, cantidad, prefijo });
 
-            const connection = await db.getConnection();
-            try {
-                await connection.beginTransaction();
+            return res.status(201).json(resultado);
 
-                const [existing] = await connection.query('SELECT numero FROM mesas WHERE tenant_id = ?', [tenantId]);
-                const existingNumbers = new Set(existing.map(m => m.numero));
-
-                const created = [];
-                const errors = [];
-
-                let startNumber = 1;
-                if (!prefijo) {
-                    const numericMesas = existing
-                        .map(m => {
-                            const num = parseInt(m.numero);
-                            return isNaN(num) ? 0 : num;
-                        })
-                        .filter(n => n > 0);
-
-                    if (numericMesas.length > 0) {
-                        startNumber = Math.max(...numericMesas) + 1;
-                    }
-                } else {
-                    const prefixPattern = new RegExp(`^${prefijo}(\\d+)$`);
-                    const prefixedMesas = existing
-                        .map(m => {
-                            const match = m.numero.match(prefixPattern);
-                            return match ? parseInt(match[1]) : 0;
-                        })
-                        .filter(n => n > 0);
-
-                    if (prefixedMesas.length > 0) {
-                        startNumber = Math.max(...prefixedMesas) + 1;
-                    }
-                }
-
-                for (let i = 0; i < cantidad; i++) {
-                    const numeroMesa = prefijo ? `${prefijo}${startNumber + i}` : String(startNumber + i);
-
-                    if (existingNumbers.has(numeroMesa)) {
-                        errors.push(`Mesa ${numeroMesa} ya existe`);
-                        continue;
-                    }
-
-                    try {
-                        const [result] = await connection.query(
-                            'INSERT INTO mesas (tenant_id, numero, descripcion, estado) VALUES (?, ?, ?, ?)',
-                            [tenantId, numeroMesa, null, 'libre']
-                        );
-                        created.push({ id: result.insertId, numero: numeroMesa });
-                        existingNumbers.add(numeroMesa);
-                    } catch (error) {
-                        if (error.code === 'ER_DUP_ENTRY') {
-                            errors.push(`Mesa ${numeroMesa} ya existe`);
-                        } else {
-                            throw error;
-                        }
-                    }
-                }
-
-                await connection.commit();
-                connection.release();
-
-                res.status(201).json({
-                    success: true,
-                    creadas: created.length,
-                    errores: errors.length,
-                    mesas: created,
-                    mensajes: errors,
-                    desde: prefijo ? `${prefijo}${startNumber}` : startNumber
-                });
-            } catch (error) {
-                await connection.rollback();
-                connection.release();
-                throw error;
-            }
         } catch (error) {
-            console.error('Error al crear mesas masivas:', error);
-            res.status(500).json({ error: 'Error al crear mesas' });
+            console.error('Error al crear mesas masivas:', error.message);
+            if (error.message === 'La cantidad debe estar entre 1 y 100') {
+                return res.status(400).json({ error: error.message });
+            }
+            return res.status(500).json({ error: 'Error interno al crear mesas masivas' });
         }
     }
 
     // POST /mesas/abrir
     static async abrirPedido(req, res) {
-        const tenantId = req.tenant?.id;
-        if (!tenantId) return res.status(403).json({ error: 'Contexto de tenant no disponible' });
-
-        const { mesa_id, cliente_id, notas } = req.body || {};
-        if (!mesa_id) return res.status(400).json({ error: 'mesa_id requerido' });
         try {
-            const connection = await db.getConnection();
-            try {
-                await connection.beginTransaction();
-                const [mesas] = await connection.query('SELECT id FROM mesas WHERE id = ? AND tenant_id = ?', [mesa_id, tenantId]);
-                if (mesas.length === 0) {
-                    await connection.rollback();
-                    connection.release();
-                    return res.status(404).json({ error: 'Mesa no encontrada' });
-                }
+            const tenantId = req.tenant?.id;
+            if (!tenantId) return res.status(403).json({ error: 'Contexto de tenant no disponible' });
 
-                const [existentes] = await connection.query(
-                    `SELECT * FROM pedidos WHERE mesa_id = ? AND estado NOT IN ('cerrado','cancelado') LIMIT 1`,
-                    [mesa_id]
-                );
-                if (existentes.length > 0) {
-                    await connection.commit();
-                    connection.release();
-                    return res.json({ pedido: existentes[0] });
-                }
+            const { mesa_id, cliente_id, notas } = req.body || {};
+            if (!mesa_id) return res.status(400).json({ error: 'El ID de la mesa es requerido' });
 
-                const [insert] = await connection.query(
-                    `INSERT INTO pedidos (tenant_id, mesa_id, cliente_id, estado, total, notas) VALUES (?, ?, ?, 'abierto', 0, ?)`,
-                    [tenantId, mesa_id, cliente_id || null, notas || null]
-                );
+            // 🌟 1. Delegamos las transacciones al ACTION. (SRP / MVC correcto)
+            const pedido = await AbrirPedidoService.execute({
+                tenantId,
+                mesa_id,
+                cliente_id,
+                notas
+            });
 
-                await connection.commit();
-                connection.release();
-                res.status(201).json({ pedido: { id: insert.insertId, mesa_id, cliente_id: cliente_id || null, estado: 'abierto', total: 0, notas: notas || null } });
-            } catch (error) {
-                await connection.rollback();
-                connection.release();
-                throw error;
-            }
+            // 🌐 2. El controlador solo retorna la respuesta HTTP final.
+            return res.status(201).json({ pedido });
+
         } catch (error) {
-            console.error('Error al abrir pedido:', error);
-            res.status(500).json({ error: 'Error al abrir pedido' });
+            console.error('Error al abrir pedido:', error.message);
+            // 🐛 3. Manejo de Errores controlado por la nomenclatura del Servicio
+            if (error.message === 'Mesa no encontrada') {
+                return res.status(404).json({ error: error.message });
+            }
+            return res.status(500).json({ error: 'Fallo interno al intentar abrir el pedido en base de datos' });
         }
     }
 
@@ -347,32 +266,19 @@ class MesasController {
             if (!tenantId) return res.status(403).json({ error: 'Contexto de tenant no disponible' });
 
             const pedidoId = req.params.pedidoId;
-            const [pedidos] = await db.query('SELECT id FROM pedidos WHERE id = ? AND tenant_id = ?', [pedidoId, tenantId]);
-            if (pedidos.length === 0) return res.status(404).json({ error: 'Pedido no encontrado' });
-
             const { producto_id, cantidad, unidad, precio, nota } = req.body || {};
-            if (!producto_id || !cantidad || !precio) {
-                return res.status(400).json({ error: 'producto_id, cantidad y precio son requeridos' });
-            }
-            const check = await InventarioService.checkStockParaProducto(tenantId, producto_id, parseFloat(cantidad) || 1);
-            if (!check.ok) {
-                const msg = (check.faltantes || []).map(f => `${f.insumo_nombre}: requiere ${f.requerido} ${f.unidad_base}, disponible ${f.disponible}`).join('; ');
-                console.warn('[Inventario] Vendiendo sin stock suficiente: ' + msg);
-                // No bloqueamos la venta, permitimos stock negativo
-            }
-            const subtotal = Number(cantidad) * Number(precio);
-            const [pedidoRow] = await db.query('SELECT mesa_id FROM pedidos WHERE id = ? AND tenant_id = ?', [pedidoId, tenantId]);
-            const mesaId = pedidoRow && pedidoRow[0] && pedidoRow[0].mesa_id;
-            const [result] = await db.query(
-                `INSERT INTO pedido_items (tenant_id, pedido_id, producto_id, cantidad, unidad_medida, precio_unitario, subtotal, estado, nota)
-                 VALUES (?, ?, ?, ?, ?, ?, ?, 'pendiente', ?)` ,
-                [tenantId, pedidoId, producto_id, cantidad, unidad || 'UND', precio, subtotal, nota || null]
-            );
-            if (mesaId) await db.query("UPDATE mesas SET estado = 'ocupada' WHERE id = ? AND tenant_id = ?", [mesaId, tenantId]);
-            res.status(201).json({ id: result.insertId });
+            
+            const resultado = await AgregarItemService.execute({ 
+                tenantId, pedidoId, producto_id, cantidad, unidad, precio, nota 
+            });
+            return res.status(201).json(resultado);
+
         } catch (error) {
-            console.error('Error al agregar item:', error);
-            res.status(500).json({ error: 'Error al agregar item' });
+            console.error('Error al agregar item:', error.message);
+            if (error.message === 'Pedido no encontrado') {
+                return res.status(404).json({ error: error.message });
+            }
+            return res.status(400).json({ error: error.message || 'Error al agregar item' });
         }
     }
 
@@ -385,28 +291,17 @@ class MesasController {
             const pedidoId = req.params.pedidoId;
             const { servicio_id, cantidad, precio, nota } = req.body || {};
             
-            if (!servicio_id || !cantidad || !precio) {
-                return res.status(400).json({ error: 'servicio_id, cantidad y precio son requeridos' });
-            }
+            const resultado = await AgregarServicioService.execute({ 
+                tenantId, pedidoId, servicio_id, cantidad, precio, nota 
+            });
+            return res.status(201).json(resultado);
 
-            const subtotal = Number(cantidad) * Number(precio);
-            const [pedidoRow] = await db.query('SELECT mesa_id FROM pedidos WHERE id = ? AND tenant_id = ?', [pedidoId, tenantId]);
-            if (pedidoRow.length === 0) return res.status(404).json({ error: 'Pedido no encontrado' });
-            
-            const mesaId = pedidoRow[0].mesa_id;
-
-            const [result] = await db.query(
-                `INSERT INTO pedido_items (tenant_id, pedido_id, servicio_id, es_servicio, cantidad, unidad_medida, precio_unitario, subtotal, estado, nota)
-                 VALUES (?, ?, ?, 1, ?, 'SERV', ?, ?, 'listo', ?)` ,
-                [tenantId, pedidoId, servicio_id, cantidad, precio, subtotal, nota || null]
-            );
-
-            if (mesaId) await db.query("UPDATE mesas SET estado = 'ocupada' WHERE id = ? AND tenant_id = ?", [mesaId, tenantId]);
-            
-            res.status(201).json({ id: result.insertId });
         } catch (error) {
-            console.error('Error al agregar servicio:', error);
-            res.status(500).json({ error: 'Error al agregar servicio' });
+            console.error('Error al agregar servicio:', error.message);
+            if (error.message === 'Pedido no encontrado') {
+                return res.status(404).json({ error: error.message });
+            }
+            return res.status(400).json({ error: error.message || 'Error al agregar servicio' });
         }
     }
 
@@ -417,53 +312,15 @@ class MesasController {
             if (!tenantId) return res.status(403).json({ error: 'Contexto de tenant no disponible' });
 
             const itemId = req.params.itemId;
-            const connection = await db.getConnection();
-            try {
-                await connection.beginTransaction();
+            const resultado = await EliminarItemService.execute({ tenantId, itemId });
 
-                const [rows] = await connection.query(
-                    'SELECT pi.id, p.id as pedido_id, p.mesa_id FROM pedido_items pi INNER JOIN pedidos p ON pi.pedido_id = p.id WHERE pi.id = ? AND p.tenant_id = ? FOR UPDATE',
-                    [itemId, tenantId]
-                );
-                
-                if (rows.length === 0) {
-                    await connection.rollback();
-                    connection.release();
-                    return res.status(404).json({ error: 'Item no encontrado' });
-                }
-
-                const { pedido_id, mesa_id } = rows[0];
-                await connection.query('DELETE FROM pedido_items WHERE id = ?', [itemId]);
-
-                // Validar si la mesa se queda sin productos en ese pedido
-                const [restantes] = await connection.query(
-                    'SELECT COUNT(*) as cnt FROM pedido_items WHERE pedido_id = ?',
-                    [pedido_id]
-                );
-
-                if (restantes[0].cnt === 0) {
-                    await connection.query("UPDATE pedidos SET estado = 'cancelado' WHERE id = ?", [pedido_id]);
-                    const [abiertos] = await connection.query(
-                        "SELECT COUNT(*) as cnt FROM pedidos WHERE mesa_id = ? AND estado NOT IN ('cerrado','cancelado')",
-                        [mesa_id]
-                    );
-                    if (abiertos[0].cnt === 0) {
-                        await connection.query("UPDATE mesas SET estado = 'libre' WHERE id = ?", [mesa_id]);
-                    }
-                }
-
-                await connection.commit();
-                connection.release();
-
-                res.json({ message: 'Item eliminado y estado de mesa validado' });
-            } catch (error) {
-                await connection.rollback();
-                connection.release();
-                throw error;
-            }
+            return res.json(resultado);
         } catch (error) {
-            console.error('Error al eliminar item:', error);
-            res.status(500).json({ error: 'Error al eliminar item' });
+            console.error('Error al eliminar item:', error.message);
+            if (error.message === 'Item no encontrado') {
+                return res.status(404).json({ error: error.message });
+            }
+            return res.status(500).json({ error: 'Error interno al eliminar item' });
         }
     }
 
@@ -562,315 +419,91 @@ class MesasController {
 
     // POST /mesas/pedidos/:pedidoId/facturar
     static async facturarPedido(req, res) {
-        const tenantId = req.tenant?.id;
-        if (!tenantId) return res.status(403).json({ error: 'Contexto de tenant no disponible' });
-
-        const pedidoId = req.params.pedidoId;
-        const { cliente_id, forma_pago, descuentos, propina: propinaBody } = req.body || {};
-        if (!cliente_id) return res.status(400).json({ error: 'cliente_id requerido para facturar' });
-        if (!forma_pago) return res.status(400).json({ error: 'forma_pago requerido' });
-        const descuentosMap = descuentos && typeof descuentos === 'object' ? descuentos : {};
         try {
-            const connection = await db.getConnection();
-            try {
-                await connection.beginTransaction();
+            const tenantId = req.tenant?.id;
+            if (!tenantId) return res.status(403).json({ error: 'Contexto de tenant no disponible' });
 
-                await FacturaRepository.acomodarNumeracionSiFalta(connection, tenantId);
+            const pedidoId = req.params.pedidoId;
+            const { cliente_id, forma_pago, descuentos, propina: propinaBody } = req.body || {};
+            
+            if (!cliente_id) return res.status(400).json({ error: 'El ID de cliente es requerido para facturar' });
+            if (!forma_pago) return res.status(400).json({ error: 'La forma de pago es requerida' });
+            
+            const descuentosMap = descuentos && typeof descuentos === 'object' ? descuentos : {};
 
-                const [pedidos] = await connection.query('SELECT * FROM pedidos WHERE id = ? AND tenant_id = ? FOR UPDATE', [pedidoId, tenantId]);
-                if (pedidos.length === 0) throw new Error('Pedido no encontrado');
-                const pedido = pedidos[0];
+            // 🌟 1. Delegar todo el SQL y Cálculos pesados (SRP)
+            const resultado = await FacturarPedidoService.execute({
+                tenantId,
+                pedidoId,
+                cliente_id,
+                forma_pago,
+                descuentosMap,
+                propinaBody
+            });
 
-                const [items] = await connection.query(
-                    `SELECT * FROM pedido_items WHERE pedido_id = ? AND estado <> 'cancelado'`,
-                    [pedidoId]
-                );
-                if (items.length === 0) throw new Error('Pedido sin items');
+            // 🌐 2. Devolver JSON Bonito
+            return res.status(201).json(resultado);
 
-                let total = 0;
-                let montoEfectivo = 0;
-                let montoTransferencia = 0;
-
-                const lineasFactura = items.map(i => {
-                    const cant = Number(i.cantidad || 0);
-                    const precioUnit = Number(i.precio_unitario || 0);
-                    const pct = descuentosMap[String(i.id)] != null ? Number(descuentosMap[String(i.id)]) : 0;
-                    const desc = Math.min(100, Math.max(0, pct)) / 100;
-                    const subtotal = Math.round(cant * precioUnit * (1 - desc) * 100) / 100;
-                    const precioUnitFactura = desc > 0 ? Math.round(precioUnit * (1 - desc) * 100) / 100 : precioUnit;
-                    total += subtotal;
-
-                    // Compute distribution of payment
-                    if (i.pagado) {
-                        if (i.forma_pago === 'efectivo') montoEfectivo += subtotal;
-                        else if (i.forma_pago === 'transferencia') montoTransferencia += subtotal;
-                    } else {
-                        if (forma_pago === 'efectivo') montoEfectivo += subtotal;
-                        else if (forma_pago === 'transferencia') montoTransferencia += subtotal;
-                    }
-
-                    return { 
-                        producto_id: i.producto_id, 
-                        servicio_id: i.servicio_id,
-                        es_servicio: i.es_servicio,
-                        cantidad: cant, 
-                        precio_unitario: precioUnitFactura, 
-                        unidad_medida: i.unidad_medida || 'UND', 
-                        subtotal, 
-                        descuento_porcentaje: desc > 0 ? pct : null 
-                    };
-                });
-                total = Math.round(total * 100) / 100;
-                const propina = Math.max(0, parseFloat(propinaBody != null ? propinaBody : pedido.propina) || 0);
-                const totalConPropina = Math.round((total + propina) * 100) / 100;
-
-                // Propina will be added to the overall selected forma_pago of the invoice
-                if (forma_pago === 'efectivo') montoEfectivo += propina;
-                else if (forma_pago === 'transferencia') montoTransferencia += propina;
-
-                montoEfectivo = Math.round(montoEfectivo * 100) / 100;
-                montoTransferencia = Math.round(montoTransferencia * 100) / 100;
-
-                let formaPagoFinal = forma_pago;
-                if (montoEfectivo > 0 && montoTransferencia > 0) formaPagoFinal = 'mixto';
-                else if (montoEfectivo > 0) formaPagoFinal = 'efectivo';
-                else if (montoTransferencia > 0) formaPagoFinal = 'transferencia';
-
-                const [rowsNum] = await connection.query(
-                    'SELECT COALESCE(MAX(numero), 0) + 1 AS siguiente FROM facturas WHERE tenant_id = ?',
-                    [tenantId]
-                );
-                const numeroFactura = (rowsNum && rowsNum[0] && rowsNum[0].siguiente) || 1;
-                const fechaEmisionUtc = new Date().toISOString().slice(0, 19).replace('T', ' ');
-
-                // Buscar sesión de caja abierta para vincular la venta
-                const [sesiones] = await connection.query(
-                    'SELECT id FROM caja_sesiones WHERE tenant_id = ? AND estado = "abierta" LIMIT 1',
-                    [tenantId]
-                );
-                const cajaSesionId = sesiones.length > 0 ? sesiones[0].id : null;
-
-                const [facturaInsert] = await connection.query(
-                    `INSERT INTO facturas (tenant_id, numero, cliente_id, total, forma_pago, monto_efectivo, monto_transferencia, propina, fecha, caja_sesion_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-                    [tenantId, numeroFactura, cliente_id, totalConPropina, formaPagoFinal, montoEfectivo, montoTransferencia, propina, fechaEmisionUtc, cajaSesionId]
-                );
-                const facturaId = facturaInsert.insertId;
-
-                const detallesValuesFinal = lineasFactura.map(l => [
-                    facturaId, 
-                    l.producto_id, 
-                    l.servicio_id,
-                    l.es_servicio,
-                    l.cantidad, 
-                    l.precio_unitario, 
-                    l.unidad_medida, 
-                    l.subtotal, 
-                    l.descuento_porcentaje
-                ]);
-
-                await connection.query(
-                    `INSERT INTO detalle_factura (factura_id, producto_id, servicio_id, es_servicio, cantidad, precio_unitario, unidad_medida, subtotal, descuento_porcentaje) VALUES ?`,
-                    [detallesValuesFinal]
-                );
-
-                for (const l of lineasFactura) {
-                    try {
-                        if (!l.es_servicio && l.producto_id) {
-                            await InventarioService.descontarPorReceta(tenantId, l.producto_id, l.cantidad, 'factura_' + facturaId);
-                        }
-                    } catch (invErr) {
-                        console.error('Error al descontar inventario por receta:', invErr);
-                    }
-                }
-
-                await connection.query(`UPDATE pedidos SET estado = 'cerrado', total = ? WHERE id = ?`, [totalConPropina, pedidoId]);
-                await connection.query(`UPDATE mesas SET estado = 'libre' WHERE id = ?`, [pedido.mesa_id]);
-
-                await connection.commit();
-                connection.release();
-                res.status(201).json({ factura_id: facturaId, numero: numeroFactura });
-            } catch (error) {
-                await connection.rollback();
-                connection.release();
-                throw error;
-            }
         } catch (error) {
-            console.error('Error en facturación desde pedido:', error);
-            res.status(500).json({ error: error.message || 'Error al facturar pedido' });
+            console.error('Error en facturación desde pedido:', error.message);
+            if (error.message === 'Pedido no encontrado' || error.message === 'Pedido sin items') {
+                return res.status(404).json({ error: error.message });
+            }
+            return res.status(500).json({ error: error.message || 'Error al facturar pedido' });
         }
     }
 
     // PUT /mesas/pedidos/:pedidoId/mover
     static async moverPedido(req, res) {
-        const tenantId = req.tenant?.id;
-        if (!tenantId) return res.status(403).json({ error: 'Contexto de tenant no disponible' });
-
-        const pedidoId = req.params.pedidoId;
-        const { mesa_destino_id } = req.body || {};
-        if (!mesa_destino_id) return res.status(400).json({ error: 'mesa_destino_id requerido' });
         try {
-            const connection = await db.getConnection();
-            try {
-                await connection.beginTransaction();
+            const tenantId = req.tenant?.id;
+            if (!tenantId) return res.status(403).json({ error: 'Contexto de tenant no disponible' });
 
-                const [pedidos] = await connection.query('SELECT * FROM pedidos WHERE id = ? AND tenant_id = ? FOR UPDATE', [pedidoId, tenantId]);
-                if (pedidos.length === 0) throw new Error('Pedido no encontrado');
-                const pedido = pedidos[0];
+            const pedidoId = req.params.pedidoId;
+            const { mesa_destino_id } = req.body || {};
+            if (!mesa_destino_id) return res.status(400).json({ error: 'mesa_destino_id requerido' });
 
-                const [mesaDest] = await connection.query('SELECT id FROM mesas WHERE id = ? AND tenant_id = ?', [mesa_destino_id, tenantId]);
-                if (mesaDest.length === 0) throw new Error('Mesa destino no encontrada');
+            const resultado = await MoverPedidoService.execute({ tenantId, pedidoId, mesa_destino_id });
+            return res.json(resultado);
 
-                const [abiertosDestino] = await connection.query(
-                    `SELECT COUNT(*) as cnt FROM pedidos WHERE mesa_id = ? AND estado NOT IN ('cerrado','cancelado')`,
-                    [mesa_destino_id]
-                );
-                if ((abiertosDestino[0]?.cnt || 0) > 0) {
-                    throw new Error('La mesa destino tiene un pedido activo');
-                }
-
-                await connection.query('UPDATE pedidos SET mesa_id = ? WHERE id = ?', [mesa_destino_id, pedidoId]);
-
-                const [restantesOrigen] = await connection.query(
-                    `SELECT COUNT(*) as cnt FROM pedidos WHERE mesa_id = ? AND estado NOT IN ('cerrado','cancelado')`,
-                    [pedido.mesa_id]
-                );
-                if ((restantesOrigen[0]?.cnt || 0) === 0) {
-                    await connection.query('UPDATE mesas SET estado = "libre" WHERE id = ?', [pedido.mesa_id]);
-                }
-
-                await connection.query('UPDATE mesas SET estado = "ocupada" WHERE id = ?', [mesa_destino_id]);
-
-                await connection.commit();
-                connection.release();
-                res.json({ message: 'Pedido movido', mesa_origen_id: pedido.mesa_id, mesa_destino_id });
-            } catch (error) {
-                await connection.rollback();
-                connection.release();
-                throw error;
-            }
         } catch (error) {
-            console.error('Error al mover pedido:', error);
-            res.status(400).json({ error: error.message || 'Error al mover pedido' });
+            console.error('Error al mover pedido:', error.message);
+            return res.status(400).json({ error: error.message || 'Error al mover pedido' });
         }
     }
 
     // POST /mesas/pedidos/:pedidoId/mover-items
     static async moverItems(req, res) {
-        const tenantId = req.tenant?.id;
-        if (!tenantId) return res.status(403).json({ error: 'Contexto de tenant no disponible' });
-
-        const pedidoOrigenId = req.params.pedidoId;
-        const { itemIds, mesa_destino_id } = req.body || {};
-
-        if (!Array.isArray(itemIds) || itemIds.length === 0) return res.status(400).json({ error: 'Seleccione al menos un producto' });
-        if (!mesa_destino_id) return res.status(400).json({ error: 'Mesa destino requerida' });
-
         try {
-            const connection = await db.getConnection();
-            try {
-                await connection.beginTransaction();
+            const tenantId = req.tenant?.id;
+            if (!tenantId) return res.status(403).json({ error: 'Contexto de tenant no disponible' });
 
-                const [pedidos] = await connection.query('SELECT * FROM pedidos WHERE id = ? AND tenant_id = ? FOR UPDATE', [pedidoOrigenId, tenantId]);
-                if (pedidos.length === 0) throw new Error('Pedido origen no encontrado');
-                const pedidoOrigen = pedidos[0];
+            const pedidoOrigenId = req.params.pedidoId;
+            const { itemIds, mesa_destino_id } = req.body || {};
 
-                const [mesaDest] = await connection.query('SELECT id, numero FROM mesas WHERE id = ? AND tenant_id = ?', [mesa_destino_id, tenantId]);
-                if (mesaDest.length === 0) throw new Error('Mesa destino no encontrada');
+            const resultado = await MoverItemsService.execute({ tenantId, pedidoOrigenId, itemIds, mesa_destino_id });
+            return res.json(resultado);
 
-                let [pedidoDest] = await connection.query(
-                    `SELECT * FROM pedidos WHERE mesa_id = ? AND estado NOT IN ('cerrado','cancelado') LIMIT 1`,
-                    [mesa_destino_id]
-                );
-
-                let pedidoDestinoId;
-                if (pedidoDest.length > 0) {
-                    pedidoDestinoId = pedidoDest[0].id;
-                } else {
-                    const [insert] = await connection.query(
-                        `INSERT INTO pedidos (tenant_id, mesa_id, cliente_id, estado, total) VALUES (?, ?, ?, 'abierto', 0)`,
-                        [tenantId, mesa_destino_id, pedidoOrigen.cliente_id]
-                    );
-                    pedidoDestinoId = insert.insertId;
-                }
-
-                await connection.query(
-                    `UPDATE pedido_items SET pedido_id = ? WHERE id IN (?) AND pedido_id = ?`,
-                    [pedidoDestinoId, itemIds, pedidoOrigenId]
-                );
-
-                const [restantes] = await connection.query(
-                    `SELECT COUNT(*) as cnt FROM pedido_items WHERE pedido_id = ? AND estado <> 'cancelado'`,
-                    [pedidoOrigenId]
-                );
-
-                if ((restantes[0]?.cnt || 0) === 0) {
-                    await connection.query(`UPDATE pedidos SET estado = 'cancelado' WHERE id = ?`, [pedidoOrigenId]);
-                    const [abiertosOrigen] = await connection.query(
-                        `SELECT COUNT(*) as cnt FROM pedidos WHERE mesa_id = ? AND estado NOT IN ('cerrado','cancelado')`,
-                        [pedidoOrigen.mesa_id]
-                    );
-                    if ((abiertosOrigen[0]?.cnt || 0) === 0) {
-                        await connection.query('UPDATE mesas SET estado = "libre" WHERE id = ?', [pedidoOrigen.mesa_id]);
-                    }
-                }
-
-                await connection.query('UPDATE mesas SET estado = "ocupada" WHERE id = ?', [mesa_destino_id]);
-
-                await connection.commit();
-                connection.release();
-                res.json({ success: true, message: 'Productos movidos exitosamente' });
-            } catch (error) {
-                await connection.rollback();
-                connection.release();
-                throw error;
-            }
         } catch (error) {
-            console.error('Error al mover productos:', error);
-            res.status(400).json({ error: error.message || 'Error al mover productos' });
+            console.error('Error al mover productos:', error.message);
+            return res.status(400).json({ error: error.message || 'Error al mover productos' });
         }
     }
 
     // PUT /mesas/:mesaId/liberar
     static async liberarMesa(req, res) {
-        const tenantId = req.tenant?.id;
-        if (!tenantId) return res.status(403).json({ error: 'Contexto de tenant no disponible' });
-
-        const mesaId = req.params.mesaId;
         try {
-            const connection = await db.getConnection();
-            try {
-                await connection.beginTransaction();
+            const tenantId = req.tenant?.id;
+            if (!tenantId) return res.status(403).json({ error: 'Contexto de tenant no disponible' });
 
-                const [mesas] = await connection.query('SELECT id FROM mesas WHERE id = ? AND tenant_id = ?', [mesaId, tenantId]);
-                if (mesas.length === 0) throw new Error('Mesa no encontrada');
+            const mesaId = req.params.mesaId;
 
-                const [abiertos] = await connection.query(
-                    `SELECT p.id FROM pedidos p WHERE p.mesa_id = ? AND p.estado NOT IN ('cerrado','cancelado') FOR UPDATE`,
-                    [mesaId]
-                );
+            const resultado = await LiberarMesaService.execute({ tenantId, mesaId });
+            return res.json(resultado);
 
-                if (abiertos.length > 0) {
-                    const ids = abiertos.map(p => p.id);
-                    const [items] = await connection.query(
-                        `SELECT COUNT(*) as cnt FROM pedido_items WHERE pedido_id IN (?) AND estado <> 'cancelado'`,
-                        [ids]
-                    );
-                    if ((items[0]?.cnt || 0) > 0) throw new Error('La mesa tiene items activos, no se puede liberar');
-                    await connection.query(`UPDATE pedidos SET estado = 'cancelado' WHERE id IN (?)`, [ids]);
-                }
-
-                await connection.query(`UPDATE mesas SET estado = 'libre' WHERE id = ?`, [mesaId]);
-                await connection.commit();
-                connection.release();
-                res.json({ message: 'Mesa liberada' });
-            } catch (error) {
-                await connection.rollback();
-                connection.release();
-                throw error;
-            }
         } catch (error) {
-            console.error('Error al liberar mesa:', error);
-            res.status(400).json({ error: error.message || 'Error al liberar mesa' });
+            console.error('Error al liberar mesa:', error.message);
+            return res.status(400).json({ error: error.message || 'Error al liberar mesa' });
         }
     }
 

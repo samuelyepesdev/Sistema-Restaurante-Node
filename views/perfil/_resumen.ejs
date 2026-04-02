@@ -56,6 +56,34 @@
                     </div>
                 </div>
             </div>
+
+            <hr class="my-4">
+            <div class="mt-4">
+                <label class="form-label small fw-bold text-muted mb-2"><i class="bi bi-calendar-check me-1"></i>Generar Reporte de un Mes Específico</label>
+                <div class="row g-2 mb-3">
+                    <div class="col-8">
+                        <select id="reportMonth" class="form-select form-select-sm">
+                            <% const meses = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre']; %>
+                            <% const currentMonth = new Date().getMonth() + 1; %>
+                            <% meses.forEach((m, i) => { %>
+                                <option value="<%= i + 1 %>" <%= (i + 1) === currentMonth ? 'selected' : '' %>><%= m %></option>
+                            <% }) %>
+                        </select>
+                    </div>
+                    <div class="col-4">
+                        <select id="reportYear" class="form-select form-select-sm">
+                            <% const currentYear = new Date().getFullYear(); %>
+                            <% for(let y = currentYear; y >= currentYear - 2; y--) { %>
+                                <option value="<%= y %>"><%= y %></option>
+                            <% } %>
+                        </select>
+                    </div>
+                </div>
+                <button type="button" class="btn btn-outline-success w-100 py-2" onclick="testReport()">
+                    <i class="bi bi-whatsapp me-2"></i>Enviar Reporte Seleccionado
+                </button>
+                <small class="text-muted d-block mt-2 text-center" style="font-size: 0.75rem;">Se enviará a tu Email y WhatsApp registrado.</small>
+            </div>
         </div>
     </div>
 </div>

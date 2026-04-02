@@ -23,4 +23,7 @@ router.get('/', requirePermission('perfil.ver'), PerfilController.index);
 // POST /perfil/actualizar - Actualizar datos y logo
 router.post('/actualizar', requirePermission('perfil.editar'), upload.single('logo'), PerfilController.update);
 
+// POST /perfil/test-report - Enviar reporte de prueba
+router.post('/test-report', requirePermission('perfil.editar'), PerfilController.testReport);
+
 module.exports = router;

@@ -83,4 +83,77 @@
             btn.disabled = false;
         }
     });
+
+    async function testReport() {
+        const btn = event ? event.currentTarget : document.querySelector('button[onclick="testReport()"]');
+        const originalHtml = btn.innerHTML;
+        
+        const mes = document.getElementById('reportMonth').value;
+        const anio = document.getElementById('reportYear').value;
+
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Enviando...';
+        btn.disabled = true;
+
+        try {
+            const response = await fetch('/perfil/test-report', { 
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ mes, anio })
+            });
+            const result = await response.json();
+
+            if (result.success) {
+                // Descarga automática del PDF
+                if (result.pdfBase64) {
+                    const blob = b64toBlob(result.pdfBase64, 'application/pdf');
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = result.fileName || 'Reporte_Mensual.pdf';
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                }
+
+                Swal.fire({
+                    icon: 'success',
+                    title: '¡Enviado!',
+                    text: result.message
+                });
+            } else {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Atención',
+                    text: result.message
+                });
+            }
+        } catch (error) {
+            Swal.fire({
+                icon: 'error',
+                title: 'No se pudo enviar',
+                text: error.message
+            });
+        } finally {
+            btn.innerHTML = originalHtml;
+            btn.disabled = false;
+        }
+    }
+
+    // Helper para convertir Base64 a Blob con limpieza
+    function b64toBlob(b64Data, contentType = '', sliceSize = 512) {
+        // Limpiar posibles caracteres no válidos o espacios
+        const cleanB64 = b64Data.replace(/\s/g, '');
+        const byteCharacters = atob(cleanB64);
+        const byteArrays = [];
+        for (let offset = 0; offset < byteCharacters.length; offset += sliceSize) {
+            const slice = byteCharacters.slice(offset, offset + sliceSize);
+            const byteNumbers = new Array(slice.length);
+            for (let i = 0; i < slice.length; i++) {
+                byteNumbers[i] = slice.charCodeAt(i);
+            }
+            const byteArray = new Uint8Array(byteNumbers);
+            byteArrays.push(byteArray);
+        }
+        return new Blob(byteArrays, { type: contentType });
+    }
 </script>

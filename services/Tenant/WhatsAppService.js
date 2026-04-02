@@ -1,4 +1,4 @@
-const { Client, LocalAuth } = require('whatsapp-web.js');
+const { Client, LocalAuth, MessageMedia } = require('whatsapp-web.js');
 const qrcode = require('qrcode');
 const db = require('../../config/database');
 const path = require('path');
@@ -530,8 +530,62 @@ class WhatsAppService {
 
         console.log(`[WhatsApp] SE CREÓ PEDIDO #${pedidoId} en Mesa ${mesaId} para Tenant ${tenantId}`);
 
-        // Emitir evento para notificaciones en tiempo real
+    // Emitir evento para notificaciones en tiempo real
         this.events.emit('orderCreated', { tenantId, pedidoId, mesaId });
+    }
+
+    /**
+     * Formatea un número para WhatsApp (específico para Colombia si tiene 10 dígitos)
+     */
+    formatPhone(phone) {
+        if (!phone) return null;
+        let cleaned = phone.replace(/\D/g, '');
+        // Si tiene 10 dígitos y no empieza por 57, asumimos que es Colombia
+        if (cleaned.length === 10 && !cleaned.startsWith('57')) {
+            cleaned = '57' + cleaned;
+        }
+        return cleaned.includes('@c.us') ? cleaned : `${cleaned}@c.us`;
+    }
+
+    /**
+     * Envía un mensaje de texto simple.
+     */
+    async sendMessage(tenantId, to, text) {
+        const client = this.getClient(tenantId);
+        if (!client) {
+            console.error(`[WhatsApp] No hay cliente para Tenant ${tenantId}`);
+            return false;
+        }
+        try {
+            const formattedTo = this.formatPhone(to);
+            await client.sendMessage(formattedTo, text);
+            return true;
+        } catch (error) {
+            console.error(`[WhatsApp] Error enviando mensaje a ${to}:`, error.message);
+            return false;
+        }
+    }
+
+    /**
+     * Envía un archivo/media.
+     */
+    async sendMediaMessage(tenantId, to, buffer, filename, caption = '') {
+        const client = this.getClient(tenantId);
+        if (!client) {
+            console.error(`[WhatsApp] No hay cliente para Tenant ${tenantId}`);
+            return false;
+        }
+
+        try {
+            const formattedTo = this.formatPhone(to);
+            const media = new MessageMedia('application/pdf', buffer.toString('base64'), filename);
+
+            await client.sendMessage(formattedTo, media, { caption });
+            return true;
+        } catch (error) {
+            console.error(`[WhatsApp] Error enviando media a ${to}:`, error.message);
+            return false;
+        }
     }
 }
 
