@@ -17,8 +17,8 @@ class MailerService {
                 greetingTimeout: 30000,   // 30 segundos para el saludo
                 socketTimeout: 60000,     // 60 segundos de lectura total
                 family: 4,
-                debug: true,              // <-- ESTO NOS DARÁ EL LOG DETALLADO
-                logger: true,             // <-- ESTO TAMBIÉN
+                debug: false,              
+                logger: false,             
                 tls: {
                     rejectUnauthorized: false,
                     minVersion: 'TLSv1.2'

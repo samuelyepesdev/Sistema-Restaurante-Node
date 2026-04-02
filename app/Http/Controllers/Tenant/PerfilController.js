@@ -78,7 +78,8 @@ class PerfilController {
                 success: true, 
                 message: msg, 
                 whatsapp: result.whatsappEnviado,
-                pdfBase64: result.pdfBuffer ? result.pdfBuffer.toString('base64') : null,
+                // Forzamos conversión a Buffer de Node para asegurar un Base64 limpio
+                pdfBase64: result.pdfBuffer ? Buffer.from(result.pdfBuffer).toString('base64') : null,
                 fileName: `Reporte_${mes || 'Actual'}_${anio || ''}.pdf`
             });
         } catch (error) {

@@ -139,9 +139,11 @@
         }
     }
 
-    // Helper para convertir Base64 a Blob
+    // Helper para convertir Base64 a Blob con limpieza
     function b64toBlob(b64Data, contentType = '', sliceSize = 512) {
-        const byteCharacters = atob(b64Data);
+        // Limpiar posibles caracteres no válidos o espacios
+        const cleanB64 = b64Data.replace(/\s/g, '');
+        const byteCharacters = atob(cleanB64);
         const byteArrays = [];
         for (let offset = 0; offset < byteCharacters.length; offset += sliceSize) {
             const slice = byteCharacters.slice(offset, offset + sliceSize);
