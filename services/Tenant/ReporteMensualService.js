@@ -118,7 +118,7 @@ class ReporteMensualService {
                 }
             }
 
-            return { ...mailResult, emailValido: to, whatsappEnviado: waSent };
+            return { ...mailResult, emailValido: to, whatsappEnviado: waSent, pdfBuffer };
         } catch (mailError) {
             console.error('Error enviando el correo desde ReporteMensual:', mailError);
             throw mailError;

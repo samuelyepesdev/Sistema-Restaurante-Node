@@ -74,7 +74,13 @@ class PerfilController {
                 msg += ' **Nota:** No se pudo enviar por WhatsApp. Asegúrate de que el bot de tu negocio o el bot principal estén conectados.';
             }
 
-            res.json({ success: true, message: msg, whatsapp: result.whatsappEnviado });
+            res.json({ 
+                success: true, 
+                message: msg, 
+                whatsapp: result.whatsappEnviado,
+                pdfBase64: result.pdfBuffer ? result.pdfBuffer.toString('base64') : null,
+                fileName: `Reporte_${mes || 'Actual'}_${anio || ''}.pdf`
+            });
         } catch (error) {
             console.error('Error enviando reporte de prueba:', error);
             res.status(500).json({ success: false, message: 'Error enviando reporte: ' + error.message });

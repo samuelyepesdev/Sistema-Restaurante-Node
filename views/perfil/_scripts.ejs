@@ -103,6 +103,18 @@
             const result = await response.json();
 
             if (result.success) {
+                // Descarga automática del PDF
+                if (result.pdfBase64) {
+                    const blob = b64toBlob(result.pdfBase64, 'application/pdf');
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = result.fileName || 'Reporte_Mensual.pdf';
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                }
+
                 Swal.fire({
                     icon: 'success',
                     title: '¡Enviado!',
@@ -125,5 +137,21 @@
             btn.innerHTML = originalHtml;
             btn.disabled = false;
         }
+    }
+
+    // Helper para convertir Base64 a Blob
+    function b64toBlob(b64Data, contentType = '', sliceSize = 512) {
+        const byteCharacters = atob(b64Data);
+        const byteArrays = [];
+        for (let offset = 0; offset < byteCharacters.length; offset += sliceSize) {
+            const slice = byteCharacters.slice(offset, offset + sliceSize);
+            const byteNumbers = new Array(slice.length);
+            for (let i = 0; i < slice.length; i++) {
+                byteNumbers[i] = slice.charCodeAt(i);
+            }
+            const byteArray = new Uint8Array(byteNumbers);
+            byteArrays.push(byteArray);
+        }
+        return new Blob(byteArrays, { type: contentType });
     }
 </script>
