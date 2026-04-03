@@ -1,7 +1,7 @@
 {
-  "name": "ecl-fruver",
-  "version": "1.0.0",
-  "description": "Sistema de Facturación para ECL FRUVER",
+  "name": "gastroflow",
+  "version": "1.3.15",
+  "description": "Sistema de Facturación para GastroFlow",
   "main": "server.js",
   "bin": "server.js",
   "pkg": {
