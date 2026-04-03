@@ -543,3 +543,16 @@ body {
         margin-top: 0.5rem;
     }
 }
+
+/* ========================================
+   FIX GLOBAL: Prevenir Auto-Zoom en iOS
+   ======================================== */
+@media screen and (max-width: 768px) {
+    input, 
+    select, 
+    textarea, 
+    .form-control, 
+    .form-select {
+        font-size: 16px !important; /* Mínimo 16px para evitar que iPhone haga zoom */
+    }
+}
