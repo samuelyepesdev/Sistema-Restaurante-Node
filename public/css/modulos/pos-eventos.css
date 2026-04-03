@@ -1,0 +1,179 @@
+/* ========================================
+   pos-eventos.css — Diseño Premium Stepper
+   ======================================== */
+
+:root {
+    --step-active: #3b82f6;
+    --step-completed: #10b981;
+    --step-inactive: #e2e8f0;
+    --bg-gradient: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+}
+
+body.pos-event-flow {
+    background: var(--bg-gradient);
+    min-height: 100vh;
+}
+
+/* Header & Title */
+.flow-header {
+    margin-bottom: 2rem;
+}
+
+.flow-title {
+    font-size: 1.875rem;
+    font-weight: 700;
+    color: #0f172a;
+    margin-bottom: 0.25rem;
+}
+
+.flow-subtitle {
+    font-size: 0.875rem;
+    color: #64748b;
+}
+
+/* Modern Stepper */
+.stepper-container {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 2rem;
+    overflow-x: auto;
+    padding-bottom: 0.5rem;
+}
+
+.step-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.step-circle {
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 1.1rem;
+    transition: all 0.3s ease;
+    background: var(--step-inactive);
+    color: #64748b;
+}
+
+.step-item.active .step-circle {
+    background: var(--step-active);
+    color: white;
+    box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.4);
+}
+
+.step-item.completed .step-circle {
+    background: #dcfce7;
+    color: var(--step-completed);
+}
+
+.step-label {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #64748b;
+}
+
+.step-item.active .step-label {
+    color: var(--step-active);
+}
+
+.step-divider {
+    width: 1.5rem;
+    height: 1px;
+    background: #cbd5e1;
+    margin: 0 0.5rem;
+}
+
+/* Content Card */
+.flow-card {
+    background: white;
+    border-radius: 1rem;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+    overflow: hidden;
+    transition: transform 0.3s ease;
+}
+
+.flow-card-body {
+    padding: 2rem;
+}
+
+/* Hiding steps */
+.step-content {
+    display: none;
+}
+.step-content.active {
+    display: block;
+    animation: fadeIn 0.4s ease-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Inputs & Buttons */
+.flow-input {
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    padding: 0.75rem 1rem;
+    border-radius: 0.5rem;
+    transition: border-color 0.2s;
+}
+
+.flow-input:focus {
+    border-color: var(--step-active);
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.btn-flow-next {
+    background: var(--step-active);
+    color: white;
+    border: none;
+    padding: 0.625rem 1.5rem;
+    border-radius: 0.5rem;
+    font-weight: 600;
+}
+
+.btn-flow-back {
+    background: white;
+    color: #64748b;
+    border: 1px solid #e2e8f0;
+    padding: 0.625rem 1.5rem;
+    border-radius: 0.5rem;
+    font-weight: 600;
+}
+
+/* Info Cards inside Flow */
+.info-box {
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
+    border-radius: 0.75rem;
+    padding: 1rem;
+}
+
+.summary-card {
+    background: #f8fafc;
+    border-radius: 0.75rem;
+    padding: 1rem;
+    border: 1px solid #e2e8f0;
+}
+
+/* Table overrides */
+.table-pos thead th {
+    background: #f8fafc;
+    color: #64748b;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid #e2e8f0;
+}

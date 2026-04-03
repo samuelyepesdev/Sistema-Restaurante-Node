@@ -350,6 +350,86 @@ $(document).ready(function () {
 
     $('#nuevaVenta').click(() => { limpiarSesionProvisional(); limpiarTodo(); });
 
-    // Cierre de dropdowns al hacer clic fuera — usa .hide() (NO .remove()) para no destruir el elemento del DOM
+    // ========================================
+    // Lógica de Stepper (Navegación por Pasos)
+    // ========================================
+    let currentStep = 1;
+
+    function goToStep(step) {
+        if (step < 1 || step > 4) return;
+
+        // Validaciones antes de avanzar
+        if (step > currentStep) {
+            if (currentStep === 1 && !$('#cliente_id').val()) {
+                return Swal.fire('Atención', 'Por favor seleccione un cliente para continuar', 'warning');
+            }
+            if (currentStep === 2 && productosFactura.length === 0) {
+                return Swal.fire('Atención', 'Agregue al menos un producto a la venta', 'warning');
+            }
+        }
+
+        currentStep = step;
+
+        // Visualización de contenido
+        $('.step-content').removeClass('active');
+        $(`#content-step-${currentStep}`).addClass('active');
+
+        // Actualización de indicadores
+        updateStepVisuals();
+
+        // Control de botones
+        $('#btnStepBack').css('visibility', currentStep === 1 ? 'hidden' : 'visible');
+        
+        if (currentStep === 4) {
+            $('#btnStepNext').fadeOut();
+            actualizarResumenFinal();
+        } else {
+            $('#btnStepNext').fadeIn();
+        }
+
+        // Scroll al inicio del card
+        $('.flow-card')[0].scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    function updateStepVisuals() {
+        const icons = { 1: 'person', 2: 'box-seam', 3: 'credit-card', 4: 'file-earmark-text' };
+        $('.step-item').each(function() {
+            const stepNum = $(this).data('step');
+            $(this).removeClass('active completed');
+            
+            if (stepNum === currentStep) {
+                $(this).addClass('active');
+                $(this).find('.step-circle').html(`<i class="bi bi-${icons[stepNum]}"></i>`);
+            } else if (stepNum < currentStep) {
+                $(this).addClass('completed');
+                $(this).find('.step-circle').html('<i class="bi bi-check-lg"></i>');
+            } else {
+                $(this).find('.step-circle').html(`<i class="bi bi-${icons[stepNum]}"></i>`);
+            }
+        });
+    }
+
+    function actualizarResumenFinal() {
+        const subtotal = totalFactura;
+        const total = subtotal;
+
+        $('#resumenSubtotal').text(`$${subtotal.toLocaleString('es-CO')}`);
+        $('#resumenTotal').text(total.toLocaleString('es-CO'));
+        const descTotal = productosFactura.reduce((s, p) => s + (p.precio_original * p.cantidad - subtotalLinea(p)), 0);
+        $('#resumenDescuento').text(`-$${descTotal.toLocaleString('es-CO')}`);
+    }
+
+    $('#btnStepNext').click(() => goToStep(currentStep + 1));
+    $('#btnStepBack').click(() => goToStep(currentStep - 1));
+
+    $('input[name="forma_pago_radio"]').change(function() {
+        $('#formaPago').val($(this).val());
+    });
+
+    $(document).on('click', '.step-item.completed, .step-item.active', function() {
+        goToStep($(this).data('step'));
+    });
+
+    // Cierre de dropdowns al hacer clic fuera
     $(document).on('click', e => { if (!$(e.target).closest('.search-container').length) $('#resultadosProductos').hide(); });
 });
