@@ -158,13 +158,14 @@ body.pos-event-flow {
     border: 1px solid #e2e8f0;
     padding: 0.75rem 1rem;
     border-radius: 0.5rem;
-    transition: border-color 0.2s;
+    font-size: 16px; /* CRÍTICO: Evita zoom en iPhone */
+    transition: all 0.2s ease;
 }
 
 .flow-input:focus {
     border-color: var(--step-active);
     outline: none;
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.15);
 }
 
 .btn-flow-next {
