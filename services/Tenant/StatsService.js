@@ -41,7 +41,9 @@ class StatsService {
             eventStats,
             ventasPorEvento,
             eventosEnRango,
-            eventosCalendario
+            eventosCalendario,
+            totalSalesAllTime,
+            totalInvoicesAllTime
         ] = await Promise.all([
             StatsRepository.getVentasHoy(tenantId),
             StatsRepository.getVentasMes(tenantId),
@@ -54,7 +56,9 @@ class StatsService {
             StatsRepository.getEventStatsForDashboard(tenantId, desde, hasta),
             StatsRepository.getVentasPorEventoEnRango(tenantId, desde, hasta),
             StatsRepository.getEventosEnRango(tenantId, desde, hasta),
-            StatsRepository.getEventosEnRango(tenantId, mesInicio, mesFin)
+            StatsRepository.getEventosEnRango(tenantId, mesInicio, mesFin),
+            StatsRepository.getTotalSalesAllTime(tenantId),
+            StatsRepository.getTotalInvoicesAllTime(tenantId)
         ]);
 
         let insumosBajoStock = 0;
@@ -74,6 +78,8 @@ class StatsService {
             ventasMesCantidad: ventasMes.cantidad,
             totalSales,
             totalInvoices,
+            totalSalesAllTime,
+            totalInvoicesAllTime,
             topProducts,
             salesByCategory,
             topProductsByCategory,

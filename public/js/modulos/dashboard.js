@@ -78,12 +78,15 @@ function updateStatsCards(stats) {
     // Ventas del mes
     $('#ventasMesTotal').text(formatCurrency(stats.ventasMesTotal != null ? stats.ventasMesTotal : 0));
     $('#ventasMesCantidad').text(stats.ventasMesCantidad != null ? stats.ventasMesCantidad : 0);
-    // Totales del período (abajo)
-    $('#totalSales').text(formatCurrency(stats.totalSales));
-    $('#totalInvoices').text(stats.totalInvoices);
+    // Totales de todo el tiempo (Ventas Generales)
+    $('#totalSales').text(formatCurrency(stats.totalSalesAllTime != null ? stats.totalSalesAllTime : stats.totalSales));
+    $('#totalInvoices').text(stats.totalInvoicesAllTime != null ? stats.totalInvoicesAllTime : stats.totalInvoices);
 
-    const avgInvoice = stats.totalInvoices > 0
-        ? stats.totalSales / stats.totalInvoices
+    const totalSalesVal = stats.totalSalesAllTime != null ? stats.totalSalesAllTime : stats.totalSales;
+    const totalInvoicesVal = stats.totalInvoicesAllTime != null ? stats.totalInvoicesAllTime : stats.totalInvoices;
+
+    const avgInvoice = totalInvoicesVal > 0
+        ? totalSalesVal / totalInvoicesVal
         : 0;
     $('#avgInvoice').text(formatCurrency(avgInvoice));
 

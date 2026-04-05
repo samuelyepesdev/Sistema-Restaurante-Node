@@ -27,11 +27,22 @@ class StatsRepository {
         const params = [tenantId];
 
         if (filters.desde && filters.hasta) {
-            query += ' AND DATE(fecha) BETWEEN ? AND ?';
+            query += " AND DATE(CONVERT_TZ(fecha, '+00:00', '-05:00')) BETWEEN ? AND ?";
             params.push(filters.desde, filters.hasta);
         }
 
         const [result] = await db.query(query, params);
+        return parseFloat(result[0]?.total || 0);
+    }
+
+    /**
+     * Get total sales amount for all time
+     * @param {number} tenantId - Tenant ID
+     * @returns {Promise<number>} Total sales amount
+     */
+    static async getTotalSalesAllTime(tenantId) {
+        const query = 'SELECT COALESCE(SUM(total), 0) AS total FROM facturas WHERE tenant_id = ? AND evento_id IS NULL';
+        const [result] = await db.query(query, [tenantId]);
         return parseFloat(result[0]?.total || 0);
     }
 
@@ -90,11 +101,22 @@ class StatsRepository {
         const params = [tenantId];
 
         if (filters.desde && filters.hasta) {
-            query += ' AND DATE(fecha) BETWEEN ? AND ?';
+            query += " AND DATE(CONVERT_TZ(fecha, '+00:00', '-05:00')) BETWEEN ? AND ?";
             params.push(filters.desde, filters.hasta);
         }
 
         const [result] = await db.query(query, params);
+        return parseInt(result[0]?.total || 0);
+    }
+
+    /**
+     * Get total number of invoices for all time
+     * @param {number} tenantId - Tenant ID
+     * @returns {Promise<number>} Total invoices count
+     */
+    static async getTotalInvoicesAllTime(tenantId) {
+        const query = 'SELECT COUNT(*) AS total FROM facturas WHERE tenant_id = ? AND evento_id IS NULL';
+        const [result] = await db.query(query, [tenantId]);
         return parseInt(result[0]?.total || 0);
     }
 
@@ -113,7 +135,7 @@ class StatsRepository {
         const params = [tenantId];
 
         if (filters.desde && filters.hasta) {
-            query += ' AND DATE(fecha) BETWEEN ? AND ?';
+            query += " AND DATE(CONVERT_TZ(fecha, '+00:00', '-05:00')) BETWEEN ? AND ?";
             params.push(filters.desde, filters.hasta);
         }
 
@@ -153,7 +175,7 @@ class StatsRepository {
         const params = [tenantId];
 
         if (filters.desde && filters.hasta) {
-            query += ' AND DATE(f.fecha) BETWEEN ? AND ?';
+            query += " AND DATE(CONVERT_TZ(f.fecha, '+00:00', '-05:00')) BETWEEN ? AND ?";
             params.push(filters.desde, filters.hasta);
         }
 
@@ -198,7 +220,7 @@ class StatsRepository {
         const params = [tenantId];
 
         if (filters.desde && filters.hasta) {
-            query += ' AND DATE(f.fecha) BETWEEN ? AND ?';
+            query += " AND DATE(CONVERT_TZ(f.fecha, '+00:00', '-05:00')) BETWEEN ? AND ?";
             params.push(filters.desde, filters.hasta);
         }
 
@@ -239,7 +261,7 @@ class StatsRepository {
         const params = [tenantId];
 
         if (filters.desde && filters.hasta) {
-            query += ' AND DATE(f.fecha) BETWEEN ? AND ?';
+            query += " AND DATE(CONVERT_TZ(f.fecha, '+00:00', '-05:00')) BETWEEN ? AND ?";
             params.push(filters.desde, filters.hasta);
         }
 
@@ -356,7 +378,7 @@ class StatsRepository {
             `SELECT COALESCE(SUM(total), 0) AS total, COUNT(*) AS cantidad
              FROM facturas 
              WHERE tenant_id = ? AND evento_id IS NOT NULL 
-             AND DATE(fecha) BETWEEN ? AND ?`,
+             AND DATE(CONVERT_TZ(fecha, '+00:00', '-05:00')) BETWEEN ? AND ?`,
             [tenantId, desde, hasta]
         );
         return {
@@ -374,7 +396,7 @@ class StatsRepository {
                     COALESCE(SUM(f.total), 0) AS total_ventas
              FROM eventos e
              INNER JOIN facturas f ON f.evento_id = e.id AND f.tenant_id = e.tenant_id
-             WHERE e.tenant_id = ? AND DATE(f.fecha) BETWEEN ? AND ?
+             WHERE e.tenant_id = ? AND DATE(CONVERT_TZ(f.fecha, '+00:00', '-05:00')) BETWEEN ? AND ?
              GROUP BY e.id, e.nombre
              ORDER BY total_ventas DESC`,
             [tenantId, desde, hasta]
