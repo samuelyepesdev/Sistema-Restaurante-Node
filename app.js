@@ -12,6 +12,9 @@ const webRoutes = require('./routes/web');
 
 const app = express();
 
+// Confíe en el primer proxy (necesario para express-rate-limit detrás de proxies como Nginx o Cloudflare)
+app.set('trust proxy', 1);
+
 // Configuración de Vistas
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
