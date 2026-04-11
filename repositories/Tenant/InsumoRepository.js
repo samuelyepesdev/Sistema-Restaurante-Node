@@ -79,7 +79,7 @@ class InsumoRepository {
         const allowed = ['codigo', 'nombre', 'unidad_compra', 'cantidad_compra', 'precio_compra', 'precio_venta', 'unidad_base', 'stock_minimo', 'categoria_id', 'unidad_medida_id', 'proveedor_id'];
         for (const key of allowed) {
             if (data[key] !== undefined) {
-                if (key === 'cantidad_compra' || key === 'precio_compra' || key === 'stock_minimo') {
+                if (key === 'cantidad_compra' || key === 'precio_compra' || key === 'precio_venta' || key === 'stock_minimo') {
                     fields.push(`${key} = ?`);
                     params.push(parseFloat(data[key]));
                 } else {

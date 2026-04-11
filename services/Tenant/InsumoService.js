@@ -32,7 +32,8 @@ class InsumoService {
             stock_minimo: data.stock_minimo !== undefined ? parseFloat(data.stock_minimo) : 0,
             categoria_id: data.categoria_id ? parseInt(data.categoria_id, 10) : null,
             unidad_medida_id: data.unidad_medida_id ? parseInt(data.unidad_medida_id, 10) : null,
-            proveedor_id: data.proveedor_id ? parseInt(data.proveedor_id, 10) : null
+            proveedor_id: data.proveedor_id ? parseInt(data.proveedor_id, 10) : null,
+            precio_venta: data.precio_venta !== undefined ? parseFloat(data.precio_venta) : 0
         });
     }
 
@@ -48,7 +49,8 @@ class InsumoService {
             nombre: (data.nombre || insumo.nombre).trim(),
             unidad_compra: data.unidad_compra || insumo.unidad_compra,
             cantidad_compra: data.cantidad_compra !== undefined ? parseFloat(data.cantidad_compra) : insumo.cantidad_compra,
-            precio_compra: data.precio_compra !== undefined ? parseFloat(data.precio_compra) : insumo.precio_compra
+            precio_compra: data.precio_compra !== undefined ? parseFloat(data.precio_compra) : insumo.precio_compra,
+            precio_venta: data.precio_venta !== undefined ? parseFloat(data.precio_venta) : insumo.precio_venta
         };
         if (data.unidad_base !== undefined) updateData.unidad_base = data.unidad_base;
         if (data.stock_minimo !== undefined) updateData.stock_minimo = parseFloat(data.stock_minimo);
