@@ -41,15 +41,20 @@
                 </div>
 
                 <div class="row mb-4">
-                    <div class="col-md-6 mb-3 mb-md-0">
+                    <div class="col-md-4 mb-3 mb-md-0">
                         <label for="direccion" class="form-label">Dirección / Sucursal</label>
                         <input type="text" class="form-control" id="direccion" name="direccion"
                             value="<%= tenant.direccion || '' %>">
                     </div>
-                    <div class="col-md-6">
+                    <div class="col-md-4 mb-3 mb-md-0">
                         <label for="telefono" class="form-label">Teléfono de Contacto</label>
                         <input type="text" class="form-control" id="telefono" name="telefono"
                             value="<%= tenant.telefono || '' %>">
+                    </div>
+                    <div class="col-md-4">
+                        <label for="email" class="form-label">Correo para Reportes</label>
+                        <input type="email" class="form-control" id="email" name="email"
+                            value="<%= tenant.email || '' %>" placeholder="ejemplo@correo.com">
                     </div>
                 </div>
 
