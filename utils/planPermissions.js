@@ -51,7 +51,12 @@ const PERMISSION_TO_MODULE = {
     'servicios.ver': 'servicios',
     'servicios.crear': 'servicios',
     'servicios.editar': 'servicios',
-    'servicios.eliminar': 'servicios'
+    'servicios.eliminar': 'servicios',
+    'perfil.ver': 'configuracion',
+    'perfil.editar': 'configuracion',
+    'reporte_mensual.test': 'configuracion',
+    'cocina.ver_todo': 'cocina',
+    'cocina.ver_listos': 'cocina'
 };
 
 // Módulos que se usan en navbar / rutas (para allowedByPlan)
