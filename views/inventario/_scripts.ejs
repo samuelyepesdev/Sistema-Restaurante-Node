@@ -64,7 +64,8 @@
             precio_compra: parseFloat(document.getElementById('nuevoPrecioCompra').value) || 0,
             stock_minimo: parseFloat(document.getElementById('nuevoStockMinimo').value) || 0,
             stock_inicial: parseFloat(document.getElementById('nuevoStockInicial').value) || 0,
-            proveedor_id: document.getElementById('nuevoProveedorId').value || null
+            proveedor_id: document.getElementById('nuevoProveedorId').value || null,
+            precio_venta: parseFloat(document.getElementById('nuevoPrecioVenta').value) || 0
         };
         let valid = true;
         [fCodigo, fNombre].forEach(f => {
@@ -99,6 +100,17 @@
             textMedida.classList.add('d-none');
         }
         actualizarPreviewCosto();
+    });
+
+    document.getElementById('nuevoCategoriaId')?.addEventListener('change', function () {
+        const selectedText = this.options[this.selectedIndex].text.trim();
+        const container = document.getElementById('containerPrecioVenta');
+        if (selectedText === 'Cerámicas') {
+            container.classList.remove('d-none');
+        } else {
+            container.classList.add('d-none');
+            document.getElementById('nuevoPrecioVenta').value = '';
+        }
     });
 
     // Preview de costo por unidad base en tiempo real

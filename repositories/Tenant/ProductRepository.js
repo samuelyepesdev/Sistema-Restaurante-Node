@@ -56,7 +56,7 @@ class ProductRepository {
             ORDER BY p.nombre
             LIMIT ?)
             UNION ALL
-            (SELECT i.id + 1000000 AS id, i.codigo, i.nombre, i.precio_compra AS precio_unidad, pc.name AS categoria_nombre, 1 AS is_insumo
+            (SELECT i.id + 1000000 AS id, i.codigo, i.nombre, COALESCE(i.precio_venta, 0) AS precio_unidad, pc.name AS categoria_nombre, 1 AS is_insumo
             FROM insumos i
             INNER JOIN parametros pc ON i.categoria_id = pc.id
             WHERE i.tenant_id = ? AND pc.name = 'Cerámicas' AND (i.nombre LIKE ? OR i.codigo LIKE ?)

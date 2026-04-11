@@ -3,7 +3,7 @@ const InventarioService = require('../InventarioService');
 
 class AgregarItemService {
     static async execute({ tenantId, pedidoId, producto_id, cantidad, unidad, precio, nota }) {
-        if (!producto_id || !cantidad || !precio) {
+        if (!producto_id || cantidad == null || precio == null) {
             throw new Error('producto_id, cantidad y precio son requeridos');
         }
 
@@ -69,7 +69,7 @@ class AgregarItemService {
         // 3. Crear el producto
         const [prodResult] = await db.query(
             'INSERT INTO productos (tenant_id, codigo, nombre, precio_unidad, categoria_id) VALUES (?, ?, ?, ?, ?)',
-            [tenantId, insumo.codigo, insumo.nombre, precioSugerido || 0, categoriaId]
+            [tenantId, insumo.codigo, insumo.nombre, insumo.precio_venta || precioSugerido || 0, categoriaId]
         );
         const newProdId = prodResult.insertId;
 

@@ -33,6 +33,16 @@
                     </select>
                 </div>
 
+                <!-- Campo dinámico para Cerámicas -->
+                <div class="mb-3 d-none" id="containerPrecioVenta">
+                    <label class="form-label fw-semibold text-primary">Precio de Venta Unitario <span class="text-danger">*</span></label>
+                    <div class="input-group">
+                        <span class="input-group-text">$</span>
+                        <input type="number" class="form-control" id="nuevoPrecioVenta" placeholder="0.00">
+                    </div>
+                    <div class="form-text">Este es el precio al que se venderá la cerámica en las mesas.</div>
+                </div>
+
                 <div class="mb-3">
                     <label class="form-label fw-semibold">Proveedor Principal</label>
                     <select class="form-select" id="nuevoProveedorId">

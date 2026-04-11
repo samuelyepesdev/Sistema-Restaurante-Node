@@ -406,7 +406,12 @@ class ProductManager {
                         throw new Error(data.error || 'Error al importar');
                     }
 
-                    alert(`Importación completa: ${data.inserted} filas.`);
+                    await Swal.fire({
+                        icon: 'success',
+                        title: 'Importación Completada',
+                        text: `Se han procesado ${data.inserted} productos correctamente.`,
+                        confirmButtonText: 'Genial'
+                    });
                     Utils.reload();
                 } catch (error) {
                     AlertManager.alert(error.message, 'error');
