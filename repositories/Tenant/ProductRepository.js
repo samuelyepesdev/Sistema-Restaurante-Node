@@ -38,22 +38,40 @@ class ProductRepository {
     }
 
     /**
-     * Search products by name or code
-     * @param {string} query - Search term
-     * @param {number} limit - Maximum results (default: 10)
-     * @returns {Promise<Array>} Array of products
+     * Search products by name or code, including ingredients from 'Cerámicas' category
+     * @param {string} queryTerm - Search term
+     * @param {number} tenantId - Tenant ID
+     * @param {number} limit - Maximum results
+     * @returns {Promise<Array>} Array of products and virtual products for ceramics
      */
-    static async search(query, tenantId, limit = 10) {
-        const searchTerm = `%${query}%`;
-        const [productos] = await db.query(`
-            SELECT p.*, c.nombre AS categoria_nombre
+    static async search(queryTerm, tenantId, limit = 10) {
+        const searchTerm = `%${queryTerm}%`;
+        
+        // Buscamos productos reales y opcionalmente insumos de la categoría 'Cerámicas'
+        const sql = `
+            (SELECT p.id, p.codigo, p.nombre, p.precio_unidad, c.nombre AS categoria_nombre, 0 AS is_insumo
             FROM productos p
             LEFT JOIN categorias c ON p.categoria_id = c.id
             WHERE p.tenant_id = ? AND p.activo = 1 AND (p.nombre LIKE ? OR p.codigo LIKE ?)
             ORDER BY p.nombre
+            LIMIT ?)
+            UNION ALL
+            (SELECT i.id + 1000000 AS id, i.codigo, i.nombre, i.precio_compra AS precio_unidad, pc.name AS categoria_nombre, 1 AS is_insumo
+            FROM insumos i
+            INNER JOIN parametros pc ON i.categoria_id = pc.id
+            WHERE i.tenant_id = ? AND pc.name = 'Cerámicas' AND (i.nombre LIKE ? OR i.codigo LIKE ?)
+            ORDER BY i.nombre
+            LIMIT ?)
             LIMIT ?
-        `, [tenantId, searchTerm, searchTerm, limit]);
-        return productos;
+        `;
+        
+        const [rows] = await db.query(sql, [
+            tenantId, searchTerm, searchTerm, limit,
+            tenantId, searchTerm, searchTerm, limit,
+            limit
+        ]);
+        
+        return rows;
     }
 
     /**
