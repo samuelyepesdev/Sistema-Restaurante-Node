@@ -6,6 +6,7 @@
 
 const ProductRepository = require('../../repositories/Tenant/ProductRepository');
 const CategoryRepository = require('../../repositories/Admin/CategoryRepository');
+const db = require('../../config/database');
 
 class ProductService {
     /**
@@ -168,31 +169,69 @@ class ProductService {
         return { message: 'Producto eliminado exitosamente' };
     }
 
-    /**
-     * Import products from Excel data
-     * @param {Array<Object>} rows - Array of product objects from Excel
-     * @returns {Promise<Object>} Import result with count
-     */
     static async importFromExcel(tenantId, rows) {
         if (!rows || rows.length === 0) {
             throw new Error('No hay registros válidos para importar');
         }
 
         const categoryMap = await CategoryRepository.getCategoryMap(tenantId);
+        let inserted = 0;
+        let updated = 0;
+        const errores = [];
 
-        const products = rows.map(row => {
-            const categoriaId = categoryMap.get(row.categoria.toLowerCase()) || 1;
-            return {
-                codigo: row.codigo,
-                nombre: row.nombre,
-                categoria_id: categoriaId,
-                precio_unidad: row.precio_unidad
-            };
-        });
+        for (let i = 0; i < rows.length; i++) {
+            const row = rows[i];
+            const fila = i + 2; // +1 cabecera, +1 base 1
+            
+            try {
+                if (!row.codigo || !row.nombre) {
+                    errores.push({ fila, mensaje: 'Código y nombre son requeridos' });
+                    continue;
+                }
 
-        await ProductRepository.bulkUpsert(tenantId, products);
+                // 1. Obtener o crear categoría
+                let categoriaNombre = (row.categoria || 'General').trim();
+                let categoriaId = categoryMap.get(categoriaNombre.toLowerCase());
 
-        return { inserted: products.length };
+                if (!categoriaId) {
+                    // Crear categoría al vuelo
+                    categoriaId = await CategoryRepository.create(tenantId, { 
+                        nombre: categoriaNombre, 
+                        descripcion: 'Creada automáticamente mediante importación' 
+                    });
+                    categoryMap.set(categoriaNombre.toLowerCase(), categoriaId);
+                }
+
+                // 2. Realizar Upsert robusto
+                // MySQL reporta 1 para insert, 2 para update.
+                const [result] = await db.query(
+                    `INSERT INTO productos (tenant_id, codigo, nombre, categoria_id, precio_unidad, activo) 
+                     VALUES (?, ?, ?, ?, ?, 1) 
+                     ON DUPLICATE KEY UPDATE 
+                        nombre = VALUES(nombre), 
+                        categoria_id = VALUES(categoria_id), 
+                        precio_unidad = VALUES(precio_unidad),
+                        activo = 1`,
+                    [tenantId, String(row.codigo).trim(), String(row.nombre).trim(), categoriaId, parseFloat(row.precio_unidad) || 0]
+                );
+
+                if (result.affectedRows === 1) inserted++;
+                else if (result.affectedRows === 2) updated++;
+                else updated++; // Si no hubo cambios reales, affectedRows puede ser 0 pero cuenta como revisado
+
+            } catch (err) {
+                console.error(`Error en fila ${fila}:`, err);
+                errores.push({ fila, mensaje: err.message });
+            }
+        }
+
+        return { 
+            success: true,
+            total: rows.length,
+            inserted, 
+            updated,
+            errores
+        };
     }
 
     /**

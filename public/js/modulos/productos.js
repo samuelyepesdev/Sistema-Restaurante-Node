@@ -406,13 +406,30 @@ class ProductManager {
                         throw new Error(data.error || 'Error al importar');
                     }
 
+                    let html = `<div class="text-start small">
+                        <div class="mb-1"><i class="bi bi-plus-circle text-success me-2"></i>Nuevos: <strong>${data.inserted}</strong></div>
+                        <div class="mb-1"><i class="bi bi-arrow-repeat text-primary me-2"></i>Actualizados: <strong>${data.updated}</strong></div>
+                    </div>`;
+
+                    if (data.errores && data.errores.length > 0) {
+                        html += `<hr><div class="text-start small text-danger">
+                            <strong><i class="bi bi-exclamation-triangle me-1"></i> Errores (${data.errores.length}):</strong>
+                            <div class="mt-2 p-2 bg-light border rounded" style="max-height: 100px; overflow-y: auto; font-size: 0.75rem;">
+                                ${data.errores.map(e => `• Fila ${e.fila}: ${e.mensaje}`).join('<br>')}
+                            </div>
+                        </div>`;
+                    }
+
                     await Swal.fire({
-                        icon: 'success',
-                        title: 'Importación Completada',
-                        text: `Se han procesado ${data.inserted} productos correctamente.`,
-                        confirmButtonText: 'Genial'
+                        icon: data.errores?.length > 0 ? (data.inserted + data.updated > 0 ? 'warning' : 'error') : 'success',
+                        title: 'Importación Finalizada',
+                        html: html,
+                        confirmButtonText: 'Entendido'
                     });
-                    Utils.reload();
+                    
+                    if (data.inserted > 0 || data.updated > 0) {
+                        Utils.reload();
+                    }
                 } catch (error) {
                     AlertManager.alert(error.message, 'error');
                 } finally {

@@ -146,8 +146,14 @@ class ProductRepository {
             await connection.beginTransaction();
             for (const p of products) {
                 await connection.query(
-                    'INSERT INTO productos (tenant_id, codigo, nombre, categoria_id, precio_unidad) VALUES (?,?,?,?,?) ON DUPLICATE KEY UPDATE nombre=VALUES(nombre), categoria_id=VALUES(categoria_id), precio_unidad=VALUES(precio_unidad)',
-                    [tenantId, p.codigo, p.nombre, p.categoria_id, p.precio_unidad]
+                    `INSERT INTO productos (tenant_id, codigo, nombre, categoria_id, precio_unidad, activo) 
+                     VALUES (?, ?, ?, ?, ?, 1) 
+                     ON DUPLICATE KEY UPDATE 
+                        nombre = VALUES(nombre), 
+                        categoria_id = VALUES(categoria_id), 
+                        precio_unidad = VALUES(precio_unidad),
+                        activo = 1`,
+                    [tenantId, String(p.codigo).trim(), String(p.nombre).trim(), p.categoria_id, parseFloat(p.precio_unidad) || 0]
                 );
             }
             await connection.commit();
