@@ -10,9 +10,9 @@ const rateLimit = require('express-rate-limit');
 
 // Bloquear ataques de fuerza bruta al login (máx 5 intentos / 15 min)
 const loginLimiter = rateLimit({
-    windowMs: 15 * 60 * 1000, 
+    windowMs: 1 * 60 * 1000, 
     max: 5, 
-    message: { error: 'Demasiados intentos de inicio de sesión fallidos, por favor intente de nuevo en 15 minutos.' },
+    message: { error: 'Demasiados intentos de inicio de sesión fallidos, por favor intente de nuevo en 3 minutos.' },
     standardHeaders: true, 
     legacyHeaders: false,
 });
