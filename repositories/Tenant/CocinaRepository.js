@@ -23,8 +23,14 @@ class CocinaRepository {
             JOIN pedidos p ON p.id = i.pedido_id
             JOIN mesas m ON m.id = p.mesa_id
             JOIN productos pr ON pr.id = i.producto_id
-            WHERE p.tenant_id = ? AND p.estado NOT IN ('cerrado', 'cancelado')
-              AND i.estado IN ('enviado','preparando','listo')
+            JOIN categorias c ON pr.categoria_id = c.id
+            WHERE p.tenant_id = ? 
+              AND c.nombre <> 'Cerámicas'
+              AND (
+                (p.estado NOT IN ('cerrado', 'cancelado') AND i.estado IN ('enviado','preparando','listo'))
+                OR 
+                (p.estado = 'cerrado' AND i.estado IN ('enviado','preparando'))
+              )
             ORDER BY COALESCE(i.enviado_at, i.created_at) ASC, i.id ASC
         `, [tenantId]);
         return items;
