@@ -108,7 +108,7 @@ $(function () {
                         <span class="badge bg-light text-dark ms-2">${items.length} ${items.length === 1 ? 'ítem' : 'ítems'}</span>
                     </div>
                     <div class="badge bg-light text-dark">
-                        Pedido #${items[0]?.pedido_id || ''}
+                        Pedido #${items[0]?.pedido_numero || ''}
                     </div>
                 </div>
                 <div class="card-body">

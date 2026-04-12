@@ -24,9 +24,16 @@ class AbrirPedidoService {
                 return existentes[0];
             }
 
+            // Obtener siguiente número de pedido para este tenant (correlativo interno)
+            const [numResult] = await connection.query(
+                `SELECT COALESCE(MAX(numero), 0) + 1 AS siguiente FROM pedidos WHERE tenant_id = ?`,
+                [tenantId]
+            );
+            const siguienteNumero = numResult[0].siguiente;
+
             const [insert] = await connection.query(
-                `INSERT INTO pedidos (tenant_id, mesa_id, cliente_id, estado, total, notas) VALUES (?, ?, ?, 'abierto', 0, ?)`,
-                [tenantId, mesa_id, cliente_id || null, notas || null]
+                `INSERT INTO pedidos (tenant_id, mesa_id, cliente_id, estado, total, notas, numero) VALUES (?, ?, ?, 'abierto', 0, ?, ?)`,
+                [tenantId, mesa_id, cliente_id || null, notas || null, siguienteNumero]
             );
 
             await connection.query("UPDATE mesas SET estado = 'ocupada' WHERE id = ?", [mesa_id]);
@@ -35,6 +42,7 @@ class AbrirPedidoService {
             
             return { 
                 id: insert.insertId, 
+                numero: siguienteNumero,
                 mesa_id, 
                 cliente_id: cliente_id || null, 
                 estado: 'abierto', 

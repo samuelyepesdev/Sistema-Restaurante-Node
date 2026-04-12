@@ -18,7 +18,7 @@ class CocinaRepository {
      */
     static async getQueue(tenantId) {
         const [items] = await db.query(`
-            SELECT i.*, p.mesa_id, m.numero AS mesa_numero, pr.nombre AS producto_nombre
+            SELECT i.*, p.numero AS pedido_numero, p.mesa_id, m.numero AS mesa_numero, pr.nombre AS producto_nombre
             FROM pedido_items i
             JOIN pedidos p ON p.id = i.pedido_id
             JOIN mesas m ON m.id = p.mesa_id
