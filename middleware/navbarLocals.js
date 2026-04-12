@@ -17,7 +17,6 @@ module.exports = function navbarLocals(req, res, next) {
 
             const cs = (mod) => !mod || ap[mod] === true;
             const hp = (p) => !!(user && (
-                String(user.rol || '').toLowerCase() === 'admin' || 
                 String(user.rol || '').toLowerCase() === 'superadmin' || 
                 (Array.isArray(user.permisos) && user.permisos.includes(p))
             ));
