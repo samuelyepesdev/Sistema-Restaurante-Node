@@ -177,3 +177,141 @@ body {
 @media (max-width: 576px) { .btn-preparar-lote { padding: 0.4rem 0.2rem !important; font-size: 0.7rem !important; } }
 
 @media (max-width: 576px) { .mesa-card .card-header { padding: 0.4rem 0.6rem !important; font-size: 0.85rem !important; } .mesa-card .card-body { padding: 0.4rem !important; } .item-card { margin-bottom: 0.5rem !important; border-radius: 0.4rem !important; } .producto { font-size: 0.9rem !important; } }
+
+
+/* Estilos para notas resaltadas (Post-it style) */
+.nota-especial {
+    background-color: #fffde7 !important;
+    border-left: 6px solid #ff9800 !important;
+    padding: 10px 14px !important;
+    margin: 10px 0 !important;
+    border-radius: 6px !important;
+    box-shadow: 3px 3px 8px rgba(0,0,0,0.08) !important;
+    position: relative;
+    overflow: hidden;
+    animation: slideInLeftCocina 0.4s ease-out;
+}
+
+.nota-especial::before {
+    content: '\F5E1'; /* Icono de bi-sticky-fill */
+    font-family: 'bootstrap-icons';
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 1.5rem;
+    color: rgba(255, 152, 0, 0.15);
+}
+
+.nota-especial strong {
+    color: #e65100;
+    text-transform: uppercase;
+    font-size: 0.7rem;
+    font-weight: 800;
+    letter-spacing: 0.8px;
+    display: block;
+    margin-bottom: 3px;
+}
+
+.nota-especial span {
+    color: #212121;
+    font-weight: 700;
+    font-size: 1.05rem;
+    display: block;
+    line-height: 1.3;
+}
+
+@keyframes slideInLeftCocina {
+    from {
+        opacity: 0;
+        transform: translateX(-15px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+/* Versión compacta para el resumen de totales */
+.nota-resumen {
+    background-color: #fffde7 !important;
+    border-left: 3px solid #ffb300 !important;
+    color: #5d4037 !important;
+    font-weight: 600 !important;
+    padding: 6px 8px !important;
+    margin-bottom: 6px !important;
+    border-radius: 4px !important;
+    font-size: 0.8rem !important;
+}
+
+.resumen-item {
+    border: 1px solid #e0e7ff !important;
+    border-radius: 12px !important;
+    background-color: #fff !important;
+    transition: all 0.3s ease;
+    /* Eliminamos overflow: hidden para que los badges no se corten */
+    overflow: visible !important; 
+}
+
+.resumen-item .producto-nombre {
+    font-size: 1rem;
+    font-weight: 800;
+    color: #1e1b4b; /* Azul muy oscuro casi negro */
+    margin-bottom: 0;
+    line-height: 1.1;
+    word-break: break-word;
+}
+
+.resumen-item .total-badge {
+    background: linear-gradient(135deg, #4f46e5, #7c3aed); /* Degradado vibrante */
+    color: white;
+    padding: 4px 10px;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    font-weight: 800;
+    box-shadow: 0 4px 6px -1px rgba(79, 70, 229, 0.2);
+    flex-shrink: 0;
+}
+
+.nota-resumen {
+    background-color: #fffbeb !important; /* Amarillo más cálido */
+    border-left: 4px solid #f59e0b !important; /* Naranja ámbar vibrante */
+    color: #92400e !important;
+    padding: 8px 10px !important;
+    margin-bottom: 8px !important;
+    border-radius: 8px !important;
+    box-shadow: 0 2px 4px rgba(245, 158, 11, 0.1) !important;
+}
+
+.btn-preparar-lote {
+    border-radius: 8px !important;
+    font-weight: 700 !important;
+    text-transform: uppercase;
+    font-size: 0.7rem !important;
+    letter-spacing: 0.5px;
+    padding: 8px !important;
+    background-color: #6366f1 !important; /* Indigo */
+    border: none !important;
+    box-shadow: 0 4px 0px #4338ca !important; /* Efecto 3D sutil */
+    transition: all 0.1s;
+}
+
+.btn-preparar-lote:active {
+    transform: translateY(2px);
+    box-shadow: 0 1px 0px #4338ca !important;
+}
+
+.btn-success.btn-preparar-lote {
+    background-color: #10b981 !important; /* Verde esmeralda */
+    box-shadow: 0 4px 0px #047857 !important;
+}
+
+.btn-success.btn-preparar-lote:active {
+    box-shadow: 0 1px 0px #047857 !important;
+}
+
+.bg-danger-light {
+    background-color: #fee2e2 !important;
+    border: 1px solid #fecaca !important;
+    color: #991b1b !important;
+}

@@ -82,7 +82,11 @@ $(function () {
                                 ${estadoBadge}
                                 <span class="badge bg-dark cantidad-badge">${it.cantidad} ${it.unidad_medida || 'UND'}</span>
                             </div>
-                            ${it.nota ? `<div class="text-danger fw-bold small mb-1"><i class="bi bi-exclamation-triangle"></i> ${it.nota}</div>` : ''}
+                            ${it.nota ? `
+                            <div class="nota-especial">
+                                <strong>Instrucciones Especiales:</strong>
+                                <span>${it.nota}</span>
+                            </div>` : ''}
                             <div class="small text-muted">
                                 <i class="bi bi-clock"></i> ${new Date(it.created_at).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}
                                 ${it.enviado_at ? ` • Enviado: ${new Date(it.enviado_at).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}` : ''}
@@ -234,14 +238,13 @@ $(function () {
 
             html += `
                 <div class="col">
-                    <div class="card h-100 border-0 shadow-sm resumen-item">
-                        <div class="card-body p-2">
-                            <div class="d-flex justify-content-between align-items-center mb-1">
-                                <span class="h2 fw-bold text-primary mb-0">${pData.total}</span>
-                                <span class="badge bg-secondary" style="font-size: 0.6rem;">${unidadStr}</span>
+                    <div class="card h-100 resumen-item shadow-none">
+                        <div class="card-body p-3">
+                            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+                                <span class="producto-nombre">${pNombre}</span>
+                                <span class="total-badge">${pData.total} <small>${unidadStr}</small></span>
                             </div>
-                            <h6 class="fw-bold mb-2 text-dark border-bottom pb-1">${pNombre}</h6>
-                            <div class="variaciones-list">
+                            <div class="variaciones-list border-top pt-2">
             `;
 
             pData.variaciones.forEach((vData, nota) => {
@@ -249,10 +252,12 @@ $(function () {
                 const isNota = !!nota;
 
                 html += `
-                    <div class="mb-2 p-1 rounded ${isNota ? 'bg-danger-light border border-danger' : 'bg-white border-light'} shadow-none" style="font-size: 0.75rem;">
-                        <div class="d-flex justify-content-between align-items-center mb-1">
-                            <span class="${isNota ? 'text-danger fw-bold' : 'text-muted'}" style="line-height: 1.1;">${label}</span>
-                            <span class="badge ${isNota ? 'bg-danger' : 'bg-primary'} badge-pill" style="font-size: 0.7rem;">${vData.total}</span>
+                    <div class="mb-3 p-2 rounded ${isNota ? 'nota-resumen border border-warning' : 'bg-white border text-muted md-light'} shadow-none">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="${isNota ? 'text-dark fw-bold' : 'text-muted'}" style="font-size: 0.85rem; line-height: 1.2;">
+                                ${isNota ? '<i class="bi bi-sticky-fill me-1"></i>' : ''}${label}
+                            </span>
+                            <span class="badge ${isNota ? 'bg-warning text-dark' : 'bg-secondary'} rounded-pill">${vData.total}</span>
                         </div>
                         
                         <div class="d-flex flex-column flex-sm-row gap-1">
