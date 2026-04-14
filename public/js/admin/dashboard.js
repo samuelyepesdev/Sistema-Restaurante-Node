@@ -259,20 +259,37 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
             });
 
-            // ── Actualizar el último punto del gráfico multi-tenant (hoy) ──────
+            // ── Actualizar el punto de HOY en el gráfico multi-tenant ──────────
             if (chartTenants && chartTenants.data && chartTenants.data.datasets) {
                 let chartActualizado = false;
+
+                // Determinar la etiqueta del día de hoy para encontrar el índice correcto
+                const hoyLabel = new Date(data.hoyColombia + 'T12:00:00')
+                    .toLocaleDateString('es-ES', { day: '2-digit', month: 'short' });
+                const labels = chartTenants.data.labels;
+                const todayIdx = labels.indexOf(hoyLabel);
+
                 data.ventasHoyPorTenant.forEach(v => {
                     const dataset = chartTenants.data.datasets.find(ds => ds.label === v.nombre);
-                    if (dataset && dataset.data.length > 0) {
-                        const lastIdx = dataset.data.length - 1;
-                        if (dataset.data[lastIdx] !== v.total) {
-                            dataset.data[lastIdx] = v.total;
+                    if (!dataset) return;
+
+                    if (todayIdx !== -1) {
+                        // El punto de hoy ya existe en el gráfico — actualizamos su valor acumulado
+                        if (dataset.data[todayIdx] !== v.total) {
+                            dataset.data[todayIdx] = v.total;
                             chartActualizado = true;
                         }
+                    } else {
+                        // Es un día nuevo — añadir el punto al final del gráfico
+                        if (!chartTenants.data.labels.includes(hoyLabel)) {
+                            chartTenants.data.labels.push(hoyLabel);
+                        }
+                        dataset.data.push(v.total);
+                        chartActualizado = true;
                     }
                 });
-                if (chartActualizado) chartTenants.update('none'); // 'none' = sin animación para no distraer
+
+                if (chartActualizado) chartTenants.update('none');
             }
 
             // Mostrar hora de última actualización

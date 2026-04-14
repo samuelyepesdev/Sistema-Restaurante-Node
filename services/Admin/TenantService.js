@@ -248,16 +248,16 @@ class TenantService {
         const parts = [String(yyyy), mm, dd];
 
         const [ventasDiaRows] = await db.query(`
-            SELECT DATE(CONVERT_TZ(fecha, '+00:00', '-05:00')) AS fecha, SUM(total) as total
+            SELECT DATE(CONVERT_TZ(fecha, '+00:00', '-05:00')) AS fecha_colombia, SUM(total) as total
             FROM facturas
             WHERE evento_id IS NULL AND DATE(CONVERT_TZ(fecha, '+00:00', '-05:00')) BETWEEN ? AND ?
-            GROUP BY fecha
-            ORDER BY fecha ASC
+            GROUP BY fecha_colombia
+            ORDER BY fecha_colombia ASC
         `, [mesInicioStr, hoyColombia]);
 
         const ventasPorFecha = {};
         ventasDiaRows.forEach(r => {
-            const f = (r.fecha instanceof Date) ? r.fecha.toISOString().split('T')[0] : String(r.fecha || '').substring(0, 10);
+            const f = (r.fecha_colombia instanceof Date) ? r.fecha_colombia.toISOString().split('T')[0] : String(r.fecha_colombia || '').substring(0, 10);
             ventasPorFecha[f] = parseFloat(r.total || 0);
         });
 
@@ -271,16 +271,16 @@ class TenantService {
         }
 
         const [ventasEventosDiaRows] = await db.query(`
-            SELECT DATE(CONVERT_TZ(fecha, '+00:00', '-05:00')) AS fecha, SUM(total) as total
+            SELECT DATE(CONVERT_TZ(fecha, '+00:00', '-05:00')) AS fecha_colombia, SUM(total) as total
             FROM facturas
             WHERE evento_id IS NOT NULL AND DATE(CONVERT_TZ(fecha, '+00:00', '-05:00')) BETWEEN ? AND ?
-            GROUP BY fecha
-            ORDER BY fecha ASC
+            GROUP BY fecha_colombia
+            ORDER BY fecha_colombia ASC
         `, [mesInicioStr, hoyColombia]);
 
         const ventasEventosPorFecha = {};
         ventasEventosDiaRows.forEach(r => {
-            const f = (r.fecha instanceof Date) ? r.fecha.toISOString().split('T')[0] : String(r.fecha || '').substring(0, 10);
+            const f = (r.fecha_colombia instanceof Date) ? r.fecha_colombia.toISOString().split('T')[0] : String(r.fecha_colombia || '').substring(0, 10);
             ventasEventosPorFecha[f] = parseFloat(r.total || 0);
         });
 
@@ -305,16 +305,16 @@ class TenantService {
         const mesAnteriorFinStr = `${mesAnteriorY}-${String(mesAnteriorM).padStart(2, '0')}-${String(diasEnMesAnterior).padStart(2, '0')}`;
 
         const [ventasDiaAntRows] = await db.query(`
-            SELECT DATE(CONVERT_TZ(fecha, '+00:00', '-05:00')) AS fecha, SUM(total) as total
+            SELECT DATE(CONVERT_TZ(fecha, '+00:00', '-05:00')) AS fecha_colombia, SUM(total) as total
             FROM facturas
             WHERE evento_id IS NULL AND DATE(CONVERT_TZ(fecha, '+00:00', '-05:00')) BETWEEN ? AND ?
-            GROUP BY fecha
-            ORDER BY fecha ASC
+            GROUP BY fecha_colombia
+            ORDER BY fecha_colombia ASC
         `, [mesAnteriorInicioStr, mesAnteriorFinStr]);
 
         const ventasPorFechaAnt = {};
         ventasDiaAntRows.forEach(r => {
-            const f = (r.fecha instanceof Date) ? r.fecha.toISOString().split('T')[0] : String(r.fecha || '').substring(0, 10);
+            const f = (r.fecha_colombia instanceof Date) ? r.fecha_colombia.toISOString().split('T')[0] : String(r.fecha_colombia || '').substring(0, 10);
             ventasPorFechaAnt[f] = parseFloat(r.total || 0);
         });
 
@@ -341,16 +341,16 @@ class TenantService {
 
         // 2. Obtener las ventas reales
         const [ventasTenantRows] = await db.query(`
-            SELECT t.nombre AS tenant_nombre, DATE(CONVERT_TZ(f.fecha, '+00:00', '-05:00')) AS fecha, SUM(f.total) as total
+            SELECT t.nombre AS tenant_nombre, DATE(CONVERT_TZ(f.fecha, '+00:00', '-05:00')) AS fecha_colombia, SUM(f.total) as total
             FROM facturas f
             JOIN tenants t ON f.tenant_id = t.id
             WHERE f.evento_id IS NULL AND DATE(CONVERT_TZ(f.fecha, '+00:00', '-05:00')) BETWEEN ? AND ?
-            GROUP BY f.tenant_id, fecha
-            ORDER BY fecha ASC
+            GROUP BY f.tenant_id, fecha_colombia
+            ORDER BY fecha_colombia ASC
         `, [mesInicioStr, hoyColombia]);
 
         ventasTenantRows.forEach(r => {
-            const f = (r.fecha instanceof Date) ? r.fecha.toISOString().split('T')[0] : String(r.fecha || '').substring(0, 10);
+            const f = (r.fecha_colombia instanceof Date) ? r.fecha_colombia.toISOString().split('T')[0] : String(r.fecha_colombia || '').substring(0, 10);
             const t = r.tenant_nombre || 'Desconocido';
             if (!ventasPorTenantYFecha[t]) {
                 ventasPorTenantYFecha[t] = {};
