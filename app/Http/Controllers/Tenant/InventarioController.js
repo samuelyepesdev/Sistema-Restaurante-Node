@@ -145,6 +145,31 @@ class InventarioController {
         }
     }
 
+    // GET /inventario/api/insumos/:id
+    static async getInsumo(req, res) {
+        try {
+            const tenantId = req.tenant?.id;
+            if (!tenantId) return res.status(403).json({ error: 'Contexto de tenant no disponible' });
+            const item = await InsumoService.getById(req.params.id, tenantId);
+            if (!item) return res.status(404).json({ error: 'Insumo no encontrado' });
+            res.json(item);
+        } catch (e) {
+            res.status(500).json({ error: e.message });
+        }
+    }
+
+    // DELETE /inventario/api/insumos/:id
+    static async deleteInsumo(req, res) {
+        try {
+            const tenantId = req.tenant?.id;
+            if (!tenantId) return res.status(403).json({ error: 'Contexto de tenant no disponible' });
+            await InsumoService.delete(req.params.id, tenantId);
+            res.json({ ok: true, message: 'Insumo eliminado exitosamente' });
+        } catch (e) {
+            res.status(400).json({ error: e.message });
+        }
+    }
+
     // POST /inventario/api/movimientos/entrada
     static async registrarEntrada(req, res) {
         try {

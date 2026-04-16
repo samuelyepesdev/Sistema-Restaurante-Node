@@ -256,6 +256,139 @@
         }
     });
 
+    function actualizarPreviewEditCosto() {
+        const precio = parseFloat(document.getElementById('editPrecioCompra')?.value) || 0;
+        const cantidad = parseFloat(document.getElementById('editCantidadCompra')?.value) || 1;
+        const unidadBase = document.getElementById('editUnidadBase')?.value || 'g';
+        const preview = document.getElementById('previewEditCosto');
+        const previewValor = document.getElementById('previewEditCostoValor');
+        const previewUnidad = document.getElementById('previewEditUnidadBase');
+        if (preview && previewValor) {
+            previewUnidad.textContent = unidadBase;
+            if (precio > 0 && cantidad > 0) {
+                const costoPorUnidad = precio / cantidad;
+                previewValor.textContent = '$' + costoPorUnidad.toLocaleString('es-CO', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+                preview.style.display = '';
+            } else {
+                preview.style.display = 'none';
+            }
+        }
+    }
+    document.getElementById('editPrecioCompra')?.addEventListener('input', actualizarPreviewEditCosto);
+    document.getElementById('editCantidadCompra')?.addEventListener('input', actualizarPreviewEditCosto);
+    document.getElementById('editUnidadBase')?.addEventListener('change', actualizarPreviewEditCosto);
+
+    // --- Funciones para Editar y Eliminar ---
+
+    async function abrirEditarInsumo(id) {
+        try {
+            const item = await apiFetch(`${base}/api/insumos/${id}`);
+            if (!item) return;
+
+            document.getElementById('editInsumoId').value = item.id;
+            document.getElementById('editNombre').value = item.nombre;
+            document.getElementById('editCodigo').value = item.codigo;
+            document.getElementById('editCategoriaId').value = item.categoria_id || '';
+            document.getElementById('editProveedorId').value = item.proveedor_id || '';
+            document.getElementById('editUnidadBase').value = item.unidad_base || 'g';
+            document.getElementById('editStockMinimo').value = item.stock_minimo || 0;
+
+            // Costeo
+            document.getElementById('editCantidadCompra').value = item.cantidad_compra || 1;
+            document.getElementById('editPrecioCompra').value = item.precio_compra || 0;
+            
+            // Unidad de medida / compra (select + text)
+            const selectMedida = document.getElementById('editUnidadMedidaId');
+            if (selectMedida) {
+                selectMedida.value = item.unidad_medida_id || '';
+            }
+
+            // Precio de venta si es Cerámica
+            const container = document.getElementById('editContainerPrecioVenta');
+            if (item.categoria_nombre === 'Cerámicas') {
+                container.classList.remove('d-none');
+                document.getElementById('editPrecioVenta').value = item.precio_venta || 0;
+            } else {
+                container.classList.add('d-none');
+            }
+
+            actualizarPreviewEditCosto();
+            const modal = new bootstrap.Modal(document.getElementById('modalEditarInsumo'));
+            modal.show();
+        } catch (e) {
+            console.error('Error al cargar insumo:', e);
+            alertError('Error', 'No se pudo cargar la información del insumo.');
+        }
+    }
+
+    document.getElementById('btnActualizarInsumo').addEventListener('click', async () => {
+        const id = document.getElementById('editInsumoId').value;
+        const btn = document.getElementById('btnActualizarInsumo');
+        
+        const payload = {
+            nombre: document.getElementById('editNombre').value.trim(),
+            codigo: document.getElementById('editCodigo').value.trim(),
+            categoria_id: document.getElementById('editCategoriaId').value || null,
+            proveedor_id: document.getElementById('editProveedorId').value || null,
+            unidad_base: document.getElementById('editUnidadBase').value,
+            stock_minimo: parseFloat(document.getElementById('editStockMinimo').value) || 0,
+            cantidad_compra: parseFloat(document.getElementById('editCantidadCompra').value) || 1,
+            precio_compra: parseFloat(document.getElementById('editPrecioCompra').value) || 0,
+            unidad_medida_id: document.getElementById('editUnidadMedidaId').value || null,
+            precio_venta: parseFloat(document.getElementById('editPrecioVenta').value) || 0
+        };
+
+        if (!payload.nombre || !payload.codigo) {
+            alertError('Campos requeridos', 'Por favor completa el nombre y el código.');
+            return;
+        }
+
+        setLoading(btn, true);
+        try {
+            await apiFetch(`${base}/api/insumos/${id}`, 'PUT', payload);
+            alertSuccess('Insumo actualizado', 'modalEditarInsumo');
+            setTimeout(() => location.reload(), 1000);
+        } catch (e) {
+            alertError('Error al actualizar', e.message);
+        } finally {
+            setLoading(btn, false);
+        }
+    });
+
+    async function eliminarInsumo(id, nombre) {
+        const result = await Swal.fire({
+            title: '¿Eliminar insumo?',
+            text: `¿Estás seguro de que deseas eliminar "${nombre}"? Esta acción no se puede deshacer y puede afectar a las recetas que lo utilicen.`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: 'Sí, eliminar',
+            cancelButtonText: 'Cancelar'
+        });
+
+        if (result.isConfirmed) {
+            try {
+                await apiFetch(`${base}/api/insumos/${id}`, 'DELETE');
+                alertSuccess('Insumo eliminado');
+                setTimeout(() => location.reload(), 1000);
+            } catch (e) {
+                alertError('Error al eliminar', e.message);
+            }
+        }
+    }
+
+    document.getElementById('editCategoriaId')?.addEventListener('change', function () {
+        const selectedText = this.options[this.selectedIndex].text.trim();
+        const container = document.getElementById('editContainerPrecioVenta');
+        if (selectedText === 'Cerámicas') {
+            container.classList.remove('d-none');
+        } else {
+            container.classList.add('d-none');
+            document.getElementById('editPrecioVenta').value = '';
+        }
+    });
+
     // Búsqueda rápida por código/nombre (tabla + tarjetas)
     (function () {
         const input = document.getElementById('buscarInsumo');

@@ -8,8 +8,10 @@ router.get('/', InventarioController.index);
 
 // API Insumos
 router.get('/api/insumos', InventarioController.listInsumos);
+router.get('/api/insumos/:id', InventarioController.getInsumo);
 router.post('/api/insumos', requirePermission('inventario.editar'), InventarioController.storeInsumo);
 router.put('/api/insumos/:id', requirePermission('inventario.editar'), InventarioController.updateInsumo);
+router.delete('/api/insumos/:id', requirePermission('inventario.editar'), InventarioController.deleteInsumo);
 
 // API Stats & Helpers
 router.get('/api/resumen', InventarioController.getResumen);

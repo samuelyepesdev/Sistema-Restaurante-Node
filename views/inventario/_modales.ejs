@@ -148,6 +148,131 @@
                     <i class="bi bi-plus-lg me-1"></i> Crear insumo
                 </button>
             </div>
+</div>
+</div>
+
+<!-- Modal Editar Insumo -->
+<div class="modal fade" id="modalEditarInsumo" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-pencil me-2 text-primary"></i>Editar insumo</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="editInsumoId">
+
+                <!-- ─── Sección principal ─── -->
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Nombre del insumo <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control" id="editNombre" required>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Código <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control" id="editCodigo" required>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Categoría</label>
+                    <select class="form-select" id="editCategoriaId">
+                        <option value="">Sin categoría</option>
+                        <% categoriasInsumo.forEach(c=> { %>
+                            <option value="<%= c.id %>">
+                                <%= c.name %>
+                            </option>
+                            <% }) %>
+                    </select>
+                </div>
+
+                <div class="mb-3 d-none" id="editContainerPrecioVenta">
+                    <label class="form-label fw-semibold text-primary">Precio de Venta Unitario <span class="text-danger">*</span></label>
+                    <div class="input-group">
+                        <span class="input-group-text">$</span>
+                        <input type="number" class="form-control" id="editPrecioVenta" placeholder="0.00">
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Proveedor Principal</label>
+                    <select class="form-select" id="editProveedorId">
+                        <option value="">Sin proveedor</option>
+                        <% (typeof proveedores !=='undefined' ? proveedores : []).forEach(p=> { %>
+                            <option value="<%= p.id %>">
+                                <%= p.nombre %>
+                            </option>
+                            <% }) %>
+                    </select>
+                </div>
+
+                <div class="row g-3 mb-3">
+                    <div class="col-6">
+                        <label class="form-label fw-semibold">Unidad</label>
+                        <select class="form-select" id="editUnidadBase">
+                            <option value="g">g (gramos)</option>
+                            <option value="ml">ml (mililitros)</option>
+                            <option value="UND">UND (unidades)</option>
+                        </select>
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label fw-semibold">Stock mínimo</label>
+                        <input type="number" step="0.01" class="form-control" id="editStockMinimo" value="0" min="0">
+                    </div>
+                </div>
+
+                <!-- ─── Sección avanzada (costeo) ─── -->
+                <div class="accordion accordion-flush" id="accordionEditCosteo">
+                    <div class="accordion-item border rounded">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed py-2 px-3 text-muted small fw-semibold"
+                                type="button" data-bs-toggle="collapse" data-bs-target="#colapseEditCosteo">
+                                <i class="bi bi-calculator me-2 text-primary"></i>
+                                Opciones avanzadas — Costeo
+                            </button>
+                        </h2>
+                        <div id="colapseEditCosteo" class="accordion-collapse collapse">
+                            <div class="accordion-body pt-2 pb-3">
+                                <div class="row g-2 mb-2">
+                                    <div class="col-6">
+                                        <label class="form-label small">Unidad de compra</label>
+                                        <select class="form-select form-select-sm" id="editUnidadMedidaId">
+                                            <option value="">Seleccione...</option>
+                                            <% unidadesCompra.forEach(u=> { %>
+                                                <option value="<%= u.id %>" data-name="<%= u.name %>">
+                                                    <%= u.name %>
+                                                </option>
+                                                <% }) %>
+                                        </select>
+                                    </div>
+                                    <div class="col-6">
+                                        <label class="form-label small">Presentación (cantidad en unidad base)</label>
+                                        <input type="number" step="0.01" class="form-control form-control-sm" id="editCantidadCompra">
+                                    </div>
+                                </div>
+                                    <div class="mb-2">
+                                    <label class="form-label small">Precio de compra (por presentación)</label>
+                                    <div class="input-group input-group-sm">
+                                        <span class="input-group-text">$</span>
+                                        <input type="number" step="0.01" class="form-control" id="editPrecioCompra">
+                                    </div>
+                                </div>
+                                <div id="previewEditCosto" class="alert alert-info py-2 px-3 mb-0" style="display: none;">
+                                    <small class="fw-bold">Costo estimado:</small>
+                                    <span class="ms-1" id="previewEditCostoValor">$0,00</span>
+                                    <small class="text-muted">/ <span id="previewEditUnidadBase">g</span></small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" id="btnActualizarInsumo">
+                    <i class="bi bi-check-lg me-1"></i> Guardar cambios
+                </button>
+            </div>
         </div>
     </div>
 </div>

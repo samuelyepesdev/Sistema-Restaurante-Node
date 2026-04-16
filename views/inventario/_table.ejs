@@ -56,6 +56,12 @@
                                     <button type="button" class="btn-icon btn-icon-m"
                                         onclick='verMovimientos(<%= i.id %>, "<%= i.nombre.replace(/"/g, "") %>")'
                                         title="Ver Historial"><i class="bi bi-clock-history"></i></button>
+                                    <button type="button" class="btn-icon btn-icon-p"
+                                        onclick='abrirEditarInsumo(<%= i.id %>)'
+                                        title="Editar Insumo"><i class="bi bi-pencil"></i></button>
+                                    <button type="button" class="btn-icon btn-icon-d"
+                                        onclick='eliminarInsumo(<%= i.id %>, "<%= i.nombre.replace(/"/g, "") %>")'
+                                        title="Eliminar Insumo"><i class="bi bi-trash"></i></button>
                                 </div>
                             </td>
                             <% } %>
@@ -126,6 +132,14 @@
                             onclick='verMovimientos(<%= i.id %>, "<%= i.nombre.replace(/"/g, "") %>")'
                             title="Ver Historial">
                             <i class="bi bi-clock-history"></i>
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-primary flex-grow-1 d-flex align-items-center justify-content-center gap-1"
+                            onclick='abrirEditarInsumo(<%= i.id %>)'>
+                            <i class="bi bi-pencil"></i> Editar
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-danger px-3 d-flex align-items-center justify-content-center"
+                            onclick='eliminarInsumo(<%= i.id %>, "<%= i.nombre.replace(/"/g, "") %>")'>
+                            <i class="bi bi-trash"></i>
                         </button>
                     </div>
                     <% } %>

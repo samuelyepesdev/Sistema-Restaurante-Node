@@ -177,6 +177,21 @@ h1.h4 {
     color: #374151;
 }
 
+.btn-icon-m {
+    background: #ede9fe;
+    color: #5b21b6;
+}
+
+.btn-icon-p {
+    background: #e0f2fe;
+    color: #0369a1;
+}
+
+.btn-icon-d {
+    background: #fff1f2;
+    color: #9f1239;
+}
+
 .btn-icon:hover {
     transform: scale(1.1);
     filter: brightness(0.95);
