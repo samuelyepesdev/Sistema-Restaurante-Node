@@ -281,9 +281,21 @@
     // --- Funciones para Editar y Eliminar ---
 
     async function abrirEditarInsumo(id) {
+        // Mostrar cargando inmediatamente para evitar que el usuario piense que no hizo clic
+        Swal.fire({
+            title: 'Cargando datos...',
+            allowOutsideClick: false,
+            didOpen: () => { Swal.showLoading(); }
+        });
+
         try {
             const item = await apiFetch(`${base}/api/insumos/${id}`);
-            if (!item) return;
+            Swal.close(); // Cerrar el cargando
+            
+            if (!item) {
+                alertError('Error', 'No se encontró la información del insumo.');
+                return;
+            }
 
             document.getElementById('editInsumoId').value = item.id;
             document.getElementById('editNombre').value = item.nombre;
@@ -297,7 +309,7 @@
             document.getElementById('editCantidadCompra').value = item.cantidad_compra || 1;
             document.getElementById('editPrecioCompra').value = item.precio_compra || 0;
             
-            // Unidad de medida / compra (select + text)
+            // Unidad de medida / compra
             const selectMedida = document.getElementById('editUnidadMedidaId');
             if (selectMedida) {
                 selectMedida.value = item.unidad_medida_id || '';
@@ -313,11 +325,18 @@
             }
 
             actualizarPreviewEditCosto();
-            const modal = new bootstrap.Modal(document.getElementById('modalEditarInsumo'));
-            modal.show();
+            const modalEl = document.getElementById('modalEditarInsumo');
+            if (modalEl) {
+                const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+                modal.show();
+            } else {
+                console.error('No se encontró el modal modalEditarInsumo');
+                alertError('Error', 'El modal de edición no está disponible.');
+            }
         } catch (e) {
+            Swal.close();
             console.error('Error al cargar insumo:', e);
-            alertError('Error', 'No se pudo cargar la información del insumo.');
+            alertError('Error', 'No se pudo cargar la información del insumo: ' + e.message);
         }
     }
 
