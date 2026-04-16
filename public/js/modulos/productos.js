@@ -212,13 +212,29 @@ class ProductManager {
                     credentials: 'same-origin',
                     body: JSON.stringify({ parametro_ids: parametroIds })
                 }).then(r => { if (!r.ok) throw new Error('Error al guardar parámetros'); });
+                
+                AlertManager.success('Producto actualizado correctamente');
             } else {
                 await ApiClient.post('/api/productos', productData);
+                AlertManager.success('Producto creado correctamente');
             }
 
-            Utils.reload();
+            // Ocultar el modal antes de recargar
+            this.formManager.hide();
+
+            // Esperar un momento para que el usuario vea el toast antes de recargar
+            setTimeout(() => {
+                Utils.reload();
+            }, 1000);
         } catch (error) {
-            AlertManager.alert(error.message, 'error');
+            console.error('Error saving product:', error);
+            // Mostrar error detallado utilizando SweetAlert2 si está disponible a través de AlertManager
+            const errorMessage = error.message || 'Hubo un problema al guardar el producto. Por favor, intente de nuevo.';
+            if (error.message && error.message.includes('fetch')) {
+                AlertManager.error('Error de conexión: No se pudo comunicar con el servidor.');
+            } else {
+                AlertManager.error(errorMessage);
+            }
         }
     }
 

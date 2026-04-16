@@ -11,7 +11,23 @@ class AlertManager {
      * @param {string} type - Alert type (info, warning, error)
      */
     static alert(message, type = 'info') {
-        alert(message);
+        if (typeof Swal !== 'undefined') {
+            const iconMap = {
+                success: 'success',
+                error: 'error',
+                warning: 'warning',
+                info: 'info',
+                danger: 'error'
+            };
+            Swal.fire({
+                icon: iconMap[type] || 'info',
+                title: type === 'error' || type === 'danger' ? '¡Error!' : 'Atención',
+                text: message,
+                confirmButtonColor: '#0d6efd'
+            });
+        } else {
+            alert(message);
+        }
     }
 
     /**
@@ -21,6 +37,18 @@ class AlertManager {
      * @returns {Promise<boolean>} User's choice
      */
     static confirm(message, title = 'Confirmar') {
+        if (typeof Swal !== 'undefined') {
+            return Swal.fire({
+                title: title,
+                text: message,
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#0d6efd',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'Confirmar',
+                cancelButtonText: 'Cancelar'
+            }).then(result => result.isConfirmed);
+        }
         return new Promise((resolve) => {
             const result = confirm(message);
             resolve(result);
