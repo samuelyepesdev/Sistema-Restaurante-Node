@@ -3,102 +3,176 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gastos y Ganancias | Finanzas</title>
+    <title>Estado de Resultados | Finanzas Corporativas</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        :root { --primary-gradient: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%); }
-        .kpi-card { border: none; border-radius: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); transition: transform 0.2s; }
-        .kpi-card:hover { transform: translateY(-5px); }
-        .bg-gradient-primary { background: var(--primary-gradient); color: white; }
-        .bg-gradient-success { background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; }
-        .bg-gradient-danger { background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); color: white; }
-        .card-header { background: transparent; border-bottom: 1px solid rgba(0,0,0,0.05); font-weight: bold; }
-        .category-item { padding: 10px; border-bottom: 1px solid #f1f5f9; display: flex; justify-content: space-between; }
-        .category-item:last-child { border-bottom: none; }
+        :root {
+            --finance-navy: #0f172a;
+            --finance-slate: #334155;
+            --finance-border: #e2e8f0;
+            --finance-success: #059669;
+            --finance-danger: #dc2626;
+        }
+        body { background-color: #f8fafc; font-family: 'Inter', -apple-system, sans-serif; color: var(--finance-navy); }
+        .card-finance { border: 1px solid var(--finance-border); border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); background: white; }
+        .kpi-title { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--finance-slate); font-weight: 700; }
+        .kpi-value { font-size: 1.5rem; font-weight: 800; }
+        .sidebar-border { border-left: 4px solid var(--finance-navy); }
+        .sidebar-success { border-left: 4px solid var(--finance-success); }
+        .sidebar-danger { border-left: 4px solid var(--finance-danger); }
+        .table-finance { font-size: 0.85rem; }
+        .table-finance th { background: #f1f5f9; color: var(--finance-slate); text-transform: uppercase; font-size: 0.7rem; }
+        .nav-finance { background: white; border-bottom: 1px solid var(--finance-border); }
+        .btn-finance { border-radius: 4px; font-weight: 600; font-size: 0.85rem; padding: 0.5rem 1rem; }
+        .chart-container { position: relative; height: 300px; width: 100%; }
+        .badge-type { font-size: 0.65rem; padding: 0.3em 0.6em; }
     </style>
 </head>
-<body class="bg-light">
+<body>
     <%- include('../partials/navbar', { user, tenant, allowedByPlan }) %>
 
     <div class="container py-4">
-        <div class="d-flex justify-content-between align-items-center mb-4">
+        <!-- Header Corporativo -->
+        <div class="d-flex justify-content-between align-items-end mb-4 border-bottom pb-3">
             <div>
-                <h1 class="h3 mb-0 text-gray-800">📊 Finanzas Reales</h1>
-                <p class="text-muted small">Control de ingresos, gastos y rentabilidad de Cerámicas.</p>
+                <h1 class="fw-bold h4 mb-1">Estado de Resultados</h1>
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb mb-0" style="font-size: 0.8rem;">
+                        <li class="breadcrumb-item"><a href="/" class="text-decoration-none">Sistema</a></li>
+                        <li class="breadcrumb-item active">Finanzas</li>
+                    </ol>
+                </nav>
             </div>
-            <div class="d-flex gap-2">
-                <select class="form-select form-select-sm" id="filtroDias" onchange="location.href='?dias='+this.value">
-                    <option value="7" <%= dias == 7 ? 'selected' : '' %>>Últimos 7 días</option>
-                    <option value="30" <%= dias == 30 ? 'selected' : '' %>>Últimos 30 días</option>
-                    <option value="90" <%= dias == 90 ? 'selected' : '' %>>Últimos 90 días</option>
+            <div class="d-flex gap-3 align-items-center">
+                <div class="text-end me-3 d-none d-md-block">
+                    <div class="small text-muted">Periodo de Análisis</div>
+                    <div class="fw-bold small">Últimos <%= dias %> días</div>
+                </div>
+                <select class="form-select form-select-sm" style="width: auto;" onchange="location.href='?dias='+this.value">
+                    <option value="7" <%= dias == 7 ? 'selected' : '' %>>Semana Actual</option>
+                    <option value="30" <%= dias == 30 ? 'selected' : '' %>>Mes Contable</option>
+                    <option value="90" <%= dias == 90 ? 'selected' : '' %>>Trimestre</option>
                 </select>
-                <button class="btn btn-sm btn-primary rounded-pill" data-bs-toggle="modal" data-bs-target="#modalNuevoGasto">
-                    <i class="bi bi-plus-circle me-1"></i> Nuevo Gasto
+                <button class="btn btn-dark btn-finance" data-bs-toggle="modal" data-bs-target="#modalNuevoGasto">
+                    <i class="bi bi-plus-lg me-2"></i>Registrar Operación
                 </button>
             </div>
         </div>
 
-        <!-- KPI Cards -->
-        <div class="row g-4 mb-4">
+        <!-- Fila de KPIs Sobrios -->
+        <div class="row g-3 mb-4">
             <div class="col-md-4">
-                <div class="card kpi-card bg-gradient-success h-100">
-                    <div class="card-body">
-                        <div class="small text-white-50 text-uppercase fw-bold mb-1">Ingresos Totales</div>
-                        <div class="h2 mb-0 fw-bold">$<%= Number(resumen.ingresos).toLocaleString('es-CO') %></div>
-                        <div class="mt-2 small"><i class="bi bi-arrow-up-circle me-1"></i> Ventas y otros</div>
-                    </div>
+                <div class="card card-finance sidebar-success p-3">
+                    <div class="kpi-title mb-1">Ingresos Operativos</div>
+                    <div class="kpi-value text-success">$<%= Number(resumen.ingresos).toLocaleString('es-CO') %></div>
+                    <div class="small text-muted mt-2">Ventas de productos y servicios</div>
                 </div>
             </div>
             <div class="col-md-4">
-                <div class="card kpi-card bg-gradient-danger h-100">
-                    <div class="card-body">
-                        <div class="small text-white-50 text-uppercase fw-bold mb-1">Egresos (Gastos)</div>
-                        <div class="h2 mb-0 fw-bold">$<%= Number(resumen.egresos).toLocaleString('es-CO') %></div>
-                        <div class="mt-2 small"><i class="bi bi-cart-dash me-1"></i> Inventario y operativos</div>
-                    </div>
+                <div class="card card-finance sidebar-danger p-3">
+                    <div class="kpi-title mb-1">Costos y Gastos</div>
+                    <div class="kpi-value text-danger">$<%= Number(resumen.egresos).toLocaleString('es-CO') %></div>
+                    <div class="small text-muted mt-2">Inventario, nómina y operación</div>
                 </div>
             </div>
             <div class="col-md-4">
-                <div class="card kpi-card bg-gradient-primary h-100">
-                    <div class="card-body">
-                        <div class="small text-white-50 text-uppercase fw-bold mb-1">Ganancia Neta</div>
-                        <div class="h2 mb-0 fw-bold">$<%= Number(resumen.utilidad).toLocaleString('es-CO') %></div>
-                        <div class="mt-2 small"><i class="bi bi-lightning-charge me-1"></i> ROI del periodo</div>
+                <div class="card card-finance sidebar-border p-3">
+                    <div class="kpi-title mb-1">Utilidad del Ejercicio</div>
+                    <div class="kpi-value <%= resumen.utilidad >= 0 ? 'text-primary' : 'text-danger' %>">
+                        $<%= Number(resumen.utilidad).toLocaleString('es-CO') %>
                     </div>
+                    <div class="small text-muted mt-2">Flujo de caja neto acumulado</div>
                 </div>
             </div>
         </div>
 
-        <div class="row g-4">
-            <!-- Gráfico de Gastos por Categoría -->
-            <div class="col-md-7">
-                <div class="card kpi-card h-100">
-                    <div class="card-header"><i class="bi bi-pie-chart me-2"></i>Distribución de Gastos</div>
-                    <div class="card-body">
-                        <canvas id="chartGastos" style="max-height: 300px;"></canvas>
+        <div class="row g-3">
+            <!-- Gráfico de Tendencia Lineal (Más Profesional) -->
+            <div class="col-lg-8">
+                <div class="card card-finance p-4">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h6 class="fw-bold mb-0">Flujo de Caja Diario</h6>
+                        <div class="small text-muted">Ingresos vs Egresos</div>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="chartTendencia"></canvas>
                     </div>
                 </div>
             </div>
 
-            <!-- Lista de Categorías -->
-            <div class="col-md-5">
-                <div class="card kpi-card h-100">
-                    <div class="card-header"><i class="bi bi-list-stars me-2"></i>Gastos por Categoría</div>
-                    <div class="card-body p-0">
-                        <% if (resumen.gastosPorCategoria && resumen.gastosPorCategoria.length > 0) { %>
-                            <div class="list-group list-group-flush">
-                                <% resumen.gastosPorCategoria.forEach(cat => { %>
-                                    <div class="category-item">
-                                        <span class="fw-semibold text-secondary"><%= cat.categoria_gasto %></span>
-                                        <span class="fw-bold text-danger">$<%= Number(cat.total).toLocaleString('es-CO') %></span>
+            <!-- Desglose de Gastos -->
+            <div class="col-lg-4">
+                <div class="card card-finance h-100 p-4">
+                    <h6 class="fw-bold mb-4">Gastos por Centro de Costo</h6>
+                    <% if (resumen.gastosPorCategoria && resumen.gastosPorCategoria.length > 0) { %>
+                        <div class="chart-container mb-4" style="height: 180px;">
+                            <canvas id="chartCategorias"></canvas>
+                        </div>
+                        <div class="mt-auto">
+                            <% resumen.gastosPorCategoria.forEach(cat => { 
+                                let pct = (cat.total / resumen.egresos) * 100;
+                            %>
+                                <div class="mb-2">
+                                    <div class="d-flex justify-content-between small mb-1">
+                                        <span class="text-muted"><%= cat.categoria_gasto %></span>
+                                        <span class="fw-bold">$<%= Number(cat.total).toLocaleString('es-CO') %></span>
                                     </div>
-                                <% }) %>
-                            </div>
-                        <% } else { %>
-                            <div class="p-4 text-center text-muted">No hay gastos registrados en este periodo.</div>
-                        <% } %>
+                                    <div class="progress" style="height: 4px;">
+                                        <div class="progress-bar bg-secondary" style="width: <%= pct %>%"></div>
+                                    </div>
+                                </div>
+                            <% }) %>
+                        </div>
+                    <% } else { %>
+                        <div class="text-center py-5 text-muted small">No se registran egresos.</div>
+                    <% } %>
+                </div>
+            </div>
+
+            <!-- Libro Diario (Transacciones Recientes) -->
+            <div class="col-12 mt-4">
+                <div class="card card-finance">
+                    <div class="card-header bg-white py-3">
+                        <h6 class="fw-bold mb-0">Libro Diario - Últimas Transacciones</h6>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-finance table-hover mb-0">
+                            <thead>
+                                <tr>
+                                    <th class="ps-4">Fecha</th>
+                                    <th>Concepto / Motivo</th>
+                                    <th>Categoría</th>
+                                    <th>Referencia</th>
+                                    <th class="text-end pe-4">Monto</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <% if (resumen.movimientos && resumen.movimientos.length > 0) { %>
+                                    <% resumen.movimientos.forEach(m => { %>
+                                        <tr>
+                                            <td class="ps-4 text-muted"><%= new Date(m.created_at).toLocaleString('es-CO') %></td>
+                                            <td>
+                                                <span class="badge badge-type <%= m.tipo === 'entrada' ? 'bg-success' : 'bg-danger' %> me-2">
+                                                    <%= m.tipo.toUpperCase() %>
+                                                </span>
+                                                <%= m.motivo %>
+                                            </td>
+                                            <td class="text-muted"><%= m.categoria_gasto %></td>
+                                            <td><small class="text-muted"><%= m.referencia_tipo %> #<%= m.referencia_id || 'N/A' %></small></td>
+                                            <td class="text-end pe-4 fw-bold <%= m.tipo === 'entrada' ? 'text-success' : 'text-danger' %>">
+                                                <%= m.tipo === 'entrada' ? '+' : '-' %>$<%= Number(m.monto).toLocaleString('es-CO') %>
+                                            </td>
+                                        </tr>
+                                    <% }) %>
+                                <% } else { %>
+                                    <tr>
+                                        <td colspan="5" class="text-center py-4 text-muted">No hay transacciones recientes.</td>
+                                    </tr>
+                                <% } %>
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>
@@ -108,39 +182,47 @@
     <!-- Modal Nuevo Gasto -->
     <div class="modal fade" id="modalNuevoGasto" tabindex="-1">
         <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Registrar Gasto Manual</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            <div class="modal-content border-0 shadow">
+                <div class="modal-header bg-dark text-white">
+                    <h5 class="modal-title h6 fw-bold">Nueva Operación Financiera</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
-                <div class="modal-body">
+                <div class="modal-body p-4">
                     <form id="formGasto">
                         <div class="mb-3">
-                            <label class="form-label">Monto</label>
+                            <label class="form-label small fw-bold">Tipo de Operación</label>
+                            <select class="form-select" id="gastoTipo">
+                                <option value="salida">EGRESO (Gasto / Pago)</option>
+                                <option value="entrada">INGRESO (Inyección / Otro)</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold">Monto del Movimiento</label>
                             <div class="input-group">
                                 <span class="input-group-text">$</span>
-                                <input type="number" class="form-control" id="gastoMonto" required>
+                                <input type="number" class="form-control" id="gastoMonto" required placeholder="0.00">
                             </div>
                         </div>
                         <div class="mb-3">
-                            <label class="form-label">Categoría</label>
+                            <label class="form-label small fw-bold">Centro de Costo / Categoría</label>
                             <select class="form-select" id="gastoCategoria">
                                 <option value="General">General</option>
                                 <option value="Servicios">Servicios Públicos</option>
                                 <option value="Nómina">Nómina / Sueldos</option>
                                 <option value="Arriendo">Arriendo</option>
+                                <option value="Insumos">Compra de Insumos</option>
                                 <option value="Mantenimiento">Mantenimiento</option>
                             </select>
                         </div>
                         <div class="mb-3">
-                            <label class="form-label">Descripción</label>
-                            <textarea class="form-control" id="gastoMotivo" rows="2" placeholder="Ej: Pago de luz mes de abril"></textarea>
+                            <label class="form-label small fw-bold">Justificación Comercial</label>
+                            <textarea class="form-control" id="gastoMotivo" rows="2" placeholder="Ej: Pago de factura energía eléctrica abril 2024"></textarea>
                         </div>
                     </form>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
-                    <button type="button" class="btn btn-primary" onclick="guardarGasto()">Guardar Gasto</button>
+                <div class="modal-footer border-0">
+                    <button type="button" class="btn btn-light btn-sm fw-bold" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-dark btn-sm fw-bold px-4" onclick="guardarGasto()">Confirmar Registro</button>
                 </div>
             </div>
         </div>
@@ -149,25 +231,68 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
-        // Renderizar Gráfico
-        const ctx = document.getElementById('chartGastos').getContext('2d');
-        const data = <%- JSON.stringify(resumen.gastosPorCategoria || []) %>;
+        // Configuración de Gráfico de Tendencia
+        const ctxTendencia = document.getElementById('chartTendencia').getContext('2d');
+        const historico = <%- JSON.stringify(resumen.historico || []) %>;
         
-        new Chart(ctx, {
-            type: 'doughnut',
+        new Chart(ctxTendencia, {
+            type: 'line',
             data: {
-                labels: data.map(d => d.categoria_gasto),
-                datasets: [{
-                    data: data.map(d => d.total),
-                    backgroundColor: ['#4f46e5', '#10b981', '#f59e0b', '#ef4444', '#06b6d4', '#8b5cf6'],
-                    borderWidth: 0
-                }]
+                labels: historico.map(h => h.fecha),
+                datasets: [
+                    {
+                        label: 'Ingresos',
+                        data: historico.map(h => h.ingresos),
+                        borderColor: '#059669',
+                        backgroundColor: 'rgba(5, 150, 105, 0.1)',
+                        fill: true,
+                        tension: 0.3,
+                        borderWidth: 2
+                    },
+                    {
+                        label: 'Egresos',
+                        data: historico.map(h => h.egresos),
+                        borderColor: '#dc2626',
+                        backgroundColor: 'rgba(220, 38, 38, 0.1)',
+                        fill: true,
+                        tension: 0.3,
+                        borderWidth: 2
+                    }
+                ]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                plugins: {
-                    legend: { position: 'right' }
+                plugins: { legend: { position: 'top', align: 'end' } },
+                scales: {
+                    y: { beginAtZero: true, grid: { color: '#f1f5f9' } },
+                    x: { grid: { display: false } }
+                }
+            }
+        });
+
+        // Gráfico de Categorías
+        const ctxCat = document.getElementById('chartCategorias').getContext('2d');
+        const dataCat = <%- JSON.stringify(resumen.gastosPorCategoria || []) %>;
+        
+        new Chart(ctxCat, {
+            type: 'bar',
+            data: {
+                labels: dataCat.map(d => d.categoria_gasto),
+                datasets: [{
+                    data: dataCat.map(d => d.total),
+                    backgroundColor: '#1e293b',
+                    borderRadius: 4
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    x: { grid: { display: false } },
+                    y: { grid: { display: false } }
                 }
             }
         });
@@ -177,23 +302,29 @@
                 monto: document.getElementById('gastoMonto').value,
                 motivo: document.getElementById('gastoMotivo').value,
                 categoria: document.getElementById('gastoCategoria').value,
-                tipo: 'salida'
+                tipo: document.getElementById('gastoTipo').value
             };
 
+            if(!payload.monto) return Swal.fire('Aviso', 'Ingrese un monto válido', 'warning');
+
             try {
-                // Aquí podrías usar una API genérica de caja o crear una específica
                 const r = await fetch('/caja/api/movimientos', { 
                     method: 'POST', 
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
                 });
                 if(r.ok) {
-                    Swal.fire('Éxito', 'Gasto registrado', 'success').then(() => location.reload());
+                    Swal.fire({
+                        title: 'Registro Exitoso',
+                        text: 'La operación ha sido asentada en el libro diario.',
+                        icon: 'success',
+                        confirmButtonColor: '#0f172a'
+                    }).then(() => location.reload());
                 } else {
-                    Swal.fire('Error', 'No se pudo guardar', 'error');
+                    Swal.fire('Error', 'No se pudo completar la operación', 'error');
                 }
             } catch(e) {
-                Swal.fire('Error', e.message, 'error');
+                Swal.fire('Error de Conexión', e.message, 'error');
             }
         }
     </script>

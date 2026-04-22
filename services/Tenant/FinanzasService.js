@@ -53,6 +53,15 @@ class FinanzasService {
 
         const resumen = await FinanzasRepository.getResumenPeriodo(tenantId, inicio, hoy);
         const porCategoria = await FinanzasRepository.getPorCategoria(tenantId, 'salida', inicio, hoy);
+        const historico = await FinanzasRepository.getHistoricoDiario(tenantId, inicio, hoy);
+
+        // También obtener los últimos 10 movimientos para el "Libro Diario"
+        const [movimientos] = await db.query(
+            `SELECT * FROM caja_movimientos 
+            WHERE tenant_id = ? 
+            ORDER BY created_at DESC LIMIT 10`,
+            [tenantId]
+        );
 
         let ingresos = 0, egresos = 0;
         resumen.forEach(r => {
@@ -64,7 +73,9 @@ class FinanzasService {
             ingresos,
             egresos,
             utilidad: ingresos - egresos,
-            gastosPorCategoria: porCategoria
+            gastosPorCategoria: porCategoria,
+            historico,
+            movimientos
         };
     }
 }

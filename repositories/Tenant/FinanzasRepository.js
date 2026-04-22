@@ -72,6 +72,24 @@ class FinanzasRepository {
         );
         return rows;
     }
+
+    /**
+     * Obtiene el histórico diario de ingresos y egresos
+     */
+    static async getHistoricoDiario(tenantId, fechaInicio, fechaFin) {
+        const [rows] = await db.query(
+            `SELECT 
+                DATE(created_at) as fecha,
+                SUM(CASE WHEN tipo = 'entrada' THEN monto ELSE 0 END) as ingresos,
+                SUM(CASE WHEN tipo = 'salida' THEN monto ELSE 0 END) as egresos
+            FROM caja_movimientos
+            WHERE tenant_id = ? AND created_at BETWEEN ? AND ?
+            GROUP BY DATE(created_at)
+            ORDER BY fecha ASC`,
+            [tenantId, fechaInicio, fechaFin]
+        );
+        return rows;
+    }
 }
 
 module.exports = FinanzasRepository;
