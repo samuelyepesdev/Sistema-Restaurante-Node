@@ -20,6 +20,17 @@ class FacturaService {
             throw new Error('Datos incompletos');
         }
 
+        const AgregarItemService = require('./Mesas/AgregarItemService');
+
+        // Resolver IDs virtuales de insumos (>= 1.000.000) a productos reales
+        // Esto garantiza que siempre exista el producto espejo antes de facturar
+        for (const p of productos) {
+            if (!p.es_servicio && p.producto_id >= 1000000) {
+                const insumoId = p.producto_id - 1000000;
+                p.producto_id = await AgregarItemService._getOrCreateMirrorProduct(tenantId, insumoId, p.precio);
+            }
+        }
+
         for (const p of productos) {
             if (!p.es_servicio && p.producto_id) {
                 const check = await InventarioService.checkStockParaProducto(tenantId, p.producto_id, parseFloat(p.cantidad) || 1);

@@ -113,7 +113,38 @@ class FacturarPedidoService {
             await connection.query(`UPDATE mesas SET estado = 'libre' WHERE id = ?`, [pedido.mesa_id]);
 
             await connection.commit();
-            
+
+            // --- INTEGRACIÓN CON FINANZAS ---
+            // Se ejecuta DESPUÉS del commit para no bloquear la transacción principal.
+            try {
+                const FinanzasService = require('../FinanzasService');
+                const ProductRepository = require('../../../repositories/Tenant/ProductRepository');
+
+                // Detectar si algún item de la venta es una cerámica
+                let esCeramica = false;
+                for (const l of lineasFactura) {
+                    if (!l.es_servicio && l.producto_id) {
+                        try {
+                            const prod = await ProductRepository.findById(l.producto_id, tenantId);
+                            if (prod && (prod.nombre?.toLowerCase().includes('cerámica') || prod.categoria_nombre === 'Cerámicas')) {
+                                esCeramica = true;
+                                break;
+                            }
+                        } catch (_) { /* ignorar error de lookup */ }
+                    }
+                }
+
+                await FinanzasService.registrarIngresoVenta(tenantId, {
+                    monto: totalConPropina,
+                    factura_id: facturaId,
+                    esCeramica,
+                    usuario_id: null // La sesión de caja ya provee el usuario en FinanzasService
+                });
+            } catch (finErr) {
+                console.error('CRÍTICO: Error al registrar ingreso en finanzas (pedido):', finErr);
+            }
+            // --------------------------------
+
             return { factura_id: facturaId, numero: numeroFactura };
             
         } catch (error) {
