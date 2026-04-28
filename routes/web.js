@@ -47,6 +47,7 @@ router.use('/api/servicios', requireAuthWithTenant, serviciosRoutes);
 
 // --- RUTAS PÚBLICAS Y AUTH ---
 router.use('/auth', authRoutes);
+router.use('/qr', require('./qr'));
 
 // --- RUTA PRINCIPAL (Home & Redirección) ---
 router.get('/', optionalAuth, HomeController.index);
