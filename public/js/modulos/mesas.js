@@ -4,6 +4,7 @@
 $(function () {
   const canvas = new bootstrap.Offcanvas('#canvasPedido');
   let pedidoActual = null; // { id, mesa_id }
+  let isProgrammaticHide = false; // NUEVO: Evitar limpiar pedidoActual en ocultamiento temporal
   let items = []; // items del pedido en UI
   let clienteActual = { id: null, nombre: 'Consumidor Final' }; // NUEVO: cliente de la mesa
   let descuentosPorItem = {}; // { itemId: percent } - solo para esta venta; no cambia el precio del producto en catálogo
@@ -15,7 +16,9 @@ $(function () {
   });
   document.getElementById('canvasPedido')?.addEventListener('hidden.bs.offcanvas', () => {
     document.body.classList.remove('offcanvas-open');
-    pedidoActual = null; // Limpiar al cerrar
+    if (!isProgrammaticHide) {
+      pedidoActual = null; // Limpiar solo si el cierre es manual
+    }
   });
 
   // Exponer función para refrescar si la mesa coincide (usado por SSE en _scripts.ejs)
@@ -1273,7 +1276,8 @@ $(function () {
     const el = document.getElementById('canvasPedido');
     const wasOpen = el && el.classList.contains('show');
     if (wasOpen) {
-      try { canvas.hide(); } catch (_) {/* noop */ }
+      isProgrammaticHide = true;
+      try { canvas.hide(); } catch (_) { isProgrammaticHide = false; }
       // esperar a que termine animación
       await new Promise(r => setTimeout(r, 250));
     }
@@ -1281,6 +1285,7 @@ $(function () {
       const result = await action();
       return result;
     } finally {
+      isProgrammaticHide = false;
       if (wasOpen) {
         try { canvas.show(); } catch (_) {/* noop */ }
       }
