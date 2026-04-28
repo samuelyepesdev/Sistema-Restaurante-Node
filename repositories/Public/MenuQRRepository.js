@@ -21,11 +21,14 @@ class MenuQRRepository {
             logo_src = `data:image/${row.logo_tipo};base64,${Buffer.from(row.logo_data).toString('base64')}`;
         }
 
+        // Obtener color primario de la configuración del tenant
+        const primaryColor = (config.colores && config.colores.primary) ? config.colores.primary : '#e63946';
+
         return {
             id: row.id,
             nombre: row.nombre,
             slug: row.slug,
-            theme_color: config.theme_color || '#e63946',
+            theme_color: primaryColor,
             theme_font: config.theme_font || "'Inter', sans-serif",
             logo_src
         };

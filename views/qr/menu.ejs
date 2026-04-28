@@ -20,8 +20,8 @@
     <!-- Top Header -->
     <div class="header-top">
         <div class="d-flex align-items-center">
-            <% if (tenant.logo) { %>
-                <img src="data:image/png;base64,<%= tenant.logo.toString('base64') %>" alt="Logo" class="tenant-logo me-2">
+            <% if (tenant.logo_src) { %>
+                <img src="<%= tenant.logo_src %>" alt="Logo" class="tenant-logo me-2">
             <% } else { %>
                 <h4 class="mb-0 fw-bold" style="color: var(--primary-color);"><%= tenant.nombre %></h4>
             <% } %>

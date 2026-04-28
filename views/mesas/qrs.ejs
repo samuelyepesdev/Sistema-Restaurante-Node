@@ -10,23 +10,33 @@
         body { background: #f8f9fa; padding: 20px; font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; }
         .qr-card { 
             text-align: center; 
-            border: 2px dashed #ccc; 
-            padding: 30px 20px; 
+            border: 1px solid #eee; 
+            padding: 25px 15px; 
             background: white; 
-            border-radius: 15px; 
+            border-radius: 12px; 
             page-break-inside: avoid;
-            height: 100%;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
         }
-        .qr-canvas { width: 220px !important; height: 220px !important; margin: 15px auto; display: block; }
-        .mesa-number { font-size: 2.5rem; font-weight: 800; margin: 0; color: #111; letter-spacing: -1px; }
-        .mesa-desc { font-size: 1.1rem; color: #666; font-weight: 500; text-transform: uppercase; letter-spacing: 1px; }
-        .tenant-name { font-size: 1.5rem; font-weight: bold; margin-bottom: 15px; border-bottom: 1px solid #eee; padding-bottom: 15px; color: #333; }
-        .scan-text { font-weight: 800; font-size: 1.1rem; text-transform: uppercase; letter-spacing: 1px; color: #dc3545; }
+        .qr-canvas { width: 180px !important; height: 180px !important; margin: 10px auto; display: block; }
+        .mesa-number { font-size: 2rem; font-weight: 800; margin: 0; color: #111; }
+        .mesa-desc { font-size: 1rem; color: #666; font-weight: 500; text-transform: uppercase; }
+        .tenant-name { font-size: 1.2rem; font-weight: bold; margin-bottom: 10px; border-bottom: 1px solid #eee; padding-bottom: 10px; color: #333; }
+        .scan-text { font-weight: 800; font-size: 0.9rem; text-transform: uppercase; color: #dc3545; }
         
         @media print {
+            @page { margin: 1cm; size: auto; }
             body { background: white; padding: 0; }
             .no-print { display: none !important; }
-            .qr-card { border: 2px solid #000; margin-bottom: 20px; border-radius: 10px; }
+            .container { max-width: none !important; width: 100% !important; margin: 0 !important; padding: 0 !important; }
+            .row { display: flex; flex-wrap: wrap; margin: 0; }
+            .col { 
+                width: 50%; 
+                padding: 10px; 
+                flex: 0 0 50%;
+                max-width: 50%;
+            }
+            .qr-card { border: 1.5px solid #333; box-shadow: none; margin-bottom: 30px; }
         }
     </style>
 </head>
