@@ -1,6 +1,6 @@
-const db = require('../../../../config/database');
-const CategoryService = require('../../../../services/Admin/CategoryService');
-const ProductRepository = require('../../../../repositories/Tenant/ProductRepository');
+const db = require('../../../../../config/database');
+const CategoryService = require('../../../../../services/Admin/CategoryService');
+const ProductRepository = require('../../../../../repositories/Tenant/ProductRepository');
 
 class MesaDashboardController {
     // GET /mesas

@@ -1,5 +1,5 @@
-const db = require('../../../../config/database');
-const CrearMesasMasivasService = require('../../../../services/Tenant/Mesas/CrearMesasMasivasService');
+const db = require('../../../../../config/database');
+const CrearMesasMasivasService = require('../../../../../services/Tenant/Mesas/CrearMesasMasivasService');
 
 class MesaManagementController {
     // POST /mesas/crear

@@ -1,9 +1,9 @@
-const AgregarItemService = require('../../../../services/Tenant/Mesas/AgregarItemService');
-const AgregarServicioService = require('../../../../services/Tenant/Mesas/AgregarServicioService');
-const EliminarItemService = require('../../../../services/Tenant/Mesas/EliminarItemService');
-const UpdateItemCantidadService = require('../../../../services/Tenant/Mesas/UpdateItemCantidadService');
-const UpdateItemEstadoService = require('../../../../services/Tenant/Mesas/UpdateItemEstadoService');
-const PagarItemIndividualService = require('../../../../services/Tenant/Mesas/PagarItemIndividualService');
+const AgregarItemService = require('../../../../../services/Tenant/Mesas/AgregarItemService');
+const AgregarServicioService = require('../../../../../services/Tenant/Mesas/AgregarServicioService');
+const EliminarItemService = require('../../../../../services/Tenant/Mesas/EliminarItemService');
+const UpdateItemCantidadService = require('../../../../../services/Tenant/Mesas/UpdateItemCantidadService');
+const UpdateItemEstadoService = require('../../../../../services/Tenant/Mesas/UpdateItemEstadoService');
+const PagarItemIndividualService = require('../../../../../services/Tenant/Mesas/PagarItemIndividualService');
 
 class PedidoItemsController {
     // POST /mesas/pedidos/:pedidoId/items

@@ -1,6 +1,6 @@
-const LiberarMesaService = require('../../../../services/Tenant/Mesas/LiberarMesaService');
-const MoverPedidoService = require('../../../../services/Tenant/Mesas/MoverPedidoService');
-const MoverItemsService = require('../../../../services/Tenant/Mesas/MoverItemsService');
+const LiberarMesaService = require('../../../../../services/Tenant/Mesas/LiberarMesaService');
+const MoverPedidoService = require('../../../../../services/Tenant/Mesas/MoverPedidoService');
+const MoverItemsService = require('../../../../../services/Tenant/Mesas/MoverItemsService');
 
 class MesaActionsController {
     // PUT /mesas/:mesaId/liberar

@@ -1,5 +1,5 @@
-const db = require('../../../../config/database');
-const GenerarTokensQRService = require('../../../../services/Tenant/Mesas/GenerarTokensQRService');
+const db = require('../../../../../config/database');
+const GenerarTokensQRService = require('../../../../../services/Tenant/Mesas/GenerarTokensQRService');
 
 class MesaQRController {
     // POST /mesas/qrs/generar

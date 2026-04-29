@@ -1,9 +1,9 @@
-const AbrirPedidoService = require('../../../../services/Tenant/Mesas/AbrirPedidoService');
-const GetPedidoDetailsService = require('../../../../services/Tenant/Mesas/GetPedidoDetailsService');
-const UpdatePropinaService = require('../../../../services/Tenant/Mesas/UpdatePropinaService');
-const AsociarClientePedidoService = require('../../../../services/Tenant/Mesas/AsociarClientePedidoService');
-const LimpiarPedidoService = require('../../../../services/Tenant/Mesas/LimpiarPedidoService');
-const FacturarPedidoService = require('../../../../services/Tenant/Mesas/FacturarPedidoService');
+const AbrirPedidoService = require('../../../../../services/Tenant/Mesas/AbrirPedidoService');
+const GetPedidoDetailsService = require('../../../../../services/Tenant/Mesas/GetPedidoDetailsService');
+const UpdatePropinaService = require('../../../../../services/Tenant/Mesas/UpdatePropinaService');
+const AsociarClientePedidoService = require('../../../../../services/Tenant/Mesas/AsociarClientePedidoService');
+const LimpiarPedidoService = require('../../../../../services/Tenant/Mesas/LimpiarPedidoService');
+const FacturarPedidoService = require('../../../../../services/Tenant/Mesas/FacturarPedidoService');
 
 class PedidoController {
     // POST /mesas/abrir
