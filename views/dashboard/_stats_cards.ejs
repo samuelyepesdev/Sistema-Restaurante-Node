@@ -78,7 +78,7 @@
         <h5 class="text-muted mb-2 small text-uppercase fw-bold">Ventas generales</h5>
     </div>
     <div class="col-md-3">
-        <div class="card stat-card c-blue text-white clickable" id="cardTotalVentas" data-action="go-ventas"
+        <div class="card stat-card c-primary text-white clickable" id="cardTotalVentas" data-action="go-ventas"
             title="Ir a Ventas">
             <div class="card-body">
                 <div class="d-flex justify-content-between align-items-center">
@@ -92,7 +92,7 @@
         </div>
     </div>
     <div class="col-md-3">
-        <div class="card stat-card c-slate text-white clickable" id="cardTotalFacturas" data-action="go-ventas"
+        <div class="card stat-card c-teal text-white clickable" id="cardTotalFacturas" data-action="go-ventas"
             title="Ir a Ventas">
             <div class="card-body">
                 <div class="d-flex justify-content-between align-items-center">
@@ -106,7 +106,7 @@
         </div>
     </div>
     <div class="col-md-3">
-        <div class="card stat-card c-indigo text-white clickable" id="cardPromedio" data-action="modal-promedio"
+        <div class="card stat-card c-primary text-white clickable" id="cardPromedio" data-action="modal-promedio"
             title="Ver detalle del promedio">
             <div class="card-body">
                 <div class="d-flex justify-content-between align-items-center">
@@ -121,10 +121,66 @@
     </div>
 </div>
 
+<!-- Desglose de ingresos -->
+<div class="row mb-2">
+    <div class="col-md-3">
+        <div class="card stat-card c-primary text-white" id="cardEfectivo">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <div class="stat-label">Total Efectivo</div>
+                        <div class="stat-value" id="totalCash">$0.00</div>
+                    </div>
+                    <i class="bi bi-cash-stack stat-icon"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stat-card c-teal text-white" id="cardTransferencia">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <div class="stat-label">Total Transferencia</div>
+                        <div class="stat-value" id="totalTransfer">$0.00</div>
+                    </div>
+                    <i class="bi bi-bank stat-icon"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stat-card c-primary text-white" id="cardServiciosExternos">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <div class="stat-label">Servicios Externos</div>
+                        <div class="stat-value" id="totalExternal">$0.00</div>
+                    </div>
+                    <i class="bi bi-box-arrow-right stat-icon"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stat-card c-teal text-white" id="cardVentaNeta">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <div class="stat-label">Venta Neta</div>
+                        <div class="stat-value" id="totalNet">$0.00</div>
+                    </div>
+                    <i class="bi bi-wallet2 stat-icon"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Eventos del mes e insumos bajo stock -->
 <div class="row mb-3">
     <div class="col-md-4">
-        <div class="card stat-card c-indigo text-white clickable" id="cardEventos" data-action="go-eventos"
+        <div class="card stat-card c-teal text-white clickable" id="cardEventos" data-action="go-eventos"
             title="Ir a Eventos">
             <div class="card-body">
                 <div class="d-flex justify-content-between align-items-center">
@@ -139,7 +195,7 @@
         </div>
     </div>
     <div class="col-md-4">
-        <div class="card stat-card c-slate text-white clickable" id="cardVentasEventos"
+        <div class="card stat-card c-primary text-white clickable" id="cardVentasEventos"
             data-action="modal-ventas-eventos" title="Ver detalle de ventas en eventos">
             <div class="card-body">
                 <div class="d-flex justify-content-between align-items-center">

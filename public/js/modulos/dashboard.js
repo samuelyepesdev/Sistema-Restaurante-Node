@@ -98,6 +98,12 @@ function updateStatsCards(stats) {
     // Insumos bajo stock
     const insumosBajo = stats.insumosBajoStock != null ? stats.insumosBajoStock : 0;
     $('#insumosBajoStock').text(insumosBajo);
+
+    // Nuevas métricas de desglose de ingresos (Efectivo, Transferencia, Externos)
+    $('#totalCash').text(formatCurrency(stats.totalEfectivo != null ? stats.totalEfectivo : 0));
+    $('#totalTransfer').text(formatCurrency(stats.totalTransferencia != null ? stats.totalTransferencia : 0));
+    $('#totalExternal').text(formatCurrency(stats.totalServiciosExternos != null ? stats.totalServiciosExternos : 0));
+    $('#totalNet').text(formatCurrency(stats.ventaNeta != null ? stats.ventaNeta : 0));
 }
 
 /**

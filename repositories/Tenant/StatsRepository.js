@@ -150,6 +150,49 @@ class StatsRepository {
     }
 
     /**
+     * Get total amounts grouped by payment method (specifically Cash and Transfer)
+     */
+    static async getTotalsByPaymentMethod(tenantId, filters = {}) {
+        let query = `
+            SELECT forma_pago, 
+                   COALESCE(SUM(total), 0) AS total,
+                   COALESCE(SUM(total_servicios_externos), 0) AS total_externos
+            FROM facturas
+            WHERE tenant_id = ? AND evento_id IS NULL
+        `;
+        const params = [tenantId];
+
+        if (filters.desde && filters.hasta) {
+            query += " AND DATE(CONVERT_TZ(fecha, '+00:00', '-05:00')) BETWEEN ? AND ?";
+            params.push(filters.desde, filters.hasta);
+        }
+
+        query += ' GROUP BY forma_pago';
+
+        const [result] = await db.query(query, params);
+        
+        const totals = {
+            efectivo: 0,
+            transferencia: 0,
+            serviciosExternos: 0
+        };
+
+        result.forEach(row => {
+            const fp = String(row.forma_pago || '').toLowerCase().trim();
+            const totalFactura = parseFloat(row.total || 0);
+            const totalExternos = parseFloat(row.total_externos || 0);
+            const netSale = totalFactura - totalExternos;
+
+            if (fp === 'efectivo') totals.efectivo += netSale;
+            else if (fp === 'transferencia') totals.transferencia += netSale;
+            
+            totals.serviciosExternos += totalExternos;
+        });
+
+        return totals;
+    }
+
+    /**
      * Get top selling products
      * @param {number} tenantId - Tenant ID
      * @param {number} limit - Number of products to return (default: 10)

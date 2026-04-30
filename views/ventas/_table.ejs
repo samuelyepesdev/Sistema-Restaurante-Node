@@ -74,7 +74,8 @@
                                                 data-total="<%= venta.total %>"
                                                 data-neto="<%= Number(venta.total) - Number(venta.total_servicios_externos || 0) %>"
                                                 data-externo="<%= venta.total_servicios_externos || 0 %>">
-                                                $<%= (Number(venta.total) || 0).toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) %>
+                                                $<%= (Number(venta.total) || 0).toLocaleString('es-CO', {
+                                                    minimumFractionDigits: 2, maximumFractionDigits: 2 }) %>
                                             </td>
                                             <td class="text-center" data-label="Acciones">
                                                 <div class="d-flex gap-1 justify-content-center flex-wrap">
@@ -99,12 +100,13 @@
                         </tbody>
                     </table>
 
-                    <% if (isHoy) { let subTotalEfectivo=0; let subTotalTransferencia=0; let subTotalExternos = 0; listaVentas.forEach(v=> {
+                    <% if (isHoy) { let subTotalEfectivo=0; let subTotalTransferencia=0; let subTotalExternos=0;
+                        listaVentas.forEach(v=> {
                         const fp = (v.forma_pago || '').toLowerCase();
                         const totalFactura = Number(v.total || 0);
                         const totalExt = Number(v.total_servicios_externos || 0);
                         const neto = totalFactura - totalExt;
-                        
+
                         subTotalExternos += totalExt;
                         if (fp === 'efectivo') subTotalEfectivo += neto;
                         if (fp === 'transferencia') subTotalTransferencia += neto;
