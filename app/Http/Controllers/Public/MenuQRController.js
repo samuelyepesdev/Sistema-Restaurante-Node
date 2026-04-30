@@ -8,12 +8,20 @@ class MenuQRController {
             // Delegar toda la carga de datos al Service
             const data = await MenuQRService.getMenuData(tenantSlug, qrToken);
 
+            // Establecer cookie de sesión QR (expira en 3 horas)
+            res.cookie(`qr_session_${data.mesa.id}`, data.mesa.qr_session_id, {
+                maxAge: 3 * 60 * 60 * 1000,
+                httpOnly: true,
+                path: '/'
+            });
+
             // Renderizar Vista Móvil
             res.render('qr/menu', {
                 tenant: data.tenant,
                 mesa: data.mesa,
                 categorias: data.categorias,
-                qrToken
+                qrToken,
+                qrSessionId: data.mesa.qr_session_id
             });
 
         } catch (error) {

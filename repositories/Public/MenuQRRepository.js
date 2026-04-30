@@ -43,12 +43,27 @@ class MenuQRRepository {
 
     static async getMesaByQRToken(qrToken, tenantId) {
         const [rows] = await db.query(
-            `SELECT id, numero, descripcion, estado 
+            `SELECT id, numero, descripcion, estado, qr_session_id 
              FROM mesas 
              WHERE qr_token = ? AND tenant_id = ? AND tipo = "fisica"`,
             [qrToken, tenantId]
         );
-        return rows[0] || null;
+        
+        if (!rows.length) return null;
+        
+        const mesa = rows[0];
+        
+        // Si la mesa está libre y no tiene sesión, o si queremos forzar una nueva sesión al primer escaneo
+        if (mesa.estado === 'libre' && !mesa.qr_session_id) {
+            const newSessionId = Date.now().toString(); // Simple ID basado en tiempo
+            await db.query(
+                'UPDATE mesas SET qr_session_id = ?, last_qr_activity = NOW() WHERE id = ?',
+                [newSessionId, mesa.id]
+            );
+            mesa.qr_session_id = newSessionId;
+        }
+        
+        return mesa;
     }
 
     static async getCategoriasYProductosActivos(tenantId) {

@@ -4,7 +4,7 @@ const WhatsAppService = require('../Tenant/WhatsAppService');
 const InventarioService = require('../Tenant/InventarioService'); // Para validación de stock
 
 class PedidoQRService {
-    static async procesarPedido(qrToken, itemsInput, notasGlobales, clientIp) {
+    static async procesarPedido(qrToken, itemsInput, notasGlobales, clientIp, cookies = {}) {
         if (!itemsInput || !Array.isArray(itemsInput) || itemsInput.length === 0) {
             throw { status: 400, message: 'El pedido no contiene productos.' };
         }
@@ -13,9 +13,9 @@ class PedidoQRService {
         try {
             await connection.beginTransaction();
 
-            // 1. Encontrar y validar mesa y tenant (Bloqueamos las filas temporalmente para evitar race conditions si es posible, o validamos normal)
+            // 1. Encontrar y validar mesa y tenant
             const [mesas] = await connection.query(
-                `SELECT m.id, m.tenant_id, m.numero, t.activo 
+                `SELECT m.id, m.tenant_id, m.numero, m.qr_session_id, m.last_qr_activity, t.activo 
                  FROM mesas m 
                  JOIN tenants t ON m.tenant_id = t.id 
                  WHERE m.qr_token = ? AND m.tipo = 'fisica'`, 
@@ -27,9 +27,31 @@ class PedidoQRService {
             }
             
             const mesa = mesas[0];
+
+            // VALIDACIÓN DE SEGURIDAD Y TIEMPO (Solución para expiración)
+            const clientSession = cookies ? cookies[`qr_session_${mesa.id}`] : null;
+            
+            // Si la mesa tiene una sesión activa en DB, el cliente DEBE tener la misma en su cookie
+            if (mesa.qr_session_id && clientSession !== mesa.qr_session_id) {
+                throw { status: 403, message: 'Tu sesión ha expirado o el código QR ya no es válido para esta mesa. Por favor, escanea el código nuevamente.' };
+            }
+
+            // Si han pasado más de 2 horas desde el primer escaneo/actividad y la mesa sigue ocupada, invalidar por tiempo
+            if (mesa.last_qr_activity) {
+                const diffHoras = (Date.now() - new Date(mesa.last_qr_activity).getTime()) / (1000 * 60 * 60);
+                if (diffHoras > 2) {
+                    // Limpiar sesión vieja para forzar re-escaneo
+                    await connection.query('UPDATE mesas SET qr_session_id = NULL, last_qr_activity = NULL WHERE id = ?', [mesa.id]);
+                    throw { status: 403, message: 'La sesión de esta mesa ha expirado por inactividad. Por favor, escanea el código nuevamente.' };
+                }
+            }
+
             if (!mesa.activo) {
                 throw { status: 403, message: 'El restaurante se encuentra inactivo actualmente.' };
             }
+
+            // Actualizar última actividad
+            await connection.query('UPDATE mesas SET last_qr_activity = NOW() WHERE id = ?', [mesa.id]);
 
             const tenantId = mesa.tenant_id;
             const mesaId = mesa.id;

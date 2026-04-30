@@ -28,7 +28,7 @@ class LiberarMesaService {
                 await connection.query(`UPDATE pedidos SET estado = 'cancelado' WHERE id IN (?)`, [ids]);
             }
 
-            await connection.query(`UPDATE mesas SET estado = 'libre' WHERE id = ?`, [mesaId]);
+            await connection.query(`UPDATE mesas SET estado = 'libre', qr_session_id = NULL, last_qr_activity = NULL WHERE id = ?`, [mesaId]);
             
             await connection.commit();
             return { message: 'Mesa liberada' };

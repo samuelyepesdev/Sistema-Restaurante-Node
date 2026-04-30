@@ -8,7 +8,7 @@ class PedidoQRController {
             // Extraer la IP del cliente de forma segura (manejando proxies si los hay)
             const clientIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
 
-            const resultado = await PedidoQRService.procesarPedido(qr_token, items, notas, clientIp);
+            const resultado = await PedidoQRService.procesarPedido(qr_token, items, notas, clientIp, req.cookies);
 
             return res.status(200).json({
                 success: true,
