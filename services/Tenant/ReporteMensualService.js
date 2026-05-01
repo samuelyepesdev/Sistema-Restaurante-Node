@@ -32,8 +32,12 @@ class ReporteMensualService {
             if (requestDate > date) {
                 throw new Error('No se puede generar un reporte de un mes futuro.');
             }
+        } else if (options.finDeMes) {
+            // Producción normal (Cron último día): Cierre del MES ACTUAL
+            targetMonth = date.getMonth();
+            targetYear = date.getFullYear();
         } else if (!options.testMesActual) {
-            // Producción normal (Cron): Cierre del MES ANTERIOR
+            // Producción (Cron Antiguo): Cierre del MES ANTERIOR
             date.setMonth(date.getMonth() - 1);
             targetMonth = date.getMonth();
             targetYear = date.getFullYear();
@@ -126,16 +130,18 @@ class ReporteMensualService {
     }
 
     /**
-     * Función llamada por el CRON el día 1 de cada mes
+     * Función llamada por el CRON el último día de cada mes (o el día 1 si es manual/antiguo)
      */
-    static async procesarCierreMensual() {
+    static async procesarCierreMensual(options = {}) {
         console.log('--- Iniciando CRON de cierre mensual de reportes ---');
         const tenants = await TenantService.getAllTenants();
 
         for (const t of tenants) {
             if (t.activo) {
                 try {
-                    await this.generarYEnviar(t, { testMesActual: false }); // Envía mes anterior
+                    // Si se llama desde el cron de fin de mes, options tendrá { finDeMes: true }
+                    // Si no, por defecto será para enviar el mes anterior.
+                    await this.generarYEnviar(t, { testMesActual: false, ...options });
                 } catch (err) {
                     console.error(`Error enviando reporte mensual a tenant ${t.nombre}:`, err.message);
                 }

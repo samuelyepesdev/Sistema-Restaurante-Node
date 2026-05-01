@@ -5,10 +5,14 @@ const WhatsAppService = require('../services/Tenant/WhatsAppService');
 
 const runBackgroundJobs = async () => {
     try {
-        // Se ejecuta el primer (1) día de cada mes a las 6:00 AM (0 6 1 * *)
-        cron.schedule('0 6 1 * *', async () => {
-            console.log('--- CRON: Iniciando envío de reportes mensuales ---');
-            await ReporteMensualService.procesarCierreMensual();
+        // Se evalúa todos los días a las 23:50 para ver si es el último día del mes
+        cron.schedule('50 23 * * *', async () => {
+            const tomorrow = new Date();
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            if (tomorrow.getDate() === 1) {
+                console.log('--- CRON: Último día del mes detectado. Iniciando envío de reportes mensuales ---');
+                await ReporteMensualService.procesarCierreMensual({ finDeMes: true });
+            }
         });
         console.log('--- Cron jobs iniciados exitosamente ---');
 
