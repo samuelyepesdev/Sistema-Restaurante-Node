@@ -1,0 +1,78 @@
+// Core shared state and helper functions for Mesas module
+
+window.MesasModule = {
+  canvas: null,
+  pedidoActual: null,
+  isProgrammaticHide: false,
+  items: [],
+  clienteActual: { id: null, nombre: 'Consumidor Final' },
+  descuentosPorItem: {},
+  propinaPedido: 0,
+  currentMesaEstado: 'libre',
+
+  formatear(valor) {
+    return `$${Number(valor || 0).toLocaleString('es-CO')}`;
+  },
+
+  subtotalConDescuento(cantidad, precio, itemId) {
+    const pct = this.descuentosPorItem[itemId] != null ? this.descuentosPorItem[itemId] : 0;
+    return cantidad * precio * (1 - pct / 100);
+  },
+
+  async runWithOffcanvasHidden(action) {
+    const wasOpen = this.canvas && document.getElementById('canvasPedido')?.classList.contains('show');
+    if (wasOpen) {
+      this.isProgrammaticHide = true;
+      try { this.canvas.hide(); } catch (_) { this.isProgrammaticHide = false; }
+      await new Promise(r => setTimeout(r, 250));
+    }
+    try {
+      return await action();
+    } finally {
+      this.isProgrammaticHide = false;
+      if (wasOpen) {
+        try { this.canvas.show(); } catch (_) {}
+      }
+    }
+  }
+};
+
+$(function () {
+  if (document.getElementById('canvasPedido')) {
+    window.MesasModule.canvas = new bootstrap.Offcanvas('#canvasPedido');
+  }
+
+  // Handle favorites panel body styling classes
+  document.getElementById('canvasPedido')?.addEventListener('shown.bs.offcanvas', () => {
+    document.body.classList.add('offcanvas-open');
+  });
+  document.getElementById('canvasPedido')?.addEventListener('hidden.bs.offcanvas', () => {
+    document.body.classList.remove('offcanvas-open');
+    if (!window.MesasModule.isProgrammaticHide) {
+      window.MesasModule.pedidoActual = null;
+    }
+  });
+});
+
+window.refreshMesaIfOpen = async function(mesaId) {
+  if (window.MesasModule.pedidoActual && window.MesasModule.pedidoActual.mesa_id == mesaId) {
+    console.log(`[SSE] Refrescando mesa abierta ${mesaId}...`);
+    if (typeof window.MesasModule.cargarPedido === 'function') {
+      await window.MesasModule.cargarPedido(window.MesasModule.pedidoActual.id);
+    }
+    const Toast = Swal.mixin({
+      toast: true,
+      position: 'top-end',
+      showConfirmButton: false,
+      timer: 3000,
+      timerProgressBar: true
+    });
+    Toast.fire({
+      icon: 'info',
+      title: 'Pedido actualizado',
+      text: 'Se han recibido nuevos productos vía QR.'
+    });
+  } else {
+    if (typeof refreshMesas === 'function') refreshMesas();
+  }
+};
