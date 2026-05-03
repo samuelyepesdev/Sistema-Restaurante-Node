@@ -12,9 +12,18 @@
             <div class="modal-body">
                 <form id="formProducto">
                     <input type="hidden" id="productoId">
+                    <input type="hidden" id="imagenUrl">
                     <div class="mb-3">
                         <label class="form-label">Código</label>
                         <input type="text" class="form-control" id="codigo" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Imagen del Producto</label>
+                        <input type="file" class="form-control" id="imagenFile" accept="image/*">
+                        <div id="imagenPreviewContainer" class="mt-2 d-none">
+                            <img id="imagenPreview" src="" alt="Vista previa" class="img-thumbnail" style="max-height: 120px;">
+                            <button type="button" class="btn btn-sm btn-outline-danger mt-1 d-block" id="btnQuitarImagen">Quitar</button>
+                        </div>
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Nombre</label>

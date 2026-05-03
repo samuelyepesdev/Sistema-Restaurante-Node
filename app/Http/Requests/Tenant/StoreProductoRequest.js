@@ -35,7 +35,11 @@ class StoreProductoRequest extends BaseRequest {
             body('descripcion')
                 .optional({ checkFalsy: true })
                 .isString().withMessage('La descripción debe ser un texto')
-                .isLength({ max: 1000 }).withMessage('La descripción no puede exceder los 1000 caracteres')
+                .isLength({ max: 1000 }).withMessage('La descripción no puede exceder los 1000 caracteres'),
+
+            body('imagen_url')
+                .optional({ checkFalsy: true })
+                .isString().withMessage('La URL de la imagen debe ser un texto')
         ];
     }
 }

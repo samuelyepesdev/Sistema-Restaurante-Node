@@ -46,4 +46,8 @@ router.post('/importar', requirePermission('plantillas.ver'), requirePlanFeature
 // PATCH /productos/:id/favorito - Toggle favorite
 router.patch('/:id/favorito', requirePermission('productos.editar'), ProductosController.toggleFavorite);
 
+// POST /productos/upload-image - Upload image to Cloudflare R2
+router.post('/upload-image', requirePermission('productos.crear'), upload.single('imagen'), ProductosController.uploadImage);
+
 module.exports = router;
+
