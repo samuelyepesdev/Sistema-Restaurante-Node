@@ -292,6 +292,22 @@ class ProductosController {
             res.status(500).json({ error: 'Error al actualizar favorito' });
         }
     }
+
+    // POST /productos/upload-image
+    static async uploadImage(req, res) {
+        try {
+            if (!req.file) {
+                return res.status(400).json({ error: 'No se recibió ningún archivo de imagen' });
+            }
+            const R2StorageService = require('../../../../services/Tenant/R2StorageService');
+            const url = await R2StorageService.uploadFile(req.file.buffer, req.file.originalname, req.file.mimetype);
+            res.json({ url });
+        } catch (error) {
+            console.error('Error al subir imagen:', error);
+            res.status(500).json({ error: error.message || 'Error al subir imagen' });
+        }
+    }
 }
 
 module.exports = ProductosController;
+

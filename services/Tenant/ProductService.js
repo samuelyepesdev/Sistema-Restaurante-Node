@@ -54,7 +54,7 @@ class ProductService {
      * @throws {Error} If validation fails or duplicate code
      */
     static async create(tenantId, productData) {
-        const { codigo, nombre, precio_unidad, categoria_id, descripcion } = productData;
+        const { codigo, nombre, precio_unidad, categoria_id, descripcion, imagen_url } = productData;
 
         if (!codigo || !nombre) {
             throw new Error('El código y nombre son requeridos');
@@ -73,7 +73,8 @@ class ProductService {
                 nombre: nombre.trim(),
                 precio_unidad: parseFloat(precio_unidad) || 0,
                 categoria_id: categoria_id || 1,
-                descripcion: descripcion ? descripcion.trim() : null
+                descripcion: descripcion ? descripcion.trim() : null,
+                imagen_url: imagen_url || null
             });
 
             return {
@@ -96,7 +97,7 @@ class ProductService {
      * @throws {Error} If product not found or validation fails
      */
     static async update(id, tenantId, productData) {
-        const { codigo, nombre, precio_unidad, categoria_id, descripcion } = productData;
+        const { codigo, nombre, precio_unidad, categoria_id, descripcion, imagen_url } = productData;
 
         if (!codigo || !nombre) {
             throw new Error('El código y nombre son requeridos');
@@ -120,7 +121,8 @@ class ProductService {
                 nombre: nombre.trim(),
                 precio_unidad: parseFloat(precio_unidad) || 0,
                 categoria_id: categoria_id || 1,
-                descripcion: descripcion ? descripcion.trim() : null
+                descripcion: descripcion ? descripcion.trim() : null,
+                imagen_url: imagen_url || null
             });
 
             if (result.affectedRows === 0) {

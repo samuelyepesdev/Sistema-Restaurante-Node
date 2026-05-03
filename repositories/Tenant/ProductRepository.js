@@ -85,10 +85,10 @@ class ProductRepository {
      * @returns {Promise<Object>} Created product with insertId
      */
     static async create(tenantId, productData) {
-        const { codigo, nombre, precio_unidad, categoria_id, descripcion } = productData;
+        const { codigo, nombre, precio_unidad, categoria_id, descripcion, imagen_url } = productData;
         const result = await db.query(
-            'INSERT INTO productos (tenant_id, codigo, nombre, precio_unidad, categoria_id, descripcion) VALUES (?, ?, ?, ?, ?, ?)',
-            [tenantId, codigo, nombre, precio_unidad || 0, categoria_id || 1, descripcion || null]
+            'INSERT INTO productos (tenant_id, codigo, nombre, precio_unidad, categoria_id, descripcion, imagen_url) VALUES (?, ?, ?, ?, ?, ?, ?)',
+            [tenantId, codigo, nombre, precio_unidad || 0, categoria_id || 1, descripcion || null, imagen_url || null]
         );
         return result;
     }
@@ -100,13 +100,14 @@ class ProductRepository {
      * @returns {Promise<Object>} Update result
      */
     static async update(id, tenantId, productData) {
-        const { codigo, nombre, precio_unidad, categoria_id, descripcion } = productData;
+        const { codigo, nombre, precio_unidad, categoria_id, descripcion, imagen_url } = productData;
         const result = await db.query(
-            'UPDATE productos SET codigo = ?, nombre = ?, precio_unidad = ?, categoria_id = ?, descripcion = ? WHERE id = ? AND tenant_id = ?',
-            [codigo, nombre, precio_unidad || 0, categoria_id || 1, descripcion || null, id, tenantId]
+            'UPDATE productos SET codigo = ?, nombre = ?, precio_unidad = ?, categoria_id = ?, descripcion = ?, imagen_url = ? WHERE id = ? AND tenant_id = ?',
+            [codigo, nombre, precio_unidad || 0, categoria_id || 1, descripcion || null, imagen_url || null, id, tenantId]
         );
         return result;
     }
+
 
     /**
      * Update only product price (for applying suggested price from costeo)

@@ -56,6 +56,9 @@ ProductManager.prototype.init = function() {
       const esModoEdicion = this.formManager.isEditMode;
       if (!e.relatedTarget && !esModoEdicion) {
         this.formManager.resetForm();
+        document.getElementById('imagenUrl').value = '';
+        document.getElementById('imagenFile').value = '';
+        document.getElementById('imagenPreviewContainer')?.classList.add('d-none');
         document.getElementById('productoParametrosContainer')?.classList.add('d-none');
         setTimeout(() => {
           document.getElementById('codigo')?.focus();
@@ -64,6 +67,67 @@ ProductManager.prototype.init = function() {
       if (esModoEdicion) {
         document.getElementById('productoParametrosContainer')?.classList.remove('d-none');
       }
+    });
+  }
+
+  // Handle product image upload to Cloudflare R2 on file selection
+  const imgFileEl = document.getElementById('imagenFile');
+  if (imgFileEl) {
+    imgFileEl.addEventListener('change', async (e) => {
+      if (!e.target.files || e.target.files.length === 0) return;
+
+      const file = e.target.files[0];
+      const formData = new FormData();
+      formData.append('imagen', file);
+
+      // Disable submit button temporarily
+      const btnGuardar = document.getElementById('guardarProducto');
+      if (btnGuardar) {
+        btnGuardar.disabled = true;
+        btnGuardar.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Subiendo...';
+      }
+
+      try {
+        const res = await fetch('/api/productos/upload-image', {
+          method: 'POST',
+          body: formData
+        });
+
+        if (!res.ok) {
+          const errData = await res.json();
+          throw new Error(errData.error || 'Error al subir la imagen');
+        }
+
+        const data = await res.json();
+        document.getElementById('imagenUrl').value = data.url;
+
+        const previewContainer = document.getElementById('imagenPreviewContainer');
+        const previewImg = document.getElementById('imagenPreview');
+        if (previewContainer && previewImg) {
+          previewImg.src = data.url;
+          previewContainer.classList.remove('d-none');
+        }
+
+        AlertManager.success('Imagen cargada correctamente');
+      } catch (err) {
+        AlertManager.error(err.message || 'No se pudo subir la imagen');
+        e.target.value = '';
+      } finally {
+        if (btnGuardar) {
+          btnGuardar.disabled = false;
+          btnGuardar.innerHTML = '<i class="bi bi-save me-1"></i>Guardar';
+        }
+      }
+    });
+  }
+
+  // Handle removing product image
+  const btnQuitarImagen = document.getElementById('btnQuitarImagen');
+  if (btnQuitarImagen) {
+    btnQuitarImagen.addEventListener('click', () => {
+      document.getElementById('imagenUrl').value = '';
+      document.getElementById('imagenFile').value = '';
+      document.getElementById('imagenPreviewContainer')?.classList.add('d-none');
     });
   }
 

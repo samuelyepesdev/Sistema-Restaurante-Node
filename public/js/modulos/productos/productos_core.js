@@ -98,7 +98,8 @@ class ProductManager {
       nombre: data.nombre || document.getElementById('nombre').value,
       categoria_id: data.categoriaId || document.getElementById('categoriaId').value,
       precio_unidad: parseFloat(data.precioUnidad || document.getElementById('precioUnidad').value) || 0,
-      descripcion: document.getElementById('descripcion') ? document.getElementById('descripcion').value : ''
+      descripcion: document.getElementById('descripcion') ? document.getElementById('descripcion').value : '',
+      imagen_url: document.getElementById('imagenUrl')?.value || null
     };
 
     try {
@@ -154,6 +155,23 @@ class ProductManager {
       if (document.getElementById('descripcion')) {
         document.getElementById('descripcion').value = producto.descripcion || '';
       }
+      
+      const imgUrl = producto.imagen_url || '';
+      const imgUrlEl = document.getElementById('imagenUrl');
+      const previewContainer = document.getElementById('imagenPreviewContainer');
+      const previewImg = document.getElementById('imagenPreview');
+      const imgFileEl = document.getElementById('imagenFile');
+
+      if (imgUrlEl) imgUrlEl.value = imgUrl;
+      if (imgFileEl) imgFileEl.value = '';
+
+      if (imgUrl && previewContainer && previewImg) {
+        previewImg.src = imgUrl;
+        previewContainer.classList.remove('d-none');
+      } else if (previewContainer) {
+        previewContainer.classList.add('d-none');
+      }
+
       const paramContainer = document.getElementById('productoParametrosContainer');
       if (paramContainer) {
         try {
