@@ -26,8 +26,28 @@ app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
 // Route specifically for sitemap.xml
 app.get('/sitemap.xml', (req, res) => {
+    const protocol = req.headers['x-forwarded-proto'] || req.protocol || 'https';
+    const host = req.headers['x-forwarded-host'] || req.headers.host || 'gatroflow.digital';
+    const domain = `${protocol}://${host}`;
+
+    const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+    <url>
+        <loc>${domain}/</loc>
+        <lastmod>2026-05-04</lastmod>
+        <changefreq>daily</changefreq>
+        <priority>1.0</priority>
+    </url>
+    <url>
+        <loc>${domain}/auth/login</loc>
+        <lastmod>2026-05-04</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.8</priority>
+    </url>
+</urlset>`;
+
     res.header('Content-Type', 'application/xml');
-    res.sendFile(path.join(__dirname, 'public', 'sitemap.xml'));
+    res.send(sitemap);
 });
 
 
