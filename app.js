@@ -24,6 +24,13 @@ app.use(cookieParser());
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
+// Route specifically for sitemap.xml
+app.get('/sitemap.xml', (req, res) => {
+    res.header('Content-Type', 'application/xml');
+    res.sendFile(path.join(__dirname, 'public', 'sitemap.xml'));
+});
+
+
 // Seguridad: Rate Limit General
 const limiter = rateLimit({
     windowMs: 15 * 60 * 1000, 
