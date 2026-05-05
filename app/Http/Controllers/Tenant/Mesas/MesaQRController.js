@@ -24,7 +24,10 @@ class MesaQRController {
                 ORDER BY CAST(numero AS UNSIGNED), numero
             `, [tenantId]);
 
-            const baseUrl = req.protocol + '://' + req.get('host');
+            const protocol = req.headers['x-forwarded-proto'] || req.protocol || 'https';
+            const host = req.headers['x-forwarded-host'] || req.get('host');
+            // Aseguramos que la URL siempre tenga http:// o https:// para que el celular lo reconozca como un enlace
+            const baseUrl = `${protocol}://${host}`;
             res.render('mesas/qrs', {
                 mesas,
                 baseUrl,
