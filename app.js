@@ -71,6 +71,8 @@ app.use((req, res, next) => {
         /\.asp$/i,
         /wp-admin/i,
         /wp-content/i,
+        /wp-includes/i,
+        /wlwmanifest\.xml/i,
         /vendor/i,
         /composer\.json/i,
         /package\.json/i,
