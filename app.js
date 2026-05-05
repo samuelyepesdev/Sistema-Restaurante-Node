@@ -61,6 +61,32 @@ const limiter = rateLimit({
 });
 app.use(limiter);
 
+// Middleware de Seguridad: Bloquear escaneos maliciosos (.env, .git, .php, etc)
+app.use((req, res, next) => {
+    const maliciousPatterns = [
+        /^\/\.env/i,
+        /^\/\.git/i,
+        /\.php$/i,
+        /\.jsp$/i,
+        /\.asp$/i,
+        /wp-admin/i,
+        /wp-content/i,
+        /vendor/i,
+        /composer\.json/i,
+        /package\.json/i,
+        /\.bak$/i,
+        /\.sql$/i
+    ];
+
+    const isMalicious = maliciousPatterns.some(pattern => pattern.test(req.path));
+
+    if (isMalicious) {
+        // Enviamos 403 y terminamos la petición sin pasar al log de 404
+        return res.status(403).send('Forbidden: Access Denied');
+    }
+    next();
+});
+
 // Headers de seguridad y CORS estricto
 app.use((req, res, next) => {
     res.setHeader('X-Content-Type-Options', 'nosniff');
