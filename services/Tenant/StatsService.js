@@ -6,6 +6,7 @@
 
 const StatsRepository = require('../../repositories/Tenant/StatsRepository');
 const InventarioService = require('./InventarioService');
+const cacheService = require('../Shared/CacheService');
 
 class StatsService {
     /**
@@ -15,6 +16,10 @@ class StatsService {
      * @returns {Promise<Object>} Dashboard statistics object
      */
     static async getDashboardStats(tenantId, filters = {}) {
+        const cacheKey = `tenant_dashboard_stats_${tenantId}_${JSON.stringify(filters)}`;
+        const cached = cacheService.get(cacheKey);
+        if (cached) return cached;
+
         // Calcular fechas en timezone Colombia (America/Bogota), no en UTC
         const fechaHoyColombia = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Bogota' }); // 'YYYY-MM-DD'
         const [anioColombia, mesColombia] = fechaHoyColombia.split('-').map(Number);
@@ -27,7 +32,6 @@ class StatsService {
 
         const mesInicio = mesInicioStr;
         const mesFin = mesFinStr;
-
 
         const [
             ventasHoy,
@@ -77,7 +81,7 @@ class StatsService {
             // Inventario puede no estar disponible en todos los tenants
         }
 
-        return {
+        const stats = {
             ventasHoyTotal: ventasHoy.total,
             ventasHoyCantidad: ventasHoy.cantidad,
             ventasMesTotal: ventasMes.total,
@@ -115,6 +119,10 @@ class StatsService {
             totalServiciosExternosMes: paymentTotalsMes.serviciosExternos,
             ventaNetaMes: (ventasMes.total - paymentTotalsMes.serviciosExternos)
         };
+
+        // Cachear por 2 minutos (120 segundos)
+        cacheService.set(cacheKey, stats, 120);
+        return stats;
     }
 
     /**
@@ -131,4 +139,3 @@ class StatsService {
 }
 
 module.exports = StatsService;
-

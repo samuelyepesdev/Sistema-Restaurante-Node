@@ -1,4 +1,40 @@
 const db = require('../../../config/database');
+const cacheService = require('../../Shared/CacheService');
+
+/**
+ * Convierte un rango de fechas en hora local colombiana (Bogotá GMT-5)
+ * a su rango correspondiente en fechas UTC reales ('YYYY-MM-DD HH:mm:ss').
+ * Permite realizar búsquedas indexadas (SARGABLE) sin usar DATE(CONVERT_TZ(...)).
+ */
+function getUtcRangeForColombia(desde, hasta) {
+    const utcDesde = `${desde} 05:00:00`;
+    const utcHastaDate = new Date(`${hasta}T23:59:59`);
+    utcHastaDate.setHours(utcHastaDate.getHours() + 5);
+    
+    const y = utcHastaDate.getFullYear();
+    const m = String(utcHastaDate.getMonth() + 1).padStart(2, '0');
+    const d = String(utcHastaDate.getDate()).padStart(2, '0');
+    const hh = String(utcHastaDate.getHours()).padStart(2, '0');
+    const mm = String(utcHastaDate.getMinutes()).padStart(2, '0');
+    const ss = String(utcHastaDate.getSeconds()).padStart(2, '0');
+    
+    const utcHasta = `${y}-${m}-${d} ${hh}:${mm}:${ss}`;
+    return { utcDesde, utcHasta };
+}
+
+/**
+ * Retorna el rango UTC exacto que cubre un único día en hora colombiana.
+ */
+function getUtcDayRangeForColombia(dateStr) {
+    const utcDesde = `${dateStr} 05:00:00`;
+    const nextDay = new Date(`${dateStr}T12:00:00`);
+    nextDay.setDate(nextDay.getDate() + 1);
+    const y = nextDay.getFullYear();
+    const m = String(nextDay.getMonth() + 1).padStart(2, '0');
+    const d = String(nextDay.getDate()).padStart(2, '0');
+    const utcHasta = `${y}-${m}-${d} 04:59:59`;
+    return { utcDesde, utcHasta };
+}
 
 class TenantStatsService {
     /**
@@ -6,6 +42,10 @@ class TenantStatsService {
      * @returns {Promise<Object>} Dashboard statistics object
      */
     static async getDashboardStats() {
+        const cacheKey = 'superadmin_dashboard_stats';
+        const cached = cacheService.get(cacheKey);
+        if (cached) return cached;
+
         const [resumen] = await db.query(`
             SELECT
                 COUNT(*) AS total,
@@ -85,13 +125,16 @@ class TenantStatsService {
         const diaHoy = bogotaDate.getUTCDate(); // Día actual en Bogotá
         const parts = [String(yyyy), mm, dd];
 
+        // Rango de fechas UTC para el mes actual colombia
+        const { utcDesde: utcMesInicio, utcHasta: utcMesFin } = getUtcRangeForColombia(mesInicioStr, hoyColombia);
+
         const [ventasDiaRows] = await db.query(`
             SELECT DATE(CONVERT_TZ(fecha, '+00:00', '-05:00')) AS fecha_colombia, SUM(total) as total
             FROM facturas
-            WHERE evento_id IS NULL AND DATE(CONVERT_TZ(fecha, '+00:00', '-05:00')) BETWEEN ? AND ?
+            WHERE evento_id IS NULL AND fecha BETWEEN ? AND ?
             GROUP BY fecha_colombia
             ORDER BY fecha_colombia ASC
-        `, [mesInicioStr, hoyColombia]);
+        `, [utcMesInicio, utcMesFin]);
 
         const ventasPorFecha = {};
         ventasDiaRows.forEach(r => {
@@ -111,10 +154,10 @@ class TenantStatsService {
         const [ventasEventosDiaRows] = await db.query(`
             SELECT DATE(CONVERT_TZ(fecha, '+00:00', '-05:00')) AS fecha_colombia, SUM(total) as total
             FROM facturas
-            WHERE evento_id IS NOT NULL AND DATE(CONVERT_TZ(fecha, '+00:00', '-05:00')) BETWEEN ? AND ?
+            WHERE evento_id IS NOT NULL AND fecha BETWEEN ? AND ?
             GROUP BY fecha_colombia
             ORDER BY fecha_colombia ASC
-        `, [mesInicioStr, hoyColombia]);
+        `, [utcMesInicio, utcMesFin]);
 
         const ventasEventosPorFecha = {};
         ventasEventosDiaRows.forEach(r => {
@@ -142,13 +185,15 @@ class TenantStatsService {
         const diasEnMesAnterior = new Date(mesAnteriorY, mesAnteriorM, 0).getDate();
         const mesAnteriorFinStr = `${mesAnteriorY}-${String(mesAnteriorM).padStart(2, '0')}-${String(diasEnMesAnterior).padStart(2, '0')}`;
 
+        const { utcDesde: utcMesAntInicio, utcHasta: utcMesAntFin } = getUtcRangeForColombia(mesAnteriorInicioStr, mesAnteriorFinStr);
+
         const [ventasDiaAntRows] = await db.query(`
             SELECT DATE(CONVERT_TZ(fecha, '+00:00', '-05:00')) AS fecha_colombia, SUM(total) as total
             FROM facturas
-            WHERE evento_id IS NULL AND DATE(CONVERT_TZ(fecha, '+00:00', '-05:00')) BETWEEN ? AND ?
+            WHERE evento_id IS NULL AND fecha BETWEEN ? AND ?
             GROUP BY fecha_colombia
             ORDER BY fecha_colombia ASC
-        `, [mesAnteriorInicioStr, mesAnteriorFinStr]);
+        `, [utcMesAntInicio, utcMesAntFin]);
 
         const ventasPorFechaAnt = {};
         ventasDiaAntRows.forEach(r => {
@@ -180,10 +225,10 @@ class TenantStatsService {
             SELECT t.nombre AS tenant_nombre, DATE(CONVERT_TZ(f.fecha, '+00:00', '-05:00')) AS fecha_colombia, SUM(f.total) as total
             FROM facturas f
             JOIN tenants t ON f.tenant_id = t.id
-            WHERE f.evento_id IS NULL AND DATE(CONVERT_TZ(f.fecha, '+00:00', '-05:00')) BETWEEN ? AND ?
+            WHERE f.evento_id IS NULL AND f.fecha BETWEEN ? AND ?
             GROUP BY f.tenant_id, fecha_colombia
             ORDER BY fecha_colombia ASC
-        `, [mesInicioStr, hoyColombia]);
+        `, [utcMesInicio, utcMesFin]);
 
         ventasTenantRows.forEach(r => {
             const f = (r.fecha_colombia instanceof Date) ? r.fecha_colombia.toISOString().split('T')[0] : String(r.fecha_colombia || '').substring(0, 10);
@@ -206,16 +251,18 @@ class TenantStatsService {
             ventasDiariasPorTenant.push({ nombre, data: dataPuntos });
         });
 
+        // Ventas de hoy directas
+        const { utcDesde: utcHoyInicio, utcHasta: utcHoyFin } = getUtcDayRangeForColombia(hoyColombia);
         const [ventasHoyDirectas] = await db.query(`
             SELECT t.nombre AS tenant_nombre, COALESCE(SUM(f.total), 0) AS total, COUNT(f.id) AS facturas
             FROM tenants t
             LEFT JOIN facturas f ON f.tenant_id = t.id
                 AND f.evento_id IS NULL
-                AND DATE(CONVERT_TZ(f.fecha, '+00:00', '-05:00')) = ?
+                AND f.fecha BETWEEN ? AND ?
             WHERE t.activo = 1
             GROUP BY t.id, t.nombre
             ORDER BY total DESC
-        `, [hoyColombia]);
+        `, [utcHoyInicio, utcHoyFin]);
 
         const ventasHoyPorTenant = ventasHoyDirectas.map(r => ({
             nombre: r.tenant_nombre,
@@ -229,7 +276,7 @@ class TenantStatsService {
         const toNum = (val) => (val === undefined || val === null) ? 0 : (typeof val === 'bigint' ? Number(val) : parseFloat(val) || 0);
         const rowVal = (row) => (row && typeof row === 'object') ? toNum(Object.values(row)[0]) : 0;
         
-        return {
+        const stats = {
             totalRestaurantes: parseInt(toNum(r.total ?? r.TOTAL) || 0, 10),
             restaurantesActivos: parseInt(toNum(r.activos ?? r.ACTIVOS) || 0, 10),
             restaurantesInactivos: parseInt(toNum(r.inactivos ?? r.INACTIVOS) || 0, 10),
@@ -252,6 +299,10 @@ class TenantStatsService {
             ventasHoyPorTenant,
             ventasHoyTotalGlobal
         };
+
+        // Guardar en caché por 5 minutos (300 segundos)
+        cacheService.set(cacheKey, stats, 300);
+        return stats;
     }
 }
 

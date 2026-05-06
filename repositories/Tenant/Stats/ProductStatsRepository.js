@@ -1,0 +1,155 @@
+const db = require('../../../config/database');
+
+/**
+ * Convierte un rango de fechas en hora local colombiana (Bogotá GMT-5)
+ * a su rango correspondiente en fechas UTC reales ('YYYY-MM-DD HH:mm:ss').
+ */
+function getUtcRangeForColombia(desde, hasta) {
+    const utcDesde = `${desde} 05:00:00`;
+    const utcHastaDate = new Date(`${hasta}T23:59:59`);
+    utcHastaDate.setHours(utcHastaDate.getHours() + 5);
+    
+    const y = utcHastaDate.getFullYear();
+    const m = String(utcHastaDate.getMonth() + 1).padStart(2, '0');
+    const d = String(utcHastaDate.getDate()).padStart(2, '0');
+    const hh = String(utcHastaDate.getHours()).padStart(2, '0');
+    const mm = String(utcHastaDate.getMinutes()).padStart(2, '0');
+    const ss = String(utcHastaDate.getSeconds()).padStart(2, '0');
+    
+    const utcHasta = `${y}-${m}-${d} ${hh}:${mm}:${ss}`;
+    return { utcDesde, utcHasta };
+}
+
+class ProductStatsRepository {
+    static async getTopProducts(tenantId, limit = 10, filters = {}) {
+        let query = `
+            SELECT 
+                p.id,
+                p.nombre,
+                p.codigo,
+                c.nombre AS categoria_nombre,
+                SUM(df.cantidad) AS total_cantidad,
+                SUM(df.subtotal) AS total_ventas,
+                COUNT(DISTINCT df.factura_id) AS facturas_count
+            FROM detalle_factura df
+            INNER JOIN productos p ON df.producto_id = p.id
+            LEFT JOIN categorias c ON p.categoria_id = c.id
+            INNER JOIN facturas f ON df.factura_id = f.id
+            WHERE f.tenant_id = ? AND f.evento_id IS NULL
+        `;
+        const params = [tenantId];
+
+        if (filters.desde && filters.hasta) {
+            const { utcDesde, utcHasta } = getUtcRangeForColombia(filters.desde, filters.hasta);
+            query += " AND f.fecha BETWEEN ? AND ?";
+            params.push(utcDesde, utcHasta);
+        }
+
+        query += `
+            GROUP BY p.id, p.nombre, p.codigo, c.nombre
+            ORDER BY total_ventas DESC
+            LIMIT ?
+        `;
+        params.push(limit);
+
+        const [result] = await db.query(query, params);
+        return result.map(row => ({
+            id: row.id,
+            nombre: row.nombre,
+            codigo: row.codigo,
+            categoria_nombre: row.categoria_nombre || 'Sin categoría',
+            total_cantidad: parseFloat(row.total_cantidad || 0),
+            total_ventas: parseFloat(row.total_ventas || 0),
+            facturas_count: parseInt(row.facturas_count || 0)
+        }));
+    }
+
+    static async getSalesByCategory(tenantId, filters = {}) {
+        let query = `
+            SELECT 
+                COALESCE(c.nombre, 'Sin categoría') AS categoria_nombre,
+                COUNT(DISTINCT df.factura_id) AS facturas_count,
+                SUM(df.cantidad) AS total_cantidad,
+                SUM(df.subtotal) AS total_ventas
+            FROM detalle_factura df
+            INNER JOIN productos p ON df.producto_id = p.id
+            LEFT JOIN categorias c ON p.categoria_id = c.id
+            INNER JOIN facturas f ON df.factura_id = f.id
+            WHERE f.tenant_id = ? AND f.evento_id IS NULL
+        `;
+        const params = [tenantId];
+
+        if (filters.desde && filters.hasta) {
+            const { utcDesde, utcHasta } = getUtcRangeForColombia(filters.desde, filters.hasta);
+            query += " AND f.fecha BETWEEN ? AND ?";
+            params.push(utcDesde, utcHasta);
+        }
+
+        query += ' GROUP BY c.id, c.nombre ORDER BY total_ventas DESC';
+
+        const [result] = await db.query(query, params);
+        return result.map(row => ({
+            categoria_nombre: row.categoria_nombre,
+            facturas_count: parseInt(row.facturas_count || 0),
+            total_cantidad: parseFloat(row.total_cantidad || 0),
+            total_ventas: parseFloat(row.total_ventas || 0)
+        }));
+    }
+
+    static async getTopProductsByCategory(tenantId, limit = 5, filters = {}) {
+        let query = `
+            SELECT 
+                c.id AS categoria_id,
+                COALESCE(c.nombre, 'Sin categoría') AS categoria_nombre,
+                p.id AS producto_id,
+                p.nombre AS producto_nombre,
+                p.codigo,
+                SUM(df.cantidad) AS total_cantidad,
+                SUM(df.subtotal) AS total_ventas
+            FROM detalle_factura df
+            INNER JOIN productos p ON df.producto_id = p.id
+            LEFT JOIN categorias c ON p.categoria_id = c.id
+            INNER JOIN facturas f ON df.factura_id = f.id
+            WHERE f.tenant_id = ? AND f.evento_id IS NULL
+        `;
+        const params = [tenantId];
+
+        if (filters.desde && filters.hasta) {
+            const { utcDesde, utcHasta } = getUtcRangeForColombia(filters.desde, filters.hasta);
+            query += " AND f.fecha BETWEEN ? AND ?";
+            params.push(utcDesde, utcHasta);
+        }
+
+        query += `
+            GROUP BY c.id, c.nombre, p.id, p.nombre, p.codigo
+            ORDER BY categoria_nombre, total_ventas DESC
+        `;
+
+        const [result] = await db.query(query, params);
+
+        // Group by category and limit products per category
+        const grouped = {};
+        result.forEach(row => {
+            const categoria = row.categoria_nombre;
+            if (!grouped[categoria]) {
+                grouped[categoria] = [];
+            }
+            if (grouped[categoria].length < limit) {
+                grouped[categoria].push({
+                    producto_id: row.producto_id,
+                    producto_nombre: row.producto_nombre,
+                    codigo: row.codigo,
+                    total_cantidad: parseFloat(row.total_cantidad || 0),
+                    total_ventas: parseFloat(row.total_ventas || 0)
+                });
+            }
+        });
+
+        return Object.keys(grouped).map(categoria => ({
+            categoria_nombre: categoria,
+            productos: grouped[categoria]
+        }));
+    }
+}
+
+module.exports = ProductStatsRepository;
