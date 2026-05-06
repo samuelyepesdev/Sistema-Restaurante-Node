@@ -136,7 +136,6 @@ app.use('/', webRoutes);
 
 // Manejo de errores 404
 app.use((req, res, next) => {
-    console.log('404 - Ruta no encontrada:', req.url);
     if (req.xhr || (req.headers.accept && req.headers.accept.indexOf('json') > -1)) {
         res.status(404).json({ error: 'Ruta no encontrada' });
     } else {
