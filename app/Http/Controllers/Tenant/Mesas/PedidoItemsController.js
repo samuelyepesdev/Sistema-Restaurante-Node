@@ -4,6 +4,7 @@ const EliminarItemService = require('../../../../../services/Tenant/Mesas/Elimin
 const UpdateItemCantidadService = require('../../../../../services/Tenant/Mesas/UpdateItemCantidadService');
 const UpdateItemEstadoService = require('../../../../../services/Tenant/Mesas/UpdateItemEstadoService');
 const PagarItemIndividualService = require('../../../../../services/Tenant/Mesas/PagarItemIndividualService');
+const PagarMultiplesItemsService = require('../../../../../services/Tenant/Mesas/PagarMultiplesItemsService');
 
 class PedidoItemsController {
     // POST /mesas/pedidos/:pedidoId/items
@@ -89,6 +90,18 @@ class PedidoItemsController {
             const { itemId } = req.params;
             const { forma_pago, cantidad } = req.body;
             const resultado = await PagarItemIndividualService.execute({ tenantId, itemId, forma_pago, cantidad });
+            res.json(resultado);
+        } catch (error) {
+            res.status(400).json({ error: error.message });
+        }
+    }
+
+    // POST /mesas/items/pagar-multiples
+    static async pagarMultiples(req, res) {
+        try {
+            const tenantId = req.tenant?.id;
+            const { items, forma_pago } = req.body;
+            const resultado = await PagarMultiplesItemsService.execute({ tenantId, items, forma_pago });
             res.json(resultado);
         } catch (error) {
             res.status(400).json({ error: error.message });

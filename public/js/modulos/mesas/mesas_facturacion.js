@@ -130,108 +130,255 @@ $(function () {
           await mostrarModalPago(totalConPropinaFacturar, clienteIdFacturar);
         } else if (result.isDenied) {
           await mod.runWithOffcanvasHidden(async () => {
-            const inputOptions = {};
+            let rowsHtml = '';
+            let hasPendingItems = false;
             mod.items.forEach(it => {
               if (!it.pagado) {
+                hasPendingItems = true;
                 const cantidad = Number(it.cantidad || 0);
                 const precio = Number((it.precio_unitario != null ? it.precio_unitario : it.precio) || 0);
                 const subtotal = mod.subtotalConDescuento(cantidad, precio, it.id);
-                inputOptions[it.id] = (it.producto_nombre || it.nombre || it.producto_id) + ' - ' + mod.formatear(subtotal);
+                const nombre = it.producto_nombre || it.nombre || 'Producto sin nombre';
+
+                rowsHtml += `
+                  <tr class="item-row" data-id="${it.id}" data-precio="${precio}" style="cursor: pointer; transition: background-color 0.2s;">
+                    <td style="padding: 10px 8px;">
+                      <input type="checkbox" class="form-check-input check-item" data-id="${it.id}" style="transform: scale(1.1);">
+                    </td>
+                    <td style="text-align: left; padding: 10px 8px;">
+                      <div class="fw-bold text-dark text-truncate" style="max-width: 220px;" title="${nombre}">${nombre}</div>
+                      <small class="text-muted fs-7">${mod.formatear(precio)} c/u</small>
+                    </td>
+                    <td class="text-center" style="padding: 10px 8px;">
+                      ${cantidad > 1
+                        ? `<input type="number" class="form-control form-control-sm input-cantidad-item text-center mx-auto px-1" 
+                             value="${cantidad}" min="1" max="${cantidad}" disabled style="width: 70px; height: 32px; font-weight: 600;">`
+                        : `<span class="badge bg-light text-secondary border border-secondary-subtle px-2 py-1" style="font-weight: 500;">1</span>
+                           <input type="hidden" class="input-cantidad-item" value="1">`
+                      }
+                    </td>
+                    <td class="text-end fw-bold item-subtotal-display text-success" data-original-subtotal="${subtotal}" style="padding: 10px 8px;">
+                      ${mod.formatear(subtotal)}
+                    </td>
+                  </tr>
+                `;
               }
             });
-            const { value: itemId } = await Swal.fire({
-              title: '<h4 class="mb-0 fw-bold text-primary"><i class="bi bi-cart-check me-2"></i>Seleccione el producto</h4>',
-              html: '<p class="text-muted small">Seleccione cuál de los ítems pendientes desea pagar individualmente:</p>',
-              input: 'radio',
-              inputOptions: inputOptions,
-              inputValidator: (value) => { if (!value) return 'Debe elegir un producto'; },
+
+            if (!hasPendingItems) {
+              Swal.fire({ icon: 'warning', title: 'No hay ítems pendientes por pagar' });
+              return;
+            }
+
+            const tableHtml = `
+              <div class="container-fluid p-0" style="font-family: inherit;">
+                <p class="text-muted small mb-3 text-start"><i class="bi bi-info-circle me-1"></i> Seleccione los productos a facturar y defina la cantidad en caso de ser múltiple:</p>
+                <div class="table-responsive rounded border shadow-sm mb-2" style="max-height: 320px;">
+                  <table class="table table-sm table-hover align-middle mb-0" id="tabla-pago-masivo" style="font-size: 0.9rem;">
+                     <thead class="table-light sticky-top border-bottom bg-white">
+                       <tr>
+                         <th width="35" style="padding: 10px 8px;"><input type="checkbox" id="check-todos-items" class="form-check-input" style="transform: scale(1.1);"></th>
+                         <th class="text-start" style="padding: 10px 8px;">Producto</th>
+                         <th width="80" class="text-center" style="padding: 10px 8px;">Cant</th>
+                         <th class="text-end" style="padding: 10px 8px;">Subtotal</th>
+                       </tr>
+                     </thead>
+                     <tbody class="bg-white">
+                        ${rowsHtml}
+                     </tbody>
+                  </table>
+                </div>
+                <div class="d-flex justify-content-between align-items-center mt-3 p-3 bg-light rounded border border-primary-subtle shadow-xs">
+                  <span class="fw-bold text-secondary"><i class="bi bi-calculator-fill me-2 text-primary"></i>Total Seleccionado:</span>
+                  <span class="fw-bolder text-primary fs-4" id="total-seleccionado-val">$0</span>
+                </div>
+              </div>
+            `;
+
+            const { value: itemsSeleccionados } = await Swal.fire({
+              title: '<h4 class="mb-0 fw-bold text-primary d-flex align-items-center"><i class="bi bi-cart-check-fill me-2 fs-3"></i> Facturar por Producto</h4>',
+              html: tableHtml,
+              width: '620px',
               showCancelButton: true,
-              confirmButtonText: 'Continuar <i class="bi bi-arrow-right-short"></i>',
+              confirmButtonText: 'Siguiente <i class="bi bi-arrow-right-short"></i>',
               cancelButtonText: 'Cancelar',
               confirmButtonColor: '#0d6efd',
-              cancelButtonColor: '#6c757d'
+              cancelButtonColor: '#6c757d',
+              customClass: {
+                popup: 'rounded-4 shadow',
+                confirmButton: 'px-4 py-2 fw-semibold',
+                cancelButton: 'px-4 py-2 fw-semibold'
+              },
+              didOpen: (popup) => {
+                const table = $(popup).find('#tabla-pago-masivo');
+                const checkTodos = $(popup).find('#check-todos-items');
+                const totalValDisplay = $(popup).find('#total-seleccionado-val');
+
+                const actualizarTotal = () => {
+                  let total = 0;
+                  table.find('.item-row').each(function() {
+                    const row = $(this);
+                    const isChecked = row.find('.check-item').is(':checked');
+                    if (isChecked) {
+                      const itemId = row.data('id');
+                      const precio = Number(row.data('precio'));
+                      const cant = Number(row.find('.input-cantidad-item').val()) || 1;
+                      const sub = mod.subtotalConDescuento(cant, precio, itemId);
+                      
+                      row.find('.item-subtotal-display').text(mod.formatear(sub));
+                      total += sub;
+                    } else {
+                      const orig = row.find('.item-subtotal-display').data('original-subtotal');
+                      row.find('.item-subtotal-display').text(mod.formatear(orig));
+                    }
+                  });
+                  totalValDisplay.text(mod.formatear(total));
+                };
+
+                table.on('change', '.check-item', function(e) {
+                  e.stopPropagation();
+                  const row = $(this).closest('tr');
+                  const inputCant = row.find('.input-cantidad-item[type="number"]');
+                  const isChecked = $(this).is(':checked');
+                  
+                  inputCant.prop('disabled', !isChecked);
+                  if (isChecked) {
+                    row.css('background-color', 'rgba(13, 110, 253, 0.075)');
+                  } else {
+                    row.css('background-color', '');
+                  }
+                  
+                  const allChecked = table.find('.check-item').length === table.find('.check-item:checked').length;
+                  checkTodos.prop('checked', allChecked);
+                  
+                  actualizarTotal();
+                });
+
+                table.on('input change', '.input-cantidad-item', function(e) {
+                  e.stopPropagation();
+                  const max = Number($(this).attr('max'));
+                  let val = Number($(this).val()) || 1;
+                  
+                  if (val > max) $(this).val(max);
+                  if (val < 1) $(this).val(1);
+
+                  actualizarTotal();
+                });
+
+                checkTodos.on('change', function() {
+                  const checked = $(this).is(':checked');
+                  table.find('.check-item').each(function() {
+                    $(this).prop('checked', checked).trigger('change');
+                  });
+                });
+
+                table.find('.item-row').on('click', function(e) {
+                  if ($(e.target).is('input') || $(e.target).closest('input').length > 0) return;
+                  const chk = $(this).find('.check-item');
+                  chk.prop('checked', !chk.is(':checked')).trigger('change');
+                });
+              },
+              preConfirm: () => {
+                const popup = Swal.getPopup();
+                const table = $(popup).find('#tabla-pago-masivo');
+                const seleccion = [];
+                let sumTotal = 0;
+
+                table.find('.item-row').each(function() {
+                  const row = $(this);
+                  const isChecked = row.find('.check-item').is(':checked');
+                  if (isChecked) {
+                    const itemId = row.data('id');
+                    const precio = Number(row.data('precio'));
+                    const cant = Number(row.find('.input-cantidad-item').val()) || 1;
+                    const sub = mod.subtotalConDescuento(cant, precio, itemId);
+
+                    seleccion.push({ itemId, cantidad: cant });
+                    sumTotal += sub;
+                  }
+                });
+
+                if (seleccion.length === 0) {
+                  Swal.showValidationMessage('Debe seleccionar al menos un ítem para pagar');
+                  return false;
+                }
+                return { items: seleccion, totalAPagar: sumTotal };
+              }
             });
 
-            if (itemId) {
-              const selectedItem = mod.items.find(it => String(it.id) === String(itemId));
-              let cantidadAPagar = parseFloat(selectedItem ? selectedItem.cantidad : 1);
+            if (!itemsSeleccionados) return;
 
-              if (cantidadAPagar > 1) {
-                const { value: cant } = await Swal.fire({
-                  title: '<h4 class="mb-0 fw-bold text-success"><i class="bi bi-calculator me-2"></i>Cantidad a pagar</h4>',
-                  html: `<p class="mb-2">Este producto tiene <strong>${cantidadAPagar}</strong> unidades.</p><p class="text-muted small">¿Cuántas unidades vas a pagar ahora?</p>`,
+            const subtotalAPagar = itemsSeleccionados.totalAPagar;
+
+            const inputPagoOptions = { 'efectivo': 'Efectivo', 'transferencia': 'Transferencia' };
+            const { value: formaPago } = await Swal.fire({
+              title: '<h4 class="mb-0 fw-bold text-primary"><i class="bi bi-cash-stack me-2"></i> Pagar Ítems Seleccionados</h4>',
+              html: `<p class="mb-2 fs-5">Monto Total a Pagar: <strong class="text-success">${mod.formatear(subtotalAPagar)}</strong></p><p class="text-muted small">Seleccione el método de pago para los productos elegidos:</p>`,
+              input: 'radio',
+              inputOptions: inputPagoOptions,
+              inputValidator: (value) => { if (!value) return 'Debe elegir un método'; },
+              showCancelButton: true,
+              confirmButtonText: 'Siguiente <i class="bi bi-arrow-right-short"></i>',
+              cancelButtonText: 'Cancelar',
+              confirmButtonColor: '#0d6efd',
+              cancelButtonColor: '#6c757d',
+              customClass: { popup: 'rounded-4 shadow' }
+            });
+
+            if (formaPago) {
+              let montoRecibido = 0;
+              let cambioADevolver = 0;
+
+              if (formaPago === 'efectivo') {
+                const { value: recibido } = await Swal.fire({
+                  title: '<h4 class="mb-0 fw-bold text-success"><i class="bi bi-wallet2 me-2"></i> Pago en Efectivo</h4>',
+                  html: `<p class="mb-1 fs-5">Total a pagar: <strong class="text-success fw-bold">${mod.formatear(subtotalAPagar)}</strong></p><p class="text-muted small">Ingrese el monto recibido:</p>`,
                   input: 'number',
-                  inputValue: 1,
-                  inputAttributes: { min: 1, max: cantidadAPagar, step: 1 },
+                  inputAttributes: { min: subtotalAPagar, step: 100, style: 'font-size: 1.25rem; text-align: center;' },
                   inputValidator: (value) => {
-                    if (!value || parseFloat(value) <= 0) return 'Debe ingresar una cantidad válida';
-                    if (parseFloat(value) > cantidadAPagar) return `No puede pagar más de ${cantidadAPagar} unidades`;
+                    if (!value || parseFloat(value) < subtotalAPagar) return `El monto recibido debe ser mayor o igual a ${mod.formatear(subtotalAPagar)}`;
                   },
                   showCancelButton: true,
-                  confirmButtonText: 'Siguiente <i class="bi bi-arrow-right-short"></i>',
+                  confirmButtonText: 'Confirmar Pago <i class="bi bi-check-circle"></i>',
                   cancelButtonText: 'Cancelar',
                   confirmButtonColor: '#198754',
-                  cancelButtonColor: '#6c757d'
+                  cancelButtonColor: '#6c757d',
+                  customClass: { popup: 'rounded-4 shadow' }
                 });
-                if (!cant) return;
-                cantidadAPagar = parseFloat(cant);
+                if (!recibido) return;
+                montoRecibido = parseFloat(recibido);
+                cambioADevolver = montoRecibido - subtotalAPagar;
               }
 
-              const inputPagoOptions = { 'efectivo': 'Efectivo', 'transferencia': 'Transferencia' };
-              const { value: formaPago } = await Swal.fire({
-                title: '<h4 class="mb-0 fw-bold text-primary"><i class="bi bi-cash-stack me-2"></i>Pagar Item Individual</h4>',
-                html: '<p class="text-muted small">Seleccione el método de pago para este ítem:</p>',
-                input: 'radio',
-                inputOptions: inputPagoOptions,
-                inputValidator: (value) => { if (!value) return 'Debe elegir un método'; },
-                showCancelButton: true,
-                confirmButtonText: 'Siguiente <i class="bi bi-arrow-right-short"></i>',
-                cancelButtonText: 'Cancelar',
-                confirmButtonColor: '#0d6efd',
-                cancelButtonColor: '#6c757d'
+              Swal.fire({
+                title: 'Procesando pago masivo...',
+                html: 'Espere un momento por favor.',
+                allowOutsideClick: false,
+                didOpen: () => Swal.showLoading()
               });
-              if (formaPago) {
-                let montoRecibido = 0;
-                let cambioADevolver = 0;
+
+              try {
+                const r = await fetch(`/api/mesas/items/pagar-multiples`, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    forma_pago: formaPago,
+                    items: itemsSeleccionados.items
+                  })
+                });
                 
-                const precioUnitario = Number((selectedItem.precio_unitario != null ? selectedItem.precio_unitario : selectedItem.precio) || 0);
-                const subtotalAPagar = mod.subtotalConDescuento(cantidadAPagar, precioUnitario, selectedItem.id);
-
-                if (formaPago === 'efectivo') {
-                  const { value: recibido } = await Swal.fire({
-                    title: '<h4 class="mb-0 fw-bold text-success"><i class="bi bi-wallet2 me-2"></i>Pago en Efectivo</h4>',
-                    html: `<p class="mb-1">Total a pagar: <strong class="fs-4 text-success">${mod.formatear(subtotalAPagar)}</strong></p><p class="text-muted small">Ingrese el monto recibido:</p>`,
-                    input: 'number',
-                    inputAttributes: { min: subtotalAPagar, step: 100 },
-                    inputValidator: (value) => {
-                      if (!value || parseFloat(value) < subtotalAPagar) return `El monto recibido debe ser mayor o igual a ${mod.formatear(subtotalAPagar)}`;
-                    },
-                    showCancelButton: true,
-                    confirmButtonText: 'Confirmar Pago <i class="bi bi-check-circle"></i>',
-                    cancelButtonText: 'Cancelar',
-                    confirmButtonColor: '#198754',
-                    cancelButtonColor: '#6c757d'
-                  });
-                  if (!recibido) return;
-                  montoRecibido = parseFloat(recibido);
-                  cambioADevolver = montoRecibido - subtotalAPagar;
+                const d = await r.json();
+                if (!r.ok) throw new Error(d.error || 'Error al procesar el pago masivo');
+                
+                await mod.cargarPedido(mod.pedidoActual.id);
+                
+                let htmlMsg = `<i class="bi bi-check-circle-fill text-success fs-1 d-block mb-3"></i> <span>Se procesaron los productos correctamente.</span>`;
+                if (formaPago === 'efectivo' && montoRecibido > subtotalAPagar) {
+                  htmlMsg += `<div class="mt-3 p-2 bg-light border rounded text-center"><strong class="text-success fs-5">Cambio a devolver: ${mod.formatear(cambioADevolver)}</strong></div>`;
                 }
-
-                try {
-                  const r = await fetch(`/api/mesas/items/${itemId}/pagar`, {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ forma_pago: formaPago, cantidad: cantidadAPagar })
-                  });
-                  if (!r.ok) { const d = await r.json(); throw new Error(d.error || 'Error al pagar item'); }
-                  await mod.cargarPedido(mod.pedidoActual.id);
-                  
-                  let htmlMsg = `Producto pagado correctamente.`;
-                  if (formaPago === 'efectivo' && montoRecibido > subtotalAPagar) {
-                    htmlMsg += `<br><br><strong class="text-success" style="font-size:1.15rem;">Cambio a devolver: ${mod.formatear(cambioADevolver)}</strong>`;
-                  }
-                  Swal.fire({ icon: 'success', title: 'Completado', html: htmlMsg, confirmButtonText: 'OK', confirmButtonColor: '#198754' });
-                } catch(e) { Swal.fire({ icon: 'error', title: e.message }); }
+                Swal.fire({ icon: 'success', title: 'Pago Exitoso', html: htmlMsg, confirmButtonText: 'Aceptar', confirmButtonColor: '#198754', customClass: { popup: 'rounded-4 shadow' } });
+              } catch(e) { 
+                Swal.fire({ icon: 'error', title: 'Error en el pago', text: e.message, confirmButtonColor: '#dc3545', customClass: { popup: 'rounded-4 shadow' } }); 
               }
             }
           });

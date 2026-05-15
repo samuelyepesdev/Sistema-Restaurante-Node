@@ -20,11 +20,26 @@ window.MesasModule = {
   },
 
   async runWithOffcanvasHidden(action) {
-    const wasOpen = this.canvas && document.getElementById('canvasPedido')?.classList.contains('show');
+    const canvasEl = document.getElementById('canvasPedido');
+    const wasOpen = this.canvas && canvasEl?.classList.contains('show');
     if (wasOpen) {
       this.isProgrammaticHide = true;
-      try { this.canvas.hide(); } catch (_) { this.isProgrammaticHide = false; }
-      await new Promise(r => setTimeout(r, 250));
+      await new Promise(resolve => {
+        // Escuchar evento oficial de Bootstrap para garantizar sincronía
+        const onHidden = () => {
+          canvasEl.removeEventListener('hidden.bs.offcanvas', onHidden);
+          resolve();
+        };
+        canvasEl.addEventListener('hidden.bs.offcanvas', onHidden);
+        
+        try { 
+          this.canvas.hide(); 
+        } catch (_) { 
+          this.isProgrammaticHide = false;
+          canvasEl.removeEventListener('hidden.bs.offcanvas', onHidden);
+          resolve(); 
+        }
+      });
     }
     try {
       return await action();

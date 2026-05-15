@@ -43,6 +43,7 @@ router.delete('/items/:itemId', Items.destroy);
 router.put('/items/:itemId/enviar', Items.enviar);
 router.put('/items/:itemId/estado', Items.updateEstado);
 router.put('/items/:itemId/pagar', Items.pagar);
+router.post('/items/pagar-multiples', Items.pagarMultiples);
 
 // --- ACCIONES OPERATIVAS ---
 router.put('/pedidos/:pedidoId/mover', Actions.moverPedido);
