@@ -21,8 +21,8 @@ app.set('views', path.join(__dirname, 'views'));
 
 // Middlewares Base
 app.use(cookieParser());
-app.use(express.json({ limit: '50mb' }));
-app.use(express.urlencoded({ extended: true, limit: '50mb' }));
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 const idempotency = require('./middleware/idempotency');
 app.use(idempotency);
@@ -98,16 +98,32 @@ app.use((req, res, next) => {
     res.setHeader('X-Content-Type-Options', 'nosniff');
     res.setHeader('X-Frame-Options', 'SAMEORIGIN');
     res.setHeader('X-XSS-Protection', '1; mode=block');
-    
+    res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+    res.setHeader('Permissions-Policy', 'geolocation=(), microphone=(), camera=()');
+
+    // Content-Security-Policy — unsafe-inline requerido mientras existan scripts inline en layout.ejs
+    const cspDirectives = [
+        "default-src 'self'",
+        "script-src 'self' 'unsafe-inline' https://code.jquery.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com",
+        "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com",
+        "font-src 'self' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com",
+        "img-src 'self' data: blob: https:",
+        "connect-src 'self'",
+        "frame-src 'none'",
+        "object-src 'none'",
+        "base-uri 'self'",
+        "form-action 'self'"
+    ];
+    res.setHeader('Content-Security-Policy', cspDirectives.join('; '));
+
     const allowedOrigin = process.env.APP_URL || process.env.FRONTEND_URL || '';
     if (allowedOrigin && req.headers.origin === allowedOrigin) {
         res.setHeader('Access-Control-Allow-Origin', allowedOrigin);
     }
-    
+
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, idempotency-key, Idempotency-Key');
     next();
-
 });
 
 // Middleware Condicional para Dropdown Navbar

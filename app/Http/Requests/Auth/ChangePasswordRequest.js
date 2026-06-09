@@ -13,7 +13,9 @@ class ChangePasswordRequest extends BaseRequest {
 
             body('newPassword')
                 .notEmpty().withMessage('La nueva contraseña es requerida')
-                .isLength({ min: 6 }).withMessage('La nueva contraseña debe tener al menos 6 caracteres'),
+                .isLength({ min: 8 }).withMessage('La nueva contraseña debe tener al menos 8 caracteres')
+                .matches(/[A-Z]/).withMessage('La nueva contraseña debe contener al menos una letra mayúscula')
+                .matches(/[0-9]/).withMessage('La nueva contraseña debe contener al menos un número'),
 
             body('newPasswordConfirm')
                 .notEmpty().withMessage('Debe confirmar la nueva contraseña')

@@ -1,6 +1,9 @@
 require('dotenv').config();
 require('dns').setDefaultResultOrder('ipv4first'); // FUERZA IPv4 A NIVEL GLOBAL
 
+const { validateEnv } = require('./config/env');
+validateEnv();
+
 const app = require('./app');
 const db = require('./config/database');
 const { createRequiredDirectories } = require('./config/setup');
