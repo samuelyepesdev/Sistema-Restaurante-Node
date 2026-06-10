@@ -10,8 +10,9 @@ ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser
 
 # --- Etapa de dependencias ---
 FROM base AS deps
+ENV NODE_ENV=production
 COPY package*.json ./
-RUN HUSKY=0 npm ci --omit=dev && npm cache clean --force
+RUN npm ci --omit=dev && npm cache clean --force
 
 # --- Etapa de producción ---
 FROM base AS production
