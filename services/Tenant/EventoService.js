@@ -17,7 +17,10 @@ class EventoService {
         ]);
         const mapResumen = {};
         (resumen || []).forEach(r => {
-            mapResumen[r.evento_id] = { cantidad_ventas: parseInt(r.cantidad_ventas || 0), total_ventas: parseFloat(r.total_ventas || 0) };
+            mapResumen[r.evento_id] = {
+                cantidad_ventas: parseInt(r.cantidad_ventas || 0),
+                total_ventas: parseFloat(r.total_ventas || 0)
+            };
         });
         return eventos.map(e => ({
             ...e,
@@ -46,7 +49,9 @@ class EventoService {
 
     static async update(id, tenantId, data) {
         const event = await EventoRepository.findById(id, tenantId);
-        if (!event) throw new Error('Evento no encontrado.');
+        if (!event) {
+            throw new Error('Evento no encontrado.');
+        }
         if (data.fecha_fin && data.fecha_inicio && new Date(data.fecha_fin) < new Date(data.fecha_inicio)) {
             throw new Error('La fecha fin debe ser mayor o igual a la fecha inicio.');
         }
@@ -55,7 +60,9 @@ class EventoService {
 
     static async delete(id, tenantId) {
         const ok = await EventoRepository.delete(id, tenantId);
-        if (!ok) throw new Error('Evento no encontrado.');
+        if (!ok) {
+            throw new Error('Evento no encontrado.');
+        }
     }
 }
 

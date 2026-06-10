@@ -15,11 +15,13 @@ module.exports = function navbarLocals(req, res, next) {
             const tenant = req.tenant || res.locals.tenant || null;
             const ap = res.locals.allowedByPlan || {};
 
-            const cs = (mod) => !mod || ap[mod] === true;
-            const hp = (p) => !!(user && (
-                String(user.rol || '').toLowerCase() === 'superadmin' || 
-                (Array.isArray(user.permisos) && user.permisos.includes(p))
-            ));
+            const cs = mod => !mod || ap[mod] === true;
+            const hp = p =>
+                !!(
+                    user &&
+                    (String(user.rol || '').toLowerCase() === 'superadmin' ||
+                        (Array.isArray(user.permisos) && user.permisos.includes(p)))
+                );
 
             const isSuperadmin = !!(user && String(user.rol || '').toLowerCase() === 'superadmin');
 
@@ -29,7 +31,7 @@ module.exports = function navbarLocals(req, res, next) {
                 brandName = words.slice(0, 2).join(' ');
             }
 
-            const fullName = user ? (user.nombre_completo || user.username || '') : '';
+            const fullName = user ? user.nombre_completo || user.username || '' : '';
             const userInitial = fullName ? fullName.charAt(0).toUpperCase() : '?';
             const userFirstName = fullName.split(' ')[0] || '';
 
@@ -51,10 +53,11 @@ module.exports = function navbarLocals(req, res, next) {
                 proveedores: hp('proveedores.ver') && cs('proveedores'),
                 caja: hp('caja.ver') && cs('caja'),
                 finanzas: hp('finanzas.ver'),
-                servicios: hp('servicios.ver') && cs('servicios'),
+                servicios: hp('servicios.ver') && cs('servicios')
             };
 
-            const hasMas = can.recetas || can.eventos || can.analitica || can.whatsapp || can.proveedores || can.servicios;
+            const hasMas =
+                can.recetas || can.eventos || can.analitica || can.whatsapp || can.proveedores || can.servicios;
 
             let primaryColor = '#6366f1';
             let bgStart = '#1e3a5f';
@@ -67,7 +70,9 @@ module.exports = function navbarLocals(req, res, next) {
             if (tenant && tenant.config) {
                 const cfg = typeof tenant.config === 'string' ? JSON.parse(tenant.config) : tenant.config;
                 if (cfg.colores) {
-                    if (cfg.colores.primary) primaryColor = cfg.colores.primary;
+                    if (cfg.colores.primary) {
+                        primaryColor = cfg.colores.primary;
+                    }
                     if (cfg.colores.navbar) {
                         bgStart = cfg.colores.navbar;
                         bgEnd = cfg.colores.navbar;
@@ -75,8 +80,12 @@ module.exports = function navbarLocals(req, res, next) {
                     if (cfg.colores.navbarText) {
                         textColor = cfg.colores.navbarText;
                     }
-                    if (cfg.colores.cardPrimary) cardPrimary = cfg.colores.cardPrimary;
-                    if (cfg.colores.cardSecondary) cardSecondary = cfg.colores.cardSecondary;
+                    if (cfg.colores.cardPrimary) {
+                        cardPrimary = cfg.colores.cardPrimary;
+                    }
+                    if (cfg.colores.cardSecondary) {
+                        cardSecondary = cfg.colores.cardSecondary;
+                    }
                 }
             }
 
@@ -94,7 +103,7 @@ module.exports = function navbarLocals(req, res, next) {
                 cardPrimary,
                 cardSecondary,
                 can,
-                hasMas,
+                hasMas
             };
         }
     });

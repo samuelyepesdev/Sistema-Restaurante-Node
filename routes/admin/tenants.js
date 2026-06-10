@@ -9,7 +9,9 @@ const UpdateTenantRequest = require('../../app/Http/Requests/Admin/UpdateTenantR
 
 // Middleware de seguridad para el módulo admin
 router.use((req, res, next) => {
-    if (!req.user) return res.redirect('/auth/login');
+    if (!req.user) {
+        return res.redirect('/auth/login');
+    }
     if (!authService.hasRole(req.user.rol, [ROLES.SUPERADMIN])) {
         return res.redirect('/');
     }

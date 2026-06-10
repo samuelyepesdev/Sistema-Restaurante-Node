@@ -26,7 +26,9 @@ class PermisosController {
     static async listUsuarios(req, res) {
         try {
             const tenantId = parseInt(req.query.tenantId);
-            if (!tenantId) return res.json({ usuarios: [] });
+            if (!tenantId) {
+                return res.json({ usuarios: [] });
+            }
             const usuarios = await PermisoRepository.getUsuariosByTenantId(tenantId);
             res.json({ usuarios });
         } catch (error) {
@@ -39,7 +41,9 @@ class PermisosController {
     static async getUsuarioPermisos(req, res) {
         try {
             const userId = parseInt(req.params.userId);
-            if (!userId) return res.status(400).json({ error: 'userId inválido' });
+            if (!userId) {
+                return res.status(400).json({ error: 'userId inválido' });
+            }
             const permisoIds = await PermisoRepository.getEffectivePermisoIdsByUser(userId);
             res.json({ permiso_ids: permisoIds });
         } catch (error) {
@@ -52,8 +56,12 @@ class PermisosController {
     static async updateUsuarioPermisos(req, res) {
         try {
             const userId = parseInt(req.params.userId);
-            const permisoIds = Array.isArray(req.body.permiso_ids) ? req.body.permiso_ids.map(id => parseInt(id)).filter(id => !isNaN(id)) : [];
-            if (!userId) return res.status(400).json({ error: 'userId inválido' });
+            const permisoIds = Array.isArray(req.body.permiso_ids)
+                ? req.body.permiso_ids.map(id => parseInt(id)).filter(id => !isNaN(id))
+                : [];
+            if (!userId) {
+                return res.status(400).json({ error: 'userId inválido' });
+            }
             await PermisoRepository.setPermisosForUser(userId, permisoIds);
             res.json({ success: true, message: 'Permisos guardados. Los cambios se aplican al instante.' });
         } catch (error) {

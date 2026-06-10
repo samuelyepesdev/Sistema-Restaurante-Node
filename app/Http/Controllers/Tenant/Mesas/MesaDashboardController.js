@@ -7,9 +7,14 @@ class MesaDashboardController {
     static async index(req, res) {
         try {
             const tenantId = req.tenant?.id;
-            if (!tenantId) return res.status(403).render('errors/internal', { error: { message: 'Contexto de tenant no disponible' } });
+            if (!tenantId) {
+                return res
+                    .status(403)
+                    .render('errors/internal', { error: { message: 'Contexto de tenant no disponible' } });
+            }
 
-            const [mesasData] = await db.query(`
+            const [mesasData] = await db.query(
+                `
                 SELECT m.*, (
                     SELECT COUNT(*) FROM pedidos p 
                     WHERE p.mesa_id = m.id AND p.estado NOT IN ('cerrado','cancelado')
@@ -17,7 +22,9 @@ class MesaDashboardController {
                 FROM mesas m
                 WHERE m.tenant_id = ?
                 ORDER BY m.tipo ASC, CAST(m.numero AS UNSIGNED), m.numero
-            `, [tenantId]);
+            `,
+                [tenantId]
+            );
 
             const mesas = mesasData.filter(m => m.tipo === 'fisica');
             const mesasVirtuales = mesasData.filter(m => m.tipo === 'virtual' && m.estado !== 'libre');
@@ -45,9 +52,12 @@ class MesaDashboardController {
     static async list(req, res) {
         try {
             const tenantId = req.tenant?.id;
-            if (!tenantId) return res.status(403).json({ error: 'Contexto de tenant no disponible' });
+            if (!tenantId) {
+                return res.status(403).json({ error: 'Contexto de tenant no disponible' });
+            }
 
-            const [mesas] = await db.query(`
+            const [mesas] = await db.query(
+                `
                 SELECT m.*, (
                     SELECT COUNT(*) FROM pedidos p 
                     WHERE p.mesa_id = m.id AND p.estado NOT IN ('cerrado','cancelado')
@@ -55,7 +65,9 @@ class MesaDashboardController {
                 FROM mesas m
                 WHERE m.tenant_id = ? AND (m.tipo = 'fisica' OR m.estado <> 'libre')
                 ORDER BY m.tipo ASC, CAST(m.numero AS UNSIGNED), m.numero
-            `, [tenantId]);
+            `,
+                [tenantId]
+            );
             res.json(mesas);
         } catch (error) {
             console.error('Error al listar mesas:', error);

@@ -5,7 +5,11 @@ class EventosController {
     static async index(req, res) {
         try {
             const tenantId = req.tenant?.id;
-            if (!tenantId) return res.status(403).render('errors/internal', { error: { message: 'Contexto de tenant no disponible' } });
+            if (!tenantId) {
+                return res
+                    .status(403)
+                    .render('errors/internal', { error: { message: 'Contexto de tenant no disponible' } });
+            }
             const eventos = await EventoService.listWithVentasResumen(tenantId);
             res.render('eventos/index', {
                 eventos,
@@ -22,7 +26,9 @@ class EventosController {
     static async listActivos(req, res) {
         try {
             const tenantId = req.tenant?.id;
-            if (!tenantId) return res.status(403).json({ error: 'Contexto de tenant no disponible' });
+            if (!tenantId) {
+                return res.status(403).json({ error: 'Contexto de tenant no disponible' });
+            }
             const fecha = req.query.fecha || new Date().toISOString().slice(0, 10);
             const eventos = await EventoService.list(tenantId, { activo: true });
             const activosEnFecha = eventos.filter(e => {
@@ -40,7 +46,9 @@ class EventosController {
     static async store(req, res) {
         try {
             const tenantId = req.tenant?.id;
-            if (!tenantId) return res.status(403).json({ error: 'Contexto de tenant no disponible' });
+            if (!tenantId) {
+                return res.status(403).json({ error: 'Contexto de tenant no disponible' });
+            }
             const id = await EventoService.create(tenantId, req.body);
             return res.status(201).json({ id, message: 'Evento creado' });
         } catch (error) {
@@ -53,7 +61,9 @@ class EventosController {
     static async update(req, res) {
         try {
             const tenantId = req.tenant?.id;
-            if (!tenantId) return res.status(403).json({ error: 'Contexto de tenant no disponible' });
+            if (!tenantId) {
+                return res.status(403).json({ error: 'Contexto de tenant no disponible' });
+            }
             await EventoService.update(req.params.id, tenantId, req.body);
             res.status(200).json({ message: 'Evento actualizado' });
         } catch (error) {
@@ -66,7 +76,9 @@ class EventosController {
     static async destroy(req, res) {
         try {
             const tenantId = req.tenant?.id;
-            if (!tenantId) return res.status(403).json({ error: 'Contexto de tenant no disponible' });
+            if (!tenantId) {
+                return res.status(403).json({ error: 'Contexto de tenant no disponible' });
+            }
             await EventoService.delete(req.params.id, tenantId);
             res.status(200).json({ message: 'Evento eliminado' });
         } catch (error) {

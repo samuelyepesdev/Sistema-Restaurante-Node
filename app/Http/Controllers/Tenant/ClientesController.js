@@ -6,7 +6,11 @@ class ClientesController {
     static async index(req, res) {
         try {
             const tenantId = req.tenant?.id;
-            if (!tenantId) return res.status(403).render('errors/internal', { error: { message: 'Contexto de tenant no disponible' } });
+            if (!tenantId) {
+                return res
+                    .status(403)
+                    .render('errors/internal', { error: { message: 'Contexto de tenant no disponible' } });
+            }
 
             const [clientes, tiposDocumento] = await Promise.all([
                 ClienteService.getAll(tenantId),
@@ -34,7 +38,9 @@ class ClientesController {
     static async search(req, res) {
         try {
             const tenantId = req.tenant?.id;
-            if (!tenantId) return res.status(403).json({ error: 'Contexto de tenant no disponible' });
+            if (!tenantId) {
+                return res.status(403).json({ error: 'Contexto de tenant no disponible' });
+            }
             const query = req.query.q || '';
             const clientes = await ClienteService.search(query, tenantId);
             res.json(clientes);
@@ -48,7 +54,9 @@ class ClientesController {
     static async show(req, res) {
         try {
             const tenantId = req.tenant?.id;
-            if (!tenantId) return res.status(403).json({ error: 'Contexto de tenant no disponible' });
+            if (!tenantId) {
+                return res.status(403).json({ error: 'Contexto de tenant no disponible' });
+            }
             const cliente = await ClienteService.getById(parseInt(req.params.id), tenantId);
             res.json(cliente);
         } catch (error) {
@@ -64,7 +72,9 @@ class ClientesController {
     static async store(req, res) {
         try {
             const tenantId = req.tenant?.id;
-            if (!tenantId) return res.status(403).json({ error: 'Contexto de tenant no disponible' });
+            if (!tenantId) {
+                return res.status(403).json({ error: 'Contexto de tenant no disponible' });
+            }
             const result = await ClienteService.create(tenantId, req.body);
             res.status(201).json(result);
         } catch (error) {
@@ -80,7 +90,9 @@ class ClientesController {
     static async update(req, res) {
         try {
             const tenantId = req.tenant?.id;
-            if (!tenantId) return res.status(403).json({ error: 'Contexto de tenant no disponible' });
+            if (!tenantId) {
+                return res.status(403).json({ error: 'Contexto de tenant no disponible' });
+            }
             const result = await ClienteService.update(parseInt(req.params.id), tenantId, req.body);
             res.json(result);
         } catch (error) {
@@ -97,7 +109,9 @@ class ClientesController {
     static async destroy(req, res) {
         try {
             const tenantId = req.tenant?.id;
-            if (!tenantId) return res.status(403).json({ error: 'Contexto de tenant no disponible' });
+            if (!tenantId) {
+                return res.status(403).json({ error: 'Contexto de tenant no disponible' });
+            }
             const result = await ClienteService.delete(parseInt(req.params.id), tenantId);
             res.json(result);
         } catch (error) {

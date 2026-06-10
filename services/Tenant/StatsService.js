@@ -18,7 +18,9 @@ class StatsService {
     static async getDashboardStats(tenantId, filters = {}) {
         const cacheKey = `tenant_dashboard_stats_${tenantId}_${JSON.stringify(filters)}`;
         const cached = cacheService.get(cacheKey);
-        if (cached) return cached;
+        if (cached) {
+            return cached;
+        }
 
         // Calcular fechas en timezone Colombia (America/Bogota), no en UTC
         const fechaHoyColombia = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Bogota' }); // 'YYYY-MM-DD'
@@ -105,19 +107,19 @@ class StatsService {
             totalEfectivo: paymentTotals.efectivo,
             totalTransferencia: paymentTotals.transferencia,
             totalServiciosExternos: paymentTotals.serviciosExternos,
-            ventaNeta: (totalSales - paymentTotals.serviciosExternos),
-            
+            ventaNeta: totalSales - paymentTotals.serviciosExternos,
+
             // Totales históricos (desde el día 1)
             totalEfectivoAllTime: paymentTotalsAllTime.efectivo,
             totalTransferenciaAllTime: paymentTotalsAllTime.transferencia,
             totalServiciosExternosAllTime: paymentTotalsAllTime.serviciosExternos,
-            ventaNetaAllTime: (totalSalesAllTime - paymentTotalsAllTime.serviciosExternos),
+            ventaNetaAllTime: totalSalesAllTime - paymentTotalsAllTime.serviciosExternos,
 
             // Totales del mes actual
             totalEfectivoMes: paymentTotalsMes.efectivo,
             totalTransferenciaMes: paymentTotalsMes.transferencia,
             totalServiciosExternosMes: paymentTotalsMes.serviciosExternos,
-            ventaNetaMes: (ventasMes.total - paymentTotalsMes.serviciosExternos)
+            ventaNetaMes: ventasMes.total - paymentTotalsMes.serviciosExternos
         };
 
         // Cachear por 2 minutos (120 segundos)

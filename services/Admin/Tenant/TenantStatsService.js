@@ -10,14 +10,14 @@ function getUtcRangeForColombia(desde, hasta) {
     const utcDesde = `${desde} 05:00:00`;
     const utcHastaDate = new Date(`${hasta}T23:59:59`);
     utcHastaDate.setHours(utcHastaDate.getHours() + 5);
-    
+
     const y = utcHastaDate.getFullYear();
     const m = String(utcHastaDate.getMonth() + 1).padStart(2, '0');
     const d = String(utcHastaDate.getDate()).padStart(2, '0');
     const hh = String(utcHastaDate.getHours()).padStart(2, '0');
     const mm = String(utcHastaDate.getMinutes()).padStart(2, '0');
     const ss = String(utcHastaDate.getSeconds()).padStart(2, '0');
-    
+
     const utcHasta = `${y}-${m}-${d} ${hh}:${mm}:${ss}`;
     return { utcDesde, utcHasta };
 }
@@ -44,7 +44,9 @@ class TenantStatsService {
     static async getDashboardStats() {
         const cacheKey = 'superadmin_dashboard_stats';
         const cached = cacheService.get(cacheKey);
-        if (cached) return cached;
+        if (cached) {
+            return cached;
+        }
 
         const [resumen] = await db.query(`
             SELECT
@@ -68,13 +70,17 @@ class TenantStatsService {
             plan_slug: row.plan_slug || '',
             cantidad: parseInt(row.cantidad || 0, 10)
         }));
-        if (sinPlanCount > 0) porPlanList.push({ plan_nombre: 'Sin plan', plan_slug: '', cantidad: sinPlanCount });
+        if (sinPlanCount > 0) {
+            porPlanList.push({ plan_nombre: 'Sin plan', plan_slug: '', cantidad: sinPlanCount });
+        }
         const [usuariosRow] = await db.query(`
             SELECT COUNT(*) AS total FROM usuarios WHERE tenant_id IS NOT NULL
         `);
         const [facturasRows] = await db.query(`SELECT COUNT(*) AS cnt FROM facturas WHERE evento_id IS NULL`);
-        const [ventasMontoRows] = await db.query(`SELECT COALESCE(SUM(total), 0) AS total FROM facturas WHERE evento_id IS NULL`);
-        
+        const [ventasMontoRows] = await db.query(
+            `SELECT COALESCE(SUM(total), 0) AS total FROM facturas WHERE evento_id IS NULL`
+        );
+
         // Desglose de monto total vendido por método de pago para todos los restaurantes
         const [montoPorFormaPagoRows] = await db.query(`
             SELECT forma_pago, COALESCE(SUM(total), 0) AS total 
@@ -86,7 +92,9 @@ class TenantStatsService {
         let totalTransferencia = 0;
         let totalOtros = 0;
         montoPorFormaPagoRows.forEach(row => {
-            const fp = String(row.forma_pago || '').toLowerCase().trim();
+            const fp = String(row.forma_pago || '')
+                .toLowerCase()
+                .trim();
             const total = parseFloat(row.total || 0);
             if (fp === 'efectivo') {
                 totalEfectivo += total;
@@ -115,7 +123,7 @@ class TenantStatsService {
         // Ventas del mes actuales diarias (Bogotá UTC-5)
         const bogotaOffset = -5;
         const now = new Date();
-        const bogotaDate = new Date(now.getTime() + (bogotaOffset * 3600000));
+        const bogotaDate = new Date(now.getTime() + bogotaOffset * 3600000);
         const yyyy = bogotaDate.getUTCFullYear();
         const mm = String(bogotaDate.getUTCMonth() + 1).padStart(2, '0');
         const dd = String(bogotaDate.getUTCDate()).padStart(2, '0');
@@ -128,17 +136,23 @@ class TenantStatsService {
         // Rango de fechas UTC para el mes actual colombia
         const { utcDesde: utcMesInicio, utcHasta: utcMesFin } = getUtcRangeForColombia(mesInicioStr, hoyColombia);
 
-        const [ventasDiaRows] = await db.query(`
+        const [ventasDiaRows] = await db.query(
+            `
             SELECT DATE(CONVERT_TZ(fecha, '+00:00', '-05:00')) AS fecha_colombia, SUM(total) as total
             FROM facturas
             WHERE evento_id IS NULL AND fecha BETWEEN ? AND ?
             GROUP BY fecha_colombia
             ORDER BY fecha_colombia ASC
-        `, [utcMesInicio, utcMesFin]);
+        `,
+            [utcMesInicio, utcMesFin]
+        );
 
         const ventasPorFecha = {};
         ventasDiaRows.forEach(r => {
-            const f = (r.fecha_colombia instanceof Date) ? r.fecha_colombia.toISOString().split('T')[0] : String(r.fecha_colombia || '').substring(0, 10);
+            const f =
+                r.fecha_colombia instanceof Date
+                    ? r.fecha_colombia.toISOString().split('T')[0]
+                    : String(r.fecha_colombia || '').substring(0, 10);
             ventasPorFecha[f] = parseFloat(r.total || 0);
         });
 
@@ -151,17 +165,23 @@ class TenantStatsService {
             });
         }
 
-        const [ventasEventosDiaRows] = await db.query(`
+        const [ventasEventosDiaRows] = await db.query(
+            `
             SELECT DATE(CONVERT_TZ(fecha, '+00:00', '-05:00')) AS fecha_colombia, SUM(total) as total
             FROM facturas
             WHERE evento_id IS NOT NULL AND fecha BETWEEN ? AND ?
             GROUP BY fecha_colombia
             ORDER BY fecha_colombia ASC
-        `, [utcMesInicio, utcMesFin]);
+        `,
+            [utcMesInicio, utcMesFin]
+        );
 
         const ventasEventosPorFecha = {};
         ventasEventosDiaRows.forEach(r => {
-            const f = (r.fecha_colombia instanceof Date) ? r.fecha_colombia.toISOString().split('T')[0] : String(r.fecha_colombia || '').substring(0, 10);
+            const f =
+                r.fecha_colombia instanceof Date
+                    ? r.fecha_colombia.toISOString().split('T')[0]
+                    : String(r.fecha_colombia || '').substring(0, 10);
             ventasEventosPorFecha[f] = parseFloat(r.total || 0);
         });
 
@@ -185,19 +205,28 @@ class TenantStatsService {
         const diasEnMesAnterior = new Date(mesAnteriorY, mesAnteriorM, 0).getDate();
         const mesAnteriorFinStr = `${mesAnteriorY}-${String(mesAnteriorM).padStart(2, '0')}-${String(diasEnMesAnterior).padStart(2, '0')}`;
 
-        const { utcDesde: utcMesAntInicio, utcHasta: utcMesAntFin } = getUtcRangeForColombia(mesAnteriorInicioStr, mesAnteriorFinStr);
+        const { utcDesde: utcMesAntInicio, utcHasta: utcMesAntFin } = getUtcRangeForColombia(
+            mesAnteriorInicioStr,
+            mesAnteriorFinStr
+        );
 
-        const [ventasDiaAntRows] = await db.query(`
+        const [ventasDiaAntRows] = await db.query(
+            `
             SELECT DATE(CONVERT_TZ(fecha, '+00:00', '-05:00')) AS fecha_colombia, SUM(total) as total
             FROM facturas
             WHERE evento_id IS NULL AND fecha BETWEEN ? AND ?
             GROUP BY fecha_colombia
             ORDER BY fecha_colombia ASC
-        `, [utcMesAntInicio, utcMesAntFin]);
+        `,
+            [utcMesAntInicio, utcMesAntFin]
+        );
 
         const ventasPorFechaAnt = {};
         ventasDiaAntRows.forEach(r => {
-            const f = (r.fecha_colombia instanceof Date) ? r.fecha_colombia.toISOString().split('T')[0] : String(r.fecha_colombia || '').substring(0, 10);
+            const f =
+                r.fecha_colombia instanceof Date
+                    ? r.fecha_colombia.toISOString().split('T')[0]
+                    : String(r.fecha_colombia || '').substring(0, 10);
             ventasPorFechaAnt[f] = parseFloat(r.total || 0);
         });
 
@@ -221,17 +250,23 @@ class TenantStatsService {
             ventasPorTenantYFecha[nombre] = {};
         });
 
-        const [ventasTenantRows] = await db.query(`
+        const [ventasTenantRows] = await db.query(
+            `
             SELECT t.nombre AS tenant_nombre, DATE(CONVERT_TZ(f.fecha, '+00:00', '-05:00')) AS fecha_colombia, SUM(f.total) as total
             FROM facturas f
             JOIN tenants t ON f.tenant_id = t.id
             WHERE f.evento_id IS NULL AND f.fecha BETWEEN ? AND ?
             GROUP BY f.tenant_id, fecha_colombia
             ORDER BY fecha_colombia ASC
-        `, [utcMesInicio, utcMesFin]);
+        `,
+            [utcMesInicio, utcMesFin]
+        );
 
         ventasTenantRows.forEach(r => {
-            const f = (r.fecha_colombia instanceof Date) ? r.fecha_colombia.toISOString().split('T')[0] : String(r.fecha_colombia || '').substring(0, 10);
+            const f =
+                r.fecha_colombia instanceof Date
+                    ? r.fecha_colombia.toISOString().split('T')[0]
+                    : String(r.fecha_colombia || '').substring(0, 10);
             const t = r.tenant_nombre || 'Desconocido';
             if (!ventasPorTenantYFecha[t]) {
                 ventasPorTenantYFecha[t] = {};
@@ -253,7 +288,8 @@ class TenantStatsService {
 
         // Ventas de hoy directas
         const { utcDesde: utcHoyInicio, utcHasta: utcHoyFin } = getUtcDayRangeForColombia(hoyColombia);
-        const [ventasHoyDirectas] = await db.query(`
+        const [ventasHoyDirectas] = await db.query(
+            `
             SELECT t.nombre AS tenant_nombre, COALESCE(SUM(f.total), 0) AS total, COUNT(f.id) AS facturas
             FROM tenants t
             LEFT JOIN facturas f ON f.tenant_id = t.id
@@ -262,7 +298,9 @@ class TenantStatsService {
             WHERE t.activo = 1
             GROUP BY t.id, t.nombre
             ORDER BY total DESC
-        `, [utcHoyInicio, utcHoyFin]);
+        `,
+            [utcHoyInicio, utcHoyFin]
+        );
 
         const ventasHoyPorTenant = ventasHoyDirectas.map(r => ({
             nombre: r.tenant_nombre,
@@ -273,9 +311,10 @@ class TenantStatsService {
         const ventasHoyTotalGlobal = ventasHoyPorTenant.reduce((sum, v) => sum + v.total, 0);
 
         const r = resumen[0] || {};
-        const toNum = (val) => (val === undefined || val === null) ? 0 : (typeof val === 'bigint' ? Number(val) : parseFloat(val) || 0);
-        const rowVal = (row) => (row && typeof row === 'object') ? toNum(Object.values(row)[0]) : 0;
-        
+        const toNum = val =>
+            val === undefined || val === null ? 0 : typeof val === 'bigint' ? Number(val) : parseFloat(val) || 0;
+        const rowVal = row => (row && typeof row === 'object' ? toNum(Object.values(row)[0]) : 0);
+
         const stats = {
             totalRestaurantes: parseInt(toNum(r.total ?? r.TOTAL) || 0, 10),
             restaurantesActivos: parseInt(toNum(r.activos ?? r.ACTIVOS) || 0, 10),

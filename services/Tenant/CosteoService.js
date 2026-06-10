@@ -15,12 +15,24 @@ const ProductRepository = require('../../repositories/Tenant/ProductRepository')
  */
 function compraABase(cantidadCompra, unidadCompra) {
     const q = parseFloat(cantidadCompra) || 0;
-    const u = String(unidadCompra || 'UND').trim().toLowerCase();
-    if (u === 'kg') return { cantidadBase: q * 1000, tipoBase: 'g' };
-    if (u === 'g' || u === 'gr') return { cantidadBase: q, tipoBase: 'g' };
-    if (u === 'lb') return { cantidadBase: q * 453.592, tipoBase: 'g' };
-    if (u === 'l') return { cantidadBase: q * 1000, tipoBase: 'ml' };
-    if (u === 'ml') return { cantidadBase: q, tipoBase: 'ml' };
+    const u = String(unidadCompra || 'UND')
+        .trim()
+        .toLowerCase();
+    if (u === 'kg') {
+        return { cantidadBase: q * 1000, tipoBase: 'g' };
+    }
+    if (u === 'g' || u === 'gr') {
+        return { cantidadBase: q, tipoBase: 'g' };
+    }
+    if (u === 'lb') {
+        return { cantidadBase: q * 453.592, tipoBase: 'g' };
+    }
+    if (u === 'l') {
+        return { cantidadBase: q * 1000, tipoBase: 'ml' };
+    }
+    if (u === 'ml') {
+        return { cantidadBase: q, tipoBase: 'ml' };
+    }
     return { cantidadBase: q || 1, tipoBase: 'UND' };
 }
 
@@ -29,16 +41,28 @@ function compraABase(cantidadCompra, unidadCompra) {
  */
 function recetaCantidadABase(cantidad, unidadReceta, tipoBase) {
     const q = parseFloat(cantidad) || 0;
-    const u = String(unidadReceta || 'g').trim().toLowerCase();
+    const u = String(unidadReceta || 'g')
+        .trim()
+        .toLowerCase();
     if (tipoBase === 'g') {
-        if (u === 'kg') return q * 1000;
-        if (u === 'g' || u === 'gr') return q;
-        if (u === 'lb') return q * 453.592;
+        if (u === 'kg') {
+            return q * 1000;
+        }
+        if (u === 'g' || u === 'gr') {
+            return q;
+        }
+        if (u === 'lb') {
+            return q * 453.592;
+        }
         return q;
     }
     if (tipoBase === 'ml') {
-        if (u === 'l') return q * 1000;
-        if (u === 'ml') return q;
+        if (u === 'l') {
+            return q * 1000;
+        }
+        if (u === 'ml') {
+            return q;
+        }
         return q;
     }
     return q;
@@ -57,11 +81,13 @@ function calcularCostoDirecto(ingredientes) {
         const unidadReceta = (it.unidad || 'g').trim();
 
         const { cantidadBase: cantidadBaseCompra, tipoBase } = compraABase(cantidadCompra, unidadCompra);
-        if (cantidadBaseCompra <= 0) return sum;
+        if (cantidadBaseCompra <= 0) {
+            return sum;
+        }
 
         const costoUnitarioReal = precioCompra / cantidadBaseCompra;
         const cantidadRecetaBase = recetaCantidadABase(cantidadUsada, unidadReceta, tipoBase);
-        return sum + (costoUnitarioReal * cantidadRecetaBase);
+        return sum + costoUnitarioReal * cantidadRecetaBase;
     }, 0);
 
     return Math.round(total * 100) / 100;
@@ -71,10 +97,14 @@ function calcularCostoDirecto(ingredientes) {
  * Costo unitario calculado (por unidad base): precio_compra / cantidad_compra_en_base.
  */
 function getCostoUnitarioCalculado(insumo) {
-    if (!insumo) return 0;
+    if (!insumo) {
+        return 0;
+    }
     const precio = parseFloat(insumo.precio_compra) || 0;
     const { cantidadBase } = compraABase(parseFloat(insumo.cantidad_compra) || 1, insumo.unidad_compra);
-    if (cantidadBase <= 0) return 0;
+    if (cantidadBase <= 0) {
+        return 0;
+    }
     return Math.round((precio / cantidadBase) * 100000) / 100000;
 }
 
@@ -82,14 +112,17 @@ function getCostoUnitarioCalculado(insumo) {
  * Costo indirecto según configuración: porcentaje (merma), costo fijo por plato, o factor.
  */
 function calcularCostoIndirecto(costoDirecto, config, totalCostosFijos = 0) {
-    if (!config) return 0;
+    if (!config) {
+        return 0;
+    }
     const metodo = config.metodo_indirectos || 'porcentaje';
     if (metodo === 'porcentaje') {
         const pct = parseFloat(config.porcentaje_indirectos) || 0;
-        return Math.round((costoDirecto * pct / 100) * 100) / 100;
+        return Math.round(((costoDirecto * pct) / 100) * 100) / 100;
     }
     if (metodo === 'costo_fijo') {
-        const totalFijo = typeof totalCostosFijos === 'number' ? totalCostosFijos : (parseFloat(config.costo_fijo_mensual) || 0);
+        const totalFijo =
+            typeof totalCostosFijos === 'number' ? totalCostosFijos : parseFloat(config.costo_fijo_mensual) || 0;
         const unidadesEstimadasMes = parseInt(config.platos_estimados_mes, 10) || 500;
         return unidadesEstimadasMes > 0 ? Math.round((totalFijo / unidadesEstimadasMes) * 100) / 100 : 0;
     }
@@ -100,7 +133,9 @@ function calcularCostoIndirecto(costoDirecto, config, totalCostosFijos = 0) {
  * Precio sugerido: Precio = Costo total ÷ (1 - Margen de ganancia esperado)
  */
 function calcularPrecioSugerido(costoTotal, config) {
-    if (!config) return costoTotal * 2;
+    if (!config) {
+        return costoTotal * 2;
+    }
     const metodo = config.metodo_indirectos || 'factor';
     const margen = parseFloat(config.margen_objetivo_default) || 65;
     if (metodo === 'factor') {
@@ -114,14 +149,18 @@ function calcularPrecioSugerido(costoTotal, config) {
 class CosteoService {
     static async getCosteoByProductoId(productoId, tenantId) {
         const receta = await RecetaRepository.findByProductoId(productoId, tenantId);
-        if (!receta) return null;
+        if (!receta) {
+            return null;
+        }
         return this.getCosteoReceta(receta.id, tenantId);
     }
 
     static async getCosteoReceta(recetaId, tenantId) {
         const receta = await RecetaRepository.findById(recetaId, tenantId);
-        if (!receta) return null;
-        
+        if (!receta) {
+            return null;
+        }
+
         const [ingredientes, config, totalCostosFijos] = await Promise.all([
             RecetaRepository.getIngredientes(recetaId),
             ConfiguracionCosteoRepository.findOne(tenantId),
@@ -136,9 +175,11 @@ class CosteoService {
         const cvuPorcion = Math.round(costoTotalPorcion * 100) / 100;
         const precioSugerido = calcularPrecioSugerido(costoTotalPorcion, config);
         const precioActual = parseFloat(receta.precio_venta_actual) || 0;
-        
-        const mermaPct = config && (config.metodo_indirectos || 'porcentaje') === 'porcentaje'
-            ? (parseFloat(config.porcentaje_indirectos) || 0) : 0;
+
+        const mermaPct =
+            config && (config.metodo_indirectos || 'porcentaje') === 'porcentaje'
+                ? parseFloat(config.porcentaje_indirectos) || 0
+                : 0;
         const margenObjetivoPct = parseFloat(config?.margen_objetivo_default) || 65;
 
         const utilidadBrutaPorcion = precioActual > 0 ? precioActual - cvuPorcion : 0;
@@ -146,9 +187,10 @@ class CosteoService {
         const markupRealPct = cvuPorcion > 0 && precioActual > 0 ? (utilidadBrutaPorcion / cvuPorcion) * 100 : null;
         const margenContribucionPorcion = precioActual > 0 ? precioActual - cvuPorcion : 0;
 
-        const puntoEquilibrioPorciones = margenContribucionPorcion > 0 && totalCostosFijos >= 0
-            ? totalCostosFijos / margenContribucionPorcion
-            : null;
+        const puntoEquilibrioPorciones =
+            margenContribucionPorcion > 0 && totalCostosFijos >= 0
+                ? totalCostosFijos / margenContribucionPorcion
+                : null;
 
         return {
             receta,
@@ -167,10 +209,15 @@ class CosteoService {
             precio_sugerido: precioSugerido,
             precio_venta_actual: precioActual,
             utilidad_bruta_porcion: Math.round(utilidadBrutaPorcion * 100) / 100,
-            margen_actual_pct: margenRealPct != null ? Math.round(margenRealPct * 100) / 100 : null,
-            markup_real_pct: markupRealPct != null ? Math.round(markupRealPct * 100) / 100 : null,
+            margen_actual_pct:
+                margenRealPct !== null && margenRealPct !== undefined ? Math.round(margenRealPct * 100) / 100 : null,
+            markup_real_pct:
+                markupRealPct !== null && markupRealPct !== undefined ? Math.round(markupRealPct * 100) / 100 : null,
             margen_contribucion_porcion: Math.round(margenContribucionPorcion * 100) / 100,
-            punto_equilibrio_porciones: puntoEquilibrioPorciones != null ? Math.round(puntoEquilibrioPorciones * 100) / 100 : null
+            punto_equilibrio_porciones:
+                puntoEquilibrioPorciones !== null && puntoEquilibrioPorciones !== undefined
+                    ? Math.round(puntoEquilibrioPorciones * 100) / 100
+                    : null
         };
     }
 
@@ -193,7 +240,10 @@ class CosteoService {
      */
     static async getAlertas(tenantId) {
         const config = await this.getConfig(tenantId);
-        const margenMinimo = config.margen_minimo_alerta != null ? parseFloat(config.margen_minimo_alerta) : 30;
+        const margenMinimo =
+            config.margen_minimo_alerta !== null && config.margen_minimo_alerta !== undefined
+                ? parseFloat(config.margen_minimo_alerta)
+                : 30;
         const [recetas, productos] = await Promise.all([
             RecetaRepository.findAll(tenantId),
             ProductRepository.findAll(tenantId)
@@ -206,9 +256,11 @@ class CosteoService {
 
         // Transformar recetas de manera funcional y concurrente (Promise.all + .map)
         const itemsWithNulls = await Promise.all(
-            (recetas || []).map(async (receta) => {
+            (recetas || []).map(async receta => {
                 const costeo = await this.getCosteoReceta(receta.id, tenantId);
-                if (!costeo) return null;
+                if (!costeo) {
+                    return null;
+                }
                 return {
                     producto_id: receta.producto_id,
                     producto_nombre: receta.producto_nombre || receta.nombre_receta,
@@ -222,9 +274,14 @@ class CosteoService {
         );
 
         const items = itemsWithNulls.filter(Boolean);
-        const margenBajo = items.filter(it => it.margen_actual_pct != null && it.margen_actual_pct < margenMinimo);
-        const precioBajoCosto = items.filter(it =>
-            (parseFloat(it.precio_venta_actual) || 0) < (parseFloat(it.costo_total_porcion) || 0)
+        const margenBajo = items.filter(
+            it =>
+                it.margen_actual_pct !== null &&
+                it.margen_actual_pct !== undefined &&
+                it.margen_actual_pct < margenMinimo
+        );
+        const precioBajoCosto = items.filter(
+            it => (parseFloat(it.precio_venta_actual) || 0) < (parseFloat(it.costo_total_porcion) || 0)
         );
 
         return {
@@ -244,15 +301,17 @@ class CosteoService {
             this.getConfig(tenantId),
             RecetaRepository.findAll(tenantId)
         ]);
-        
+
         const gananciaDeseada = parseFloat(config.ganancia_neta_deseada_mensual) || 0;
 
         // Carga en paralelo asíncrona de los costeos de todas las recetas
         const productsWithNulls = await Promise.all(
-            (recetas || []).map(async (receta) => {
+            (recetas || []).map(async receta => {
                 const costeo = await this.getCosteoReceta(receta.id, tenantId);
-                if (!costeo) return null;
-                
+                if (!costeo) {
+                    return null;
+                }
+
                 const precio = parseFloat(costeo.precio_venta_actual) || 0;
                 const cvu = parseFloat(costeo.cvu_porcion) || costeo.costo_total_porcion || 0;
                 const mcPorcion = precio - cvu;
@@ -273,16 +332,17 @@ class CosteoService {
         );
 
         const productos = productsWithNulls.filter(Boolean);
-        
+
         // Sumatorias declarativas e inmutables usando .reduce
         const sumaPrecios = productos.reduce((sum, p) => sum + p.precioRaw, 0);
         const sumaMargenContribucion = productos.reduce((sum, p) => sum + p.mcRaw, 0);
 
         const mcPctNegocio = sumaPrecios > 0 ? (sumaMargenContribucion / sumaPrecios) * 100 : 0;
         const ventasEquilibrio = mcPctNegocio > 0 ? totalCostosFijos / (mcPctNegocio / 100) : null;
-        const ventasParaMeta = mcPctNegocio > 0 && (totalCostosFijos + gananciaDeseada) > 0
-            ? (totalCostosFijos + gananciaDeseada) / (mcPctNegocio / 100)
-            : ventasEquilibrio;
+        const ventasParaMeta =
+            mcPctNegocio > 0 && totalCostosFijos + gananciaDeseada > 0
+                ? (totalCostosFijos + gananciaDeseada) / (mcPctNegocio / 100)
+                : ventasEquilibrio;
 
         return {
             total_costos_fijos: Math.round(totalCostosFijos * 100) / 100,
@@ -290,9 +350,14 @@ class CosteoService {
             numero_productos_con_receta: productos.length,
             productos,
             margen_contribucion_pct_negocio: Math.round(mcPctNegocio * 100) / 100,
-            ventas_equilibrio: ventasEquilibrio != null ? Math.round(ventasEquilibrio * 100) / 100 : null,
-            ventas_para_meta: ventasParaMeta != null ? Math.round(ventasParaMeta * 100) / 100 : null,
-            nota_mix: 'El margen % del negocio asume un mix ponderado por precio (una unidad de cada producto). Con ventas reales el mix puede variar.'
+            ventas_equilibrio:
+                ventasEquilibrio !== null && ventasEquilibrio !== undefined
+                    ? Math.round(ventasEquilibrio * 100) / 100
+                    : null,
+            ventas_para_meta:
+                ventasParaMeta !== null && ventasParaMeta !== undefined ? Math.round(ventasParaMeta * 100) / 100 : null,
+            nota_mix:
+                'El margen % del negocio asume un mix ponderado por precio (una unidad de cada producto). Con ventas reales el mix puede variar.'
         };
     }
 }

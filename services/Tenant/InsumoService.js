@@ -39,31 +39,48 @@ class InsumoService {
 
     static async update(id, tenantId, data) {
         const insumo = await InsumoRepository.findById(id, tenantId);
-        if (!insumo) throw new Error('Insumo no encontrado');
+        if (!insumo) {
+            throw new Error('Insumo no encontrado');
+        }
         if (data.codigo && data.codigo.trim() !== insumo.codigo) {
             const exists = await InsumoRepository.findByCodigo(data.codigo.trim(), tenantId, id);
-            if (exists) throw new Error('Ya existe un insumo con ese código');
+            if (exists) {
+                throw new Error('Ya existe un insumo con ese código');
+            }
         }
         const updateData = {
             codigo: (data.codigo || insumo.codigo).trim(),
             nombre: (data.nombre || insumo.nombre).trim(),
             unidad_compra: data.unidad_compra || insumo.unidad_compra,
-            cantidad_compra: data.cantidad_compra !== undefined ? parseFloat(data.cantidad_compra) : insumo.cantidad_compra,
+            cantidad_compra:
+                data.cantidad_compra !== undefined ? parseFloat(data.cantidad_compra) : insumo.cantidad_compra,
             precio_compra: data.precio_compra !== undefined ? parseFloat(data.precio_compra) : insumo.precio_compra,
             precio_venta: data.precio_venta !== undefined ? parseFloat(data.precio_venta) : insumo.precio_venta
         };
-        if (data.unidad_base !== undefined) updateData.unidad_base = data.unidad_base;
-        if (data.stock_minimo !== undefined) updateData.stock_minimo = parseFloat(data.stock_minimo);
-        if (data.categoria_id !== undefined) updateData.categoria_id = data.categoria_id ? parseInt(data.categoria_id, 10) : null;
-        if (data.unidad_medida_id !== undefined) updateData.unidad_medida_id = data.unidad_medida_id ? parseInt(data.unidad_medida_id, 10) : null;
-        if (data.proveedor_id !== undefined) updateData.proveedor_id = data.proveedor_id ? parseInt(data.proveedor_id, 10) : null;
+        if (data.unidad_base !== undefined) {
+            updateData.unidad_base = data.unidad_base;
+        }
+        if (data.stock_minimo !== undefined) {
+            updateData.stock_minimo = parseFloat(data.stock_minimo);
+        }
+        if (data.categoria_id !== undefined) {
+            updateData.categoria_id = data.categoria_id ? parseInt(data.categoria_id, 10) : null;
+        }
+        if (data.unidad_medida_id !== undefined) {
+            updateData.unidad_medida_id = data.unidad_medida_id ? parseInt(data.unidad_medida_id, 10) : null;
+        }
+        if (data.proveedor_id !== undefined) {
+            updateData.proveedor_id = data.proveedor_id ? parseInt(data.proveedor_id, 10) : null;
+        }
         await InsumoRepository.update(id, tenantId, updateData);
         return { message: 'Insumo actualizado' };
     }
 
     static async delete(id, tenantId) {
         const insumo = await InsumoRepository.findById(id, tenantId);
-        if (!insumo) throw new Error('Insumo no encontrado');
+        if (!insumo) {
+            throw new Error('Insumo no encontrado');
+        }
         await InsumoRepository.delete(id, tenantId);
         return { message: 'Insumo eliminado' };
     }
@@ -84,13 +101,15 @@ class InsumoService {
         for (let i = 0; i < rows.length; i++) {
             const fila = i + 2; // 1-based + header
             const r = rows[i];
-            const codigo = r.codigo != null ? String(r.codigo).trim() : '';
-            const nombre = r.nombre != null ? String(r.nombre).trim() : '';
+            const codigo = r.codigo !== null && r.codigo !== undefined ? String(r.codigo).trim() : '';
+            const nombre = r.nombre !== null && r.nombre !== undefined ? String(r.nombre).trim() : '';
             if (!codigo || !nombre) {
                 errores.push({ fila, mensaje: 'Código y nombre son obligatorios' });
                 continue;
             }
-            const unidad_compra = (r.unidad_compra != null ? String(r.unidad_compra).trim() : '') || 'UND';
+            const unidad_compra =
+                (r.unidad_compra !== null && r.unidad_compra !== undefined ? String(r.unidad_compra).trim() : '') ||
+                'UND';
             const cantidad_compra = parseFloat(r.cantidad_compra) || 1;
             const precio_compra = parseFloat(r.precio_compra) || 0;
             try {

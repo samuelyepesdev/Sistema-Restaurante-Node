@@ -9,7 +9,7 @@ class ServicioRepository {
     static async findAll(tenantId, filters = {}) {
         let sql = `SELECT * FROM servicios WHERE tenant_id = ?`;
         const params = [tenantId];
-        
+
         if (filters.q && filters.q.trim()) {
             sql += ' AND (nombre LIKE ? OR descripcion LIKE ?)';
             const term = '%' + filters.q.trim() + '%';
@@ -27,10 +27,7 @@ class ServicioRepository {
     }
 
     static async findById(id, tenantId) {
-        const [rows] = await db.query(
-            'SELECT * FROM servicios WHERE id = ? AND tenant_id = ?',
-            [id, tenantId]
-        );
+        const [rows] = await db.query('SELECT * FROM servicios WHERE id = ? AND tenant_id = ?', [id, tenantId]);
         return rows[0] || null;
     }
 
@@ -40,7 +37,10 @@ class ServicioRepository {
             `INSERT INTO servicios (tenant_id, nombre, descripcion, precio, es_externo, activo)
              VALUES (?, ?, ?, ?, ?, ?)`,
             [
-                tenantId, nombre, descripcion || null, parseFloat(precio) || 0,
+                tenantId,
+                nombre,
+                descripcion || null,
+                parseFloat(precio) || 0,
                 es_externo !== undefined ? es_externo : true,
                 activo !== undefined ? activo : true
             ]
@@ -52,16 +52,18 @@ class ServicioRepository {
         const fields = [];
         const params = [];
         const allowed = ['nombre', 'descripcion', 'precio', 'es_externo', 'activo'];
-        
+
         for (const key of allowed) {
             if (data[key] !== undefined) {
                 fields.push(`${key} = ?`);
                 params.push(data[key]);
             }
         }
-        
-        if (fields.length === 0) return null;
-        
+
+        if (fields.length === 0) {
+            return null;
+        }
+
         params.push(id, tenantId);
         const [result] = await db.query(
             `UPDATE servicios SET ${fields.join(', ')} WHERE id = ? AND tenant_id = ?`,

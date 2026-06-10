@@ -84,7 +84,9 @@ class PermisoRepository {
 
     /** Usuarios de un tenant (para asignar permisos por restaurante) */
     static async getUsuariosByTenantId(tenantId) {
-        if (tenantId == null) return [];
+        if (tenantId === null || tenantId === undefined) {
+            return [];
+        }
         const [rows] = await db.query(
             `SELECT u.id, u.username, u.nombre_completo, u.email, u.activo, u.rol_id, r.nombre AS rol_nombre
              FROM usuarios u
@@ -108,23 +110,26 @@ class PermisoRepository {
      */
     static async getEffectivePermisoIdsByUser(userId) {
         const [userRows] = await db.query('SELECT rol_id FROM usuarios WHERE id = ?', [userId]);
-        if (!userRows.length) return [];
+        if (!userRows.length) {
+            return [];
+        }
         const rolId = userRows[0].rol_id;
         const [rolePerms] = await db.query('SELECT permiso_id FROM rol_permisos WHERE rol_id = ?', [rolId]);
         const roleIds = (rolePerms || []).map(r => r.permiso_id);
         const userIds = await PermisoRepository.getPermisoIdsByUser(userId);
-        if (userIds && userIds.length > 0) return userIds;
+        if (userIds && userIds.length > 0) {
+            return userIds;
+        }
         return roleIds;
     }
 
     /** Obtener IDs de permisos cuyos nombres están en la lista (para sincronizar con plan) */
     static async getPermisoIdsByNames(permissionNames) {
-        if (!permissionNames || permissionNames.length === 0) return [];
+        if (!permissionNames || permissionNames.length === 0) {
+            return [];
+        }
         const placeholders = permissionNames.map(() => '?').join(',');
-        const [rows] = await db.query(
-            `SELECT id FROM permisos WHERE nombre IN (${placeholders})`,
-            permissionNames
-        );
+        const [rows] = await db.query(`SELECT id FROM permisos WHERE nombre IN (${placeholders})`, permissionNames);
         return (rows || []).map(r => r.id);
     }
 

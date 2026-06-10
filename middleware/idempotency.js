@@ -7,7 +7,7 @@ const cacheService = require('../services/Shared/CacheService');
  */
 module.exports = function (req, res, next) {
     const mutatingMethods = ['POST', 'PUT', 'PATCH', 'DELETE'];
-    
+
     // Solo interceptar peticiones mutativas
     if (!mutatingMethods.includes(req.method)) {
         return next();
@@ -26,13 +26,13 @@ module.exports = function (req, res, next) {
     if (cachedResponse) {
         console.log(`[Idempotencia] Bloqueada petición duplicada para la llave: ${key}`);
         res.status(cachedResponse.status);
-        
+
         if (cachedResponse.headers) {
             Object.keys(cachedResponse.headers).forEach(h => {
                 res.setHeader(h, cachedResponse.headers[h]);
             });
         }
-        
+
         return res.json(cachedResponse.body);
     }
 
@@ -54,13 +54,17 @@ module.exports = function (req, res, next) {
 
         // Solo cachear respuestas exitosas (status 2xx)
         if (res.statusCode >= 200 && res.statusCode < 300) {
-            cacheService.set(cacheKey, {
-                status: res.statusCode,
-                body: body,
-                headers: {
-                    'Content-Type': 'application/json'
-                }
-            }, 1800); // Mantener en caché por 30 minutos (1800 segundos)
+            cacheService.set(
+                cacheKey,
+                {
+                    status: res.statusCode,
+                    body: body,
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                },
+                1800
+            ); // Mantener en caché por 30 minutos (1800 segundos)
         }
 
         return originalJson.call(this, body);
@@ -72,20 +76,26 @@ module.exports = function (req, res, next) {
         const alreadyHandled = cacheService.get(cacheKey);
         if (!alreadyHandled) {
             cacheService.delete(processingKey); // Liberar bloqueo
-            
+
             if (res.statusCode >= 200 && res.statusCode < 300) {
                 let parsedBody = body;
                 try {
                     parsedBody = typeof body === 'string' ? JSON.parse(body) : body;
-                } catch (_) {}
-                
-                cacheService.set(cacheKey, {
-                    status: res.statusCode,
-                    body: parsedBody,
-                    headers: {
-                        'Content-Type': res.getHeader('Content-Type') || 'application/json'
-                    }
-                }, 1800);
+                } catch (_) {
+                    /* intentional */
+                }
+
+                cacheService.set(
+                    cacheKey,
+                    {
+                        status: res.statusCode,
+                        body: parsedBody,
+                        headers: {
+                            'Content-Type': res.getHeader('Content-Type') || 'application/json'
+                        }
+                    },
+                    1800
+                );
             }
         }
         return originalSend.call(this, body);

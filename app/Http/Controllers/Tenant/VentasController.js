@@ -10,7 +10,9 @@ class VentasController {
         try {
             const tenantId = req.tenant?.id;
             if (!tenantId) {
-                return res.status(403).render('errors/internal', { error: { message: 'Contexto de tenant no disponible' } });
+                return res
+                    .status(403)
+                    .render('errors/internal', { error: { message: 'Contexto de tenant no disponible' } });
             }
             const filters = {
                 desde: req.query.desde,
@@ -21,13 +23,18 @@ class VentasController {
             let eventoFiltro = null;
             if (filters.evento_id) {
                 const ev = await EventoService.getById(filters.evento_id, tenantId);
-                if (ev) eventoFiltro = { id: ev.id, nombre: ev.nombre };
+                if (ev) {
+                    eventoFiltro = { id: ev.id, nombre: ev.nombre };
+                }
             }
             const [ventas, mesasListas] = await Promise.all([
                 VentaService.getWithFilters(tenantId, filters),
                 VentaService.getTablesReadyToPay(tenantId)
             ]);
-            let totalEfectivo = 0, totalTransferencia = 0, totalGeneral = 0, totalServiciosExternos = 0;
+            let totalEfectivo = 0,
+                totalTransferencia = 0,
+                totalGeneral = 0,
+                totalServiciosExternos = 0;
             (ventas || []).forEach(function (v) {
                 const totalFactura = Number(v.total) || 0;
                 const totalExternos = Number(v.total_servicios_externos) || 0;
@@ -36,11 +43,16 @@ class VentasController {
                 totalGeneral += netSale; // Solo sumamos la venta neta (productos)
                 totalServiciosExternos += totalExternos;
 
-                const fp = String(v.forma_pago || '').toLowerCase().trim();
+                const fp = String(v.forma_pago || '')
+                    .toLowerCase()
+                    .trim();
                 // Proporcionalmente asignamos a efectivo/transf
-                if (fp === 'efectivo') totalEfectivo += netSale; 
-                else if (fp === 'transferencia') totalTransferencia += netSale;
-                
+                if (fp === 'efectivo') {
+                    totalEfectivo += netSale;
+                } else if (fp === 'transferencia') {
+                    totalTransferencia += netSale;
+                }
+
                 v.fechaISO = toFechaISOUtc(v.fecha);
             });
 
@@ -71,7 +83,9 @@ class VentasController {
             try {
                 ExcelJS = ExcelJS || require('exceljs');
             } catch (e) {
-                return res.status(500).send('Exportación a Excel no disponible. Instale la dependencia con: npm install exceljs');
+                return res
+                    .status(500)
+                    .send('Exportación a Excel no disponible. Instale la dependencia con: npm install exceljs');
             }
 
             const tenantId = req.tenant?.id;
@@ -92,14 +106,18 @@ class VentasController {
             let config = null;
             try {
                 config = await ConfiguracionService.getForPreview(tenantId);
-            } catch (_) { }
+            } catch (_) {
+                /* intentional */
+            }
 
-            const titulo = (config?.nombre_negocio || 'Reporte de Ventas');
+            const titulo = config?.nombre_negocio || 'Reporte de Ventas';
             const subInfo = [
                 config?.direccion ? config.direccion : null,
                 config?.telefono ? `Tel: ${config.telefono}` : null,
                 config?.nit ? `NIT: ${config.nit}` : null
-            ].filter(Boolean).join('  •  ');
+            ]
+                .filter(Boolean)
+                .join('  •  ');
             const rango = `Rango: ${req.query.desde || '-'} a ${req.query.hasta || '-'}${req.query.q ? '  •  Filtro: ' + req.query.q : ''}`;
 
             ws.mergeCells('B1:E1');
@@ -123,7 +141,7 @@ class VentasController {
 
             rows.forEach(row => {
                 ws.addRow([
-                    row.numero != null ? row.numero : row.id,
+                    row.numero !== null && row.numero !== undefined ? row.numero : row.id,
                     new Date(row.fecha),
                     row.cliente,
                     row.forma_pago,
@@ -142,13 +160,25 @@ class VentasController {
             ws.getColumn(2).numFmt = 'dd/mm/yyyy hh:mm';
             ws.getColumn(5).numFmt = '#,##0.00';
 
-            const sumRow = ws.addRow(['', '', '', 'TOTAL:', { formula: `SUM(E6:E${ws.rowCount - 1})`, result: rows.reduce((acc, r) => acc + parseFloat(r.total || 0), 0) }]);
+            const sumRow = ws.addRow([
+                '',
+                '',
+                '',
+                'TOTAL:',
+                {
+                    formula: `SUM(E6:E${ws.rowCount - 1})`,
+                    result: rows.reduce((acc, r) => acc + parseFloat(r.total || 0), 0)
+                }
+            ]);
             sumRow.getCell(4).font = { bold: true };
             sumRow.getCell(5).font = { bold: true };
             sumRow.getCell(5).numFmt = '#,##0.00';
 
             res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-            res.setHeader('Content-Disposition', `attachment; filename="ventas_${req.query.desde || 'all'}_${req.query.hasta || 'all'}.xlsx"`);
+            res.setHeader(
+                'Content-Disposition',
+                `attachment; filename="ventas_${req.query.desde || 'all'}_${req.query.hasta || 'all'}.xlsx"`
+            );
             await wb.xlsx.write(res);
             res.end();
         } catch (error) {

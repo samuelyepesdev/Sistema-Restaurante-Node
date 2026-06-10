@@ -6,7 +6,7 @@ const InventarioService = require('../Tenant/InventarioService'); // Para valida
 class PedidoQRService {
     static async procesarPedido(qrToken, itemsInput, notasGlobales, clientIp, cookies = {}) {
         if (!itemsInput || !Array.isArray(itemsInput) || itemsInput.length === 0) {
-            throw { status: 400, message: 'El pedido no contiene productos.' };
+            throw Object.assign(new Error('El pedido no contiene productos.'), { status: 400 });
         }
 
         const connection = await db.getConnection();
@@ -23,7 +23,7 @@ class PedidoQRService {
             );
 
             if (mesas.length === 0) {
-                throw { status: 404, message: 'Código QR inválido o mesa no encontrada.' };
+                throw Object.assign(new Error('Código QR inválido o mesa no encontrada.'), { status: 404 });
             }
             
             const mesa = mesas[0];
@@ -33,7 +33,7 @@ class PedidoQRService {
             
             // Si la mesa tiene una sesión activa en DB, el cliente DEBE tener la misma en su cookie
             if (mesa.qr_session_id && clientSession !== mesa.qr_session_id) {
-                throw { status: 403, message: 'Tu sesión ha expirado o el código QR ya no es válido para esta mesa. Por favor, escanea el código nuevamente.' };
+                throw Object.assign(new Error('Tu sesión ha expirado o el código QR ya no es válido para esta mesa. Por favor, escanea el código nuevamente.'), { status: 403 });
             }
 
             // Si han pasado más de 2 horas desde el primer escaneo/actividad y la mesa sigue ocupada, invalidar por tiempo
@@ -42,12 +42,12 @@ class PedidoQRService {
                 if (diffHoras > 2) {
                     // Limpiar sesión vieja para forzar re-escaneo
                     await connection.query('UPDATE mesas SET qr_session_id = NULL, last_qr_activity = NULL WHERE id = ?', [mesa.id]);
-                    throw { status: 403, message: 'La sesión de esta mesa ha expirado por inactividad. Por favor, escanea el código nuevamente.' };
+                    throw Object.assign(new Error('La sesión de esta mesa ha expirado por inactividad. Por favor, escanea el código nuevamente.'), { status: 403 });
                 }
             }
 
             if (!mesa.activo) {
-                throw { status: 403, message: 'El restaurante se encuentra inactivo actualmente.' };
+                throw Object.assign(new Error('El restaurante se encuentra inactivo actualmente.'), { status: 403 });
             }
 
             // Actualizar última actividad
@@ -64,7 +64,7 @@ class PedidoQRService {
             );
 
             if (productosDb.length !== productoIds.length) {
-                throw { status: 400, message: 'Algunos productos ya no están disponibles. Por favor, recarga el menú.' };
+                throw Object.assign(new Error('Algunos productos ya no están disponibles. Por favor, recarga el menú.'), { status: 400 });
             }
 
             const productosMap = new Map();
@@ -114,7 +114,7 @@ class PedidoQRService {
             for (const item of itemsInput) {
                 const prod = productosMap.get(Number(item.producto_id));
                 const cantidad = parseFloat(item.cantidad);
-                if (isNaN(cantidad) || cantidad <= 0) continue;
+                if (isNaN(cantidad) || cantidad <= 0) {continue;}
 
                 // Validación de stock (Soft validation, registramos warning si no hay)
                 const check = await InventarioService.checkStockParaProducto(tenantId, prod.id, cantidad);

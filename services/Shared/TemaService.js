@@ -13,7 +13,9 @@ class TemaService {
 
     static async getById(id, tenantId) {
         const tema = await TemaRepository.findById(id, tenantId);
-        if (!tema) return null;
+        if (!tema) {
+            return null;
+        }
         tema.parametros = await TemaRepository.getParametros(id, tenantId);
         return tema;
     }
@@ -23,7 +25,9 @@ class TemaService {
             throw new Error('El nombre del tema es requerido');
         }
         const exists = await TemaRepository.findByName(data.name.trim(), tenantId);
-        if (exists) throw new Error('Ya existe un tema con ese nombre');
+        if (exists) {
+            throw new Error('Ya existe un tema con ese nombre');
+        }
         return TemaRepository.create(tenantId, {
             name: data.name.trim(),
             status: data.status !== undefined ? data.status : 1
@@ -32,10 +36,14 @@ class TemaService {
 
     static async update(id, tenantId, data) {
         const tema = await TemaRepository.findById(id, tenantId);
-        if (!tema) throw new Error('Tema no encontrado');
+        if (!tema) {
+            throw new Error('Tema no encontrado');
+        }
         if (data.name && data.name.trim() !== tema.name) {
             const exists = await TemaRepository.findByName(data.name.trim(), tenantId, id);
-            if (exists) throw new Error('Ya existe un tema con ese nombre');
+            if (exists) {
+                throw new Error('Ya existe un tema con ese nombre');
+            }
         }
         await TemaRepository.update(id, tenantId, {
             name: (data.name || tema.name).trim(),
@@ -49,7 +57,9 @@ class TemaService {
 
     static async delete(id, tenantId) {
         const tema = await TemaRepository.findById(id, tenantId);
-        if (!tema) throw new Error('Tema no encontrado');
+        if (!tema) {
+            throw new Error('Tema no encontrado');
+        }
         await TemaRepository.delete(id, tenantId);
         return { message: 'Tema eliminado' };
     }
@@ -60,7 +70,9 @@ class TemaService {
 
     static async setParametros(temaId, tenantId, parametroIds) {
         const tema = await TemaRepository.findById(temaId, tenantId);
-        if (!tema) throw new Error('Tema no encontrado');
+        if (!tema) {
+            throw new Error('Tema no encontrado');
+        }
         await TemaRepository.setParametros(temaId, parametroIds || []);
         return { message: 'Parámetros actualizados' };
     }

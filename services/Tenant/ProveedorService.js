@@ -7,20 +7,28 @@ class ProveedorService {
 
     static async getById(id, tenantId) {
         const proveedor = await ProveedorRepository.findById(id, tenantId);
-        if (!proveedor) throw new Error('Proveedor no encontrado');
+        if (!proveedor) {
+            throw new Error('Proveedor no encontrado');
+        }
         return proveedor;
     }
 
     static async create(tenantId, data) {
-        if (!data.nombre) throw new Error('El nombre es requerido');
+        if (!data.nombre) {
+            throw new Error('El nombre es requerido');
+        }
         const id = await ProveedorRepository.create(tenantId, data);
         return { id, message: 'Proveedor creado correctamente' };
     }
 
     static async update(id, tenantId, data) {
-        if (!data.nombre) throw new Error('El nombre es requerido');
+        if (!data.nombre) {
+            throw new Error('El nombre es requerido');
+        }
         const affectedRows = await ProveedorRepository.update(id, tenantId, data);
-        if (affectedRows === 0) throw new Error('Proveedor no encontrado');
+        if (affectedRows === 0) {
+            throw new Error('Proveedor no encontrado');
+        }
         return { message: 'Proveedor actualizado correctamente' };
     }
 
@@ -33,7 +41,9 @@ class ProveedorService {
         }
 
         const affectedRows = await ProveedorRepository.delete(id, tenantId);
-        if (affectedRows === 0) throw new Error('Proveedor no encontrado');
+        if (affectedRows === 0) {
+            throw new Error('Proveedor no encontrado');
+        }
         return { message: 'Proveedor eliminado correctamente' };
     }
 }

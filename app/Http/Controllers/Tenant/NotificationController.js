@@ -20,9 +20,9 @@ class NotificationController {
         // console.log(`[SSE] Cliente suscrito para Tenant ${tenantId}`);
 
         // Callback para cuando se crea un pedido
-        const onOrderCreated = (data) => {
+        const onOrderCreated = data => {
             // Solo enviar si el pedido pertenece al tenant del cliente suscrito
-            if (data.tenantId == tenantId) {
+            if (data.tenantId === tenantId) {
                 console.log(`[SSE] Notificando pedido ${data.pedidoId} a Tenant ${tenantId}`);
                 res.write(`data: ${JSON.stringify({ event: 'orderCreated', ...data })}\n\n`);
             }

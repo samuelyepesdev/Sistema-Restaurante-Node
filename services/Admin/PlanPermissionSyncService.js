@@ -17,16 +17,24 @@ const { ROLES } = require('../../utils/constants');
  * @returns {string[]}
  */
 function getPermissionNamesForPlan(plan) {
-    if (!plan) return [];
-    const isPremium = plan.slug === 'premium' || plan.slug === 'definitivo' || (plan.nombre && (plan.nombre.toLowerCase().includes('premium') || plan.nombre.toLowerCase().includes('definitivo')));
-    
+    if (!plan) {
+        return [];
+    }
+    const isPremium =
+        plan.slug === 'premium' ||
+        plan.slug === 'definitivo' ||
+        (plan.nombre &&
+            (plan.nombre.toLowerCase().includes('premium') || plan.nombre.toLowerCase().includes('definitivo')));
+
     if (isPremium) {
         const { PERMISSION_TO_MODULE } = require('../../utils/planPermissions');
         return Object.keys(PERMISSION_TO_MODULE);
     }
 
-    if (!Array.isArray(plan.caracteristicas)) return [];
-    
+    if (!Array.isArray(plan.caracteristicas)) {
+        return [];
+    }
+
     const names = new Set();
     const { getPermissionNamesForModule } = require('../../utils/planPermissions');
     for (const moduleSlug of plan.caracteristicas) {
@@ -55,14 +63,18 @@ function isAdminDelTenant(rolNombre) {
  */
 async function syncPlanPermissionsToTenantUsers(tenantId, planId) {
     const plan = await PlanService.getById(planId);
-    if (!plan) return;
+    if (!plan) {
+        return;
+    }
 
     const permissionNames = getPermissionNamesForPlan(plan);
     const planPermisoIds = await PermisoRepository.getPermisoIdsByNames(permissionNames);
 
     const users = await PermisoRepository.getUsuariosByTenantId(tenantId);
     const admins = (users || []).filter(u => isAdminDelTenant(u.rol_nombre));
-    if (admins.length === 0) return;
+    if (admins.length === 0) {
+        return;
+    }
 
     for (const u of admins) {
         await PermisoRepository.setPermisosForUser(u.id, [...planPermisoIds]);

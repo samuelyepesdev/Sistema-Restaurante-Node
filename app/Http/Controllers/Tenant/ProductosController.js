@@ -8,11 +8,17 @@ class ProductosController {
     static async index(req, res) {
         try {
             const tenantId = req.tenant?.id;
-            if (!tenantId) return res.status(403).render('errors/internal', { error: { message: 'Contexto de tenant no disponible' } });
+            if (!tenantId) {
+                return res
+                    .status(403)
+                    .render('errors/internal', { error: { message: 'Contexto de tenant no disponible' } });
+            }
             const { productos, categorias } = await ProductService.getAllForView(tenantId);
             const recetas = await RecetaService.list(tenantId).catch(() => []);
             const recetasPorProducto = {};
-            (recetas || []).forEach(r => { recetasPorProducto[r.producto_id] = r; });
+            (recetas || []).forEach(r => {
+                recetasPorProducto[r.producto_id] = r;
+            });
             res.render('productos/index', {
                 productos: productos || [],
                 categorias: categorias || [],
@@ -36,7 +42,9 @@ class ProductosController {
     static async getCategorias(req, res) {
         try {
             const tenantId = req.tenant?.id;
-            if (!tenantId) return res.status(403).json({ error: 'Contexto de tenant no disponible' });
+            if (!tenantId) {
+                return res.status(403).json({ error: 'Contexto de tenant no disponible' });
+            }
             const categorias = await CategoryService.getAllActive(tenantId);
             res.json(categorias);
         } catch (error) {
@@ -49,7 +57,9 @@ class ProductosController {
     static async search(req, res) {
         try {
             const tenantId = req.tenant?.id;
-            if (!tenantId) return res.status(403).json({ error: 'Contexto de tenant no disponible' });
+            if (!tenantId) {
+                return res.status(403).json({ error: 'Contexto de tenant no disponible' });
+            }
             const query = req.query.q || '';
             const productos = await ProductService.search(query, tenantId);
             res.json(productos);
@@ -63,7 +73,9 @@ class ProductosController {
     static async show(req, res) {
         try {
             const tenantId = req.tenant?.id;
-            if (!tenantId) return res.status(403).json({ error: 'Contexto de tenant no disponible' });
+            if (!tenantId) {
+                return res.status(403).json({ error: 'Contexto de tenant no disponible' });
+            }
             const producto = await ProductService.getById(parseInt(req.params.id), tenantId);
             res.json(producto);
         } catch (error) {
@@ -79,7 +91,9 @@ class ProductosController {
     static async store(req, res) {
         try {
             const tenantId = req.tenant?.id;
-            if (!tenantId) return res.status(403).json({ error: 'Contexto de tenant no disponible' });
+            if (!tenantId) {
+                return res.status(403).json({ error: 'Contexto de tenant no disponible' });
+            }
             const result = await ProductService.create(tenantId, req.body);
             res.status(201).json(result);
         } catch (error) {
@@ -95,7 +109,9 @@ class ProductosController {
     static async updatePrecio(req, res) {
         try {
             const tenantId = req.tenant?.id;
-            if (!tenantId) return res.status(403).json({ error: 'Contexto de tenant no disponible' });
+            if (!tenantId) {
+                return res.status(403).json({ error: 'Contexto de tenant no disponible' });
+            }
             const id = parseInt(req.params.id, 10);
             const precio_unidad = req.body.precio_unidad;
             if (precio_unidad === undefined || precio_unidad === null) {
@@ -116,12 +132,18 @@ class ProductosController {
     static async update(req, res) {
         try {
             const tenantId = req.tenant?.id;
-            if (!tenantId) return res.status(403).json({ error: 'Contexto de tenant no disponible' });
+            if (!tenantId) {
+                return res.status(403).json({ error: 'Contexto de tenant no disponible' });
+            }
             const result = await ProductService.update(parseInt(req.params.id), tenantId, req.body);
             res.json(result);
         } catch (error) {
             console.error('Error al actualizar producto:', error);
-            if (error.message === 'Producto no encontrado' || error.message.includes('requeridos') || error.message.includes('código')) {
+            if (
+                error.message === 'Producto no encontrado' ||
+                error.message.includes('requeridos') ||
+                error.message.includes('código')
+            ) {
                 const statusCode = error.message === 'Producto no encontrado' ? 404 : 400;
                 return res.status(statusCode).json({ error: error.message });
             }
@@ -133,7 +155,9 @@ class ProductosController {
     static async destroy(req, res) {
         try {
             const tenantId = req.tenant?.id;
-            if (!tenantId) return res.status(403).json({ error: 'Contexto de tenant no disponible' });
+            if (!tenantId) {
+                return res.status(403).json({ error: 'Contexto de tenant no disponible' });
+            }
             const result = await ProductService.delete(parseInt(req.params.id), tenantId);
             res.json(result);
         } catch (error) {
@@ -158,10 +182,16 @@ class ProductosController {
             const ws = wb.addWorksheet('Instrucciones');
             ws.addRow(['PLANTILLA DE PRODUCTOS']).font = { bold: true, size: 16 };
             ws.addRow(['1) No cambie los encabezados de la hoja "Productos".']).font = { color: { argb: 'FF495057' } };
-            ws.addRow(['2) Columnas obligatorias: codigo, nombre, categoria. El precio puede ser 0.']).font = { color: { argb: 'FF495057' } };
+            ws.addRow(['2) Columnas obligatorias: codigo, nombre, categoria. El precio puede ser 0.']).font = {
+                color: { argb: 'FF495057' }
+            };
             ws.addRow(['3) Use punto como decimal (ej: 1234.56).']).font = { color: { argb: 'FF495057' } };
-            ws.addRow(['4) El código debe ser único. Si ya existe, se actualizarán datos.']).font = { color: { argb: 'FF495057' } };
-            ws.addRow(['5) Categorías disponibles: Bebidas, Postres, Comidas, Acompañamientos, Extras']).font = { color: { argb: 'FF495057' } };
+            ws.addRow(['4) El código debe ser único. Si ya existe, se actualizarán datos.']).font = {
+                color: { argb: 'FF495057' }
+            };
+            ws.addRow(['5) Categorías disponibles: Bebidas, Postres, Comidas, Acompañamientos, Extras']).font = {
+                color: { argb: 'FF495057' }
+            };
             ws.getColumn(1).width = 80;
             ws.addRow([]);
 
@@ -254,12 +284,16 @@ class ProductosController {
             const header = ['codigo', 'nombre', 'categoria', 'precio_unidad'];
             const rows = [];
             ws.eachRow((row, idx) => {
-                if (idx === 1) return; // Skip header
+                if (idx === 1) {
+                    return;
+                } // Skip header
                 const r = header.reduce((acc, key, i) => {
                     acc[key] = row.getCell(i + 1).value || '';
                     return acc;
                 }, {});
-                if (!r.codigo || !r.nombre || !r.categoria) return;
+                if (!r.codigo || !r.nombre || !r.categoria) {
+                    return;
+                }
                 rows.push({
                     codigo: String(r.codigo).trim(),
                     nombre: String(r.nombre).trim(),
@@ -269,7 +303,9 @@ class ProductosController {
             });
 
             const tenantId = req.tenant?.id;
-            if (!tenantId) return res.status(403).json({ error: 'Contexto de tenant no disponible' });
+            if (!tenantId) {
+                return res.status(403).json({ error: 'Contexto de tenant no disponible' });
+            }
             const result = await ProductService.importFromExcel(tenantId, rows);
             res.json(result);
         } catch (error) {
@@ -282,7 +318,9 @@ class ProductosController {
     static async toggleFavorite(req, res) {
         try {
             const tenantId = req.tenant?.id;
-            if (!tenantId) return res.status(403).json({ error: 'Contexto de tenant no disponible' });
+            if (!tenantId) {
+                return res.status(403).json({ error: 'Contexto de tenant no disponible' });
+            }
             const id = parseInt(req.params.id, 10);
             const { es_favorito } = req.body;
             await ProductService.toggleFavorite(id, tenantId, es_favorito);
@@ -310,4 +348,3 @@ class ProductosController {
 }
 
 module.exports = ProductosController;
-

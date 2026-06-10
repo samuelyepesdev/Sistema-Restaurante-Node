@@ -139,7 +139,7 @@ class ClienteService {
             return { message: 'Cliente eliminado exitosamente' };
         } catch (error) {
             if (error.code === 'ER_ROW_IS_REFERENCED_2') {
-                throw new Error('No se puede eliminar el cliente porque tiene facturas asociadas');
+                throw new Error('No se puede eliminar el cliente porque tiene facturas asociadas', { cause: error });
             }
             throw error;
         }
@@ -147,4 +147,3 @@ class ClienteService {
 }
 
 module.exports = ClienteService;
-

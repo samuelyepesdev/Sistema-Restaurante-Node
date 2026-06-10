@@ -6,7 +6,9 @@ const { ROLES } = require('../../utils/constants');
 
 // Guard: solo superadmin
 router.use((req, res, next) => {
-    if (!req.user) return res.redirect('/auth/login');
+    if (!req.user) {
+        return res.redirect('/auth/login');
+    }
     if (!authService.hasRole(req.user.rol, [ROLES.SUPERADMIN])) {
         return res.redirect('/');
     }

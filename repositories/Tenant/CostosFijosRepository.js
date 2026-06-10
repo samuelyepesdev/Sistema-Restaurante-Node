@@ -7,18 +7,12 @@ const db = require('../../config/database');
 
 class CostosFijosRepository {
     static async findAll(tenantId) {
-        const [rows] = await db.query(
-            'SELECT * FROM costos_fijos WHERE tenant_id = ? ORDER BY nombre',
-            [tenantId]
-        );
+        const [rows] = await db.query('SELECT * FROM costos_fijos WHERE tenant_id = ? ORDER BY nombre', [tenantId]);
         return rows;
     }
 
     static async findById(id, tenantId) {
-        const [rows] = await db.query(
-            'SELECT * FROM costos_fijos WHERE id = ? AND tenant_id = ?',
-            [id, tenantId]
-        );
+        const [rows] = await db.query('SELECT * FROM costos_fijos WHERE id = ? AND tenant_id = ?', [id, tenantId]);
         return rows[0] || null;
     }
 
@@ -41,9 +35,14 @@ class CostosFijosRepository {
 
     static async update(id, tenantId, data) {
         const item = await this.findById(id, tenantId);
-        if (!item) return { affectedRows: 0 };
-        const nombre = data.nombre != null ? data.nombre : item.nombre;
-        const monto_mensual = data.monto_mensual != null ? parseFloat(data.monto_mensual) : item.monto_mensual;
+        if (!item) {
+            return { affectedRows: 0 };
+        }
+        const nombre = data.nombre !== null && data.nombre !== undefined ? data.nombre : item.nombre;
+        const monto_mensual =
+            data.monto_mensual !== null && data.monto_mensual !== undefined
+                ? parseFloat(data.monto_mensual)
+                : item.monto_mensual;
         const activo = data.activo !== undefined ? (data.activo ? 1 : 0) : item.activo;
         const [result] = await db.query(
             'UPDATE costos_fijos SET nombre = ?, monto_mensual = ?, activo = ? WHERE id = ? AND tenant_id = ?',

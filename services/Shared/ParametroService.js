@@ -12,10 +12,26 @@ const CATALOGOS_INVENTARIO = {
         'Origen Mineral: Agua y sales minerales.'
     ],
     'UNIDADES DE COMPRA': [
-        'GRAMOS', 'LIBRAS', 'KILOGRAMOS', 'ARROBA', 'QUINTAL', 'ONZA',
-        'MILILITROS', 'LITROS', 'GALONES', 'ONZA LÍQUIDA', 'BARRIL',
-        'UNIDADES', 'CAJAS', 'METROS', 'CENTIMETROS', 'PAQUETES',
-        'ROLLOS', 'TABLETAS', 'TEST', 'SACKETS'
+        'GRAMOS',
+        'LIBRAS',
+        'KILOGRAMOS',
+        'ARROBA',
+        'QUINTAL',
+        'ONZA',
+        'MILILITROS',
+        'LITROS',
+        'GALONES',
+        'ONZA LÍQUIDA',
+        'BARRIL',
+        'UNIDADES',
+        'CAJAS',
+        'METROS',
+        'CENTIMETROS',
+        'PAQUETES',
+        'ROLLOS',
+        'TABLETAS',
+        'TEST',
+        'SACKETS'
     ]
 };
 
@@ -26,7 +42,9 @@ class ParametroService {
 
     static async getById(id, tenantId) {
         const param = await ParametroRepository.findById(id, tenantId);
-        if (!param) return null;
+        if (!param) {
+            return null;
+        }
         param.temas = await ParametroRepository.getTemas(id, tenantId);
         return param;
     }
@@ -36,7 +54,9 @@ class ParametroService {
             throw new Error('El nombre del parámetro es requerido');
         }
         const exists = await ParametroRepository.findByName(data.name.trim(), tenantId);
-        if (exists) throw new Error('Ya existe un parámetro con ese nombre');
+        if (exists) {
+            throw new Error('Ya existe un parámetro con ese nombre');
+        }
         return ParametroRepository.create(tenantId, {
             name: data.name.trim(),
             status: data.status !== undefined ? data.status : 1
@@ -45,10 +65,14 @@ class ParametroService {
 
     static async update(id, tenantId, data) {
         const param = await ParametroRepository.findById(id, tenantId);
-        if (!param) throw new Error('Parámetro no encontrado');
+        if (!param) {
+            throw new Error('Parámetro no encontrado');
+        }
         if (data.name && data.name.trim() !== param.name) {
             const exists = await ParametroRepository.findByName(data.name.trim(), tenantId, id);
-            if (exists) throw new Error('Ya existe un parámetro con ese nombre');
+            if (exists) {
+                throw new Error('Ya existe un parámetro con ese nombre');
+            }
         }
         await ParametroRepository.update(id, tenantId, {
             name: (data.name || param.name).trim(),
@@ -59,14 +83,18 @@ class ParametroService {
 
     static async delete(id, tenantId) {
         const param = await ParametroRepository.findById(id, tenantId);
-        if (!param) throw new Error('Parámetro no encontrado');
+        if (!param) {
+            throw new Error('Parámetro no encontrado');
+        }
         await ParametroRepository.delete(id, tenantId);
         return { message: 'Parámetro eliminado' };
     }
 
     static async getByTemaName(temaName, tenantId) {
         const tema = await TemaRepository.findByName(temaName, tenantId);
-        if (!tema) return [];
+        if (!tema) {
+            return [];
+        }
         return ParametroRepository.getParametrosByTemaId(tema.id, tenantId);
     }
 
@@ -76,7 +104,7 @@ class ParametroService {
 
     /**
      * Seed initial inventory parameters and themes for a tenant.
-     * @param {number} tenantId 
+     * @param {number} tenantId
      */
     static async seedInventoryParams(tenantId) {
         let created = 0;

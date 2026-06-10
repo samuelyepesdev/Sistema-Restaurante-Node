@@ -9,8 +9,13 @@ class LiberarMesaService {
         try {
             await connection.beginTransaction();
 
-            const [mesas] = await connection.query('SELECT id FROM mesas WHERE id = ? AND tenant_id = ?', [mesaId, tenantId]);
-            if (mesas.length === 0) throw new Error('Mesa no encontrada');
+            const [mesas] = await connection.query('SELECT id FROM mesas WHERE id = ? AND tenant_id = ?', [
+                mesaId,
+                tenantId
+            ]);
+            if (mesas.length === 0) {
+                throw new Error('Mesa no encontrada');
+            }
 
             const [abiertos] = await connection.query(
                 `SELECT p.id FROM pedidos p WHERE p.mesa_id = ? AND p.estado NOT IN ('cerrado','cancelado') FOR UPDATE`,
@@ -23,13 +28,18 @@ class LiberarMesaService {
                     `SELECT COUNT(*) as cnt FROM pedido_items WHERE pedido_id IN (?) AND estado <> 'cancelado'`,
                     [ids]
                 );
-                if ((items[0]?.cnt || 0) > 0) throw new Error('La mesa tiene items activos, no se puede liberar');
-                
+                if ((items[0]?.cnt || 0) > 0) {
+                    throw new Error('La mesa tiene items activos, no se puede liberar');
+                }
+
                 await connection.query(`UPDATE pedidos SET estado = 'cancelado' WHERE id IN (?)`, [ids]);
             }
 
-            await connection.query(`UPDATE mesas SET estado = 'libre', qr_session_id = NULL, last_qr_activity = NULL WHERE id = ?`, [mesaId]);
-            
+            await connection.query(
+                `UPDATE mesas SET estado = 'libre', qr_session_id = NULL, last_qr_activity = NULL WHERE id = ?`,
+                [mesaId]
+            );
+
             await connection.commit();
             return { message: 'Mesa liberada' };
         } catch (error) {

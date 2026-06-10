@@ -32,7 +32,7 @@ async function attachTenantContext(req, res, next) {
         let tenantId = req.user.tenant_id;
 
         // If user has no tenant_id (old token or legacy user), use default tenant
-        if (tenantId == null || tenantId === undefined) {
+        if (tenantId === null || tenantId === undefined) {
             const defaultTenant = await TenantRepository.getDefault();
             if (!defaultTenant) {
                 if (req.xhr || req.headers.accept?.indexOf('json') > -1) {
@@ -50,7 +50,9 @@ async function attachTenantContext(req, res, next) {
                 return res.status(403).json({ error: 'Tenant no encontrado' });
             }
             res.clearCookie('auth_token');
-            return res.redirect('/auth/login?mensaje=' + encodeURIComponent('Restaurante no encontrado. Contacta al administrador.'));
+            return res.redirect(
+                '/auth/login?mensaje=' + encodeURIComponent('Restaurante no encontrado. Contacta al administrador.')
+            );
         }
 
         if (!tenant.activo) {

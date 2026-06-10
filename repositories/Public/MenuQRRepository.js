@@ -8,13 +8,13 @@ class MenuQRRepository {
              WHERE slug = ? AND activo = 1`, 
             [slug]
         );
-        if (!rows.length) return null;
+        if (!rows.length) {return null;}
         
         const row = rows[0];
         let config = {};
         try {
             config = typeof row.config === 'string' ? JSON.parse(row.config) : (row.config || {});
-        } catch (e) {}
+        } catch (e) { /* intentional */ }
 
         let logo_src = null;
         if (row.logo_data && row.logo_tipo) {
@@ -49,7 +49,7 @@ class MenuQRRepository {
             [qrToken, tenantId]
         );
         
-        if (!rows.length) return null;
+        if (!rows.length) {return null;}
         
         const mesa = rows[0];
         

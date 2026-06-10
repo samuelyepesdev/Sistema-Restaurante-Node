@@ -30,14 +30,37 @@ class TenantsController {
     // POST /admin/tenants
     static async store(req, res) {
         try {
-            const { nombre, email, slug, config, plan_id, admin_username, admin_password, admin_email, admin_nombre_completo, nit, direccion, telefono, ciudad, regimen_fiscal } = req.body;
+            const {
+                nombre,
+                email,
+                slug,
+                config,
+                plan_id,
+                admin_username,
+                admin_password,
+                admin_email,
+                admin_nombre_completo,
+                nit,
+                direccion,
+                telefono,
+                ciudad,
+                regimen_fiscal
+            } = req.body;
             if (!nombre || !slug || !admin_username || !admin_password) {
                 return res.status(400).send('Faltan nombre del restaurante, slug, usuario admin o contraseña.');
             }
-            const configObj = typeof config === 'string' ? JSON.parse(config || '{}') : (config || {});
+            const configObj = typeof config === 'string' ? JSON.parse(config || '{}') : config || {};
             const tenant = await TenantService.createTenant({
-                nombre, email, slug, config: configObj, plan_id: plan_id || 1,
-                nit, direccion, telefono, ciudad, regimen_fiscal
+                nombre,
+                email,
+                slug,
+                config: configObj,
+                plan_id: plan_id || 1,
+                nit,
+                direccion,
+                telefono,
+                ciudad,
+                regimen_fiscal
             });
             const tenantId = tenant.id;
             const tipoNegocio = configObj.tipo_negocio || 'restaurante';
@@ -69,11 +92,17 @@ class TenantsController {
             const update = {};
             const textFields = ['nombre', 'email', 'nit', 'direccion', 'telefono', 'ciudad', 'regimen_fiscal'];
             textFields.forEach(f => {
-                if (req.body[f] !== undefined) update[f] = req.body[f];
+                if (req.body[f] !== undefined) {
+                    update[f] = req.body[f];
+                }
             });
 
             if (req.body.activo !== undefined && req.body.activo !== null && req.body.activo !== '') {
-                update.activo = req.body.activo === 'true' || req.body.activo === true || req.body.activo === 1 || req.body.activo === '1';
+                update.activo =
+                    req.body.activo === 'true' ||
+                    req.body.activo === true ||
+                    req.body.activo === 1 ||
+                    req.body.activo === '1';
             }
 
             if (req.body.config !== undefined && req.body.config !== null) {
@@ -82,7 +111,9 @@ class TenantsController {
 
             const { plan_id } = req.body;
             const planChanged = plan_id !== undefined && plan_id !== null && plan_id !== '';
-            if (planChanged) update.plan_id = plan_id;
+            if (planChanged) {
+                update.plan_id = plan_id;
+            }
 
             await TenantService.updateTenant(req.params.id, update);
             if (planChanged && plan_id) {
@@ -108,8 +139,10 @@ class TenantsController {
     // DELETE /admin/tenants/:id
     static async destroy(req, res) {
         try {
-            if (req.params.id == 1) {
-                return res.status(403).json({ success: false, message: 'No se puede eliminar el restaurante principal.' });
+            if (req.params.id === '1') {
+                return res
+                    .status(403)
+                    .json({ success: false, message: 'No se puede eliminar el restaurante principal.' });
             }
             await TenantService.deleteTenant(req.params.id);
             res.status(200).json({ success: true, message: 'Restaurante eliminado permanentemente.' });
@@ -142,7 +175,11 @@ class TenantsController {
         try {
             const { username, password, email, nombre_completo, rol_nombre } = req.body;
             const userId = await TenantUserService.createTenantUser(req.params.id, {
-                username, password, email, nombre_completo, rol_nombre
+                username,
+                password,
+                email,
+                nombre_completo,
+                rol_nombre
             });
             await TenantAuditService.log({
                 tenantId: req.params.id,
@@ -177,7 +214,9 @@ class TenantsController {
     static async batchUpdateRoles(req, res) {
         try {
             const { changes } = req.body;
-            if (!Array.isArray(changes)) throw new Error('Formato de cambios inválido');
+            if (!Array.isArray(changes)) {
+                throw new Error('Formato de cambios inválido');
+            }
             for (const change of changes) {
                 await TenantUserService.assignRoles(change.userId, Number(req.params.tenantId), change.rol_nombre);
                 await TenantAuditService.log({
@@ -272,8 +311,11 @@ class TenantsController {
         try {
             const tenantId = req.params.id;
             const tenant = await TenantService.getTenantById(tenantId);
-            if (!tenant) return res.status(404).json({ error: 'Tenant no encontrado' });
-            const tipoNegocio = (tenant.config && tenant.config.tipo_negocio) ? tenant.config.tipo_negocio : 'restaurante';
+            if (!tenant) {
+                return res.status(404).json({ error: 'Tenant no encontrado' });
+            }
+            const tipoNegocio =
+                tenant.config && tenant.config.tipo_negocio ? tenant.config.tipo_negocio : 'restaurante';
             const result = await CategoryService.seedDefaultCategories(tenantId, tipoNegocio);
             return res.json({ message: 'Categorías creadas', inserted: result.inserted });
         } catch (error) {

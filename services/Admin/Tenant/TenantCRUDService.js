@@ -14,7 +14,11 @@ class TenantCRUDService {
         return (rows || []).map(row => {
             let config = row.config;
             if (config && typeof config === 'string') {
-                try { config = JSON.parse(config); } catch (_) { config = {}; }
+                try {
+                    config = JSON.parse(config);
+                } catch (_) {
+                    config = {};
+                }
             }
             return {
                 id: row.id,
@@ -37,12 +41,24 @@ class TenantCRUDService {
     }
 
     static async createTenant(data) {
-        const { nombre, email, slug, config = {}, activo = true, plan_id = 1, nit, direccion, telefono, ciudad, regimen_fiscal } = data;
+        const {
+            nombre,
+            email,
+            slug,
+            config = {},
+            activo = true,
+            plan_id = 1,
+            nit,
+            direccion,
+            telefono,
+            ciudad,
+            regimen_fiscal
+        } = data;
         const [existing] = await db.query('SELECT id FROM tenants WHERE slug = ?', [slug]);
         if (existing.length > 0) {
             throw new Error('El slug ya existe');
         }
-        const planId = plan_id != null && plan_id !== '' ? parseInt(plan_id, 10) : 1;
+        const planId = plan_id !== null && plan_id !== undefined && plan_id !== '' ? parseInt(plan_id, 10) : 1;
         const [result] = await db.query(
             'INSERT INTO tenants (nombre, email, slug, config, activo, plan_id, nit, direccion, telefono, ciudad, regimen_fiscal) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
             [
@@ -75,7 +91,19 @@ class TenantCRUDService {
         const payload = [];
         const parts = [];
 
-        const fields = ['nombre', 'email', 'activo', 'plan_id', 'nit', 'direccion', 'telefono', 'ciudad', 'regimen_fiscal', 'logo_data', 'logo_tipo'];
+        const fields = [
+            'nombre',
+            'email',
+            'activo',
+            'plan_id',
+            'nit',
+            'direccion',
+            'telefono',
+            'ciudad',
+            'regimen_fiscal',
+            'logo_data',
+            'logo_tipo'
+        ];
         fields.forEach(f => {
             if (data[f] !== undefined) {
                 parts.push(`${f} = ?`);
@@ -101,18 +129,12 @@ class TenantCRUDService {
 
     static async setTenantConfig(id, config) {
         const configStr = typeof config === 'string' ? config : JSON.stringify(config || {});
-        const [result] = await db.query(
-            'UPDATE tenants SET config = ? WHERE id = ?',
-            [configStr, id]
-        );
+        const [result] = await db.query('UPDATE tenants SET config = ? WHERE id = ?', [configStr, id]);
         return result;
     }
 
     static async changeTenantStatus(id, activo) {
-        const [result] = await db.query(
-            'UPDATE tenants SET activo = ? WHERE id = ?',
-            [activo ? 1 : 0, id]
-        );
+        const [result] = await db.query('UPDATE tenants SET activo = ? WHERE id = ?', [activo ? 1 : 0, id]);
         return result;
     }
 
@@ -125,18 +147,48 @@ class TenantCRUDService {
             await connection.query('SET FOREIGN_KEY_CHECKS = 0');
 
             // Delete non-tenant_id dependencies first
-            await connection.query('DELETE FROM user_permisos WHERE user_id IN (SELECT id FROM usuarios WHERE tenant_id = ?)', [id]);
-            await connection.query('DELETE FROM detalle_factura WHERE factura_id IN (SELECT id FROM facturas WHERE tenant_id = ?)', [id]);
-            await connection.query('DELETE FROM producto_parametro WHERE producto_id IN (SELECT id FROM productos WHERE tenant_id = ?)', [id]);
-            await connection.query('DELETE FROM receta_ingredientes WHERE receta_id IN (SELECT id FROM recetas WHERE tenant_id = ?)', [id]);
-            await connection.query('DELETE FROM tema_parametro WHERE tema_id IN (SELECT id FROM temas WHERE tenant_id = ?)', [id]);
+            await connection.query(
+                'DELETE FROM user_permisos WHERE user_id IN (SELECT id FROM usuarios WHERE tenant_id = ?)',
+                [id]
+            );
+            await connection.query(
+                'DELETE FROM detalle_factura WHERE factura_id IN (SELECT id FROM facturas WHERE tenant_id = ?)',
+                [id]
+            );
+            await connection.query(
+                'DELETE FROM producto_parametro WHERE producto_id IN (SELECT id FROM productos WHERE tenant_id = ?)',
+                [id]
+            );
+            await connection.query(
+                'DELETE FROM receta_ingredientes WHERE receta_id IN (SELECT id FROM recetas WHERE tenant_id = ?)',
+                [id]
+            );
+            await connection.query(
+                'DELETE FROM tema_parametro WHERE tema_id IN (SELECT id FROM temas WHERE tenant_id = ?)',
+                [id]
+            );
 
             // Delete all data associated with the tenant
             const tables = [
-                'tenant_audit', 'tenant_addons', 'pedido_items', 'pedidos', 'movimientos_inventario',
-                'facturas', 'recetas', 'productos', 'categorias', 'insumos', 'eventos', 'costos_fijos',
-                'configuracion_costeo', 'configuracion_impresion', 'mesas', 'clientes', 'usuarios',
-                'parametros', 'temas'
+                'tenant_audit',
+                'tenant_addons',
+                'pedido_items',
+                'pedidos',
+                'movimientos_inventario',
+                'facturas',
+                'recetas',
+                'productos',
+                'categorias',
+                'insumos',
+                'eventos',
+                'costos_fijos',
+                'configuracion_costeo',
+                'configuracion_impresion',
+                'mesas',
+                'clientes',
+                'usuarios',
+                'parametros',
+                'temas'
             ];
 
             for (const table of tables) {
@@ -163,10 +215,16 @@ class TenantCRUDService {
             [id]
         );
         const row = rows[0] || null;
-        if (!row) return null;
+        if (!row) {
+            return null;
+        }
         let config = row.config;
         if (config && typeof config === 'string') {
-            try { config = JSON.parse(config); } catch (_) { config = {}; }
+            try {
+                config = JSON.parse(config);
+            } catch (_) {
+                config = {};
+            }
         }
         return {
             ...row,

@@ -40,17 +40,22 @@ class RecetaRepository {
     }
 
     static async findById(id, tenantId) {
-        const [rows] = await db.query(`
+        const [rows] = await db.query(
+            `
             SELECT r.*, p.nombre AS producto_nombre, p.codigo AS producto_codigo, p.precio_unidad AS precio_venta_actual
             FROM recetas r
             INNER JOIN productos p ON p.id = r.producto_id
             WHERE r.id = ? AND r.tenant_id = ?
-        `, [id, tenantId]);
+        `,
+            [id, tenantId]
+        );
         const row = rows[0] || null;
         if (row && row.costos_adicionales) {
             try {
-                row.costos_adicionales = typeof row.costos_adicionales === 'string'
-                    ? JSON.parse(row.costos_adicionales) : row.costos_adicionales;
+                row.costos_adicionales =
+                    typeof row.costos_adicionales === 'string'
+                        ? JSON.parse(row.costos_adicionales)
+                        : row.costos_adicionales;
             } catch (_) {
                 row.costos_adicionales = null;
             }
@@ -59,16 +64,17 @@ class RecetaRepository {
     }
 
     static async findByProductoId(productoId, tenantId) {
-        const [rows] = await db.query(
-            'SELECT * FROM recetas WHERE producto_id = ? AND tenant_id = ?',
-            [productoId, tenantId]
-        );
+        const [rows] = await db.query('SELECT * FROM recetas WHERE producto_id = ? AND tenant_id = ?', [
+            productoId,
+            tenantId
+        ]);
         return rows[0] || null;
     }
 
     static async create(tenantId, data) {
         const { producto_id, nombre_receta, porciones, costos_adicionales } = data;
-        const costosJson = costos_adicionales != null ? JSON.stringify(costos_adicionales) : null;
+        const costosJson =
+            costos_adicionales !== null && costos_adicionales !== undefined ? JSON.stringify(costos_adicionales) : null;
         const [result] = await db.query(
             'INSERT INTO recetas (tenant_id, producto_id, nombre_receta, porciones, costos_adicionales) VALUES (?, ?, ?, ?, ?)',
             [tenantId, producto_id, nombre_receta, parseFloat(porciones) || 1, costosJson]
@@ -82,7 +88,11 @@ class RecetaRepository {
         const params = [nombre_receta ?? '', parseFloat(porciones) || 1];
         if (costos_adicionales !== undefined) {
             updates.push('costos_adicionales = ?');
-            params.push(costos_adicionales != null ? JSON.stringify(costos_adicionales) : null);
+            params.push(
+                costos_adicionales !== null && costos_adicionales !== undefined
+                    ? JSON.stringify(costos_adicionales)
+                    : null
+            );
         }
         params.push(id, tenantId);
         const [result] = await db.query(
@@ -98,13 +108,16 @@ class RecetaRepository {
     }
 
     static async getIngredientes(recetaId) {
-        const [rows] = await db.query(`
+        const [rows] = await db.query(
+            `
             SELECT ri.*, i.nombre AS insumo_nombre, i.codigo AS insumo_codigo, i.unidad_compra, i.unidad_base, i.cantidad_compra, i.precio_compra
             FROM receta_ingredientes ri
             INNER JOIN insumos i ON i.id = ri.insumo_id
             WHERE ri.receta_id = ?
             ORDER BY ri.id
-        `, [recetaId]);
+        `,
+            [recetaId]
+        );
         return rows;
     }
 

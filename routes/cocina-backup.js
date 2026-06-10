@@ -19,7 +19,7 @@ router.get('/', async (req, res) => {
             ORDER BY COALESCE(i.enviado_at, i.created_at) ASC, i.id ASC
         `);
 
-        res.render('cocina', { 
+        res.render('cocina', {
             items: items || [],
             user: req.user
         });
@@ -53,15 +53,19 @@ router.put('/item/:id/estado', async (req, res) => {
     try {
         const id = req.params.id;
         const { estado } = req.body || {};
-        const permitidos = ['preparando','listo'];
-        if (!permitidos.includes(estado)) return res.status(400).json({ error: 'Estado inválido' });
+        const permitidos = ['preparando', 'listo'];
+        if (!permitidos.includes(estado)) {
+            return res.status(400).json({ error: 'Estado inválido' });
+        }
 
         const timestampField = estado === 'preparando' ? 'preparado_at' : 'listo_at';
         const [result] = await db.query(
             `UPDATE pedido_items SET estado = ?, ${timestampField} = NOW() WHERE id = ? AND estado IN ('enviado','preparando')`,
             [estado, id]
         );
-        if (result.affectedRows === 0) return res.status(404).json({ error: 'Item no encontrado o en estado no válido' });
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ error: 'Item no encontrado o en estado no válido' });
+        }
         res.json({ message: 'Estado actualizado' });
     } catch (error) {
         console.error('Error al actualizar estado en cocina:', error);
@@ -70,5 +74,3 @@ router.put('/item/:id/estado', async (req, res) => {
 });
 
 module.exports = router;
-
-

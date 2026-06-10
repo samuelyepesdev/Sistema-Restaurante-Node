@@ -7,7 +7,11 @@ class ProveedoresController {
     static async index(req, res) {
         try {
             const tenantId = req.tenant?.id;
-            if (!tenantId) return res.status(403).render('errors/generic', { error: { message: 'Contexto de tenant no disponible' } });
+            if (!tenantId) {
+                return res
+                    .status(403)
+                    .render('errors/generic', { error: { message: 'Contexto de tenant no disponible' } });
+            }
 
             const proveedores = await ProveedorService.getAll(tenantId);
 
@@ -86,7 +90,9 @@ class ProveedoresController {
         try {
             const tenantId = req.tenant?.id;
             const proveedorId = parseInt(req.params.id);
-            if (!req.file) throw new Error('No se subió ningún archivo');
+            if (!req.file) {
+                throw new Error('No se subió ningún archivo');
+            }
 
             const data = {
                 proveedor_id: proveedorId,

@@ -8,14 +8,18 @@ class ProveedorFacturaService {
 
     static async getById(id, tenantId) {
         const factura = await ProveedorFacturaRepository.findById(id, tenantId);
-        if (!factura) throw new Error('Factura no encontrada');
+        if (!factura) {
+            throw new Error('Factura no encontrada');
+        }
         return factura;
     }
 
     static async create(tenantId, data) {
         // Validar que el proveedor existe y pertenece al tenant
         const proveedor = await ProveedorRepository.findById(data.proveedor_id, tenantId);
-        if (!proveedor) throw new Error('Proveedor no válido');
+        if (!proveedor) {
+            throw new Error('Proveedor no válido');
+        }
 
         // El size limit ya debe venir validado desde el middleware (multer)
         // pero podemos ser precavidos.

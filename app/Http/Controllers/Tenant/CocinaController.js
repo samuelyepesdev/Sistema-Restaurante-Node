@@ -5,7 +5,11 @@ class CocinaController {
     static async index(req, res) {
         try {
             const tenantId = req.tenant?.id;
-            if (!tenantId) return res.status(403).render('errors/internal', { error: { message: 'Contexto de tenant no disponible' } });
+            if (!tenantId) {
+                return res
+                    .status(403)
+                    .render('errors/internal', { error: { message: 'Contexto de tenant no disponible' } });
+            }
 
             let items = await CocinaService.getQueue(tenantId);
 
@@ -41,7 +45,9 @@ class CocinaController {
     static async getQueue(req, res) {
         try {
             const tenantId = req.tenant?.id;
-            if (!tenantId) return res.status(403).json({ error: 'Contexto de tenant no disponible' });
+            if (!tenantId) {
+                return res.status(403).json({ error: 'Contexto de tenant no disponible' });
+            }
 
             let items = await CocinaService.getQueue(tenantId);
 
@@ -69,7 +75,9 @@ class CocinaController {
     static async updateItemEstado(req, res) {
         try {
             const tenantId = req.tenant?.id;
-            if (!tenantId) return res.status(403).json({ error: 'Contexto de tenant no disponible' });
+            if (!tenantId) {
+                return res.status(403).json({ error: 'Contexto de tenant no disponible' });
+            }
             const id = parseInt(req.params.id);
             const { estado } = req.body || {};
             const result = await CocinaService.updateItemEstado(id, tenantId, estado);
@@ -88,7 +96,9 @@ class CocinaController {
     static async updateGroupEstado(req, res) {
         try {
             const tenantId = req.tenant?.id;
-            if (!tenantId) return res.status(403).json({ error: 'Contexto de tenant no disponible' });
+            if (!tenantId) {
+                return res.status(403).json({ error: 'Contexto de tenant no disponible' });
+            }
 
             const { productoNombre, nota, estado } = req.body || {};
             if (!productoNombre || !estado) {

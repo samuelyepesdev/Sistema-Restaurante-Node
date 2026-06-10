@@ -8,11 +8,17 @@ class FacturasController {
     static async facturar(req, res) {
         try {
             const tenantId = req.tenant?.id;
-            if (!tenantId) return res.status(403).render('errors/internal', { error: { message: 'Contexto de tenant no disponible' } });
+            if (!tenantId) {
+                return res
+                    .status(403)
+                    .render('errors/internal', { error: { message: 'Contexto de tenant no disponible' } });
+            }
             let eventoFiltro = null;
             if (req.query.evento_id) {
                 const ev = await EventoService.getById(req.query.evento_id, tenantId);
-                if (ev) eventoFiltro = { id: ev.id, nombre: ev.nombre };
+                if (ev) {
+                    eventoFiltro = { id: ev.id, nombre: ev.nombre };
+                }
             }
             res.render('pos/index', { user: req.user, tenant: req.tenant, eventoFiltro: eventoFiltro || null });
         } catch (error) {
@@ -25,9 +31,9 @@ class FacturasController {
     static async store(req, res) {
         try {
             const tenantId = req.tenant?.id;
-            const result = await FacturaService.create(tenantId, { 
-                ...req.body, 
-                usuario_id: req.user.id 
+            const result = await FacturaService.create(tenantId, {
+                ...req.body,
+                usuario_id: req.user.id
             });
             res.status(201).json(result);
         } catch (error) {
@@ -43,12 +49,14 @@ class FacturasController {
     static async imprimir(req, res) {
         try {
             const tenantId = req.tenant?.id;
-            if (!tenantId) return res.status(403).json({ error: 'Contexto de tenant no disponible' });
+            if (!tenantId) {
+                return res.status(403).json({ error: 'Contexto de tenant no disponible' });
+            }
             const facturaId = parseInt(req.params.id);
             const { factura, detalles } = await FacturaService.getByIdForPrint(facturaId, tenantId);
 
             const config = await ConfiguracionService.getForPreview(tenantId);
-            const returnUrl = (req.query.return && typeof req.query.return === 'string') ? req.query.return : '/ventas';
+            const returnUrl = req.query.return && typeof req.query.return === 'string' ? req.query.return : '/ventas';
             factura.fechaISO = toFechaISOUtc(factura.fecha);
 
             res.render('facturas/impresion', {
@@ -60,7 +68,11 @@ class FacturasController {
             });
         } catch (error) {
             console.error('Error al obtener datos de factura:', error);
-            if (error.message === 'Factura no encontrada' || error.message.includes('detalles') || error.message.includes('configurado')) {
+            if (
+                error.message === 'Factura no encontrada' ||
+                error.message.includes('detalles') ||
+                error.message.includes('configurado')
+            ) {
                 return res.status(404).json({ error: error.message });
             }
             return res.status(500).json({ error: 'Error al obtener datos de factura' });
@@ -71,7 +83,9 @@ class FacturasController {
     static async getDetalles(req, res) {
         try {
             const tenantId = req.tenant?.id;
-            if (!tenantId) return res.status(403).json({ error: 'Contexto de tenant no disponible' });
+            if (!tenantId) {
+                return res.status(403).json({ error: 'Contexto de tenant no disponible' });
+            }
             const facturaId = parseInt(req.params.id);
             const details = await FacturaService.getDetails(facturaId, tenantId);
             res.json(details);

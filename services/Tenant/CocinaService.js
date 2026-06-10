@@ -39,11 +39,12 @@ class CocinaService {
 
     static async updateGroupEstado(tenantId, productoNombre, nota, estado) {
         const permitidos = ['preparando', 'listo'];
-        if (!permitidos.includes(estado)) throw new Error('Estado inválido');
+        if (!permitidos.includes(estado)) {
+            throw new Error('Estado inválido');
+        }
 
         return await CocinaRepository.updateGroupEstado(tenantId, productoNombre, nota, estado);
     }
 }
 
 module.exports = CocinaService;
-

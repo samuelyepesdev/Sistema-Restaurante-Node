@@ -17,7 +17,9 @@ class AddonService {
     /** Actualizar precio/nombre de un add-on */
     static async update(id, data) {
         const addon = await AddonRepository.findById(id);
-        if (!addon) throw new Error('Add-on no encontrado');
+        if (!addon) {
+            throw new Error('Add-on no encontrado');
+        }
         await AddonRepository.update(id, data);
         return AddonRepository.findById(id);
     }
@@ -30,7 +32,9 @@ class AddonService {
     /** Asignar add-on a un tenant */
     static async addToTenant(tenantId, addonId) {
         const addon = await AddonRepository.findById(addonId);
-        if (!addon) throw new Error('Add-on no encontrado');
+        if (!addon) {
+            throw new Error('Add-on no encontrado');
+        }
         await AddonRepository.addToTenant(tenantId, addonId);
     }
 
@@ -74,7 +78,9 @@ class AddonService {
      */
     static async updateTamano(tenantId, tamano) {
         const validos = ['pequeno', 'mediano', 'grande'];
-        if (!validos.includes(tamano)) throw new Error('Tamaño inválido');
+        if (!validos.includes(tamano)) {
+            throw new Error('Tamaño inválido');
+        }
         await db.query('UPDATE tenants SET tamano = ? WHERE id = ?', [tamano, tenantId]);
     }
 
@@ -85,7 +91,9 @@ class AddonService {
      * @returns {Promise<Object[]>}
      */
     static async enrichTenants(tenants, plans) {
-        if (!tenants || tenants.length === 0) return [];
+        if (!tenants || tenants.length === 0) {
+            return [];
+        }
         const tenantIds = tenants.map(t => t.id);
         const addonRows = await AddonRepository.getByTenantIds(tenantIds);
         const planMap = Object.fromEntries(plans.map(p => [p.id, p]));
@@ -93,7 +101,9 @@ class AddonService {
         // Agrupar add-ons por tenant_id
         const addonsByTenant = {};
         addonRows.forEach(row => {
-            if (!addonsByTenant[row.tenant_id]) addonsByTenant[row.tenant_id] = [];
+            if (!addonsByTenant[row.tenant_id]) {
+                addonsByTenant[row.tenant_id] = [];
+            }
             addonsByTenant[row.tenant_id].push({
                 id: row.addon_id,
                 slug: row.addon_slug,
@@ -107,7 +117,7 @@ class AddonService {
             const tamano = t.tamano || 'pequeno';
             const addons = addonsByTenant[t.id] || [];
             const keyPlan = `precio_${tamano}`;
-            const precioPlan = plan ? (plan[keyPlan] || 0) : 0;
+            const precioPlan = plan ? plan[keyPlan] || 0 : 0;
             const precioAddons = addons.reduce((s, a) => s + a.precio, 0);
             return {
                 ...t,

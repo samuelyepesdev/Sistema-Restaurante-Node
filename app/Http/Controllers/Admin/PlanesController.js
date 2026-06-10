@@ -43,7 +43,9 @@ class PlanesController {
         try {
             const { precio_pequeno, precio_mediano, precio_grande } = req.body;
             const plan = await PlanService.updatePrecios(Number(req.params.id), {
-                precio_pequeno, precio_mediano, precio_grande
+                precio_pequeno,
+                precio_mediano,
+                precio_grande
             });
             res.json({ ok: true, plan });
         } catch (error) {
@@ -57,7 +59,9 @@ class PlanesController {
         try {
             const { nombre, descripcion, descripcion_detallada } = req.body;
             const plan = await PlanService.updateGeneral(Number(req.params.id), {
-                nombre, descripcion, descripcion_detallada
+                nombre,
+                descripcion,
+                descripcion_detallada
             });
             res.json({ ok: true, plan });
         } catch (error) {
@@ -100,7 +104,11 @@ class PlanesController {
         } catch (error) {
             console.error('[PDF_EXPORT_ERROR]:', error);
             if (browser) {
-                try { await browser.close(); } catch (e) { }
+                try {
+                    await browser.close();
+                } catch (e) {
+                    /* intentional */
+                }
             }
             // Si hay error, enviamos un HTML amigable en lugar de un buffer corrupto
             res.status(500).send(`
@@ -148,7 +156,9 @@ class PlanesController {
     static async addAddonToTenant(req, res) {
         try {
             const { addon_id } = req.body;
-            if (!addon_id) return res.status(400).json({ error: 'addon_id requerido' });
+            if (!addon_id) {
+                return res.status(400).json({ error: 'addon_id requerido' });
+            }
             await AddonService.addToTenant(Number(req.params.tenantId), Number(addon_id));
             res.json({ ok: true });
         } catch (error) {
@@ -160,10 +170,7 @@ class PlanesController {
     // DELETE /api/tenant/:tenantId/addons/:addonId
     static async removeAddonFromTenant(req, res) {
         try {
-            await AddonService.removeFromTenant(
-                Number(req.params.tenantId),
-                Number(req.params.addonId)
-            );
+            await AddonService.removeFromTenant(Number(req.params.tenantId), Number(req.params.addonId));
             res.json({ ok: true });
         } catch (error) {
             console.error('Error al quitar add-on del tenant:', error);

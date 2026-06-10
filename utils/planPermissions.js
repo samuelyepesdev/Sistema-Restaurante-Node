@@ -64,9 +64,24 @@ const PERMISSION_TO_MODULE = {
 // Básico: dashboard, productos, clientes, mesas, cocina, ventas, configuracion
 // Pro: + inventario, recetas | Premium: + eventos, analitica, prediccion_ml
 const PLAN_MODULES = [
-    'dashboard', 'productos', 'clientes', 'mesas', 'cocina', 'ventas', 'configuracion',
-    'inventario', 'recetas', 'eventos', 'analitica', 'prediccion_ml',
-    'plantillas', 'importar_exportar', 'costeo', 'caja', 'servicios', 'proveedores'
+    'dashboard',
+    'productos',
+    'clientes',
+    'mesas',
+    'cocina',
+    'ventas',
+    'configuracion',
+    'inventario',
+    'recetas',
+    'eventos',
+    'analitica',
+    'prediccion_ml',
+    'plantillas',
+    'importar_exportar',
+    'costeo',
+    'caja',
+    'servicios',
+    'proveedores'
 ];
 
 /**
@@ -76,13 +91,25 @@ const PLAN_MODULES = [
  * @returns {boolean} true si no hay plan (acceso por defecto) o si el plan incluye el módulo del permiso
  */
 function planAllowsPermission(plan, permission) {
-    if (!plan) return true;
-    const isPremium = plan.slug === 'premium' || plan.slug === 'definitivo' || (plan.nombre && (plan.nombre.toLowerCase().includes('premium') || plan.nombre.toLowerCase().includes('definitivo')));
-    if (isPremium) return true;
-    
-    if (!plan.caracteristicas) return true;
+    if (!plan) {
+        return true;
+    }
+    const isPremium =
+        plan.slug === 'premium' ||
+        plan.slug === 'definitivo' ||
+        (plan.nombre &&
+            (plan.nombre.toLowerCase().includes('premium') || plan.nombre.toLowerCase().includes('definitivo')));
+    if (isPremium) {
+        return true;
+    }
+
+    if (!plan.caracteristicas) {
+        return true;
+    }
     const moduleSlug = PERMISSION_TO_MODULE[permission];
-    if (!moduleSlug) return true;
+    if (!moduleSlug) {
+        return true;
+    }
     return Array.isArray(plan.caracteristicas) && plan.caracteristicas.includes(moduleSlug);
 }
 
@@ -92,7 +119,9 @@ function planAllowsPermission(plan, permission) {
  * @returns {string[]} Nombres de permisos
  */
 function getPermissionNamesForModule(moduleSlug) {
-    if (!moduleSlug) return [];
+    if (!moduleSlug) {
+        return [];
+    }
     return Object.keys(PERMISSION_TO_MODULE).filter(p => PERMISSION_TO_MODULE[p] === moduleSlug);
 }
 
@@ -103,11 +132,21 @@ function getPermissionNamesForModule(moduleSlug) {
  * @returns {boolean}
  */
 function planHasModule(plan, moduleSlug) {
-    if (!plan) return true;
-    const isPremium = plan.slug === 'premium' || plan.slug === 'definitivo' || (plan.nombre && (plan.nombre.toLowerCase().includes('premium') || plan.nombre.toLowerCase().includes('definitivo')));
-    if (isPremium) return true;
-    
-    if (!plan.caracteristicas) return true;
+    if (!plan) {
+        return true;
+    }
+    const isPremium =
+        plan.slug === 'premium' ||
+        plan.slug === 'definitivo' ||
+        (plan.nombre &&
+            (plan.nombre.toLowerCase().includes('premium') || plan.nombre.toLowerCase().includes('definitivo')));
+    if (isPremium) {
+        return true;
+    }
+
+    if (!plan.caracteristicas) {
+        return true;
+    }
     return Array.isArray(plan.caracteristicas) && plan.caracteristicas.includes(moduleSlug);
 }
 

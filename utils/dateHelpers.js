@@ -7,16 +7,26 @@
  * @returns {string} ISO string (ej. "2026-02-28T01:33:36.000Z") o ''
  */
 function toFechaISOUtc(fecha) {
-    if (fecha == null) return '';
+    if (fecha === null || fecha === undefined) {
+        return '';
+    }
     if (typeof fecha === 'string') {
         // MySQL devuelve '0000-00-00 00:00:00' para fechas invalidas/vacias
-        if (fecha.startsWith('0000-00-00')) return '';
+        if (fecha.startsWith('0000-00-00')) {
+            return '';
+        }
         const mysqlMatch = fecha.match(/^(\d{4}-\d{2}-\d{2}) (\d{2}:\d{2}:\d{2})/);
-        if (mysqlMatch) return mysqlMatch[1] + 'T' + mysqlMatch[2] + '.000Z';
-        if (fecha.endsWith('Z') || fecha.includes('T')) return new Date(fecha).toISOString();
+        if (mysqlMatch) {
+            return mysqlMatch[1] + 'T' + mysqlMatch[2] + '.000Z';
+        }
+        if (fecha.endsWith('Z') || fecha.includes('T')) {
+            return new Date(fecha).toISOString();
+        }
     }
     if (fecha instanceof Date) {
-        if (isNaN(fecha.getTime())) return '';
+        if (isNaN(fecha.getTime())) {
+            return '';
+        }
         return fecha.toISOString();
     }
     try {

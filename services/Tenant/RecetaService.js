@@ -13,14 +13,18 @@ class RecetaService {
 
     static async getById(id, tenantId) {
         const receta = await RecetaRepository.findById(id, tenantId);
-        if (!receta) return null;
+        if (!receta) {
+            return null;
+        }
         receta.ingredientes = await RecetaRepository.getIngredientes(id);
         return receta;
     }
 
     static async getByProductoId(productoId, tenantId) {
         const receta = await RecetaRepository.findByProductoId(productoId, tenantId);
-        if (!receta) return null;
+        if (!receta) {
+            return null;
+        }
         receta.ingredientes = await RecetaRepository.getIngredientes(receta.id);
         return receta;
     }
@@ -30,9 +34,13 @@ class RecetaService {
             throw new Error('Producto y nombre de receta son requeridos');
         }
         const product = await ProductRepository.findById(data.producto_id, tenantId);
-        if (!product) throw new Error('Producto no encontrado');
+        if (!product) {
+            throw new Error('Producto no encontrado');
+        }
         const exists = await RecetaRepository.findByProductoId(data.producto_id, tenantId);
-        if (exists) throw new Error('Este producto ya tiene una receta');
+        if (exists) {
+            throw new Error('Este producto ya tiene una receta');
+        }
         const recetaId = await RecetaRepository.create(tenantId, {
             producto_id: data.producto_id,
             nombre_receta: data.nombre_receta.trim(),
@@ -47,7 +55,9 @@ class RecetaService {
 
     static async update(id, tenantId, data) {
         const receta = await RecetaRepository.findById(id, tenantId);
-        if (!receta) throw new Error('Receta no encontrada');
+        if (!receta) {
+            throw new Error('Receta no encontrada');
+        }
         await RecetaRepository.update(id, tenantId, {
             nombre_receta: data.nombre_receta !== undefined ? data.nombre_receta.trim() : receta.nombre_receta,
             porciones: data.porciones !== undefined ? parseFloat(data.porciones) : receta.porciones,
@@ -61,7 +71,9 @@ class RecetaService {
 
     static async delete(id, tenantId) {
         const receta = await RecetaRepository.findById(id, tenantId);
-        if (!receta) throw new Error('Receta no encontrada');
+        if (!receta) {
+            throw new Error('Receta no encontrada');
+        }
         await RecetaRepository.delete(id, tenantId);
         return { message: 'Receta eliminada' };
     }

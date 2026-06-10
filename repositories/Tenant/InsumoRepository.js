@@ -59,15 +59,34 @@ class InsumoRepository {
     }
 
     static async create(tenantId, data) {
-        const { codigo, nombre, unidad_compra, cantidad_compra, precio_compra, unidad_base, stock_minimo, categoria_id, unidad_medida_id, proveedor_id } = data;
+        const {
+            codigo,
+            nombre,
+            unidad_compra,
+            cantidad_compra,
+            precio_compra,
+            unidad_base,
+            stock_minimo,
+            categoria_id,
+            unidad_medida_id,
+            proveedor_id
+        } = data;
         const [result] = await db.query(
             `INSERT INTO insumos (tenant_id, codigo, nombre, unidad_compra, cantidad_compra, precio_compra, precio_venta, unidad_base, stock_minimo, categoria_id, unidad_medida_id, proveedor_id)
              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
             [
-                tenantId, codigo, nombre, unidad_compra || 'UND', parseFloat(cantidad_compra) || 1, 
-                parseFloat(precio_compra) || 0, parseFloat(data.precio_venta) || 0,
-                (unidad_base && String(unidad_base).trim()) || 'g', parseFloat(stock_minimo) || 0,
-                categoria_id || null, unidad_medida_id || null, proveedor_id || null
+                tenantId,
+                codigo,
+                nombre,
+                unidad_compra || 'UND',
+                parseFloat(cantidad_compra) || 1,
+                parseFloat(precio_compra) || 0,
+                parseFloat(data.precio_venta) || 0,
+                (unidad_base && String(unidad_base).trim()) || 'g',
+                parseFloat(stock_minimo) || 0,
+                categoria_id || null,
+                unidad_medida_id || null,
+                proveedor_id || null
             ]
         );
         return result.insertId;
@@ -76,19 +95,38 @@ class InsumoRepository {
     static async update(id, tenantId, data) {
         const fields = [];
         const params = [];
-        const allowed = ['codigo', 'nombre', 'unidad_compra', 'cantidad_compra', 'precio_compra', 'precio_venta', 'unidad_base', 'stock_minimo', 'categoria_id', 'unidad_medida_id', 'proveedor_id'];
+        const allowed = [
+            'codigo',
+            'nombre',
+            'unidad_compra',
+            'cantidad_compra',
+            'precio_compra',
+            'precio_venta',
+            'unidad_base',
+            'stock_minimo',
+            'categoria_id',
+            'unidad_medida_id',
+            'proveedor_id'
+        ];
         for (const key of allowed) {
             if (data[key] !== undefined) {
-                if (key === 'cantidad_compra' || key === 'precio_compra' || key === 'precio_venta' || key === 'stock_minimo') {
+                if (
+                    key === 'cantidad_compra' ||
+                    key === 'precio_compra' ||
+                    key === 'precio_venta' ||
+                    key === 'stock_minimo'
+                ) {
                     fields.push(`${key} = ?`);
                     params.push(parseFloat(data[key]));
                 } else {
                     fields.push(`${key} = ?`);
-                    params.push(key === 'unidad_base' ? (data[key] || 'g') : data[key]);
+                    params.push(key === 'unidad_base' ? data[key] || 'g' : data[key]);
                 }
             }
         }
-        if (fields.length === 0) return null;
+        if (fields.length === 0) {
+            return null;
+        }
         params.push(id, tenantId);
         const [result] = await db.query(
             `UPDATE insumos SET ${fields.join(', ')} WHERE id = ? AND tenant_id = ?`,
@@ -100,7 +138,12 @@ class InsumoRepository {
     static async updateStockAndCosto(id, tenantId, stock_actual, costo_promedio) {
         const [result] = await db.query(
             'UPDATE insumos SET stock_actual = ?, costo_promedio = ? WHERE id = ? AND tenant_id = ?',
-            [parseFloat(stock_actual), costo_promedio != null ? parseFloat(costo_promedio) : null, id, tenantId]
+            [
+                parseFloat(stock_actual),
+                costo_promedio !== null && costo_promedio !== undefined ? parseFloat(costo_promedio) : null,
+                id,
+                tenantId
+            ]
         );
         return result;
     }

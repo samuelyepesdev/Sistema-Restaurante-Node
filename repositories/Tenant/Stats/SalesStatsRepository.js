@@ -15,14 +15,14 @@ function getUtcRangeForColombia(desde, hasta) {
     const utcDesde = `${desde} 05:00:00`;
     const utcHastaDate = new Date(`${hasta}T23:59:59`);
     utcHastaDate.setHours(utcHastaDate.getHours() + 5);
-    
+
     const y = utcHastaDate.getFullYear();
     const m = String(utcHastaDate.getMonth() + 1).padStart(2, '0');
     const d = String(utcHastaDate.getDate()).padStart(2, '0');
     const hh = String(utcHastaDate.getHours()).padStart(2, '0');
     const mm = String(utcHastaDate.getMinutes()).padStart(2, '0');
     const ss = String(utcHastaDate.getSeconds()).padStart(2, '0');
-    
+
     const utcHasta = `${y}-${m}-${d} ${hh}:${mm}:${ss}`;
     return { utcDesde, utcHasta };
 }
@@ -48,7 +48,7 @@ class SalesStatsRepository {
 
         if (filters.desde && filters.hasta) {
             const { utcDesde, utcHasta } = getUtcRangeForColombia(filters.desde, filters.hasta);
-            query += " AND fecha BETWEEN ? AND ?";
+            query += ' AND fecha BETWEEN ? AND ?';
             params.push(utcDesde, utcHasta);
         }
 
@@ -102,7 +102,7 @@ class SalesStatsRepository {
 
         if (filters.desde && filters.hasta) {
             const { utcDesde, utcHasta } = getUtcRangeForColombia(filters.desde, filters.hasta);
-            query += " AND fecha BETWEEN ? AND ?";
+            query += ' AND fecha BETWEEN ? AND ?';
             params.push(utcDesde, utcHasta);
         }
 
@@ -126,7 +126,7 @@ class SalesStatsRepository {
 
         if (filters.desde && filters.hasta) {
             const { utcDesde, utcHasta } = getUtcRangeForColombia(filters.desde, filters.hasta);
-            query += " AND fecha BETWEEN ? AND ?";
+            query += ' AND fecha BETWEEN ? AND ?';
             params.push(utcDesde, utcHasta);
         }
 
@@ -159,14 +159,14 @@ class SalesStatsRepository {
 
         if (filters.desde && filters.hasta) {
             const { utcDesde, utcHasta } = getUtcRangeForColombia(filters.desde, filters.hasta);
-            query += " AND f.fecha BETWEEN ? AND ?";
+            query += ' AND f.fecha BETWEEN ? AND ?';
             params.push(utcDesde, utcHasta);
         }
 
         query += ' GROUP BY f.forma_pago';
 
         const [result] = await db.query(query, params);
-        
+
         const totals = {
             efectivo: 0,
             transferencia: 0,
@@ -174,14 +174,19 @@ class SalesStatsRepository {
         };
 
         result.forEach(row => {
-            const fp = String(row.forma_pago || '').toLowerCase().trim();
+            const fp = String(row.forma_pago || '')
+                .toLowerCase()
+                .trim();
             const totalFactura = parseFloat(row.total || 0);
             const totalExternos = parseFloat(row.total_externos || 0);
             const netSale = totalFactura - totalExternos;
 
-            if (fp === 'efectivo') totals.efectivo += netSale;
-            else if (fp === 'transferencia') totals.transferencia += netSale;
-            
+            if (fp === 'efectivo') {
+                totals.efectivo += netSale;
+            } else if (fp === 'transferencia') {
+                totals.transferencia += netSale;
+            }
+
             totals.serviciosExternos += totalExternos;
         });
 
@@ -207,7 +212,7 @@ class SalesStatsRepository {
         const [result] = await db.query(query, [tenantId, daysAgoUtc]);
         return result.map(row => {
             const f = row.fecha;
-            const fechaStr = (f instanceof Date) ? f.toISOString().split('T')[0] : String(f || '').substring(0, 10);
+            const fechaStr = f instanceof Date ? f.toISOString().split('T')[0] : String(f || '').substring(0, 10);
             return {
                 fecha: fechaStr,
                 cantidad_facturas: parseInt(row.cantidad_facturas || 0),

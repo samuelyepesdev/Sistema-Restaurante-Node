@@ -15,8 +15,8 @@ class R2StorageService {
                 endpoint: `https://${this.accountId}.r2.cloudflarestorage.com`,
                 credentials: {
                     accessKeyId: this.accessKeyId,
-                    secretAccessKey: this.secretAccessKey,
-                },
+                    secretAccessKey: this.secretAccessKey
+                }
             });
         }
     }
@@ -41,7 +41,7 @@ class R2StorageService {
                 Bucket: this.bucketName,
                 Key: fileName,
                 Body: fileBuffer,
-                ContentType: mimeType,
+                ContentType: mimeType
             });
 
             await this.s3Client.send(command);
@@ -50,7 +50,7 @@ class R2StorageService {
             return `${basePublicUrl}${fileName}`;
         } catch (error) {
             console.error('Error al subir archivo a R2:', error);
-            throw new Error('No se pudo subir la imagen al servidor de almacenamiento');
+            throw new Error('No se pudo subir la imagen al servidor de almacenamiento', { cause: error });
         }
     }
 }

@@ -24,10 +24,9 @@ class AddonRepository {
      * @returns {Promise<Object|null>}
      */
     static async findById(id) {
-        const [rows] = await db.query(
-            'SELECT id, slug, nombre, descripcion, precio, activo FROM addons WHERE id = ?',
-            [id]
-        );
+        const [rows] = await db.query('SELECT id, slug, nombre, descripcion, precio, activo FROM addons WHERE id = ?', [
+            id
+        ]);
         return rows[0] ? AddonRepository._mapRow(rows[0]) : null;
     }
 
@@ -39,10 +38,21 @@ class AddonRepository {
     static async update(id, data) {
         const fields = [];
         const params = [];
-        if (data.nombre !== undefined) { fields.push('nombre = ?'); params.push(String(data.nombre).trim()); }
-        if (data.descripcion !== undefined) { fields.push('descripcion = ?'); params.push(data.descripcion); }
-        if (data.precio !== undefined) { fields.push('precio = ?'); params.push(parseFloat(data.precio) || 0); }
-        if (fields.length === 0) return;
+        if (data.nombre !== undefined) {
+            fields.push('nombre = ?');
+            params.push(String(data.nombre).trim());
+        }
+        if (data.descripcion !== undefined) {
+            fields.push('descripcion = ?');
+            params.push(data.descripcion);
+        }
+        if (data.precio !== undefined) {
+            fields.push('precio = ?');
+            params.push(parseFloat(data.precio) || 0);
+        }
+        if (fields.length === 0) {
+            return;
+        }
         params.push(id);
         await db.query(`UPDATE addons SET ${fields.join(', ')} WHERE id = ?`, params);
     }
@@ -70,10 +80,7 @@ class AddonRepository {
      * @param {number} addonId
      */
     static async addToTenant(tenantId, addonId) {
-        await db.query(
-            'INSERT IGNORE INTO tenant_addons (tenant_id, addon_id) VALUES (?, ?)',
-            [tenantId, addonId]
-        );
+        await db.query('INSERT IGNORE INTO tenant_addons (tenant_id, addon_id) VALUES (?, ?)', [tenantId, addonId]);
     }
 
     /**
@@ -82,10 +89,7 @@ class AddonRepository {
      * @param {number} addonId
      */
     static async removeFromTenant(tenantId, addonId) {
-        await db.query(
-            'DELETE FROM tenant_addons WHERE tenant_id = ? AND addon_id = ?',
-            [tenantId, addonId]
-        );
+        await db.query('DELETE FROM tenant_addons WHERE tenant_id = ? AND addon_id = ?', [tenantId, addonId]);
     }
 
     /**
@@ -94,7 +98,9 @@ class AddonRepository {
      * @returns {Promise<Object[]>}  filas con { tenant_id, addon_id, addon_slug, addon_nombre, addon_precio }
      */
     static async getByTenantIds(tenantIds) {
-        if (!tenantIds || tenantIds.length === 0) return [];
+        if (!tenantIds || tenantIds.length === 0) {
+            return [];
+        }
         const placeholders = tenantIds.map(() => '?').join(',');
         const [rows] = await db.query(
             `SELECT ta.tenant_id, a.id AS addon_id, a.slug AS addon_slug,

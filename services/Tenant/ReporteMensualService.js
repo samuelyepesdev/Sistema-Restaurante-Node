@@ -17,16 +17,14 @@ function formatMoney(amount) {
 
 class ReporteMensualService {
     static async generarYEnviar(tenant, options = {}) {
-        let firstDay, lastDayStr, mesNombre;
-
         const date = new Date();
         let targetYear = date.getFullYear();
         let targetMonth = date.getMonth(); // 0-11 (por defecto el mes actual para pruebas rápidas)
 
-        if (options.mes != null && options.anio != null) {
+        if (options.mes !== null && options.mes !== undefined && options.anio !== null && options.anio !== undefined) {
             targetMonth = parseInt(options.mes) - 1; // Recibimos 1-12
             targetYear = parseInt(options.anio);
-            
+
             // Validar que no sea un mes futuro
             const requestDate = new Date(targetYear, targetMonth, 1);
             if (requestDate > date) {
@@ -44,19 +42,22 @@ class ReporteMensualService {
         }
 
         const m = targetMonth + 1;
-        firstDay = `${targetYear}-${m.toString().padStart(2, '0')}-01`;
-        lastDayStr = `${targetYear}-${m.toString().padStart(2, '0')}-${new Date(targetYear, m, 0).getDate()}`;
-        
+        const firstDay = `${targetYear}-${m.toString().padStart(2, '0')}-01`;
+        const lastDayStr = `${targetYear}-${m.toString().padStart(2, '0')}-${new Date(targetYear, m, 0).getDate()}`;
+
         // Nombre del mes en español
         const tempDate = new Date(targetYear, targetMonth, 1);
-        mesNombre = tempDate.toLocaleString('es-CO', { month: 'long', year: 'numeric' });
+        const mesNombre = tempDate.toLocaleString('es-CO', { month: 'long', year: 'numeric' });
 
         console.log(`Generando reporte para ${tenant.nombre} - Rango: ${firstDay} a ${lastDayStr}...`);
 
         const totalMes = await StatsRepository.getTotalSales(tenant.id, { desde: firstDay, hasta: lastDayStr });
         const facturasMes = await StatsRepository.getTotalInvoices(tenant.id, { desde: firstDay, hasta: lastDayStr });
         const topProductos = await StatsRepository.getTopProducts(tenant.id, 5, { desde: firstDay, hasta: lastDayStr });
-        const porCategoria = await StatsRepository.getSalesByCategory(tenant.id, { desde: firstDay, hasta: lastDayStr });
+        const porCategoria = await StatsRepository.getSalesByCategory(tenant.id, {
+            desde: firstDay,
+            hasta: lastDayStr
+        });
 
         const templatePath = path.join(__dirname, '../../views/reportes/mensual.ejs');
         const data = {
@@ -75,13 +76,21 @@ class ReporteMensualService {
         const browser = await puppeteer.launch({ headless: 'new', args: ['--no-sandbox', '--disable-setuid-sandbox'] });
         const page = await browser.newPage();
         await page.setContent(html, { waitUntil: 'networkidle0' });
-        const pdfBuffer = await page.pdf({ format: 'A4', printBackground: true, margin: { top: '20px', bottom: '20px', left: '20px', right: '20px' } });
+        const pdfBuffer = await page.pdf({
+            format: 'A4',
+            printBackground: true,
+            margin: { top: '20px', bottom: '20px', left: '20px', right: '20px' }
+        });
         await browser.close();
 
         // Determinar destinatario
         let to = options.testEmail;
         if (!to) {
-            to = tenant.email || (tenant.config && tenant.config.correo) || process.env.ADMIN_EMAIL || 'contacto@ejemplo.com';
+            to =
+                tenant.email ||
+                (tenant.config && tenant.config.correo) ||
+                process.env.ADMIN_EMAIL ||
+                'contacto@ejemplo.com';
         }
 
         const subject = `Reporte Mensual - ${tenant.nombre} - ${data.mes}`;
@@ -92,10 +101,12 @@ class ReporteMensualService {
                 to,
                 subject,
                 html: bodyContent,
-                attachments: [{
-                    filename: `Reporte_${data.mes.replace(/ /g, '_')}_${tenant.nombre.replace(/ /g, '_')}.pdf`,
-                    content: pdfBuffer
-                }]
+                attachments: [
+                    {
+                        filename: `Reporte_${data.mes.replace(/ /g, '_')}_${tenant.nombre.replace(/ /g, '_')}.pdf`,
+                        content: pdfBuffer
+                    }
+                ]
             });
 
             let waSent = false;
@@ -105,13 +116,25 @@ class ReporteMensualService {
                     const filename = `Reporte_${data.mes.replace(/ /g, '_')}_${tenant.nombre.replace(/ /g, '_')}.pdf`;
                     const caption = `Hola *${tenant.nombre}*! 👋\n\nAquí tienes el resumen de ventas de *${data.mes}*.\n\n_Tu Sistema Ecl-Fruver_`;
 
-                    // Intentamos enviar desde el propio bot del tenant si está conectado. 
+                    // Intentamos enviar desde el propio bot del tenant si está conectado.
                     // El servicio ahora maneja automáticamente el formato 57+numero.
-                    waSent = await WhatsAppService.sendMediaMessage(tenant.id, tenant.telefono, pdfBuffer, filename, caption);
+                    waSent = await WhatsAppService.sendMediaMessage(
+                        tenant.id,
+                        tenant.telefono,
+                        pdfBuffer,
+                        filename,
+                        caption
+                    );
 
                     // Si no tiene bot conectado, intentamos desde el tenantPrincipal (id 1)
                     if (!waSent && tenant.id !== 1) {
-                         waSent = await WhatsAppService.sendMediaMessage(1, tenant.telefono, pdfBuffer, filename, caption);
+                        waSent = await WhatsAppService.sendMediaMessage(
+                            1,
+                            tenant.telefono,
+                            pdfBuffer,
+                            filename,
+                            caption
+                        );
                     }
 
                     if (waSent) {
@@ -141,7 +164,7 @@ class ReporteMensualService {
 
         // 2. Procesar concurrentemente en paralelo todos los reportes usando .map() y Promise.all()
         await Promise.all(
-            tenantsActivos.map(async (t) => {
+            tenantsActivos.map(async t => {
                 try {
                     // Si se llama desde el cron de fin de mes, options tendrá { finDeMes: true }
                     // Si no, por defecto será para enviar el mes anterior.

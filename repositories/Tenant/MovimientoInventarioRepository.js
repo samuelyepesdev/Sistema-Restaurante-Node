@@ -11,8 +11,11 @@ class MovimientoInventarioRepository {
             `INSERT INTO movimientos_inventario (tenant_id, insumo_id, tipo, cantidad, costo_unitario, referencia, proveedor_id, documento_referencia)
              VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
             [
-                tenantId, insumo_id, tipo, cantidad,
-                costo_unitario != null ? costo_unitario : null,
+                tenantId,
+                insumo_id,
+                tipo,
+                cantidad,
+                costo_unitario !== null && costo_unitario !== undefined ? costo_unitario : null,
                 referencia || null,
                 proveedor_id || null,
                 documento_referencia || null

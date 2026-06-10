@@ -10,8 +10,10 @@ class CacheService {
      */
     get(key) {
         const item = this.cache.get(key);
-        if (!item) return null;
-        
+        if (!item) {
+            return null;
+        }
+
         if (Date.now() > item.expiresAt) {
             this.cache.delete(key);
             return null;
@@ -28,7 +30,7 @@ class CacheService {
     set(key, value, ttlSeconds = 300) {
         this.cache.set(key, {
             value,
-            expiresAt: Date.now() + (ttlSeconds * 1000)
+            expiresAt: Date.now() + ttlSeconds * 1000
         });
     }
 
@@ -39,7 +41,7 @@ class CacheService {
     delete(key) {
         this.cache.delete(key);
     }
-    
+
     /**
      * Elimina elementos de la caché que coinciden con un prefijo.
      * @param {string} prefix - Prefijo de las claves a eliminar

@@ -6,11 +6,17 @@ class MesaManagementController {
     static async store(req, res) {
         try {
             const tenantId = req.tenant?.id;
-            if (!tenantId) return res.status(403).json({ error: 'Contexto de tenant no disponible' });
+            if (!tenantId) {
+                return res.status(403).json({ error: 'Contexto de tenant no disponible' });
+            }
 
             const { numero, descripcion } = req.body || {};
-            if (!numero) return res.status(400).json({ error: 'El número de mesa es requerido' });
-            if (!descripcion || !String(descripcion).trim()) return res.status(400).json({ error: 'La descripción es requerida' });
+            if (!numero) {
+                return res.status(400).json({ error: 'El número de mesa es requerido' });
+            }
+            if (!descripcion || !String(descripcion).trim()) {
+                return res.status(400).json({ error: 'La descripción es requerida' });
+            }
 
             const [result] = await db.query(
                 'INSERT INTO mesas (tenant_id, numero, descripcion, estado) VALUES (?, ?, ?, ?)',
@@ -19,7 +25,9 @@ class MesaManagementController {
             res.status(201).json({ id: result.insertId });
         } catch (error) {
             console.error('Error al crear mesa:', error);
-            if (error.code === 'ER_DUP_ENTRY') return res.status(400).json({ error: 'Ya existe una mesa con ese número' });
+            if (error.code === 'ER_DUP_ENTRY') {
+                return res.status(400).json({ error: 'Ya existe una mesa con ese número' });
+            }
             res.status(500).json({ error: 'Error al crear mesa' });
         }
     }
@@ -28,26 +36,40 @@ class MesaManagementController {
     static async update(req, res) {
         try {
             const tenantId = req.tenant?.id;
-            if (!tenantId) return res.status(403).json({ error: 'Contexto de tenant no disponible' });
+            if (!tenantId) {
+                return res.status(403).json({ error: 'Contexto de tenant no disponible' });
+            }
             const { mesaId } = req.params;
             const { numero, descripcion } = req.body || {};
 
             const [rows] = await db.query('SELECT id FROM mesas WHERE id = ? AND tenant_id = ?', [mesaId, tenantId]);
-            if (rows.length === 0) return res.status(404).json({ error: 'Mesa no encontrada' });
+            if (rows.length === 0) {
+                return res.status(404).json({ error: 'Mesa no encontrada' });
+            }
 
             const updates = [];
             const values = [];
-            if (numero !== undefined) { updates.push('numero = ?'); values.push(String(numero).trim()); }
-            if (descripcion !== undefined) { updates.push('descripcion = ?'); values.push(String(descripcion).trim()); }
-            
-            if (updates.length === 0) return res.status(400).json({ error: 'Indique datos a actualizar' });
+            if (numero !== undefined) {
+                updates.push('numero = ?');
+                values.push(String(numero).trim());
+            }
+            if (descripcion !== undefined) {
+                updates.push('descripcion = ?');
+                values.push(String(descripcion).trim());
+            }
+
+            if (updates.length === 0) {
+                return res.status(400).json({ error: 'Indique datos a actualizar' });
+            }
             values.push(mesaId, tenantId);
 
             await db.query(`UPDATE mesas SET ${updates.join(', ')} WHERE id = ? AND tenant_id = ?`, values);
             res.json({ message: 'Mesa actualizada' });
         } catch (error) {
             console.error('Error al actualizar mesa:', error);
-            if (error.code === 'ER_DUP_ENTRY') return res.status(400).json({ error: 'Ya existe una mesa con ese número' });
+            if (error.code === 'ER_DUP_ENTRY') {
+                return res.status(400).json({ error: 'Ya existe una mesa con ese número' });
+            }
             res.status(500).json({ error: 'Error al actualizar mesa' });
         }
     }
@@ -74,10 +96,14 @@ class MesaManagementController {
                 `SELECT id FROM pedidos WHERE mesa_id = ? AND estado NOT IN ('cerrado', 'cancelado') LIMIT 1`,
                 [mesaId]
             );
-            if (pedidos.length > 0) return res.status(400).json({ error: 'Mesa con pedido activo' });
+            if (pedidos.length > 0) {
+                return res.status(400).json({ error: 'Mesa con pedido activo' });
+            }
 
             const [result] = await db.query('DELETE FROM mesas WHERE id = ? AND tenant_id = ?', [mesaId, tenantId]);
-            if (result.affectedRows === 0) return res.status(404).json({ error: 'Mesa no encontrada' });
+            if (result.affectedRows === 0) {
+                return res.status(404).json({ error: 'Mesa no encontrada' });
+            }
 
             res.json({ success: true, message: 'Mesa eliminada' });
         } catch (error) {

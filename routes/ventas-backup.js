@@ -29,7 +29,7 @@ router.get('/', async (req, res) => {
         query += ` ORDER BY f.fecha DESC`;
 
         const [ventas] = await db.query(query, params);
-        res.render('ventas', { 
+        res.render('ventas', {
             ventas,
             user: req.user
         });
@@ -47,7 +47,9 @@ router.get('/export', async (req, res) => {
         try {
             ExcelJS = require('exceljs');
         } catch (e) {
-            return res.status(500).send('Exportación a Excel no disponible. Instale la dependencia con: npm install exceljs');
+            return res
+                .status(500)
+                .send('Exportación a Excel no disponible. Instale la dependencia con: npm install exceljs');
         }
         let query = `
             SELECT f.id, f.fecha, c.nombre as cliente, f.forma_pago, f.total
@@ -78,16 +80,20 @@ router.get('/export', async (req, res) => {
         let config = null;
         try {
             const [cfg] = await db.query('SELECT * FROM configuracion_impresion LIMIT 1');
-            config = (cfg && cfg[0]) ? cfg[0] : null;
-        } catch (_) {}
+            config = cfg && cfg[0] ? cfg[0] : null;
+        } catch (_) {
+            /* intentional */
+        }
 
         // Encabezado superior elegante
-        const titulo = (config?.nombre_negocio || 'Reporte de Ventas');
+        const titulo = config?.nombre_negocio || 'Reporte de Ventas';
         const subInfo = [
             config?.direccion ? config.direccion : null,
             config?.telefono ? `Tel: ${config.telefono}` : null,
             config?.nit ? `NIT: ${config.nit}` : null
-        ].filter(Boolean).join('  •  ');
+        ]
+            .filter(Boolean)
+            .join('  •  ');
         const rango = `Rango: ${req.query.desde || '-'} a ${req.query.hasta || '-'}${req.query.q ? '  •  Filtro: ' + req.query.q : ''}`;
 
         // Mover título a partir de la columna B para dejar el logo en A
@@ -104,7 +110,9 @@ router.get('/export', async (req, res) => {
         ws.getRow(2).alignment = { horizontal: 'center' };
         ws.getRow(3).font = { italic: true, color: { argb: 'FF495057' } };
         ws.getRow(3).alignment = { horizontal: 'center' };
-        ws.getRow(1).height = 24; ws.getRow(2).height = 18; ws.getRow(3).height = 18;
+        ws.getRow(1).height = 24;
+        ws.getRow(2).height = 18;
+        ws.getRow(3).height = 18;
         ws.addRow([]); // fila 4 separadora
 
         // Logo si existe
@@ -113,11 +121,13 @@ router.get('/export', async (req, res) => {
                 const ext = (config.logo_tipo || '').includes('png') ? 'png' : 'jpeg';
                 const imgId = wb.addImage({ buffer: Buffer.from(config.logo_data), extension: ext });
                 ws.addImage(imgId, { tl: { col: 0, row: 0 }, ext: { width: 100, height: 60 } });
-            } catch (_) {}
+            } catch (_) {
+                /* intentional */
+            }
         }
 
         // Crear encabezado de columnas manual (fila siguiente disponible)
-        const headerRow = ws.addRow(['Factura #','Fecha','Cliente','Forma de Pago','Total']);
+        const headerRow = ws.addRow(['Factura #', 'Fecha', 'Cliente', 'Forma de Pago', 'Total']);
         headerRow.font = { bold: true, color: { argb: 'FF212529' } };
         headerRow.alignment = { vertical: 'middle', horizontal: 'center' };
         headerRow.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE9ECEF' } };
@@ -130,12 +140,18 @@ router.get('/export', async (req, res) => {
         ws.getColumn(5).width = 14;
 
         // Datos y totales
-        let totalEfectivo = 0, totalTransferencia = 0, totalGeneral = 0;
+        let totalEfectivo = 0,
+            totalTransferencia = 0,
+            totalGeneral = 0;
         rows.forEach(r => {
             const fecha = new Date(r.fecha);
             const total = Number(r.total || 0);
             totalGeneral += total;
-            if ((r.forma_pago || '') === 'efectivo') totalEfectivo += total; else if ((r.forma_pago || '') === 'transferencia') totalTransferencia += total;
+            if ((r.forma_pago || '') === 'efectivo') {
+                totalEfectivo += total;
+            } else if ((r.forma_pago || '') === 'transferencia') {
+                totalTransferencia += total;
+            }
             ws.addRow([
                 r.id,
                 fecha.toLocaleString(),
@@ -171,13 +187,16 @@ router.get('/export', async (req, res) => {
         ws.views = [{ state: 'frozen', ySplit: headerRow.number }];
 
         // Auto-ajustar ancho de columnas (mín 10, máx 40)
-        const minW = 10, maxW = 40;
+        const minW = 10,
+            maxW = 40;
         ws.columns.forEach((col, idx) => {
             let max = 0;
             col.eachCell({ includeEmpty: false }, cell => {
                 const v = cell.value;
-                const len = (v && v.toString) ? v.toString().length : 0;
-                if (len > max) max = len;
+                const len = v && v.toString ? v.toString().length : 0;
+                if (len > max) {
+                    max = len;
+                }
             });
             col.width = Math.max(minW, Math.min(maxW, max + 2));
         });
@@ -192,4 +211,4 @@ router.get('/export', async (req, res) => {
     }
 });
 
-module.exports = router; 
+module.exports = router;

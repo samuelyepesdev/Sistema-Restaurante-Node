@@ -13,7 +13,9 @@ class TenantRepository {
      * @returns {Promise<Object|null>} Tenant object or null
      */
     static async findById(id) {
-        if (id == null || id === undefined) return null;
+        if (id === null || id === undefined) {
+            return null;
+        }
         const [rows] = await db.query(
             `SELECT t.id, t.nombre, t.email, t.slug, t.config, t.logo_data, t.logo_tipo, t.activo, t.plan_id, t.created_at, t.updated_at,
                     t.nit, t.direccion, t.telefono, t.ciudad, t.regimen_fiscal,
@@ -24,7 +26,9 @@ class TenantRepository {
             [id]
         );
         const row = rows[0];
-        if (!row) return null;
+        if (!row) {
+            return null;
+        }
         return TenantRepository._mapRow(row);
     }
 
@@ -34,7 +38,9 @@ class TenantRepository {
      * @returns {Promise<Object|null>} Tenant object or null
      */
     static async findByIdAndActive(id) {
-        if (id == null || id === undefined) return null;
+        if (id === null || id === undefined) {
+            return null;
+        }
         const [rows] = await db.query(
             `SELECT t.id, t.nombre, t.email, t.slug, t.config, t.logo_data, t.logo_tipo, t.activo, t.plan_id, t.created_at, t.updated_at,
                     t.nit, t.direccion, t.telefono, t.ciudad, t.regimen_fiscal,
@@ -43,7 +49,9 @@ class TenantRepository {
             [id]
         );
         const row = rows[0];
-        if (!row) return null;
+        if (!row) {
+            return null;
+        }
         return TenantRepository._mapRow(row);
     }
 
@@ -53,7 +61,9 @@ class TenantRepository {
      * @returns {Promise<Object|null>} Tenant object or null
      */
     static async findBySlug(slug) {
-        if (!slug) return null;
+        if (!slug) {
+            return null;
+        }
         const [rows] = await db.query(
             `SELECT t.id, t.nombre, t.email, t.slug, t.config, t.logo_data, t.logo_tipo, t.activo, t.plan_id, t.created_at, t.updated_at,
                     t.nit, t.direccion, t.telefono, t.ciudad, t.regimen_fiscal,
@@ -62,7 +72,9 @@ class TenantRepository {
             [slug]
         );
         const row = rows[0];
-        if (!row) return null;
+        if (!row) {
+            return null;
+        }
         return TenantRepository._mapRow(row);
     }
 
@@ -84,12 +96,17 @@ class TenantRepository {
             }
         }
         let plan = null;
-        if (row.plan_id_ref != null) {
+        if (row.plan_id_ref !== null && row.plan_id_ref !== undefined) {
             let caracteristicas = [];
             if (row.plan_caracteristicas) {
                 try {
-                    caracteristicas = typeof row.plan_caracteristicas === 'string' ? JSON.parse(row.plan_caracteristicas) : (row.plan_caracteristicas || []);
-                } catch (_) { }
+                    caracteristicas =
+                        typeof row.plan_caracteristicas === 'string'
+                            ? JSON.parse(row.plan_caracteristicas)
+                            : row.plan_caracteristicas || [];
+                } catch (_) {
+                    /* intentional */
+                }
             }
             plan = {
                 id: row.plan_id_ref,

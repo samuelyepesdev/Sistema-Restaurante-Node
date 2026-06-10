@@ -16,7 +16,9 @@ class PagarItemIndividualService {
              WHERE pi.id = ? AND p.tenant_id = ?`,
             [itemId, tenantId]
         );
-        if (rows.length === 0) throw new Error('Item no encontrado');
+        if (rows.length === 0) {
+            throw new Error('Item no encontrado');
+        }
         const item = rows[0];
 
         const [existingPaidRows] = await db.query(
@@ -35,26 +37,32 @@ class PagarItemIndividualService {
                 // Disminuir la parte no pagada del item actual
                 const leftoverCantidad = parseFloat(item.cantidad) - cantToPay;
                 const leftoverSubtotal = leftoverCantidad * parseFloat(item.precio_unitario);
-                await db.query(
-                    `UPDATE pedido_items SET cantidad = ?, subtotal = ? WHERE id = ?`,
-                    [leftoverCantidad, leftoverSubtotal, itemId]
-                );
+                await db.query(`UPDATE pedido_items SET cantidad = ?, subtotal = ? WHERE id = ?`, [
+                    leftoverCantidad,
+                    leftoverSubtotal,
+                    itemId
+                ]);
 
                 // Incrementar la fila ya pagada existente
                 const newPaidCantidad = parseFloat(existingPaid.cantidad) + cantToPay;
-                const newPaidSubtotal = parseFloat(existingPaid.subtotal) + (cantToPay * parseFloat(item.precio_unitario));
-                await db.query(
-                    `UPDATE pedido_items SET cantidad = ?, subtotal = ? WHERE id = ?`,
-                    [newPaidCantidad, newPaidSubtotal, existingPaid.id]
-                );
+                const newPaidSubtotal =
+                    parseFloat(existingPaid.subtotal) + cantToPay * parseFloat(item.precio_unitario);
+                await db.query(`UPDATE pedido_items SET cantidad = ?, subtotal = ? WHERE id = ?`, [
+                    newPaidCantidad,
+                    newPaidSubtotal,
+                    existingPaid.id
+                ]);
             } else {
                 // Todo se ha pagado, así que se elimina esta fila de pedido_items ya que su contenido se fusiona
                 const newPaidCantidad = parseFloat(existingPaid.cantidad) + parseFloat(item.cantidad);
-                const newPaidSubtotal = parseFloat(existingPaid.subtotal) + parseFloat(item.subtotal || (parseFloat(item.cantidad) * parseFloat(item.precio_unitario)));
-                await db.query(
-                    `UPDATE pedido_items SET cantidad = ?, subtotal = ? WHERE id = ?`,
-                    [newPaidCantidad, newPaidSubtotal, existingPaid.id]
-                );
+                const newPaidSubtotal =
+                    parseFloat(existingPaid.subtotal) +
+                    parseFloat(item.subtotal || parseFloat(item.cantidad) * parseFloat(item.precio_unitario));
+                await db.query(`UPDATE pedido_items SET cantidad = ?, subtotal = ? WHERE id = ?`, [
+                    newPaidCantidad,
+                    newPaidSubtotal,
+                    existingPaid.id
+                ]);
                 await db.query(`DELETE FROM pedido_items WHERE id = ?`, [itemId]);
             }
         } else {
@@ -73,16 +81,23 @@ class PagarItemIndividualService {
                     `INSERT INTO pedido_items (tenant_id, pedido_id, producto_id, cantidad, unidad_medida, precio_unitario, subtotal, estado, nota, enviado_at, preparado_at, listo_at, servido_at, pagado, forma_pago)
                      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, NULL)`,
                     [
-                        tenantId, item.pedido_id, item.producto_id, leftoverCantidad, item.unidad_medida,
-                        item.precio_unitario, leftoverSubtotal, item.estado, item.nota,
-                        item.enviado_at, item.preparado_at, item.listo_at, item.servido_at
+                        tenantId,
+                        item.pedido_id,
+                        item.producto_id,
+                        leftoverCantidad,
+                        item.unidad_medida,
+                        item.precio_unitario,
+                        leftoverSubtotal,
+                        item.estado,
+                        item.nota,
+                        item.enviado_at,
+                        item.preparado_at,
+                        item.listo_at,
+                        item.servido_at
                     ]
                 );
             } else {
-                await db.query(
-                    `UPDATE pedido_items SET pagado = 1, forma_pago = ? WHERE id = ?`,
-                    [forma_pago, itemId]
-                );
+                await db.query(`UPDATE pedido_items SET pagado = 1, forma_pago = ? WHERE id = ?`, [forma_pago, itemId]);
             }
         }
 

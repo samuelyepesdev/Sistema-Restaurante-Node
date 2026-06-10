@@ -13,14 +13,24 @@ class MoverItemsService {
         try {
             await connection.beginTransaction();
 
-            const [pedidos] = await connection.query('SELECT * FROM pedidos WHERE id = ? AND tenant_id = ? FOR UPDATE', [pedidoOrigenId, tenantId]);
-            if (pedidos.length === 0) throw new Error('Pedido origen no encontrado');
+            const [pedidos] = await connection.query(
+                'SELECT * FROM pedidos WHERE id = ? AND tenant_id = ? FOR UPDATE',
+                [pedidoOrigenId, tenantId]
+            );
+            if (pedidos.length === 0) {
+                throw new Error('Pedido origen no encontrado');
+            }
             const pedidoOrigen = pedidos[0];
 
-            const [mesaDest] = await connection.query('SELECT id, numero FROM mesas WHERE id = ? AND tenant_id = ?', [mesa_destino_id, tenantId]);
-            if (mesaDest.length === 0) throw new Error('Mesa destino no encontrada');
+            const [mesaDest] = await connection.query('SELECT id, numero FROM mesas WHERE id = ? AND tenant_id = ?', [
+                mesa_destino_id,
+                tenantId
+            ]);
+            if (mesaDest.length === 0) {
+                throw new Error('Mesa destino no encontrada');
+            }
 
-            let [pedidoDest] = await connection.query(
+            const [pedidoDest] = await connection.query(
                 `SELECT * FROM pedidos WHERE mesa_id = ? AND estado NOT IN ('cerrado','cancelado') LIMIT 1`,
                 [mesa_destino_id]
             );
@@ -36,10 +46,11 @@ class MoverItemsService {
                 pedidoDestinoId = insert.insertId;
             }
 
-            await connection.query(
-                `UPDATE pedido_items SET pedido_id = ? WHERE id IN (?) AND pedido_id = ?`,
-                [pedidoDestinoId, itemIds, pedidoOrigenId]
-            );
+            await connection.query(`UPDATE pedido_items SET pedido_id = ? WHERE id IN (?) AND pedido_id = ?`, [
+                pedidoDestinoId,
+                itemIds,
+                pedidoOrigenId
+            ]);
 
             const [restantes] = await connection.query(
                 `SELECT COUNT(*) as cnt FROM pedido_items WHERE pedido_id = ? AND estado <> 'cancelado'`,
@@ -60,7 +71,7 @@ class MoverItemsService {
             await connection.query('UPDATE mesas SET estado = "ocupada" WHERE id = ?', [mesa_destino_id]);
 
             await connection.commit();
-            
+
             return { success: true, message: 'Productos movidos exitosamente' };
         } catch (error) {
             await connection.rollback();

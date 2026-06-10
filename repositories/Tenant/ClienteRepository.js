@@ -33,17 +33,22 @@ class ClienteRepository {
      * @returns {Promise<Array>} Array of clients
      */
     static async search(query, tenantId, limit = 10) {
-        if (!query) return [];
+        if (!query) {
+            return [];
+        }
         const searchTerm = `%${query.trim().toLowerCase()}%`;
-        
-        const [clientes] = await db.query(`
+
+        const [clientes] = await db.query(
+            `
             SELECT id, nombre, telefono, numero_documento, email, tipo_documento FROM clientes 
             WHERE tenant_id = ? 
             AND (LOWER(nombre) LIKE ? OR telefono LIKE ? OR numero_documento LIKE ? OR LOWER(email) LIKE ?)
             ORDER BY nombre
             LIMIT ?
-        `, [tenantId, searchTerm, searchTerm, searchTerm, searchTerm, limit]);
-        
+        `,
+            [tenantId, searchTerm, searchTerm, searchTerm, searchTerm, limit]
+        );
+
         return clientes;
     }
 
@@ -59,7 +64,15 @@ class ClienteRepository {
         const { nombre, direccion, telefono, tipo_documento, numero_documento, email } = clientData;
         const [result] = await db.query(
             'INSERT INTO clientes (tenant_id, nombre, direccion, telefono, tipo_documento, numero_documento, email) VALUES (?, ?, ?, ?, ?, ?, ?)',
-            [tenantId, nombre, direccion || null, telefono || null, tipo_documento || 'CC', numero_documento || null, email || null]
+            [
+                tenantId,
+                nombre,
+                direccion || null,
+                telefono || null,
+                tipo_documento || 'CC',
+                numero_documento || null,
+                email || null
+            ]
         );
         return result;
     }
@@ -74,7 +87,16 @@ class ClienteRepository {
         const { nombre, direccion, telefono, tipo_documento, numero_documento, email } = clientData;
         const result = await db.query(
             'UPDATE clientes SET nombre = ?, direccion = ?, telefono = ?, tipo_documento = ?, numero_documento = ?, email = ? WHERE id = ? AND tenant_id = ?',
-            [nombre, direccion || null, telefono || null, tipo_documento || 'CC', numero_documento || null, email || null, id, tenantId]
+            [
+                nombre,
+                direccion || null,
+                telefono || null,
+                tipo_documento || 'CC',
+                numero_documento || null,
+                email || null,
+                id,
+                tenantId
+            ]
         );
         return result;
     }
@@ -91,4 +113,3 @@ class ClienteRepository {
 }
 
 module.exports = ClienteRepository;
-

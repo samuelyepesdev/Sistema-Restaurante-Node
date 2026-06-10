@@ -12,7 +12,7 @@ class ConfiguracionService {
      * @returns {Promise<Object>} Configuration object
      */
     static async getForView(tenantId) {
-        let config = await ConfiguracionRepository.findOne(tenantId);
+        const config = await ConfiguracionRepository.findOne(tenantId);
 
         if (!config) {
             // Return default values
@@ -52,19 +52,21 @@ class ConfiguracionService {
      */
     static async getForPreview(tenantId) {
         const config = await ConfiguracionRepository.findOne(tenantId);
-        const base = config ? { ...config } : {
-            nombre_negocio: 'Mi Negocio',
-            direccion: '',
-            telefono: '',
-            nit: '',
-            pie_pagina: '¡Gracias por su compra!',
-            ancho_papel: 80,
-            font_size: 1,
-            logo_data: null,
-            logo_tipo: null,
-            qr_data: null,
-            qr_tipo: null
-        };
+        const base = config
+            ? { ...config }
+            : {
+                  nombre_negocio: 'Mi Negocio',
+                  direccion: '',
+                  telefono: '',
+                  nit: '',
+                  pie_pagina: '¡Gracias por su compra!',
+                  ancho_papel: 80,
+                  font_size: 1,
+                  logo_data: null,
+                  logo_tipo: null,
+                  qr_data: null,
+                  qr_tipo: null
+              };
 
         if (base.logo_data) {
             const logoBuffer = Buffer.from(base.logo_data);
@@ -91,10 +93,7 @@ class ConfiguracionService {
      * @returns {Promise<void>}
      */
     static async save(tenantId, configData, files) {
-        const {
-            nombre_negocio, direccion, telefono, nit, pie_pagina,
-            ancho_papel, font_size
-        } = configData;
+        const { nombre_negocio, direccion, telefono, nit, pie_pagina, ancho_papel, font_size } = configData;
 
         const existingConfig = await ConfiguracionRepository.findOne(tenantId);
 
@@ -138,4 +137,3 @@ class ConfiguracionService {
 }
 
 module.exports = ConfiguracionService;
-

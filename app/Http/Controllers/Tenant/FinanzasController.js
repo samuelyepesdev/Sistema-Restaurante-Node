@@ -9,7 +9,11 @@ class FinanzasController {
     static async index(req, res) {
         try {
             const tenantId = req.tenant?.id;
-            if (!tenantId) return res.status(403).render('errors/internal', { error: { message: 'Contexto de tenant no disponible' } });
+            if (!tenantId) {
+                return res
+                    .status(403)
+                    .render('errors/internal', { error: { message: 'Contexto de tenant no disponible' } });
+            }
 
             const dias = parseInt(req.query.dias) || 30;
             const data = await FinanzasService.getDashboardData(tenantId, dias);

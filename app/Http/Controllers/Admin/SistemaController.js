@@ -5,8 +5,10 @@ const ParametroService = require('../../../../services/Shared/ParametroService')
 class SistemaController {
     static getTenantId(req) {
         const id = req.query.tenant_id || req.body.tenant_id;
-        const num = id != null ? parseInt(id, 10) : null;
-        if (!num) throw new Error('Seleccioná un restaurante (tenant_id requerido).');
+        const num = id !== null && id !== undefined ? parseInt(id, 10) : null;
+        if (!num) {
+            throw new Error('Seleccioná un restaurante (tenant_id requerido).');
+        }
         return num;
     }
 
@@ -14,7 +16,7 @@ class SistemaController {
     static async index(req, res) {
         try {
             const tenants = await TenantService.getAllTenants();
-            const tenantId = req.query.tenant_id ? parseInt(req.query.tenant_id, 10) : (tenants[0] && tenants[0].id);
+            const tenantId = req.query.tenant_id ? parseInt(req.query.tenant_id, 10) : tenants[0] && tenants[0].id;
             const activeTenant = tenants.find(t => t.id === tenantId) || null;
             res.render('admin/sistema', {
                 user: req.user,
@@ -44,7 +46,9 @@ class SistemaController {
             const tenantId = SistemaController.getTenantId(req);
             const id = parseInt(req.params.id, 10);
             const tema = await TemaService.getById(id, tenantId);
-            if (!tema) return res.status(404).json({ error: 'Tema no encontrado' });
+            if (!tema) {
+                return res.status(404).json({ error: 'Tema no encontrado' });
+            }
             res.json(tema);
         } catch (error) {
             res.status(error.message?.includes('tenant_id') ? 400 : 500).json({ error: error.message });
@@ -68,7 +72,11 @@ class SistemaController {
             await TemaService.update(id, tenantId, req.body);
             res.json({ message: 'Tema actualizado' });
         } catch (error) {
-            const statusCode = error.message?.includes('tenant_id') ? 400 : (error.message === 'Tema no encontrado' ? 404 : 400);
+            const statusCode = error.message?.includes('tenant_id')
+                ? 400
+                : error.message === 'Tema no encontrado'
+                  ? 404
+                  : 400;
             res.status(statusCode).json({ error: error.message });
         }
     }
@@ -80,7 +88,11 @@ class SistemaController {
             await TemaService.delete(id, tenantId);
             res.json({ message: 'Tema eliminado' });
         } catch (error) {
-            const statusCode = error.message?.includes('tenant_id') ? 400 : (error.message === 'Tema no encontrado' ? 404 : 500);
+            const statusCode = error.message?.includes('tenant_id')
+                ? 400
+                : error.message === 'Tema no encontrado'
+                  ? 404
+                  : 500;
             res.status(statusCode).json({ error: error.message });
         }
     }
@@ -123,7 +135,9 @@ class SistemaController {
             const tenantId = SistemaController.getTenantId(req);
             const id = parseInt(req.params.id, 10);
             const param = await ParametroService.getById(id, tenantId);
-            if (!param) return res.status(404).json({ error: 'Parámetro no encontrado' });
+            if (!param) {
+                return res.status(404).json({ error: 'Parámetro no encontrado' });
+            }
             res.json(param);
         } catch (error) {
             res.status(error.message?.includes('tenant_id') ? 400 : 500).json({ error: error.message });
@@ -147,7 +161,11 @@ class SistemaController {
             await ParametroService.update(id, tenantId, req.body);
             res.json({ message: 'Parámetro actualizado' });
         } catch (error) {
-            const statusCode = error.message?.includes('tenant_id') ? 400 : (error.message === 'Parámetro no encontrado' ? 404 : 400);
+            const statusCode = error.message?.includes('tenant_id')
+                ? 400
+                : error.message === 'Parámetro no encontrado'
+                  ? 404
+                  : 400;
             res.status(statusCode).json({ error: error.message });
         }
     }
@@ -159,7 +177,11 @@ class SistemaController {
             await ParametroService.delete(id, tenantId);
             res.json({ message: 'Parámetro eliminado' });
         } catch (error) {
-            const statusCode = error.message?.includes('tenant_id') ? 400 : (error.message === 'Parámetro no encontrado' ? 404 : 500);
+            const statusCode = error.message?.includes('tenant_id')
+                ? 400
+                : error.message === 'Parámetro no encontrado'
+                  ? 404
+                  : 500;
             res.status(statusCode).json({ error: error.message });
         }
     }

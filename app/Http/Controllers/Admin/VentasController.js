@@ -38,9 +38,13 @@ class VentasController {
     static async destroy(req, res) {
         try {
             const facturaId = parseInt(req.params.id);
-            if (!facturaId) return res.status(400).json({ error: 'ID inválido' });
+            if (!facturaId) {
+                return res.status(400).json({ error: 'ID inválido' });
+            }
             const result = await FacturaRepository.deleteById(facturaId);
-            if (!result.deleted) return res.status(404).json({ error: 'Venta no encontrada' });
+            if (!result.deleted) {
+                return res.status(404).json({ error: 'Venta no encontrada' });
+            }
             res.json({ success: true, message: 'Venta eliminada correctamente' });
         } catch (error) {
             console.error('Error al eliminar venta:', error);

@@ -27,7 +27,9 @@ class PlanService {
      */
     static async updatePrecios(id, data) {
         const plan = await PlanRepository.findById(id);
-        if (!plan) throw new Error('Plan no encontrado');
+        if (!plan) {
+            throw new Error('Plan no encontrado');
+        }
         await PlanRepository.updatePrecios(id, data);
         return PlanRepository.findById(id);
     }
@@ -39,7 +41,9 @@ class PlanService {
      */
     static async updateGeneral(id, data) {
         const plan = await PlanRepository.findById(id);
-        if (!plan) throw new Error('Plan no encontrado');
+        if (!plan) {
+            throw new Error('Plan no encontrado');
+        }
         await PlanRepository.update(id, data);
         return PlanRepository.findById(id);
     }

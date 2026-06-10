@@ -18,11 +18,13 @@ class PagarMultiplesItemsService {
         }
 
         const resultados = [];
-        
+
         for (const item of items) {
             const { itemId, cantidad } = item;
-            if (!itemId) continue;
-            
+            if (!itemId) {
+                continue;
+            }
+
             const result = await PagarItemIndividualService.execute({
                 tenantId,
                 itemId,

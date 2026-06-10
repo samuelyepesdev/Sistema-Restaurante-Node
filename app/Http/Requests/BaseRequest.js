@@ -20,7 +20,7 @@ class BaseRequest {
     static validate(RequestClass) {
         // If RequestClass has static rules method, use it.
         // Otherwise try instance method for backward compatibility.
-        let rules = [];
+        let rules;
         if (typeof RequestClass.rules === 'function') {
             rules = RequestClass.rules();
         } else {
@@ -42,7 +42,14 @@ class BaseRequest {
                     }
 
                     return res.status(400).render('errors/generic', {
-                        error: { message: 'Por favor corregí los siguientes errores: ' + errors.array().map(e => e.msg).join(', ') },
+                        error: {
+                            message:
+                                'Por favor corregí los siguientes errores: ' +
+                                errors
+                                    .array()
+                                    .map(e => e.msg)
+                                    .join(', ')
+                        },
                         tenant: req.tenant || null,
                         user: req.user || null
                     });

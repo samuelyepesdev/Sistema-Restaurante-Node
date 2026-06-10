@@ -83,7 +83,7 @@ class ProductService {
             };
         } catch (error) {
             if (error.code === 'ER_DUP_ENTRY') {
-                throw new Error('Ya existe un producto con ese código');
+                throw new Error('Ya existe un producto con ese código', { cause: error });
             }
             throw error;
         }
@@ -132,7 +132,7 @@ class ProductService {
             return { message: 'Producto actualizado exitosamente' };
         } catch (error) {
             if (error.code === 'ER_DUP_ENTRY') {
-                throw new Error('Ya existe un producto con ese código');
+                throw new Error('Ya existe un producto con ese código', { cause: error });
             }
             throw error;
         }
@@ -147,9 +147,13 @@ class ProductService {
      */
     static async updatePrecio(id, tenantId, precioUnidad) {
         const existing = await ProductRepository.findById(id, tenantId);
-        if (!existing) throw new Error('Producto no encontrado');
+        if (!existing) {
+            throw new Error('Producto no encontrado');
+        }
         const result = await ProductRepository.updatePrecio(id, tenantId, precioUnidad);
-        if (result.affectedRows === 0) throw new Error('No se pudo actualizar el precio');
+        if (result.affectedRows === 0) {
+            throw new Error('No se pudo actualizar el precio');
+        }
         return { message: 'Precio actualizado' };
     }
 
@@ -186,7 +190,7 @@ class ProductService {
         for (let i = 0; i < rows.length; i++) {
             const row = rows[i];
             const fila = i + 2; // +1 cabecera, +1 base 1
-            
+
             try {
                 if (!row.codigo || !row.nombre) {
                     errores.push({ fila, mensaje: 'Código y nombre son requeridos' });
@@ -194,14 +198,14 @@ class ProductService {
                 }
 
                 // 1. Obtener o crear categoría
-                let categoriaNombre = (row.categoria || 'General').trim();
+                const categoriaNombre = (row.categoria || 'General').trim();
                 let categoriaId = categoryMap.get(categoriaNombre.toLowerCase());
 
                 if (!categoriaId) {
                     // Crear categoría al vuelo
-                    categoriaId = await CategoryRepository.create(tenantId, { 
-                        nombre: categoriaNombre, 
-                        descripcion: 'Creada automáticamente mediante importación' 
+                    categoriaId = await CategoryRepository.create(tenantId, {
+                        nombre: categoriaNombre,
+                        descripcion: 'Creada automáticamente mediante importación'
                     });
                     categoryMap.set(categoriaNombre.toLowerCase(), categoriaId);
                 }
@@ -216,23 +220,32 @@ class ProductService {
                         categoria_id = VALUES(categoria_id), 
                         precio_unidad = VALUES(precio_unidad),
                         activo = 1`,
-                    [tenantId, String(row.codigo).trim(), String(row.nombre).trim(), categoriaId, parseFloat(row.precio_unidad) || 0]
+                    [
+                        tenantId,
+                        String(row.codigo).trim(),
+                        String(row.nombre).trim(),
+                        categoriaId,
+                        parseFloat(row.precio_unidad) || 0
+                    ]
                 );
 
-                if (result.affectedRows === 1) inserted++;
-                else if (result.affectedRows === 2) updated++;
-                else updated++; // Si no hubo cambios reales, affectedRows puede ser 0 pero cuenta como revisado
-
+                if (result.affectedRows === 1) {
+                    inserted++;
+                } else if (result.affectedRows === 2) {
+                    updated++;
+                } else {
+                    updated++;
+                } // Si no hubo cambios reales, affectedRows puede ser 0 pero cuenta como revisado
             } catch (err) {
                 console.error(`Error en fila ${fila}:`, err);
                 errores.push({ fila, mensaje: err.message });
             }
         }
 
-        return { 
+        return {
             success: true,
             total: rows.length,
-            inserted, 
+            inserted,
             updated,
             errores
         };
@@ -251,4 +264,3 @@ class ProductService {
 }
 
 module.exports = ProductService;
-
