@@ -31,10 +31,44 @@
 <span class="material-symbols-outlined text-primary text-3xl" style="font-variation-settings: 'FILL' 1;">local_fire_department</span>
 <span class="font-display-lg text-headline-sm font-bold text-primary tracking-tight">GastroFlow</span>
 </div>
-<button class="bg-secondary-container text-on-secondary-container px-lg py-sm rounded-xl font-label-md transition-all active:scale-95 hover:shadow-lg hover:shadow-primary/20">
+
+<!-- Desktop Nav links -->
+<nav class="hidden md:flex items-center gap-lg">
+<a href="#funciones" class="font-body-md text-on-surface-variant hover:text-primary transition-colors">Funciones</a>
+<a href="#precios" class="font-body-md text-on-surface-variant hover:text-primary transition-colors">Precios</a>
+</nav>
+
+<!-- Right actions: Desktop -->
+<div class="hidden sm:flex items-center gap-md">
+<a href="/auth/login" class="font-label-md text-on-surface-variant hover:text-primary transition-colors px-md py-sm">
+            Iniciar Sesión
+        </a>
+<a href="/auth/login" class="bg-secondary-container text-on-secondary-container px-lg py-sm rounded-xl font-label-md transition-all active:scale-95 hover:shadow-lg hover:shadow-primary/20 text-center">
             Agendar Demo
-        </button>
+        </a>
+</div>
+
+<!-- Right actions: Mobile -->
+<div class="flex sm:hidden items-center gap-sm">
+<a href="/auth/login" class="font-label-md text-on-surface-variant hover:text-primary transition-colors py-sm px-xs">
+            Iniciar Sesión
+        </a>
+<button id="mobile-menu-toggle" class="text-on-surface hover:text-primary transition-colors focus:outline-none">
+<span class="material-symbols-outlined text-2xl">menu</span>
+</button>
+</div>
 </header>
+
+<!-- Mobile Menu Dropdown -->
+<div id="mobile-menu" class="hidden fixed inset-x-0 top-16 bg-surface/95 backdrop-blur-md border-b border-outline-variant z-[90] p-lg flex flex-col gap-md transition-all duration-300 transform -translate-y-4 opacity-0">
+<a href="#funciones" class="font-headline-sm text-on-surface py-xs border-b border-outline-variant/30">Funciones</a>
+<a href="#precios" class="font-headline-sm text-on-surface py-xs border-b border-outline-variant/30">Precios</a>
+<div class="flex flex-col gap-sm pt-sm">
+<a href="/auth/login" class="w-full bg-secondary-container text-on-secondary-container py-md rounded-xl font-label-md transition-all active:scale-95 text-center">
+            Agendar Demo
+        </a>
+</div>
+</div>
 <main class="w-full max-w-7xl mx-auto px-margin-mobile md:px-xl py-lg space-y-32">
 <!-- Hero Section -->
 <section class="relative pt-lg pb-xl overflow-hidden">
@@ -101,7 +135,7 @@
 </div>
 </section>
 <!-- Sección de Soluciones -->
-<section class="space-y-xl">
+<section id="funciones" class="space-y-xl">
 <div class="text-center space-y-xs">
 <h2 class="font-headline-md text-primary">La Solución Todo-en-Uno</h2>
 <p class="font-body-md text-on-surface-variant">Diseñado por expertos en gastronomía para la era digital.</p>
@@ -186,7 +220,7 @@
 </div>
 </section>
 <!-- Planes de Precios -->
-<section class="space-y-xl">
+<section id="precios" class="space-y-xl">
 <div class="text-center space-y-xs">
 <h2 class="font-headline-md text-on-surface">Escalamos con tu negocio</h2>
 <p class="font-body-md text-on-surface-variant">Planes diseñados para cada etapa de tu restaurante.</p>
