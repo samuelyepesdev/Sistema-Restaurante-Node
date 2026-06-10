@@ -26,7 +26,7 @@ module.exports = {
         }
     },
     verbose: true,
-    testPathIgnorePatterns: ['/node_modules/', '/stress-tests/'],
+    testPathIgnorePatterns: ['/node_modules/', '/stress-tests/', '/tests/e2e/'],
     setupFilesAfterEnv: ['<rootDir>/tests/setup.js'],
     modulePathIgnorePatterns: ['<rootDir>/dist/']
 };

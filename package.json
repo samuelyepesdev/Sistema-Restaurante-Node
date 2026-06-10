@@ -34,7 +34,10 @@
     "stress:load": "node stress-tests/run-load.js",
     "test": "jest",
     "test:watch": "jest --watch",
-    "test:coverage": "jest --coverage"
+    "test:coverage": "jest --coverage",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:report": "playwright show-report tests/e2e/reports"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1041.0",
@@ -61,6 +64,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
+    "@playwright/test": "^1.60.0",
     "@types/node": "25.3.0",
     "artillery": "^1.7.9",
     "autocannon": "^2.0.1",

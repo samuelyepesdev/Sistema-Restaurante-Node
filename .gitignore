@@ -12,6 +12,11 @@ public/uploads/
 # Cobertura de tests
 coverage/
 
+# E2E Playwright
+tests/e2e/.auth/
+tests/e2e/reports/
+playwright-report/
+
 # Pruebas de estrés (credenciales e informes generados)
 stress-tests/env-stress.yml
 stress-tests/reports/
