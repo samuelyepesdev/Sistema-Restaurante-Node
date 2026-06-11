@@ -54,23 +54,30 @@
                         <% if (user && user.permisos && user.permisos.includes('inventario.editar')) { %>
                             <td class="text-center pe-4">
                                 <div class="btn-action-group">
-                                    <button type="button" class="btn-icon btn-icon-e"
-                                        onclick='abrirEntrada(<%= i.id %>, "<%= i.nombre.replace(/"/g, "") %>")'
+                                    <button type="button" class="btn-icon btn-icon-e btn-action-entrada"
+                                        data-id="<%= i.id %>"
+                                        data-nombre="<%= i.nombre.replace(/"/g, '&quot;') %>"
                                         title="Registrar Compra"><i class="bi bi-cart-plus"></i></button>
-                                    <button type="button" class="btn-icon btn-icon-s"
-                                        onclick='abrirSalida(<%= i.id %>, "<%= i.nombre.replace(/"/g, "") %>", <%= i.stock_actual %>)'
+                                    <button type="button" class="btn-icon btn-icon-s btn-action-salida"
+                                        data-id="<%= i.id %>"
+                                        data-nombre="<%= i.nombre.replace(/"/g, '&quot;') %>"
+                                        data-stock="<%= i.stock_actual %>"
                                         title="Registrar Gasto"><i class="bi bi-box-arrow-up"></i></button>
-                                    <button type="button" class="btn-icon btn-icon-a"
-                                        onclick='abrirAjuste(<%= i.id %>, "<%= i.nombre.replace(/"/g, "") %>", <%= i.stock_actual %>)'
+                                    <button type="button" class="btn-icon btn-icon-a btn-action-ajuste"
+                                        data-id="<%= i.id %>"
+                                        data-nombre="<%= i.nombre.replace(/"/g, '&quot;') %>"
+                                        data-stock="<%= i.stock_actual %>"
                                         title="Ajuste Manual"><i class="bi bi-sliders"></i></button>
-                                    <button type="button" class="btn-icon btn-icon-m"
-                                        onclick='verMovimientos(<%= i.id %>, "<%= i.nombre.replace(/"/g, "") %>")'
+                                    <button type="button" class="btn-icon btn-icon-m btn-action-movimientos"
+                                        data-id="<%= i.id %>"
+                                        data-nombre="<%= i.nombre.replace(/"/g, '&quot;') %>"
                                         title="Ver Historial"><i class="bi bi-clock-history"></i></button>
-                                    <button type="button" class="btn-icon btn-icon-p"
-                                        onclick='abrirEditarInsumo(<%= i.id %>)'
+                                    <button type="button" class="btn-icon btn-icon-p btn-action-editar"
+                                        data-id="<%= i.id %>"
                                         title="Editar Insumo"><i class="bi bi-pencil"></i></button>
-                                    <button type="button" class="btn-icon btn-icon-d"
-                                        onclick='eliminarInsumo(<%= i.id %>, "<%= i.nombre.replace(/"/g, "") %>")'
+                                    <button type="button" class="btn-icon btn-icon-d btn-action-eliminar"
+                                        data-id="<%= i.id %>"
+                                        data-nombre="<%= i.nombre.replace(/"/g, '&quot;') %>"
                                         title="Eliminar Insumo"><i class="bi bi-trash"></i></button>
                                 </div>
                             </td>
@@ -133,31 +140,38 @@
                 <% if (user && user.permisos && user.permisos.includes('inventario.editar')) { %>
                     <div class="d-flex flex-wrap gap-1 pt-3 border-top">
                         <button type="button"
-                            class="btn btn-sm btn-outline-success flex-grow-1 d-flex align-items-center justify-content-center gap-1"
-                            onclick='abrirEntrada(<%= i.id %>, "<%= i.nombre.replace(/"/g, "") %>")'>
+                            class="btn btn-sm btn-outline-success flex-grow-1 d-flex align-items-center justify-content-center gap-1 btn-action-entrada"
+                            data-id="<%= i.id %>"
+                            data-nombre="<%= i.nombre.replace(/"/g, '&quot;') %>">
                             <i class="bi bi-cart-plus"></i> Compra
                         </button>
                         <button type="button"
-                            class="btn btn-sm btn-outline-danger flex-grow-1 d-flex align-items-center justify-content-center gap-1"
-                            onclick='abrirSalida(<%= i.id %>, "<%= i.nombre.replace(/"/g, "") %>", <%= i.stock_actual %>)'>
+                            class="btn btn-sm btn-outline-danger flex-grow-1 d-flex align-items-center justify-content-center gap-1 btn-action-salida"
+                            data-id="<%= i.id %>"
+                            data-nombre="<%= i.nombre.replace(/"/g, '&quot;') %>"
+                            data-stock="<%= i.stock_actual %>">
                             <i class="bi bi-box-arrow-up"></i> Gasto
                         </button>
                         <button type="button"
-                            class="btn btn-sm btn-outline-secondary flex-grow-1 d-flex align-items-center justify-content-center gap-1"
-                            onclick='abrirAjuste(<%= i.id %>, "<%= i.nombre.replace(/"/g, "") %>", <%= i.stock_actual %>)'>
+                            class="btn btn-sm btn-outline-secondary flex-grow-1 d-flex align-items-center justify-content-center gap-1 btn-action-ajuste"
+                            data-id="<%= i.id %>"
+                            data-nombre="<%= i.nombre.replace(/"/g, '&quot;') %>"
+                            data-stock="<%= i.stock_actual %>">
                             <i class="bi bi-sliders"></i> Ajuste
                         </button>
-                        <button type="button" class="btn btn-sm btn-outline-primary px-3"
-                            onclick='verMovimientos(<%= i.id %>, "<%= i.nombre.replace(/"/g, "") %>")'
+                        <button type="button" class="btn btn-sm btn-outline-primary px-3 btn-action-movimientos"
+                            data-id="<%= i.id %>"
+                            data-nombre="<%= i.nombre.replace(/"/g, '&quot;') %>"
                             title="Ver Historial">
                             <i class="bi bi-clock-history"></i>
                         </button>
-                        <button type="button" class="btn btn-sm btn-outline-primary flex-grow-1 d-flex align-items-center justify-content-center gap-1"
-                            onclick='abrirEditarInsumo(<%= i.id %>)'>
+                        <button type="button" class="btn btn-sm btn-outline-primary flex-grow-1 d-flex align-items-center justify-content-center gap-1 btn-action-editar"
+                            data-id="<%= i.id %>">
                             <i class="bi bi-pencil"></i> Editar
                         </button>
-                        <button type="button" class="btn btn-sm btn-outline-danger px-3 d-flex align-items-center justify-content-center"
-                            onclick='eliminarInsumo(<%= i.id %>, "<%= i.nombre.replace(/"/g, "") %>")'>
+                        <button type="button" class="btn btn-sm btn-outline-danger px-3 d-flex align-items-center justify-content-center btn-action-eliminar"
+                            data-id="<%= i.id %>"
+                            data-nombre="<%= i.nombre.replace(/"/g, '&quot;') %>">
                             <i class="bi bi-trash"></i>
                         </button>
                     </div>

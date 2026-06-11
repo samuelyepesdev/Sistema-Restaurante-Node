@@ -34,8 +34,8 @@
                             <% if (user && user.permisos && user.permisos.includes('recetas.editar')) { %>
                                 <td class="text-center align-middle">
                                     <div class="d-flex flex-nowrap justify-content-center gap-1">
-                                        <button type="button" class="btn btn-sm btn-outline-primary"
-                                            onclick="editarReceta(<%= r.id %>)">Editar</button>
+                                        <button type="button" class="btn btn-sm btn-outline-primary btn-editar-receta"
+                                            data-id="<%= r.id %>">Editar</button>
                                         <button type="button" class="btn btn-sm btn-outline-danger btn-eliminar-receta"
                                             data-id="<%= r.id %>" data-nombre="<%= r.nombre_receta %>">Eliminar</button>
                                     </div>
@@ -82,8 +82,8 @@
             </div>
             <% if (user && user.permisos && user.permisos.includes('recetas.editar')) { %>
                 <div class="mt-2 d-flex gap-2">
-                    <button type="button" class="btn btn-sm btn-outline-primary flex-fill"
-                        onclick="editarReceta(<%= r.id %>)">
+                    <button type="button" class="btn btn-sm btn-outline-primary flex-fill btn-editar-receta"
+                        data-id="<%= r.id %>">
                         <i class="bi bi-pencil"></i> Editar
                     </button>
                     <button type="button" class="btn btn-sm btn-outline-danger flex-fill btn-eliminar-receta"

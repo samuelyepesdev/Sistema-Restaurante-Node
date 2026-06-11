@@ -100,8 +100,19 @@ function eliminarReceta(idOrBtn, nombre) {
 }
 
 document.addEventListener('click', function (e) {
-    var btn = e.target.closest('.btn-eliminar-receta');
-    if (btn) { e.preventDefault(); eliminarReceta(btn); }
+    var btnEliminar = e.target.closest('.btn-eliminar-receta');
+    if (btnEliminar) {
+        e.preventDefault();
+        eliminarReceta(btnEliminar);
+        return;
+    }
+    var btnEditar = e.target.closest('.btn-editar-receta');
+    if (btnEditar) {
+        e.preventDefault();
+        var id = btnEditar.getAttribute('data-id');
+        editarReceta(id);
+        return;
+    }
 });
 
 (function () {

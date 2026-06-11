@@ -625,3 +625,40 @@ document.getElementById('editCategoriaId')?.addEventListener('change', function 
         abrirEntrada(id, nombre);
     });
 })();
+
+// Delegar eventos de acciones de inventario para cumplir con CSP
+(function () {
+    const handleActionClick = (e) => {
+        const btn = e.target.closest('.btn-action-entrada, .btn-action-salida, .btn-action-ajuste, .btn-action-movimientos, .btn-action-editar, .btn-action-eliminar');
+        if (!btn) return;
+
+        e.preventDefault();
+        const id = btn.getAttribute('data-id');
+        const nombre = (btn.getAttribute('data-nombre') || '').replace(/&quot;/g, '"');
+        const stock = btn.getAttribute('data-stock');
+
+        if (btn.classList.contains('btn-action-entrada')) {
+            abrirEntrada(id, nombre);
+        } else if (btn.classList.contains('btn-action-salida')) {
+            abrirSalida(id, nombre, stock);
+        } else if (btn.classList.contains('btn-action-ajuste')) {
+            abrirAjuste(id, nombre, stock);
+        } else if (btn.classList.contains('btn-action-movimientos')) {
+            verMovimientos(id, nombre);
+        } else if (btn.classList.contains('btn-action-editar')) {
+            abrirEditarInsumo(id);
+        } else if (btn.classList.contains('btn-action-eliminar')) {
+            eliminarInsumo(id, nombre);
+        }
+    };
+
+    const tbody = document.getElementById('tbodyInsumos');
+    if (tbody) {
+        tbody.addEventListener('click', handleActionClick);
+    }
+    const mobileList = document.getElementById('listaInsumosMobile');
+    if (mobileList) {
+        mobileList.addEventListener('click', handleActionClick);
+    }
+})();
+

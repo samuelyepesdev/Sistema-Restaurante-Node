@@ -4,6 +4,13 @@ $(function () {
   const mod = window.ProveedoresModule;
   mod.initModals();
 
+  const btnNuevo = document.getElementById('btnNuevoProveedor');
+  if (btnNuevo) {
+    btnNuevo.addEventListener('click', () => {
+      window.resetForm();
+    });
+  }
+
   const form = document.getElementById('proveedorForm');
   if (form) {
     form.addEventListener('submit', async (e) => {
