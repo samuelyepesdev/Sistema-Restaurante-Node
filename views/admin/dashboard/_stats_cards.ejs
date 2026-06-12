@@ -1,70 +1,65 @@
 <div class="row g-4 mb-4">
-    <div class="col-sm-6 col-lg-3">
-        <div class="card stat-card">
-            <div class="card-body">
-                <div class="d-flex align-items-start justify-content-between">
-                    <div>
-                        <div class="stat-value">
-                            <%= stats.totalRestaurantes %>
+    <!-- Card 1: Restaurantes Status Ring -->
+    <div class="col-lg-6 col-md-12">
+        <div class="premium-card">
+            <div class="d-flex align-items-center gap-4">
+                <div class="status-ring-wrapper">
+                    <svg viewBox="0 0 88 88" class="status-ring-svg">
+                        <circle cx="44" cy="44" r="34" fill="none" stroke="#eef1f4" stroke-width="10"></circle>
+                        <% 
+                            const active = Number(stats.restaurantesActivos) || 0;
+                            const total = Number(stats.totalRestaurantes) || 1;
+                            const pct = active / total;
+                            const radius = 34;
+                            const C = 2 * Math.PI * radius;
+                            const strokeDashoffset = C - (pct * C);
+                        %>
+                        <circle cx="44" cy="44" r="34" fill="none" stroke="var(--accent)" stroke-width="10"
+                            stroke-dasharray="<%= C %>" stroke-dashoffset="<%= strokeDashoffset %>"
+                            stroke-linecap="round" transform="rotate(-90 44 44)"></circle>
+                        <text x="44" y="42" text-anchor="middle" class="status-ring-text-val"><%= active %></text>
+                        <text x="44" y="55" text-anchor="middle" class="status-ring-text-label">ACTIVOS</text>
+                    </svg>
+                </div>
+                <div class="flex-grow-1 min-width-0">
+                    <span class="stat-meta-label">RESTAURANTES</span>
+                    <div class="stat-big-val mt-1"><%= stats.totalRestaurantes %></div>
+                    <div class="d-flex gap-3 mt-2">
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="dot bg-accent"></span>
+                            <span class="stat-detail-text"><%= stats.restaurantesActivos %> activos</span>
                         </div>
-                        <div class="stat-label">Total restaurantes</div>
-                    </div>
-                    <div class="stat-icon bg-primary bg-opacity-10 text-primary">
-                        <i class="bi bi-building"></i>
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="dot bg-neutral"></span>
+                            <span class="stat-detail-text"><%= stats.restaurantesInactivos %> inactivos</span>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-    <div class="col-sm-6 col-lg-3">
-        <div class="card stat-card">
-            <div class="card-body">
-                <div class="d-flex align-items-start justify-content-between">
-                    <div>
-                        <div class="stat-value text-success">
-                            <%= stats.restaurantesActivos %>
-                        </div>
-                        <div class="stat-label">Restaurantes activos</div>
-                    </div>
-                    <div class="stat-icon bg-success bg-opacity-10 text-success">
-                        <i class="bi bi-check-circle"></i>
-                    </div>
-                </div>
+
+    <!-- Card 2: Usuarios -->
+    <div class="col-lg-3 col-md-6">
+        <div class="premium-card d-flex flex-column justify-content-between">
+            <div class="d-flex align-items-center justify-content-between">
+                <span class="stat-meta-label">USUARIOS</span>
+                <span class="stat-icon-wrapper"><i class="bi bi-people"></i></span>
             </div>
+            <div class="stat-big-val mt-3"><%= stats.totalUsuarios %></div>
+            <div class="stat-detail-text text-muted mt-2">En todos los restaurantes</div>
         </div>
     </div>
-    <div class="col-sm-6 col-lg-3">
-        <div class="card stat-card">
-            <div class="card-body">
-                <div class="d-flex align-items-start justify-content-between">
-                    <div>
-                        <div class="stat-value text-secondary">
-                            <%= stats.restaurantesInactivos %>
-                        </div>
-                        <div class="stat-label">Restaurantes desactivados</div>
-                    </div>
-                    <div class="stat-icon bg-secondary bg-opacity-10 text-secondary">
-                        <i class="bi bi-pause-circle"></i>
-                    </div>
-                </div>
+
+    <!-- Card 3: Nuevos Restaurantes -->
+    <div class="col-lg-3 col-md-6">
+        <div class="premium-card d-flex flex-column justify-content-between">
+            <div class="d-flex align-items-center justify-content-between">
+                <span class="stat-meta-label">NUEVOS (30 DÍAS)</span>
+                <span class="stat-icon-wrapper"><i class="bi bi-shop-window"></i></span>
             </div>
-        </div>
-    </div>
-    <div class="col-sm-6 col-lg-3">
-        <div class="card stat-card">
-            <div class="card-body">
-                <div class="d-flex align-items-start justify-content-between">
-                    <div>
-                        <div class="stat-value text-info">
-                            <%= stats.totalUsuarios %>
-                        </div>
-                        <div class="stat-label">Usuarios en restaurantes</div>
-                    </div>
-                    <div class="stat-icon bg-info bg-opacity-10 text-info">
-                        <i class="bi bi-people"></i>
-                    </div>
-                </div>
-            </div>
+            <div class="stat-big-val mt-3"><%= stats.restaurantesUltimos30Dias %></div>
+            <div class="stat-detail-text text-muted mt-2">Registrados este mes</div>
         </div>
     </div>
 </div>

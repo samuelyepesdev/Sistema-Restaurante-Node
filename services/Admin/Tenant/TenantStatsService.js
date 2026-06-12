@@ -310,6 +310,25 @@ class TenantStatsService {
 
         const ventasHoyTotalGlobal = ventasHoyPorTenant.reduce((sum, v) => sum + v.total, 0);
 
+        // Obtener eventos del mes actual con sus ventas
+        const [topEventosRows] = await db.query(
+            `
+            SELECT e.nombre, COALESCE(SUM(f.total), 0) AS total
+            FROM facturas f
+            JOIN eventos e ON f.evento_id = e.id
+            WHERE f.fecha BETWEEN ? AND ?
+            GROUP BY e.id, e.nombre
+            ORDER BY total DESC
+            LIMIT 5
+        `,
+            [utcMesInicio, utcMesFin]
+        );
+
+        const topEventos = topEventosRows.map(row => ({
+            nombre: row.nombre,
+            total: parseFloat(row.total || 0)
+        }));
+
         const r = resumen[0] || {};
         const toNum = val =>
             val === undefined || val === null ? 0 : typeof val === 'bigint' ? Number(val) : parseFloat(val) || 0;
@@ -336,7 +355,8 @@ class TenantStatsService {
             ventasDiariasMesAnterior,
             ventasDiariasPorTenant,
             ventasHoyPorTenant,
-            ventasHoyTotalGlobal
+            ventasHoyTotalGlobal,
+            topEventos
         };
 
         // Guardar en caché por 5 minutos (300 segundos)

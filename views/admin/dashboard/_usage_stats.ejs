@@ -1,73 +1,79 @@
-<div class="section-title mt-4"><i class="bi bi-bar-chart-line"></i> Estadísticas de uso (todos los restaurantes)</div>
+<div class="section-header">
+    <i class="bi bi-bar-chart-line"></i>
+    <h2>Estadísticas de uso · todos los restaurantes</h2>
+</div>
+
 <div class="row g-4 mb-4">
+    <!-- Card 1: Ventas (Facturas) -->
     <div class="col-6 col-md-4 col-lg-2">
-        <div class="card stat-card">
-            <div class="card-body py-3">
-                <div class="stat-value" style="font-size: 1.5rem;">
-                    <%= typeof stats.totalFacturas !=='undefined' ? stats.totalFacturas : 0 %>
+        <div class="premium-card py-3">
+            <span class="stat-meta-label">VENTAS</span>
+            <div class="stat-big-val mt-2" style="font-size: 24px;">
+                <%= typeof stats.totalFacturas !== 'undefined' ? stats.totalFacturas : 0 %>
+            </div>
+            <div class="stat-detail-text text-muted mt-1" style="font-size: 11px;">Facturas totales</div>
+        </div>
+    </div>
+
+    <!-- Card 2: Monto Total Vendido con Barra Dual -->
+    <div class="col-12 col-md-8 col-lg-4">
+        <div class="premium-card py-3">
+            <span class="stat-meta-label">MONTO TOTAL VENDIDO</span>
+            <div class="stat-big-val mt-2 text-success" style="font-size: 24px;">
+                $<%= (Number(stats.totalVentasMonto) || 0).toLocaleString('es-CO', { maximumFractionDigits: 0 }) %>
+            </div>
+            <%
+                const totalMonto = Number(stats.totalVentasMonto) || 1;
+                const pctEfectivo = ((Number(stats.totalEfectivo) || 0) / totalMonto) * 100;
+                const pctTransf = ((Number(stats.totalTransferencia) || 0) / totalMonto) * 100;
+            %>
+            <div class="progress my-2 rounded-pill" style="height: 8px; background-color: #f1f3f6;">
+                <div class="progress-bar bg-accent" style="width: <%= pctEfectivo %>%;"></div>
+                <div class="progress-bar bg-neutral-dark" style="width: <%= pctTransf %>%;"></div>
+            </div>
+            <div class="d-flex justify-content-between text-muted" style="font-size: 10px; font-weight: 600;">
+                <div class="d-flex align-items-center gap-1">
+                    <span class="dot bg-accent" style="width: 7px; height: 7px;"></span>
+                    <span>Efectivo: <strong>$<%= (Number(stats.totalEfectivo) || 0).toLocaleString('es-CO', { maximumFractionDigits: 0 }) %></strong></span>
                 </div>
-                <div class="stat-label">Ventas (facturas)</div>
+                <div class="d-flex align-items-center gap-1">
+                    <span class="dot bg-neutral-dark" style="width: 7px; height: 7px;"></span>
+                    <span>Transf: <strong>$<%= (Number(stats.totalTransferencia) || 0).toLocaleString('es-CO', { maximumFractionDigits: 0 }) %></strong></span>
+                </div>
             </div>
         </div>
     </div>
+
+    <!-- Card 3: Productos -->
     <div class="col-6 col-md-4 col-lg-2">
-        <div class="card stat-card">
-            <div class="card-body py-3">
-                <div class="stat-value text-success" style="font-size: 1.25rem;">$<%= (Number(stats.totalVentasMonto) ||
-                        0).toLocaleString('es-CO', { maximumFractionDigits: 0 }) %>
-                </div>
-                <div class="stat-label">Monto total vendido</div>
-                <div class="text-muted mt-2 pt-2 border-top" style="font-size: 0.7rem; text-align: left; line-height: 1.3;">
-                    <div class="d-flex justify-content-between">
-                        <span><i class="bi bi-cash-stack text-success"></i> Efectivo:</span>
-                        <strong>$<%= (Number(stats.totalEfectivo) || 0).toLocaleString('es-CO', { maximumFractionDigits: 0 }) %></strong>
-                    </div>
-                    <div class="d-flex justify-content-between mt-1">
-                        <span><i class="bi bi-bank text-info"></i> Transf:</span>
-                        <strong>$<%= (Number(stats.totalTransferencia) || 0).toLocaleString('es-CO', { maximumFractionDigits: 0 }) %></strong>
-                    </div>
-                </div>
+        <div class="premium-card py-3">
+            <span class="stat-meta-label">PRODUCTOS</span>
+            <div class="stat-big-val mt-2" style="font-size: 24px;">
+                <%= typeof stats.totalProductos !== 'undefined' ? stats.totalProductos : 0 %>
             </div>
+            <div class="stat-detail-text text-muted mt-1" style="font-size: 11px;">En catálogos</div>
         </div>
     </div>
+
+    <!-- Card 4: Clientes -->
     <div class="col-6 col-md-4 col-lg-2">
-        <div class="card stat-card">
-            <div class="card-body py-3">
-                <div class="stat-value" style="font-size: 1.5rem;">
-                    <%= typeof stats.totalProductos !=='undefined' ? stats.totalProductos : 0 %>
-                </div>
-                <div class="stat-label">Productos</div>
+        <div class="premium-card py-3">
+            <span class="stat-meta-label">CLIENTES</span>
+            <div class="stat-big-val mt-2" style="font-size: 24px;">
+                <%= typeof stats.totalClientes !== 'undefined' ? stats.totalClientes : 0 %>
             </div>
+            <div class="stat-detail-text text-muted mt-1" style="font-size: 11px;">Registrados</div>
         </div>
     </div>
+
+    <!-- Card 5: Mesas -->
     <div class="col-6 col-md-4 col-lg-2">
-        <div class="card stat-card">
-            <div class="card-body py-3">
-                <div class="stat-value" style="font-size: 1.5rem;">
-                    <%= typeof stats.totalClientes !=='undefined' ? stats.totalClientes : 0 %>
-                </div>
-                <div class="stat-label">Clientes</div>
+        <div class="premium-card py-3">
+            <span class="stat-meta-label">MESAS</span>
+            <div class="stat-big-val mt-2" style="font-size: 24px;">
+                <%= typeof stats.totalMesas !== 'undefined' ? stats.totalMesas : 0 %>
             </div>
-        </div>
-    </div>
-    <div class="col-6 col-md-4 col-lg-2">
-        <div class="card stat-card">
-            <div class="card-body py-3">
-                <div class="stat-value" style="font-size: 1.5rem;">
-                    <%= typeof stats.totalMesas !=='undefined' ? stats.totalMesas : 0 %>
-                </div>
-                <div class="stat-label">Mesas</div>
-            </div>
-        </div>
-    </div>
-    <div class="col-6 col-md-4 col-lg-2">
-        <div class="card stat-card">
-            <div class="card-body py-3">
-                <div class="stat-value text-primary" style="font-size: 1.5rem;">
-                    <%= typeof stats.restaurantesUltimos30Dias !=='undefined' ? stats.restaurantesUltimos30Dias : 0 %>
-                </div>
-                <div class="stat-label">Restaurantes (últimos 30 días)</div>
-            </div>
+            <div class="stat-detail-text text-muted mt-1" style="font-size: 11px;">Distribuidas</div>
         </div>
     </div>
 </div>

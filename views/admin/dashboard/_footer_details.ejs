@@ -1,55 +1,60 @@
 <div class="row g-4">
+    <!-- Planes list -->
     <div class="col-lg-6">
-        <div class="card card-planes h-100">
-            <div class="card-header">
-                <i class="bi bi-layers me-2"></i>Detalle de restaurantes por plan
+        <div class="premium-card d-flex flex-column">
+            <div class="d-flex align-items-center gap-2 mb-3 border-bottom pb-3">
+                <i class="bi bi-layers text-success"></i>
+                <h5 class="m-0 fw-bold" style="font-size: 15px; color: var(--text-secondary);">DETALLE DE RESTAURANTES POR PLAN</h5>
             </div>
-            <div class="list-group list-group-flush">
+            <div class="flex-grow-1">
                 <% if (stats.porPlan && stats.porPlan.length) { %>
                     <% stats.porPlan.forEach(function(item) { %>
                         <div class="list-plan-item">
                             <span>
                                 <%= item.plan_nombre %>
                             </span>
-                            <span class="badge bg-primary rounded-pill">
+                            <span class="badge rounded-pill px-3 py-1.5 fw-bold">
                                 <%= item.cantidad %>
                             </span>
                         </div>
-                        <% }); %>
-                            <% } else { %>
-                                <div class="list-plan-item text-muted">No hay datos de planes.</div>
-                                <% } %>
+                    <% }); %>
+                <% } else { %>
+                    <div class="py-4 text-center text-muted small">
+                        <i class="bi bi-info-circle me-1"></i> No hay datos de planes.
+                    </div>
+                <% } %>
             </div>
         </div>
     </div>
+
+    <!-- Quick Links -->
     <div class="col-lg-6">
-        <div class="card card-planes h-100">
-            <div class="card-header">
-                <i class="bi bi-link-45deg me-2"></i>Accesos rápidos
+        <div class="premium-card">
+            <div class="d-flex align-items-center gap-2 mb-3 border-bottom pb-3">
+                <i class="bi bi-link-45deg text-success"></i>
+                <h5 class="m-0 fw-bold" style="font-size: 15px; color: var(--text-secondary);">ACCESOS RÁPIDOS</h5>
             </div>
-            <div class="card-body">
-                <div class="d-flex flex-column gap-1">
-                    <a href="/admin/tenants" class="quick-link">
-                        <i class="bi bi-building"></i>
-                        <span>Gestionar restaurantes</span>
-                    </a>
-                    <a href="/admin/planes" class="quick-link">
-                        <i class="bi bi-layers"></i>
-                        <span>Planes de suscripción</span>
-                    </a>
-                    <a href="/admin/permisos" class="quick-link">
-                        <i class="bi bi-shield-lock"></i>
-                        <span>Permisos por usuario</span>
-                    </a>
-                    <a href="/admin/sistema" class="quick-link">
-                        <i class="bi bi-gear-wide-connected"></i>
-                        <span>Sistema (temas y parámetros)</span>
-                    </a>
-                    <a href="/admin/ventas" class="quick-link">
-                        <i class="bi bi-trash"></i>
-                        <span>Eliminar ventas</span>
-                    </a>
-                </div>
+            <div class="d-flex flex-column gap-2">
+                <a href="/admin/tenants" class="quick-link">
+                    <i class="bi bi-building"></i>
+                    <span>Gestionar restaurantes</span>
+                </a>
+                <a href="/admin/planes" class="quick-link">
+                    <i class="bi bi-layers"></i>
+                    <span>Planes de suscripción</span>
+                </a>
+                <a href="/admin/permisos" class="quick-link">
+                    <i class="bi bi-shield-lock"></i>
+                    <span>Permisos por usuario</span>
+                </a>
+                <a href="/admin/sistema" class="quick-link">
+                    <i class="bi bi-gear-wide-connected"></i>
+                    <span>Sistema (temas y parámetros)</span>
+                </a>
+                <a href="/admin/ventas" class="quick-link">
+                    <i class="bi bi-trash"></i>
+                    <span>Eliminar ventas</span>
+                </a>
             </div>
         </div>
     </div>

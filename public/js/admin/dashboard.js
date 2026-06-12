@@ -1,18 +1,32 @@
 /**
  * Lógica de gráficos para el dashboard de superadministrador.
- * Incluye auto-refresh cada 60 segundos para ventas de hoy.
+ * Incluye auto-refresh cada 60 segundos para ventas de hoy y ordenación del Leaderboard.
  */
 
 document.addEventListener('DOMContentLoaded', function () {
 
-    // ─── Helpers ──────────────────────────────────────────────────────────────
+    // ─── Helpers & Colors ──────────────────────────────────────────────────────
+    const colorsMap = {
+        'Principal': '#2e7d46',
+        'Restaurante Principal': '#2e7d46',
+        'Ichiban': '#10b981',
+        'Rollito Cinnamon': '#f59e0b',
+        'Carreteritos': '#0ea5e9',
+        'Callejero': '#f43f5e',
+        'Gelatto & Arte': '#8b5cf6'
+    };
+
+    function getTenantColor(name) {
+        return colorsMap[name] || '#94a3b8';
+    }
+
     function hexToRgb(hex) {
         const r = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-        return r ? `${parseInt(r[1], 16)}, ${parseInt(r[2], 16)}, ${parseInt(r[3], 16)}` : '78, 115, 223';
+        return r ? `${parseInt(r[1], 16)}, ${parseInt(r[2], 16)}, ${parseInt(r[3], 16)}` : '148, 163, 184';
     }
 
     function formatCOP(value) {
-        return Number(value || 0).toLocaleString('es-CO');
+        return Number(value || 0).toLocaleString('es-CO', { maximumFractionDigits: 0 });
     }
 
     function formatHora(date) {
@@ -22,39 +36,61 @@ document.addEventListener('DOMContentLoaded', function () {
     function flashElement(el) {
         if (!el) return;
         el.style.transition = 'background-color 0.4s ease';
-        el.style.backgroundColor = 'rgba(28, 200, 138, 0.15)';
+        el.style.backgroundColor = 'rgba(46, 125, 70, 0.12)';
         setTimeout(() => { el.style.backgroundColor = ''; }, 1200);
     }
 
-    // ─── Gráfico de línea simple ───────────────────────────────────────────────
-    function createLineChart(ctx, dataArray, label, colorHex) {
-        if (!ctx || !dataArray) return;
-        const labels = dataArray.map(v => {
+    // ─── Gráfico comparativo mensual global ──────────────────────────────────
+    function createComparisonChart(ctx, dataActual, dataAnterior) {
+        if (!ctx) return;
+
+        const labels = dataActual.map(v => {
             const date = new Date(v.fecha + 'T12:00:00');
-            return date.toLocaleDateString('es-ES', { day: '2-digit', month: 'short' });
+            return date.toLocaleDateString('es-ES', { day: '2-digit' });
         });
-        const values = dataArray.map(v => v.total);
+
+        const actualValues = dataActual.map(v => v.total);
+        const anteriorValues = dataAnterior.map(v => v.total);
+
+        // Generar gradiente para el mes actual
+        const canvasCtx = ctx.getContext('2d');
+        const gradient = canvasCtx.createLinearGradient(0, 0, 0, 260);
+        gradient.addColorStop(0, 'rgba(46, 125, 70, 0.22)');
+        gradient.addColorStop(1, 'rgba(46, 125, 70, 0.02)');
 
         new Chart(ctx, {
             type: 'line',
             data: {
                 labels,
-                datasets: [{
-                    label,
-                    data: values,
-                    borderColor: colorHex,
-                    backgroundColor: `rgba(${hexToRgb(colorHex)}, 0.1)`,
-                    pointRadius: 4,
-                    pointBackgroundColor: colorHex,
-                    pointBorderColor: '#fff',
-                    pointHoverRadius: 6,
-                    pointHoverBackgroundColor: colorHex,
-                    pointHoverBorderColor: '#fff',
-                    pointHitRadius: 10,
-                    pointBorderWidth: 2,
-                    fill: true,
-                    tension: 0.3
-                }]
+                datasets: [
+                    {
+                        label: 'Mes Actual',
+                        data: actualValues,
+                        borderColor: '#2e7d46',
+                        backgroundColor: gradient,
+                        pointRadius: 0,
+                        pointHoverRadius: 5,
+                        pointHoverBackgroundColor: '#2e7d46',
+                        pointHoverBorderColor: '#fff',
+                        fill: true,
+                        tension: 0.35,
+                        borderWidth: 3
+                    },
+                    {
+                        label: 'Mes Anterior',
+                        data: anteriorValues,
+                        borderColor: '#b7c0cf',
+                        backgroundColor: 'transparent',
+                        pointRadius: 0,
+                        pointHoverRadius: 5,
+                        pointHoverBackgroundColor: '#b7c0cf',
+                        pointHoverBorderColor: '#fff',
+                        fill: false,
+                        tension: 0.35,
+                        borderWidth: 2,
+                        borderDash: [5, 5]
+                    }
+                ]
             },
             options: {
                 maintainAspectRatio: false,
@@ -62,24 +98,36 @@ document.addEventListener('DOMContentLoaded', function () {
                     legend: { display: false },
                     tooltip: {
                         backgroundColor: '#fff',
-                        bodyColor: '#858796',
-                        titleColor: '#6e707e',
-                        borderColor: '#dddfeb',
+                        bodyColor: '#475569',
+                        titleColor: '#0f172a',
+                        borderColor: '#e9ebef',
                         borderWidth: 1,
-                        displayColors: false,
+                        displayColors: true,
                         caretPadding: 10,
+                        titleFont: { family: 'Plus Jakarta Sans', weight: '700' },
+                        bodyFont: { family: 'Plus Jakarta Sans' },
                         callbacks: {
-                            label: ctx => new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(ctx.parsed.y)
+                            label: context => {
+                                let label = context.dataset.label || '';
+                                if (label) label += ': ';
+                                label += new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(context.parsed.y);
+                                return label;
+                            }
                         }
                     }
                 },
                 scales: {
-                    x: { grid: { display: false, drawBorder: false } },
+                    x: {
+                        grid: { display: false },
+                        ticks: {
+                            font: { family: 'Plus Jakarta Sans', size: 11 }
+                        }
+                    },
                     y: {
                         beginAtZero: true,
-                        grid: { color: 'rgb(234,236,244)', drawBorder: false, borderDash: [2] },
+                        grid: { color: '#f1f3f6' },
                         ticks: {
-                            padding: 10,
+                            font: { family: 'Plus Jakarta Sans', size: 11 },
                             callback: v => new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(v)
                         }
                     }
@@ -89,7 +137,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     // ─── Gráfico multi-serie por tenant ────────────────────────────────────────
-    let chartTenants = null; // Instancia global para poder actualizarla en el refresh
+    let chartTenants = null;
 
     function createMultiLineChart(ctx, tenantDataArray) {
         if (!ctx) return;
@@ -105,20 +153,19 @@ document.addEventListener('DOMContentLoaded', function () {
             for (let i = 1; i <= diaHoy; i++) labels.push(`${String(i).padStart(2, '0')} mar`);
         }
 
-        const palette = ['#4e73df', '#1cc88a', '#36b9cc', '#f6c23e', '#e74a3b', '#fd7e14', '#6f42c1', '#e83e8c', '#20c997', '#17a2b8'];
-
-        const datasets = tenantDataArray.map((t, idx) => {
-            const color = palette[idx % palette.length];
+        const datasets = tenantDataArray.map((t) => {
+            const color = getTenantColor(t.nombre);
             return {
                 label: t.nombre,
                 data: t.data.map(v => v.total),
                 borderColor: color,
-                backgroundColor: `rgba(${hexToRgb(color)}, 0.05)`,
-                pointRadius: 3,
-                pointBackgroundColor: color,
-                pointBorderColor: '#fff',
+                backgroundColor: 'transparent',
+                pointRadius: 0,
                 pointHoverRadius: 5,
-                tension: 0.3,
+                pointHoverBackgroundColor: color,
+                pointHoverBorderColor: '#fff',
+                tension: 0.35,
+                borderWidth: 2.6,
                 fill: false
             };
         });
@@ -130,21 +177,31 @@ document.addEventListener('DOMContentLoaded', function () {
                 maintainAspectRatio: false,
                 interaction: { mode: 'index', intersect: false },
                 plugins: {
-                    legend: { display: true, position: 'bottom', labels: { boxWidth: 12, padding: 15 } },
+                    legend: {
+                        display: true,
+                        position: 'bottom',
+                        labels: {
+                            boxWidth: 10,
+                            padding: 15,
+                            font: { family: 'Plus Jakarta Sans', weight: '600', size: 12 }
+                        }
+                    },
                     tooltip: {
                         backgroundColor: '#fff',
-                        bodyColor: '#858796',
-                        titleColor: '#6e707e',
-                        borderColor: '#dddfeb',
+                        bodyColor: '#475569',
+                        titleColor: '#0f172a',
+                        borderColor: '#e9ebef',
                         borderWidth: 1,
                         displayColors: true,
                         caretPadding: 10,
+                        titleFont: { family: 'Plus Jakarta Sans', weight: '700' },
+                        bodyFont: { family: 'Plus Jakarta Sans' },
                         callbacks: {
                             label: function (context) {
                                 let lbl = context.dataset.label || '';
                                 if (lbl) lbl += ': ';
                                 if (context.parsed.y !== null) {
-                                    lbl += new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(context.parsed.y);
+                                    lbl += new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(context.parsed.y);
                                 }
                                 return lbl;
                             }
@@ -152,10 +209,17 @@ document.addEventListener('DOMContentLoaded', function () {
                     }
                 },
                 scales: {
-                    x: { grid: { display: false } },
+                    x: {
+                        grid: { display: false },
+                        ticks: { font: { family: 'Plus Jakarta Sans', size: 11 } }
+                    },
                     y: {
                         beginAtZero: true,
-                        ticks: { callback: v => new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(v) }
+                        grid: { color: '#f1f3f6' },
+                        ticks: {
+                            font: { family: 'Plus Jakarta Sans', size: 11 },
+                            callback: v => new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(v)
+                        }
                     }
                 }
             }
@@ -171,40 +235,29 @@ document.addEventListener('DOMContentLoaded', function () {
         if (ctxTenants) createMultiLineChart(ctxTenants, chartData.ventasPorTenant);
 
         const ctxVentas = document.getElementById('chartVentasMes');
-        if (ctxVentas) createLineChart(ctxVentas, chartData.ventasDiarias, 'Ventas Totales ($)', '#1cc88a');
-
-        const ctxVentasAnt = document.getElementById('chartVentasMesAnterior');
-        if (ctxVentasAnt) createLineChart(ctxVentasAnt, chartData.ventasDiariasAnt, 'Ventas Totales Ant. ($)', '#858796');
-
-        const ctxVentasEventos = document.getElementById('chartVentasEventos');
-        if (ctxVentasEventos) createLineChart(ctxVentasEventos, chartData.ventasEventos, 'Ventas de Eventos ($)', '#f6c23e');
+        if (ctxVentas) createComparisonChart(ctxVentas, chartData.ventasDiarias, chartData.ventasDiariasAnt);
     }
 
-    // ─── AUTO-REFRESH: Actualiza cards de "Ventas de Hoy" cada 60 segundos ────
-    function renderCardHTML(v) {
+    // ─── AUTO-REFRESH: Actualiza Leaderboard cada 60 segundos ──────────────────
+    function renderRowHTML(v, idx, maxSales) {
+        const color = getTenantColor(v.nombre);
+        const pct = maxSales > 0 ? (v.total / maxSales) * 100 : 0;
+        const rankClass = idx === 0 ? 'top-rank' : '';
         const factText = `${v.facturas || 0} factura${(v.facturas || 0) !== 1 ? 's' : ''}`;
-        const barWidth = v.total > 0 ? '100%' : '0%';
-        const barClass = v.total > 0 ? 'bg-success' : 'bg-light';
         return `
-            <div class="card h-100 border-0 shadow-sm" style="border-radius:12px;transition:all 0.2s ease-in-out;border-left:4px solid #667eea !important;">
-                <div class="card-body p-3">
-                    <div class="d-flex align-items-center justify-content-between mb-2">
-                        <div class="small fw-bold text-muted text-truncate me-2" style="font-size:0.75rem;letter-spacing:0.5px;" title="${v.nombre}">
-                            ${v.nombre.toUpperCase()}
-                        </div>
-                        <div class="rounded-circle bg-primary bg-opacity-10 text-primary d-flex align-items-center justify-content-center" style="width:24px;height:24px;">
-                            <i class="bi bi-lightning-fill" style="font-size:0.7rem;"></i>
-                        </div>
-                    </div>
-                    <div class="h4 mb-1 fw-bold text-dark tenant-ventas-total">$${formatCOP(v.total)}</div>
-                    <div class="small text-muted tenant-ventas-facturas">
-                        <i class="bi bi-receipt me-1"></i>${factText}
-                    </div>
-                    <div class="mt-2 progress" style="height:4px;">
-                        <div class="progress-bar ${barClass}" role="progressbar" style="width:${barWidth}"></div>
-                    </div>
+            <span class="leaderboard-rank ${rankClass}">${idx + 1}</span>
+            <span class="leaderboard-dot" style="background: ${color}"></span>
+            <div class="flex-grow-1 min-width-0" style="width: 180px; flex: 0 0 180px;">
+                <div class="leaderboard-tenant-name text-truncate" title="${v.nombre}">${v.nombre}</div>
+                <div class="leaderboard-tenant-subtext">${factText}</div>
+            </div>
+            <div class="flex-grow-1 d-none d-md-block">
+                <div class="leaderboard-progress-bg">
+                    <div class="leaderboard-progress-fill" style="width: ${Math.max(pct, 1.5)}%; background: linear-gradient(90deg, rgba(${hexToRgb(color)}, 0.25), ${color});"></div>
                 </div>
-            </div>`;
+            </div>
+            <span class="leaderboard-sales-val">$${formatCOP(v.total)}</span>
+        `;
     }
 
     async function refreshLiveStats() {
@@ -227,37 +280,55 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
             }
 
-            // Actualizar cards por tenant
-            data.ventasHoyPorTenant.forEach(v => {
-                const col = container.querySelector(`[data-tenant-card="${CSS.escape(v.nombre)}"]`);
-                if (col) {
-                    const totalEl2 = col.querySelector('.tenant-ventas-total');
-                    const facturasEl = col.querySelector('.tenant-ventas-facturas');
-                    const newTotal = `$${formatCOP(v.total)}`;
+            // Calcular ventas máximas para porcentajes
+            const maxSales = Math.max(...data.ventasHoyPorTenant.map(t => t.total)) || 1;
 
-                    if (totalEl2 && totalEl2.textContent !== newTotal) {
-                        totalEl2.textContent = newTotal;
-                        flashElement(col.querySelector('.card'));
+            // Eliminar contenedor de "no hay ventas" si llega data
+            if (data.ventasHoyPorTenant.length > 0) {
+                const noVentas = document.getElementById('noVentasHoy');
+                if (noVentas) noVentas.remove();
+            }
+
+            // Actualizar y ordenar filas del Leaderboard
+            data.ventasHoyPorTenant.forEach((v, idx) => {
+                let row = container.querySelector(`[data-tenant-row="${CSS.escape(v.nombre)}"]`);
+                const rankClass = idx === 0 ? 'top-rank' : '';
+                const newTotalStr = `$${formatCOP(v.total)}`;
+
+                if (row) {
+                    // Actualizar fila existente
+                    const rankEl = row.querySelector('.leaderboard-rank');
+                    const nameEl = row.querySelector('.leaderboard-tenant-name');
+                    const subtextEl = row.querySelector('.leaderboard-tenant-subtext');
+                    const salesEl = row.querySelector('.leaderboard-sales-val');
+                    const progressEl = row.querySelector('.leaderboard-progress-fill');
+
+                    if (rankEl) {
+                        rankEl.textContent = idx + 1;
+                        if (idx === 0) rankEl.classList.add('top-rank');
+                        else rankEl.classList.remove('top-rank');
                     }
-                    if (facturasEl) {
-                        const factText = `${v.facturas || 0} factura${(v.facturas || 0) !== 1 ? 's' : ''}`;
-                        facturasEl.innerHTML = `<i class="bi bi-receipt me-1"></i>${factText}`;
+                    if (subtextEl) {
+                        subtextEl.textContent = `${v.facturas || 0} factura${(v.facturas || 0) !== 1 ? 's' : ''}`;
                     }
-                    const bar = col.querySelector('.progress-bar');
-                    if (bar) {
-                        bar.style.width = v.total > 0 ? '100%' : '0%';
-                        bar.className = `progress-bar ${v.total > 0 ? 'bg-success' : 'bg-light'}`;
+                    if (salesEl && salesEl.textContent !== newTotalStr) {
+                        salesEl.textContent = newTotalStr;
+                        flashElement(row);
                     }
+                    if (progressEl) {
+                        const pct = (v.total / maxSales) * 100;
+                        progressEl.style.width = `${Math.max(pct, 1.5)}%`;
+                    }
+                    // Mover al orden correcto según el sorting de la consulta
+                    container.appendChild(row);
                 } else {
-                    // Nuevo tenant con ventas que no estaba al cargar la página
-                    const noVentas = document.getElementById('noVentasHoy');
-                    if (noVentas) noVentas.remove();
-                    const newCol = document.createElement('div');
-                    newCol.className = 'col-6 col-md-4 col-lg-3';
-                    newCol.setAttribute('data-tenant-card', v.nombre);
-                    newCol.innerHTML = renderCardHTML(v);
-                    container.appendChild(newCol);
-                    flashElement(newCol.querySelector('.card'));
+                    // Crear nueva fila en Leaderboard
+                    row = document.createElement('div');
+                    row.className = 'leaderboard-row';
+                    row.setAttribute('data-tenant-row', v.nombre);
+                    row.innerHTML = renderRowHTML(v, idx, maxSales);
+                    container.appendChild(row);
+                    flashElement(row);
                 }
             });
 
@@ -265,7 +336,6 @@ document.addEventListener('DOMContentLoaded', function () {
             if (chartTenants && chartTenants.data && chartTenants.data.datasets) {
                 let chartActualizado = false;
 
-                // Determinar la etiqueta del día de hoy para encontrar el índice correcto
                 const hoyLabel = new Date(data.hoyColombia + 'T12:00:00')
                     .toLocaleDateString('es-ES', { day: '2-digit', month: 'short' });
                 const labels = chartTenants.data.labels;
@@ -276,13 +346,11 @@ document.addEventListener('DOMContentLoaded', function () {
                     if (!dataset) return;
 
                     if (todayIdx !== -1) {
-                        // El punto de hoy ya existe en el gráfico — actualizamos su valor acumulado
                         if (dataset.data[todayIdx] !== v.total) {
                             dataset.data[todayIdx] = v.total;
                             chartActualizado = true;
                         }
                     } else {
-                        // Es un día nuevo — añadir el punto al final del gráfico
                         if (!chartTenants.data.labels.includes(hoyLabel)) {
                             chartTenants.data.labels.push(hoyLabel);
                         }

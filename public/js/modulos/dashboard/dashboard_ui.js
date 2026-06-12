@@ -2,8 +2,8 @@
 $(function () {
   const mod = window.DashboardModule;
 
-  // Initialize Local State (default green branding)
-  mod.activeTheme = '#2e7d46';
+  // Initialize Local State dynamically from data attribute, fallback to default green
+  mod.activeTheme = $('#dashboardRoot').attr('data-accent') || '#2e7d46';
   mod.activeVariation = localStorage.getItem('dashboard_variation') || 'A';
   mod.activeTab = localStorage.getItem('dashboard_tab') || 'resumen';
   mod.activeRange = localStorage.getItem('dashboard_range') || '7d';
