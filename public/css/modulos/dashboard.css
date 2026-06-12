@@ -275,3 +275,101 @@ body {
         border-color: #cbd5f5;
     }
 }
+
+/* ============================================================
+   dashboardRoot variables & variation classes
+   ============================================================ */
+#dashboardRoot {
+    --accent: #2e7d46;
+    --accentDark: #1b4d2b;
+    --accentSoft: #eef6f0;
+    --accentSofter: #f6faf7;
+    font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+    color: #0f172a;
+    min-height: 100vh;
+    background: #f8f9fa;
+}
+
+.btn-variation {
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    padding: 7px 14px;
+    border-radius: 9px;
+    font-size: 13px;
+    font-weight: 700;
+    font-family: inherit;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: #5b6573;
+    transition: all .15s;
+}
+
+.btn-variation.active {
+    background: #fff;
+    color: var(--accent);
+    box-shadow: 0 1px 3px rgba(16,24,40,.14);
+}
+
+.btn-range {
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    padding: 6px 13px;
+    border-radius: 9px;
+    font-size: 13px;
+    font-weight: 700;
+    font-family: inherit;
+    color: #5b6573;
+    transition: all .15s;
+}
+
+.btn-range.active {
+    background: #fff;
+    color: var(--accent);
+    box-shadow: 0 1px 3px rgba(16,24,40,.14);
+}
+
+.btn-focus-tab {
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    padding: 7px 14px;
+    border-radius: 9px;
+    font-size: 13px;
+    font-weight: 700;
+    font-family: inherit;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: #5b6573;
+    transition: all .15s;
+}
+
+.btn-focus-tab.active {
+    background: #fff;
+    color: var(--accent);
+    box-shadow: 0 1px 3px rgba(16,24,40,.14);
+}
+
+/* Custom progress bars for categories */
+.category-progress-bar {
+    height: 100%;
+    border-radius: 6px;
+    transition: width 0.5s ease-in-out;
+}
+
+/* Custom Calendar elements styling to match accent colors */
+.mini-calendario td.dia-evento {
+    background: var(--accentSoft) !important;
+    color: var(--accent) !important;
+    border: 1px solid var(--accent) !important;
+    font-weight: 700;
+}
+
+.mini-calendario td.dia-hoy {
+    background: var(--accent) !important;
+    color: #fff !important;
+    font-weight: 700;
+}

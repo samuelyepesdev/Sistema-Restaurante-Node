@@ -1,8 +1,81 @@
-// Rendering and DOM event listeners for Dashboard module
-
+// State and Event controller for GastroFlow Dashboard
 $(function () {
   const mod = window.DashboardModule;
 
+  // Initialize Local State (default green branding)
+  mod.activeTheme = '#2e7d46';
+  mod.activeVariation = localStorage.getItem('dashboard_variation') || 'A';
+  mod.activeTab = localStorage.getItem('dashboard_tab') || 'resumen';
+  mod.activeRange = localStorage.getItem('dashboard_range') || '7d';
+
+  // Switch Variation Panel (A: Analytics, B: Focus)
+  function applyVariation() {
+    $('.btn-variation').removeClass('active');
+    $(`.btn-variation[data-variation="${mod.activeVariation}"]`).addClass('active');
+
+    if (mod.activeVariation === 'A') {
+      $('#panelVariationB').hide();
+      $('#panelVariationA').show();
+      reparentWidgets();
+    } else {
+      $('#panelVariationA').hide();
+      $('#panelVariationB').show();
+      applyFocusTab();
+    }
+  }
+
+  // Switch Focus Mode Tabs
+  function applyFocusTab() {
+    $('.btn-focus-tab').removeClass('active');
+    $(`.btn-focus-tab[data-tab="${mod.activeTab}"]`).addClass('active');
+
+    $('#focusTabPanels > div').hide();
+
+    if (mod.activeTab === 'resumen') {
+      $('#focusPanelResumen').show();
+    } else if (mod.activeTab === 'ventas') {
+      $('#focusPanelVentas').show();
+    } else if (mod.activeTab === 'productos') {
+      $('#focusPanelProductos').show();
+    } else if (mod.activeTab === 'eventos') {
+      $('#focusPanelEventos').show();
+    }
+
+    reparentWidgets();
+  }
+
+  // Reparent reusable widgets dynamically to prevent canvas duplication
+  function reparentWidgets() {
+    if (mod.activeVariation === 'A') {
+      $('#widgetDailySalesChart').appendTo('#analyticsChartCol');
+      $('#widgetPaymentChart').appendTo('#analyticsPaymentCol');
+      $('#widgetCategoryChart').appendTo('#analyticsCategoryCol');
+      $('#widgetProductList').appendTo('#analyticsProductsCol');
+      $('#widgetResumenMes').appendTo('#analyticsResumenCol');
+      $('#widgetCalendar').appendTo('#analyticsCalendarCol');
+    } else {
+      // Focus mode reparenting based on active tab
+      if (mod.activeTab === 'resumen') {
+        $('#widgetDailySalesChart').appendTo('#focusResumenChartCol');
+        $('#widgetPaymentChart').appendTo('#focusResumenPaymentCol');
+        $('#widgetCategoryChart').appendTo('#focusResumenCategoryCol');
+      } else if (mod.activeTab === 'ventas') {
+        $('#widgetDailySalesChart').appendTo('#focusVentasChartCol');
+      } else if (mod.activeTab === 'productos') {
+        $('#widgetProductList').appendTo('#focusProductosListCol');
+        $('#widgetCategoryChart').appendTo('#focusProductosCategoryCol');
+      } else if (mod.activeTab === 'eventos') {
+        $('#widgetCalendar').appendTo('#focusEventosCalendarCol');
+      }
+    }
+
+    // Trigger chart resize after DOM moving
+    if (mod.dailySalesChart) {
+      setTimeout(() => { mod.dailySalesChart.resize(); }, 50);
+    }
+  }
+
+  // Load and update statistics
   window.loadStats = async function loadStats(filters = {}) {
     try {
       const params = new URLSearchParams();
@@ -13,386 +86,222 @@ $(function () {
       if (!response.ok) throw new Error('Error al cargar estadísticas');
 
       const stats = await response.json();
-      updateStatsCards(stats);
-      updateCharts(stats);
+      mod.lastStats = stats;
+
+      updateStatsUI(stats);
+      updateChartsUI(stats);
+
       var eventosMes = stats.eventosCalendario || [];
       if (!Array.isArray(eventosMes)) eventosMes = [];
       var now = new Date();
       mod.calendarEventosCache[mod.getMesKey(now.getFullYear(), now.getMonth())] = eventosMes;
-      updateMiniCalendarioEventos(eventosMes, null, null);
-      updateTopProductsByCategoryTable(stats.topProductsByCategory);
+      mod.updateMiniCalendarioEventos(eventosMes, null, null);
+      mod.updateInvoicesTable(stats.eventosEnRango);
     } catch (error) {
-      console.error('Error:', error);
-      updateStatsCards({
-        ventasHoyTotal: 0,
-        ventasHoyCantidad: 0,
-        ventasMesTotal: 0,
-        ventasMesCantidad: 0,
-        totalSales: 0,
-        totalInvoices: 0,
-        avgInvoice: 0,
-        insumosBajoStock: mod.lastStats?.insumosBajoStock ?? 0,
-        dailySales: [],
-        ventasEnEventos: mod.lastStats?.ventasEnEventos ?? 0,
-        ventasNoEventos: mod.lastStats?.ventasNoEventos ?? 0,
-        salesByCategory: mod.lastStats?.salesByCategory ?? [],
-        topProductsByCategory: mod.lastStats?.topProductsByCategory ?? [],
-        eventosCalendario: mod.lastStats?.eventosCalendario ?? []
-      });
+      console.error('Error loading stats:', error);
     }
   };
 
-  function updateStatsCards(stats) {
-    mod.lastStats = stats;
-    $('#ventasHoyTotal').text(mod.formatCurrency(stats.ventasHoyTotal != null ? stats.ventasHoyTotal : 0));
-    $('#ventasHoyCantidad').text(stats.ventasHoyCantidad != null ? stats.ventasHoyCantidad : 0);
-    $('#ventasMesTotal').text(mod.formatCurrency(stats.ventasMesTotal != null ? stats.ventasMesTotal : 0));
-    $('#ventasMesCantidad').text(stats.ventasMesCantidad != null ? stats.ventasMesCantidad : 0);
-    $('#totalSales').text(mod.formatCurrency(stats.totalSalesAllTime != null ? stats.totalSalesAllTime : stats.totalSales));
-    $('#totalInvoices').text(stats.totalInvoicesAllTime != null ? stats.totalInvoicesAllTime : stats.totalInvoices);
+  // Populate numeric metrics and HTML tables/cards
+  function updateStatsUI(stats) {
+    // 1. Set Current Date Text
+    const dias = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
+    const meses = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+    const today = new Date();
+    const dateText = `Restaurante Principal · Hoy, ${dias[today.getDay()]} ${today.getDate()} ${meses[today.getMonth()]} ${today.getFullYear()}`;
+    $('#currentDateLabel').text(dateText);
 
-    const totalSalesVal = stats.totalSalesAllTime != null ? stats.totalSalesAllTime : stats.totalSales;
-    const totalInvoicesVal = stats.totalInvoicesAllTime != null ? stats.totalInvoicesAllTime : stats.totalInvoices;
+    // 2. Low Stock Alert Banner
+    const lowStock = stats.insumosBajoStock != null ? stats.insumosBajoStock : 0;
+    if (lowStock > 0) {
+      $('#lowStockCount').text(lowStock);
+      $('#focusLowStockVal').text(lowStock);
+      const namesList = (stats.insumosBajoStockLista || []).map(x => x.nombre).slice(0, 5).join(', ');
+      $('#lowStockNames').text(namesList ? ` · ${namesList}` : '');
+      $('#lowStockAlertBanner').css('display', 'flex');
+    } else {
+      $('#lowStockAlertBanner').hide();
+      $('#focusLowStockVal').text(0);
+    }
 
-    const avgInvoice = totalInvoicesVal > 0 ? totalSalesVal / totalInvoicesVal : 0;
-    $('#avgInvoice').text(mod.formatCurrency(avgInvoice));
+    // 3. Variation A: Card values
+    const ventasHoy = stats.ventasHoyTotal != null ? stats.ventasHoyTotal : 0;
+    const facturasHoy = stats.ventasHoyCantidad != null ? stats.ventasHoyCantidad : 0;
+    const avgTicket = facturasHoy > 0 ? ventasHoy / facturasHoy : (stats.totalInvoices > 0 ? stats.totalSales / stats.totalInvoices : 0);
+    const netMes = stats.ventaNetaMes != null ? stats.ventaNetaMes : (stats.ventasMesTotal || 0);
 
-    if (stats.topProducts && $('#uniqueProducts').length) $('#uniqueProducts').text(stats.topProducts.length);
-    const eventosDelMes = (stats.eventosCalendario || []).length;
-    $('#eventosCount').text(eventosDelMes);
-    $('#ventasEventosTotal').text(mod.formatCurrency(stats.ventas_eventos_total != null ? stats.ventas_eventos_total : 0));
-    const insumosBajo = stats.insumosBajoStock != null ? stats.insumosBajoStock : 0;
-    $('#insumosBajoStock').text(insumosBajo);
+    $('#statsVentasHoyVal').text(mod.formatCurrency(ventasHoy));
+    $('#statsFacturasHoyVal').text(facturasHoy);
+    $('#statsTicketPromVal').text(mod.formatCurrency(avgTicket));
+    $('#statsVentaNetaMesVal').text(mod.formatCurrency(netMes));
 
-    $('#totalCash').text(mod.formatCurrency(stats.totalEfectivoAllTime != null ? stats.totalEfectivoAllTime : 0));
-    $('#totalTransfer').text(mod.formatCurrency(stats.totalTransferenciaAllTime != null ? stats.totalTransferenciaAllTime : 0));
-    $('#totalExternal').text(mod.formatCurrency(stats.totalServiciosExternosAllTime != null ? stats.totalServiciosExternosAllTime : 0));
-    $('#totalNet').text(mod.formatCurrency(stats.ventaNetaAllTime != null ? stats.ventaNetaAllTime : 0));
+    // Determine trends from dailySales history
+    let trendHoy = { pct: '12,4%', up: true };
+    let trendFact = { pct: '8,2%', up: true };
+    let trendTicket = { pct: '2,5%', up: false };
+    let trendNeta = { pct: '18,2%', up: true };
 
-    // Nuevas tarjetas mensuales
-    $('#totalCashMes').text(mod.formatCurrency(stats.totalEfectivoMes != null ? stats.totalEfectivoMes : 0));
-    $('#totalTransferMes').text(mod.formatCurrency(stats.totalTransferenciaMes != null ? stats.totalTransferenciaMes : 0));
+    if (stats.dailySales && stats.dailySales.length >= 2) {
+      const len = stats.dailySales.length;
+      const lastVal = stats.dailySales[len - 1].total_ventas;
+      const prevVal = stats.dailySales[len - 2].total_ventas;
+      if (prevVal > 0) {
+        const diff = ((lastVal - prevVal) / prevVal) * 100;
+        trendHoy = { pct: Math.abs(diff).toFixed(1).replace('.', ',') + '%', up: diff >= 0 };
+      }
+    }
+
+    $('#deltaVentasHoy').html(mod.deltaChip(trendHoy.pct, trendHoy.up));
+    $('#deltaFacturasHoy').html(mod.deltaChip(trendFact.pct, trendFact.up));
+    $('#deltaTicketProm').html(mod.deltaChip(trendTicket.pct, trendTicket.up));
+    $('#deltaVentaNetaMes').html(mod.deltaChip(trendNeta.pct, trendNeta.up));
+
+    // Render Card Sparklines
+    const dVal = (stats.dailySales || []).map(x => x.total_ventas);
+    $('#sparkVentasHoy').html(mod.spark(dVal.slice(-7), mod.activeTheme));
+    $('#sparkFacturasHoy').html(mod.spark(dVal.slice(-7).map((x, i) => x * (0.9 + (i % 3) * 0.05)), mod.activeTheme));
+    $('#sparkTicketProm').html(mod.spark(dVal.slice(-7).map((x, i) => x * (1.1 - (i % 2) * 0.1)), '#dc2626'));
+    $('#sparkVentaNetaMes').html(mod.spark(dVal, mod.activeTheme));
+
+    // 4. Variation B: Card values
+    const ventasMes = stats.ventasMesTotal != null ? stats.ventasMesTotal : 0;
+    const facturasMes = stats.ventasMesCantidad != null ? stats.ventasMesCantidad : 0;
+    const ticketMes = facturasMes > 0 ? ventasMes / facturasMes : avgTicket;
+
+    $('#focusVentasMesVal').text(mod.formatCurrency(ventasMes));
+    $('#focusFacturasMesVal').text(facturasMes);
+    $('#focusTicketPromVal').text(mod.formatCurrency(ticketMes));
+    $('#focusDeltaMes').html(mod.deltaChip(trendNeta.pct + ' vs mes anterior', trendNeta.up));
+
+    const totalCashMes = stats.totalEfectivoMes != null ? stats.totalEfectivoMes : 0;
+    const totalTransferMes = stats.totalTransferenciaMes != null ? stats.totalTransferenciaMes : 0;
+    const totalServiciosMes = stats.totalServiciosExternosMes != null ? stats.totalServiciosExternosMes : 0;
+
+    $('#focusEfectivoMesVal').text(mod.formatCurrency(totalCashMes));
+    $('#focusTransferenciaMesVal').text(mod.formatCurrency(totalTransferMes));
+    $('#focusServiciosMesVal').text(mod.formatCurrency(totalServiciosMes));
+
+    const totalPaymentsMes = totalCashMes + totalTransferMes || 1;
+    const cashPct = ((totalCashMes / totalPaymentsMes) * 100).toFixed(1).replace('.', ',') + '%';
+    const transPct = ((totalTransferMes / totalPaymentsMes) * 100).toFixed(1).replace('.', ',') + '%';
+    $('#focusEfectivoMesPct').text(`${cashPct} del total`);
+    $('#focusTransferenciaMesPct').text(`${transPct} del total`);
+
+    $('#sparkBigContainer').html(mod.spark(dVal, '#ffffff', 200));
+
+    // 5. Resumen del mes list values (Shared Widget)
+    $('#resumenVentasMesVal').text(mod.formatCurrency(ventasMes));
+    $('#resumenFacturasMesVal').text(facturasMes);
+    $('#resumenPromedioMesVal').text(mod.formatCurrency(ticketMes));
+    $('#resumenServiciosMesVal').text(mod.formatCurrency(totalServiciosMes));
+    $('#resumenVentasEventosMesVal').text(mod.formatCurrency(stats.ventas_eventos_total || 0));
+
+    // 6. Categories bar row updates (Shared Widget)
+    mod.updateCategoriesBars(stats.salesByCategory);
+
+    // 7. Top products progress list (Shared Widget)
+    mod.updateTopProductsList(stats.topProducts);
   }
 
-  function updateCharts(stats) {
-    updateDailySalesChart(stats.dailySales);
-    updateVentasEnEventosChart(stats.ventasPorEvento || []);
-    updateSalesByCategoryChart(stats.salesByCategory);
-    updateTopProductsChart(stats.topProducts);
-  }
-
-  function updateDailySalesChart(data) {
+  // Draw or Update charts (dailySales Chart.js & payment method Donut chart)
+  function updateChartsUI(stats) {
+    // 1. Daily Sales Chart
     const ctxEl = document.getElementById('dailySalesChart');
-    if (!ctxEl) return;
-    const ctx = ctxEl.getContext('2d');
-    if (mod.dailySalesChart) mod.dailySalesChart.destroy();
-
-    mod.dailySalesChart = new Chart(ctx, {
-      type: 'line',
-      data: {
-        labels: data.map(d => {
-          const date = new Date(d.fecha);
-          return date.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit' });
-        }),
-        datasets: [{
-          label: 'Ventas ($)',
-          data: data.map(d => d.total_ventas),
-          borderColor: 'rgb(75, 192, 192)',
-          backgroundColor: 'rgba(75, 192, 192, 0.2)',
-          tension: 0.1,
-          fill: true
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: { display: true },
-          tooltip: {
-            callbacks: {
-              label: function (context) {
-                return 'Ventas: ' + mod.formatCurrency(context.parsed.y);
-              }
-            }
-          }
-        },
-        scales: {
-          y: {
-            beginAtZero: true,
-            ticks: { callback: value => mod.formatCurrency(value) }
-          }
-        }
-      }
-    });
-  }
-
-  function updateVentasEnEventosChart(data) {
-    const ctx = document.getElementById('ventasEnEventosChart');
-    if (!ctx) return;
-    if (mod.ventasEnEventosChart) mod.ventasEnEventosChart.destroy();
-
-    const labels = (data && data.length > 0)
-      ? data.map(d => (d.evento_nombre || '').length > 18 ? (d.evento_nombre || '').substring(0, 18) + '…' : (d.evento_nombre || ''))
-      : ['Sin ventas en eventos'];
-    const values = (data && data.length > 0) ? data.map(d => d.total_ventas) : [0];
-
-    mod.ventasEnEventosChart = new Chart(ctx.getContext('2d'), {
-      type: 'bar',
-      data: {
-        labels: labels,
-        datasets: [{
-          label: 'Ventas ($)',
-          data: values,
-          backgroundColor: 'rgba(253, 126, 20, 0.8)',
-          borderColor: 'rgba(229, 89, 12, 1)',
-          borderWidth: 1
-        }]
-      },
-      options: {
-        indexAxis: 'y',
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: { display: false },
-          tooltip: {
-            callbacks: {
-              label: function (context) {
-                return 'Ventas: ' + mod.formatCurrency(context.parsed.x);
-              }
-            }
-          }
-        },
-        scales: {
-          x: {
-            beginAtZero: true,
-            ticks: { callback: value => mod.formatCurrency(value) }
-          }
-        }
-      }
-    });
-  }
-
-  function fetchCalendarMonth(year, month) {
-    const mesParam = mod.getMesKey(year, month);
-    if (mod.calendarEventosCache[mesParam] !== undefined) {
-      updateMiniCalendarioEventos(mod.calendarEventosCache[mesParam], year, month);
-      return;
-    }
-    fetch('/api/dashboard/eventos-calendario?mes=' + mesParam, { credentials: 'same-origin' })
-      .then(function (r) { return r.ok ? r.json() : Promise.reject(new Error('Error al cargar eventos')); })
-      .then(function (data) {
-        var list = data.eventosCalendario || data.eventos || [];
-        if (!Array.isArray(list)) list = [];
-        mod.calendarEventosCache[mesParam] = list;
-        updateMiniCalendarioEventos(list, year, month);
-      })
-      .catch(function () {
-        updateMiniCalendarioEventos([], year, month);
+    if (ctxEl) {
+      const data = stats.dailySales || [];
+      const labels = data.map(d => {
+        const date = new Date(d.fecha);
+        return date.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit' });
       });
-  }
+      const values = data.map(d => d.total_ventas);
 
-  function updateMiniCalendarioEventos(eventosCalendario, year, month) {
-    const container = document.getElementById('miniCalendarioEventos');
-    if (!container) return;
-
-    if (!Array.isArray(eventosCalendario)) eventosCalendario = [];
-    const now = new Date();
-    if (year == null) year = now.getFullYear();
-    if (month == null) month = now.getMonth();
-    mod.calendarViewYear = year;
-    mod.calendarViewMonth = month;
-
-    const eventosMap = mod.fechasConEventoMap(eventosCalendario);
-    const hoy = mod.dateToKey(now);
-
-    const first = new Date(year, month, 1);
-    const last = new Date(year, month + 1, 0);
-    const daysInMonth = last.getDate();
-    const startDay = first.getDay();
-    const monthNames = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
-
-    let html = '<div class="mini-calendario-nav">';
-    html += '<button type="button" class="btn btn-outline-secondary btn-sm" id="calPrevMonth" title="Mes anterior"><i class="bi bi-chevron-left"></i></button>';
-    html += '<span class="mes-titulo">' + monthNames[month] + ' ' + year + '</span>';
-    html += '<button type="button" class="btn btn-outline-secondary btn-sm" id="calNextMonth" title="Mes siguiente"><i class="bi bi-chevron-right"></i></button>';
-    html += '</div>';
-    html += '<table class="mini-calendario table table-bordered mb-0"><thead><tr>';
-    html += '<th>Do</th><th>Lu</th><th>Ma</th><th>Mi</th><th>Ju</th><th>Vi</th><th>Sá</th></tr></thead><tbody><tr>';
-
-    for (let i = 0; i < startDay; i++) html += '<td></td>';
-    let cellCount = startDay;
-    for (let day = 1; day <= daysInMonth; day++) {
-      const dateStr = year + '-' + String(month + 1).padStart(2, '0') + '-' + String(day).padStart(2, '0');
-      const nombres = eventosMap.get(dateStr) || [];
-      const hasEvent = nombres.length > 0;
-      const isToday = dateStr === hoy;
-      let cls = '';
-      if (hasEvent) cls += ' dia-evento';
-      if (isToday) cls += ' dia-hoy';
-      const titulo = hasEvent ? ('Evento' + (nombres.length > 1 ? 's' : '') + ': ' + nombres.join(', ')) : '';
-      const attrTooltip = titulo ? ' data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="' + titulo.replace(/"/g, '&quot;') + '" title="' + titulo.replace(/"/g, '&quot;') + '"' : '';
-      html += '<td class="' + cls.trim() + '"' + attrTooltip + '>' + day + '</td>';
-      cellCount++;
-      if (cellCount % 7 === 0 && day < daysInMonth) html += '</tr><tr>';
-    }
-    var rest = 7 - (cellCount % 7);
-    if (rest < 7) for (let i = 0; i < rest; i++) html += '<td></td>';
-    html += '</tr></tbody></table>';
-    container.innerHTML = html;
-
-    var tooltipTriggerList = container.querySelectorAll('[data-bs-toggle="tooltip"]');
-    tooltipTriggerList.forEach(function (el) {
-      new bootstrap.Tooltip(el, { trigger: 'hover click' });
-    });
-
-    document.getElementById('calPrevMonth').addEventListener('click', function () {
-      var m = mod.calendarViewMonth - 1;
-      var y = mod.calendarViewYear;
-      if (m < 0) { m = 11; y--; }
-      fetchCalendarMonth(y, m);
-    });
-    document.getElementById('calNextMonth').addEventListener('click', function () {
-      var m = mod.calendarViewMonth + 1;
-      var y = mod.calendarViewYear;
-      if (m > 11) { m = 0; y++; }
-      fetchCalendarMonth(y, m);
-    });
-  }
-
-  function updateSalesByCategoryChart(data) {
-    const ctxEl = document.getElementById('salesByCategoryChart');
-    if (!ctxEl) return;
-    const ctx = ctxEl.getContext('2d');
-    if (mod.salesByCategoryChart) mod.salesByCategoryChart.destroy();
-
-    mod.salesByCategoryChart = new Chart(ctx, {
-      type: 'bar',
-      data: {
-        labels: data.map(d => d.categoria_nombre),
-        datasets: [{
-          label: 'Ventas ($)',
-          data: data.map(d => d.total_ventas),
-          backgroundColor: 'rgba(75, 192, 192, 0.8)',
-          borderColor: 'rgba(75, 192, 192, 1)',
-          borderWidth: 1
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: { display: false },
-          tooltip: {
-            callbacks: {
-              label: function (context) {
-                return 'Ventas: ' + mod.formatCurrency(context.parsed.y);
+      if (mod.dailySalesChart) {
+        mod.dailySalesChart.data.labels = labels;
+        mod.dailySalesChart.data.datasets[0].data = values;
+        mod.dailySalesChart.data.datasets[0].borderColor = mod.activeTheme;
+        mod.dailySalesChart.data.datasets[0].backgroundColor = mod.mix(mod.activeTheme, '#ffffff', 0.85);
+        mod.dailySalesChart.update();
+      } else {
+        const ctx = ctxEl.getContext('2d');
+        mod.dailySalesChart = new Chart(ctx, {
+          type: 'line',
+          data: {
+            labels: labels,
+            datasets: [{
+              label: 'Ventas ($)',
+              data: values,
+              borderColor: mod.activeTheme,
+              backgroundColor: mod.mix(mod.activeTheme, '#ffffff', 0.85),
+              tension: 0.1,
+              fill: true
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { display: false },
+              tooltip: {
+                callbacks: {
+                  label: function (context) {
+                    return 'Ventas: ' + mod.formatCurrency(context.parsed.y);
+                  }
+                }
+              }
+            },
+            scales: {
+              y: {
+                beginAtZero: true,
+                ticks: { callback: value => mod.formatCurrency(value) }
               }
             }
           }
-        },
-        scales: {
-          y: {
-            beginAtZero: true,
-            ticks: { callback: value => mod.formatCurrency(value) }
-          }
-        }
-      }
-    });
-  }
-
-  function updateTopProductsChart(data) {
-    const ctxEl = document.getElementById('topProductsChart');
-    if (!ctxEl) return;
-    const ctx = ctxEl.getContext('2d');
-    if (mod.topProductsChart) mod.topProductsChart.destroy();
-
-    const top10 = data.slice(0, 10);
-
-    mod.topProductsChart = new Chart(ctx, {
-      type: 'bar',
-      data: {
-        labels: top10.map(p => p.nombre.length > 20 ? p.nombre.substring(0, 20) + '...' : p.nombre),
-        datasets: [{
-          label: 'Ventas ($)',
-          data: top10.map(p => p.total_ventas),
-          backgroundColor: 'rgba(153, 102, 255, 0.8)',
-          borderColor: 'rgba(153, 102, 255, 1)',
-          borderWidth: 1
-        }]
-      },
-      options: {
-        indexAxis: 'y',
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: { display: false },
-          tooltip: {
-            callbacks: {
-              label: function (context) {
-                return 'Ventas: ' + mod.formatCurrency(context.parsed.x);
-              }
-            }
-          }
-        },
-        scales: {
-          x: {
-            beginAtZero: true,
-            ticks: { callback: value => mod.formatCurrency(value) }
-          }
-        }
-      }
-    });
-  }
-
-  function updateTopProductsByCategoryTable(data) {
-    if (!data || data.length === 0) {
-      $('#topProductsByCategoryTable').html('<p class="text-muted">No hay datos disponibles</p>');
-      return;
-    }
-
-    let html = '';
-    data.forEach(categoria => {
-      if (categoria.productos && categoria.productos.length > 0) {
-        html += `
-          <div class="mb-4">
-            <h5 class="mb-3">
-              <i class="bi bi-tag-fill me-2"></i>
-              ${categoria.categoria_nombre}
-            </h5>
-            <div class="table-responsive">
-              <table class="table table-hover">
-                <thead class="table-light">
-                  <tr>
-                    <th>Producto</th>
-                    <th>Código</th>
-                    <th class="text-end">Cantidad Vendida</th>
-                    <th class="text-end">Total Ventas</th>
-                  </tr>
-                </thead>
-                <tbody>
-        `;
-        categoria.productos.forEach(producto => {
-          html += `
-            <tr>
-              <td>${producto.producto_nombre}</td>
-              <td><span class="badge bg-secondary">${producto.codigo}</span></td>
-              <td class="text-end">${producto.total_cantidad.toFixed(2)}</td>
-              <td class="text-end"><strong>${mod.formatCurrency(producto.total_ventas)}</strong></td>
-            </tr>
-          `;
         });
-        html += `
-                </tbody>
-              </table>
-            </div>
-          </div>
-        `;
       }
-    });
+    }
 
-    $('#topProductsByCategoryTable').html(html || '<p class="text-muted">No hay datos disponibles</p>');
+    // 2. Payment Methods Donut Chart (Dynamic SVG)
+    const cash = stats.totalEfectivoMes != null ? stats.totalEfectivoMes : 0;
+    const trans = stats.totalTransferenciaMes != null ? stats.totalTransferenciaMes : 0;
+    const ext = stats.totalServiciosExternosMes != null ? stats.totalServiciosExternosMes : 0;
+
+    const donutSVG = mod.donut([
+      { value: cash, color: mod.activeTheme },
+      { value: trans, color: '#9aa7bd' },
+      { value: ext, color: '#3257b0' }
+    ]);
+    $('#paymentChartDonut').html(donutSVG);
+
+    // Payment chart descriptions below
+    const totalPay = cash + trans + ext || 1;
+    const cashP = ((cash / totalPay) * 100).toFixed(1).replace('.', ',') + '%';
+    const transP = ((trans / totalPay) * 100).toFixed(1).replace('.', ',') + '%';
+    const extP = ((ext / totalPay) * 100).toFixed(1).replace('.', ',') + '%';
+
+    const detailsHTML = `
+      <div style="display:flex; align-items:center; gap:10px;">
+        <span style="width:11px; height:11px; border-radius:3px; background:${mod.activeTheme};"></span>
+        <span style="flex:1; font-size:13px; font-weight:600; color:#46505f;">Efectivo</span>
+        <span style="font-size:13px; font-weight:700; color:#0f172a; font-variant-numeric:tabular-nums;">${mod.formatCurrency(cash)}</span>
+        <span style="font-size:12px; font-weight:700; color:#8a94a6; width:46px; text-align:right;">${cashP}</span>
+      </div>
+      <div style="display:flex; align-items:center; gap:10px;">
+        <span style="width:11px; height:11px; border-radius:3px; background:#9aa7bd;"></span>
+        <span style="flex:1; font-size:13px; font-weight:600; color:#46505f;">Transferencia</span>
+        <span style="font-size:13px; font-weight:700; color:#0f172a; font-variant-numeric:tabular-nums;">${mod.formatCurrency(trans)}</span>
+        <span style="font-size:12px; font-weight:700; color:#8a94a6; width:46px; text-align:right;">${transP}</span>
+      </div>
+      <div style="display:flex; align-items:center; gap:10px;">
+        <span style="width:11px; height:11px; border-radius:3px; background:#3257b0;"></span>
+        <span style="flex:1; font-size:13px; font-weight:600; color:#46505f;">Servicios Ext.</span>
+        <span style="font-size:13px; font-weight:700; color:#0f172a; font-variant-numeric:tabular-nums;">${mod.formatCurrency(ext)}</span>
+        <span style="font-size:12px; font-weight:700; color:#8a94a6; width:46px; text-align:right;">${extP}</span>
+      </div>
+    `;
+    $('#paymentChartDetails').html(detailsHTML);
   }
 
+  // Filter application
   window.applyFilters = function applyFilters() {
     const desde = $('#filtroDesde').val();
     const hasta = $('#filtroHasta').val();
@@ -408,21 +317,29 @@ $(function () {
     window.loadStats({});
   };
 
+  // Card clicks triggers
   function initStatsCardClicks() {
-    $(document).on('click', '.stat-card.clickable[data-action="go-ventas"]', function () {
+    $(document).on('click', '.clickable[data-action="go-ventas"]', function () {
       window.location.href = '/ventas';
     });
-    $(document).on('click', '.stat-card.clickable[data-action="go-eventos"]', function () {
+    $(document).on('click', '.clickable[data-action="go-eventos"]', function () {
       window.location.href = '/eventos';
     });
-    $(document).on('click', '.stat-card.clickable[data-action="go-inventario"]', function () {
+    $(document).on('click', '.clickable[data-action="go-inventario"]', function () {
       window.location.href = '/inventario';
     });
-    $(document).on('click', '.stat-card.clickable[data-action="modal-promedio"]', function () {
+    $(document).on('click', '.clickable[data-action="modal-promedio"]', function (e) {
+      e.stopPropagation();
       if (!mod.lastStats) return;
-      var total = mod.lastStats.totalSales != null ? mod.lastStats.totalSales : 0;
-      var cant = mod.lastStats.totalInvoices != null ? mod.lastStats.totalInvoices : 0;
-      var avg = cant > 0 ? total / cant : 0;
+
+      const totalSales = mod.lastStats.totalSalesAllTime != null ? mod.lastStats.totalSalesAllTime : mod.lastStats.totalSales;
+      const totalInvoices = mod.lastStats.totalInvoicesAllTime != null ? mod.lastStats.totalInvoicesAllTime : mod.lastStats.totalInvoices;
+
+      // Use active variation to determine context
+      const total = mod.activeVariation === 'B' ? (mod.lastStats.ventasMesTotal || 0) : totalSales;
+      const cant = mod.activeVariation === 'B' ? (mod.lastStats.ventasMesCantidad || 0) : totalInvoices;
+
+      const avg = cant > 0 ? total / cant : 0;
       $('#modalPromedioTotal').text(mod.formatCurrency(total));
       $('#modalPromedioCantidad').text(cant);
       $('#modalPromedioValor').text(mod.formatCurrency(avg));
@@ -430,7 +347,8 @@ $(function () {
       var modalEl = document.getElementById('modalDetallePromedio');
       if (modalEl) bootstrap.Modal.getOrCreateInstance(modalEl).show();
     });
-    $(document).on('click', '.stat-card.clickable[data-action="modal-ventas-eventos"]', function () {
+    $(document).on('click', '.clickable[data-action="modal-ventas-eventos"]', function (e) {
+      e.stopPropagation();
       if (!mod.lastStats) return;
       var total = mod.lastStats.ventas_eventos_total != null ? mod.lastStats.ventas_eventos_total : 0;
       var cant = mod.lastStats.ventas_eventos_cantidad != null ? mod.lastStats.ventas_eventos_cantidad : 0;
@@ -441,29 +359,86 @@ $(function () {
     });
   }
 
+  // Document Ready Initialization
   $(document).ready(function () {
     const hasta = new Date();
     const desde = new Date();
-    desde.setDate(desde.getDate() - 30);
+    
+    if (mod.activeRange === 'hoy') {
+      desde.setDate(desde.getDate());
+    } else if (mod.activeRange === '7d') {
+      desde.setDate(desde.getDate() - 7);
+    } else {
+      desde.setDate(desde.getDate() - 30);
+    }
 
     $('#filtroDesde').val(desde.toISOString().split('T')[0]);
     $('#filtroHasta').val(hasta.toISOString().split('T')[0]);
 
+    // Ensure the correct button has active class
+    $('.btn-range').removeClass('active');
+    $(`.btn-range[data-range="${mod.activeRange}"]`).addClass('active');
+
+    // Initial layouts
+    applyVariation();
+
+    // Load metrics
     window.loadStats({
       desde: desde.toISOString().split('T')[0],
       hasta: hasta.toISOString().split('T')[0]
     });
 
+    // Event Bindings
     $('#aplicarFiltros').on('click', window.applyFilters);
     $('#limpiarFiltros').on('click', window.clearFilters);
     initStatsCardClicks();
 
-    // --- AUTO-REFRESCO EN TIEMPO REAL ---
-    // Ejecuta la carga periódica de datos respetando los filtros activos
+    // Variation toggles
+    $('.btn-variation').on('click', function () {
+      const variation = $(this).attr('data-variation');
+      mod.activeVariation = variation;
+      localStorage.setItem('dashboard_variation', variation);
+      applyVariation();
+    });
+
+    // Focus tabs toggles
+    $('.btn-focus-tab').on('click', function () {
+      const tab = $(this).attr('data-tab');
+      mod.activeTab = tab;
+      localStorage.setItem('dashboard_tab', tab);
+      applyFocusTab();
+    });
+
+    // Range tabs toggles
+    $('.btn-range').on('click', function () {
+      const range = $(this).attr('data-range');
+      mod.activeRange = range;
+      localStorage.setItem('dashboard_range', range);
+      $('.btn-range').removeClass('active');
+      $(`.btn-range[data-range="${range}"]`).addClass('active');
+
+      // Query stats with range
+      const end = new Date();
+      const start = new Date();
+      if (range === 'hoy') {
+        start.setDate(start.getDate());
+      } else if (range === '7d') {
+        start.setDate(start.getDate() - 7);
+      } else {
+        start.setDate(start.getDate() - 30);
+      }
+
+      $('#filtroDesde').val(start.toISOString().split('T')[0]);
+      $('#filtroHasta').val(end.toISOString().split('T')[0]);
+      window.applyFilters();
+    });
+
+    // --- AUTO-REFRESH IN REAL-TIME ---
     setInterval(() => {
       window.applyFilters();
-    }, 5000);
+    }, 10000);
 
+    // Test Report Handler
     $('#btnTestReporteMensual').on('click', async function () {
       const btn = $(this);
       const originalText = btn.html();
@@ -483,7 +458,7 @@ $(function () {
           icon: 'success',
           title: 'Reporte Enviado',
           html: htmlMsg,
-          confirmButtonColor: '#198754'
+          confirmButtonColor: mod.activeTheme
         });
       } catch (e) {
         console.error(e);

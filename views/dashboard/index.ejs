@@ -5,26 +5,50 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard - Sistema de Facturación</title>
+    <!-- Fonts and Styles -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <link rel="stylesheet" href="/css/modulos/dashboard.css">
 </head>
 
 <body>
-    <%- include('../partials/navbar', { user: typeof user !=='undefined' ? user : null, tenant: typeof tenant
-        !=='undefined' ? tenant : null }) %>
+    <%- include('../partials/navbar', { user: typeof user !=='undefined' ? user : null, tenant: typeof tenant !=='undefined' ? tenant : null }) %>
 
-        <div class="container mt-4">
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <h1 class="mb-0">
-                    <i class="bi bi-graph-up-arrow me-2"></i>
-                    Dashboard de Estadísticas
-                </h1>
-                <% if (user.permisos && user.permisos.includes('reporte_mensual.test')) { %>
-                    <button class="btn btn-outline-success" id="btnTestReporteMensual">
-                        <i class="bi bi-file-earmark-pdf me-2"></i>Probar Reporte Mensual
-                    </button>
+    <div id="dashboardRoot">
+        <div class="container py-4">
+            
+            <!-- Encabezado y Selector de Tema/Variación -->
+            <div class="d-flex justify-content-between align-items-end gap-3 flex-wrap mb-4">
+                <div>
+                    <div class="d-flex align-items-center gap-2">
+                        <span style="width:40px;height:40px;border-radius:11px;background:var(--accentSoft);color:var(--accent);display:flex;align-items:center;justify-content:center;font-size:20px;">
+                            <i class="bi bi-graph-up-arrow"></i>
+                        </span>
+                        <h1 class="mb-0 fw-bold" style="font-size:26px; letter-spacing:-.02em; color:#0f172a;">Panel de control</h1>
+                    </div>
+                    <p class="mb-0 text-muted fw-semibold" style="margin-left: 48px; font-size:13.5px;" id="currentDateLabel">Cargando fecha...</p>
+                </div>
+                
+                <div class="d-flex align-items-center gap-3 flex-wrap">
+                    <!-- Variaciones: Analytics o Focus -->
+                    <div style="display:inline-flex;gap:3px;padding:4px;background:#eceff2;border-radius:12px;">
+                        <button type="button" class="btn-variation active" data-variation="A">
+                            <i class="bi bi-grid-1x2-fill"></i>Analytics
+                        </button>
+                        <button type="button" class="btn-variation" data-variation="B">
+                            <i class="bi bi-bullseye"></i>Focus
+                        </button>
+                    </div>
+
+                    <% if (user.permisos && user.permisos.includes('reporte_mensual.test')) { %>
+                        <button class="btn btn-outline-success border-2 px-3 fw-bold" id="btnTestReporteMensual" style="border-radius:11px; font-size:13.5px; height: 38px;">
+                            <i class="bi bi-file-earmark-pdf me-2"></i>Reporte Prueba
+                        </button>
                     <% } %>
+                </div>
             </div>
 
             <!-- Alertas de Eventos -->
@@ -36,7 +60,6 @@
                                 <h5 class="fw-bold text-dark mb-3"><i class="bi bi-bell-fill text-warning me-2"></i>Notificaciones de Eventos Principales</h5>
                                 <div class="row g-3">
                                     <% 
-                                    // Truco para Timezones: forzamos el T00:00:00 para evitar que el GMT-5 eche un d?a atr?s.
                                     const formatYMD = (d) => typeof d === 'string' ? d.split('T')[0] : d.toISOString().split('T')[0];
                                     const parseLocalDate = (dStr) => new Date(formatYMD(dStr) + 'T00:00:00');
                                     
@@ -81,143 +104,75 @@
                 </div>
             <% } %>
 
+            <!-- Banner Alerta Insumos Bajo Stock -->
+            <div id="lowStockAlertBanner" style="display:none; align-items:center; gap:12px; padding:11px 16px; border-radius:12px; background:#fff8ed; border:1px solid #fde7c7; margin-bottom:20px;">
+                <span style="width:30px;height:30px;border-radius:8px;background:#fdecca;color:#c2410c;display:flex;align-items:center;justify-content:center;font-size:15px;"><i class="bi bi-exclamation-triangle"></i></span>
+                <div style="flex:1;min-width:0;">
+                    <span style="font-size:13.5px;font-weight:700;color:#9a3412;"><span id="lowStockCount">0</span> insumos por debajo del stock mínimo</span>
+                    <span style="font-size:13px;color:#b45309;font-weight:500;" id="lowStockNames"></span>
+                </div>
+                <a href="/inventario" style="font-size:13px;font-weight:700;color:#c2410c;display:flex;align-items:center;gap:5px;cursor:pointer;text-decoration:none;">Ver inventario<i class="bi bi-arrow-right"></i></a>
+            </div>
+
             <!-- Filtros de fecha -->
-            <div class="filter-section">
+            <div style="background:white; padding:16px; border-radius:16px; border:1px solid #e9ebef; box-shadow:0 1px 2px rgba(16,24,40,.04); margin-bottom:20px;">
                 <div class="row g-2 align-items-end">
                     <div class="col-12 col-md-3">
-                        <label class="form-label">Desde</label>
-                        <input type="date" id="filtroDesde" class="form-control">
+                        <label class="form-label mb-1" style="font-size:12.5px;font-weight:700;color:#5b6573;">Desde</label>
+                        <input type="date" id="filtroDesde" class="form-control" style="border-radius:10px;font-size:13.5px;border-color:#eceff2;">
                     </div>
                     <div class="col-12 col-md-3">
-                        <label class="form-label">Hasta</label>
-                        <input type="date" id="filtroHasta" class="form-control">
+                        <label class="form-label mb-1" style="font-size:12.5px;font-weight:700;color:#5b6573;">Hasta</label>
+                        <input type="date" id="filtroHasta" class="form-control" style="border-radius:10px;font-size:13.5px;border-color:#eceff2;">
                     </div>
                     <div class="col-12 col-md-3">
-                        <button id="aplicarFiltros" class="btn btn-primary w-100">
+                        <button id="aplicarFiltros" class="btn w-100 text-white" style="background:var(--accent); border-radius:10px; font-size:13.5px; font-weight:700; border:none; height:38px;">
                             <i class="bi bi-funnel me-2"></i>Aplicar Filtros
                         </button>
                     </div>
                     <div class="col-12 col-md-3">
-                        <button id="limpiarFiltros" class="btn btn-secondary w-100">
+                        <button id="limpiarFiltros" class="btn btn-secondary w-100" style="border-radius:10px; font-size:13.5px; font-weight:700; border:none; height:38px;">
                             <i class="bi bi-x-circle me-2"></i>Limpiar
                         </button>
                     </div>
                 </div>
             </div>
 
-            <%- include('_stats_cards', { allowedByPlan: typeof allowedByPlan !=='undefined' ? allowedByPlan : null })
-                %>
+            <!-- ========================================== -->
+            <!-- VARIACIÓN A: ANALYTICS                     -->
+            <!-- ========================================== -->
+            <%- include('_panel_analytics') %>
 
-                <!-- Gr?ficos principales: en tablet/m?vil se apilan (col-lg para que debajo de 992px cada uno vaya a ancho completo) -->
-                <div class="row">
-                    <div class="col-12 col-lg-8">
-                        <div class="card">
-                            <div class="card-header">
-                                <i class="bi bi-graph-up me-2"></i>
-                                Ventas Diarias (últimos 30 días)
-                            </div>
-                            <div class="card-body">
-                                <div class="chart-container">
-                                    <canvas id="dailySalesChart"></canvas>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-12 col-lg-4">
-                        <div class="card">
-                            <div class="card-header">
-                                <i class="bi bi-calendar3 me-2"></i>
-                                Calendario: días del mes con evento.
-                            </div>
-                            <div class="card-body">
-                                <div id="miniCalendarioEventos" class="mini-calendario-container">
-                                    <div class="text-muted small text-center py-3">Cargando...</div>
-                                </div>
-                                <p class="small text-muted mb-0 mt-2">Cada día del mes que tenga al menos un evento se
-                                    marca
-                                    en violeta. Hoy en azul. Usó las flechas para ver otros meses.</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+            <!-- ========================================== -->
+            <!-- VARIACIÓN B: FOCUS                         -->
+            <!-- ========================================== -->
+            <%- include('_panel_focus') %>
 
-                <div class="row">
-                    <div class="col-md-6">
-                        <div class="card">
-                            <div class="card-header">
-                                <i class="bi bi-calendar-event me-2"></i>
-                                Ventas en eventos
-                            </div>
-                            <div class="card-body">
-                                <div class="chart-container-small">
-                                    <canvas id="ventasEnEventosChart"></canvas>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="card">
-                            <div class="card-header">
-                                <i class="bi bi-bar-chart me-2"></i>
-                                Ventas por Categoría
-                            </div>
-                            <div class="card-body">
-                                <div class="chart-container-small">
-                                    <canvas id="salesByCategoryChart"></canvas>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="card">
-                            <div class="card-header">
-                                <i class="bi bi-trophy me-2"></i>
-                                Top 10 Productos Más Vendidos
-                            </div>
-                            <div class="card-body">
-                                <div class="chart-container-small">
-                                    <canvas id="topProductsChart"></canvas>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+            <!-- ========================================== -->
+            <!-- ELEMENTOS COMPARTIDOS (WIDGETS MÓVILES)   -->
+            <!-- ========================================== -->
+            <%- include('_shared_widgets') %>
 
-                <!-- Tabla de productos m?s vendidos por categor?a -->
-                <div class="row">
-                    <div class="col-12">
-                        <div class="card">
-                            <div class="card-header">
-                                <i class="bi bi-list-ul me-2"></i>
-                                Productos Más Vendidos por Categoría
-                            </div>
-                            <div class="card-body">
-                                <div id="topProductsByCategoryTable">
-                                    <div class="loading-spinner">
-                                        <div class="spinner-border text-primary" role="status">
-                                            <span class="visually-hidden">Cargando...</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
         </div>
+    </div>
 
-        <%- include('_modales') %>
+    <%- include('_modales') %>
 
-            <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-            <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-            <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-            <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-            <script src="/js/modulos/dashboard/dashboard_core.js"></script>
-            <script src="/js/modulos/dashboard/dashboard_ui.js"></script>
+    <!-- External libraries -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
+    <!-- Custom scripts -->
+    <script src="/js/modulos/dashboard/dashboard_core.js"></script>
+    <script src="/js/modulos/dashboard/dashboard_helpers.js"></script>
+    <script src="/js/modulos/dashboard/dashboard_ui.js"></script>
 
-            <!-- Script para Modal de Eventos -->
-            <% if (typeof proximosEventos !== 'undefined' && proximosEventos.length > 0) { %>
-            <script src="/js/modulos/dashboard-eventos.js"></script>
-            <% } %>
+    <!-- Script para Modal de Eventos -->
+    <% if (typeof proximosEventos !== 'undefined' && proximosEventos.length > 0) { %>
+        <script src="/js/modulos/dashboard-eventos.js"></script>
+    <% } %>
 </body>
 
 </html>
