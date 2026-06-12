@@ -210,15 +210,41 @@ class SalesStatsRepository {
             ORDER BY fecha ASC
         `;
         const [result] = await db.query(query, [tenantId, daysAgoUtc]);
-        return result.map(row => {
+
+        const salesMap = new Map();
+        result.forEach(row => {
             const f = row.fecha;
             const fechaStr = f instanceof Date ? f.toISOString().split('T')[0] : String(f || '').substring(0, 10);
-            return {
-                fecha: fechaStr,
+            salesMap.set(fechaStr, {
                 cantidad_facturas: parseInt(row.cantidad_facturas || 0),
                 total_ventas: parseFloat(row.total_ventas || 0)
-            };
+            });
         });
+
+        const list = [];
+        const todayColombia = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Bogota' }));
+        for (let i = days; i >= 0; i--) {
+            const d = new Date(todayColombia);
+            d.setDate(todayColombia.getDate() - i);
+            const yyyy = d.getFullYear();
+            const mm = String(d.getMonth() + 1).padStart(2, '0');
+            const dd = String(d.getDate()).padStart(2, '0');
+            const dateStr = `${yyyy}-${mm}-${dd}`;
+
+            if (salesMap.has(dateStr)) {
+                list.push({
+                    fecha: dateStr,
+                    ...salesMap.get(dateStr)
+                });
+            } else {
+                list.push({
+                    fecha: dateStr,
+                    cantidad_facturas: 0,
+                    total_ventas: 0
+                });
+            }
+        }
+        return list;
     }
 
     static async getMonthlySales(tenantId, months = 3, options = {}) {

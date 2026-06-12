@@ -210,8 +210,12 @@ $(function () {
     if (ctxEl) {
       const data = stats.dailySales || [];
       const labels = data.map(d => {
-        const date = new Date(d.fecha);
-        return date.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit' });
+        if (!d.fecha) return '';
+        const parts = d.fecha.split('-');
+        if (parts.length === 3) {
+          return `${parts[2]}/${parts[1]}`;
+        }
+        return d.fecha;
       });
       const values = data.map(d => d.total_ventas);
 
