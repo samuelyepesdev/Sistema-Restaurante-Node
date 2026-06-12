@@ -1,0 +1,53 @@
+<div class="filters-panel">
+    <!-- Date From -->
+    <div class="filter-group">
+        <label for="fechaDesde">Desde</label>
+        <div class="filter-input-wrapper">
+            <i class="bi bi-calendar3"></i>
+            <input type="date" id="fechaDesde" placeholder="Desde">
+        </div>
+    </div>
+
+    <!-- Date To -->
+    <div class="filter-group">
+        <label for="fechaHasta">Hasta</label>
+        <div class="filter-input-wrapper">
+            <i class="bi bi-calendar3"></i>
+            <input type="date" id="fechaHasta" placeholder="Hasta">
+        </div>
+    </div>
+
+    <!-- Search Text -->
+    <div class="filter-group" style="flex: 1; min-width: 220px;">
+        <label for="buscarVentas">Buscar</label>
+        <div class="filter-input-wrapper">
+            <i class="bi bi-search"></i>
+            <input type="text" id="buscarVentas" placeholder="Cliente o # de factura...">
+        </div>
+    </div>
+
+    <!-- Payment Method Segment -->
+    <div class="filter-group">
+        <label>Forma de pago</label>
+        <div class="payment-segment-container" id="payFilterContainer">
+            <button type="button" class="payment-segment-btn active" data-pay="todos">Todos</button>
+            <button type="button" class="payment-segment-btn" data-pay="efectivo">Efectivo</button>
+            <button type="button" class="payment-segment-btn" data-pay="transferencia">Transf.</button>
+        </div>
+    </div>
+
+    <!-- Filter Buttons Actions -->
+    <div class="d-flex gap-2 flex-wrap align-items-center" style="margin-top: 10px;">
+        <button type="button" class="btn-premium-view" id="filtrarVentas" style="height: 38px; padding: 0 16px; display: inline-flex; align-items: center;">
+            <i class="bi bi-funnel me-1"></i> Filtrar
+        </button>
+        <button type="button" class="btn-premium-print" id="limpiarFiltrosVentas" title="Quitar filtros y volver a cargar" style="height: 38px; padding: 0 16px; display: inline-flex; align-items: center;">
+            <i class="bi bi-x-circle me-1"></i> Limpiar
+        </button>
+        <% if (typeof allowedByPlan !== 'undefined' && allowedByPlan && allowedByPlan.plantillas && user && user.permisos && user.permisos.includes('plantillas.ver')) { %>
+            <button type="button" class="btn-premium-print" id="exportarVentas" style="height: 38px; padding: 0 16px; display: inline-flex; align-items: center; background: #10b981; color: #fff; border-color: #10b981;">
+                <i class="bi bi-file-earmark-excel me-1"></i> Exportar
+            </button>
+        <% } %>
+    </div>
+</div>

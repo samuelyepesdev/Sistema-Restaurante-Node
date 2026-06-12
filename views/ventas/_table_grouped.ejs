@@ -1,0 +1,135 @@
+<%
+const fmtColDate = new Intl.DateTimeFormat('es-CO', { timeZone: 'America/Bogota', year: 'numeric', month: '2-digit', day: '2-digit' });
+const hoyColombiaFormat = fmtColDate.format(new Date());
+
+const groups = {};
+const groupOrder = [];
+
+(ventas || []).forEach(v => {
+    try {
+        const f = v.fechaISO ? new Date(v.fechaISO) : new Date(v.fecha);
+        const key = fmtColDate.format(f); // "DD/MM/YYYY"
+        if (!groups[key]) {
+            groups[key] = [];
+            groupOrder.push(key);
+        }
+        groups[key].push(v);
+    } catch (e) {
+        const key = "Sin Fecha";
+        if (!groups[key]) {
+            groups[key] = [];
+            groupOrder.push(key);
+        }
+        groups[key].push(v);
+    }
+});
+
+const getGroupTitle = (key) => {
+    if (key === "Sin Fecha") return "Ventas sin fecha";
+    
+    const parts = key.split('/');
+    const day = parseInt(parts[0], 10);
+    const month = parseInt(parts[1], 10) - 1;
+    const year = parseInt(parts[2], 10);
+    const d = new Date(year, month, day);
+    
+    const fmt = new Intl.DateTimeFormat('es-CO', { weekday: 'long', day: 'numeric', month: 'short', year: 'numeric' });
+    let label = fmt.format(d);
+    label = label.charAt(0).toUpperCase() + label.slice(1);
+    
+    if (key === hoyColombiaFormat) {
+        return `Hoy · ${label}`;
+    }
+    return label;
+};
+
+const formatMoney = (n) => '$ ' + Math.round(n).toLocaleString('es-CO');
+%>
+
+<div class="premium-table-card">
+    <table class="premium-table">
+        <thead>
+            <tr>
+                <th style="width: 100px;">Factura</th>
+                <th style="width: 180px;">Fecha</th>
+                <th>Cliente</th>
+                <th style="width: 150px;">Forma de pago</th>
+                <th style="width: 130px;">Tipo</th>
+                <th style="width: 140px; text-align: right;">Total</th>
+                <th style="width: 150px; text-align: center;">Acciones</th>
+            </tr>
+        </thead>
+        <tbody id="ventasTablaGrouped">
+            <% if (groupOrder.length === 0) { %>
+                <tr>
+                    <td colspan="7" class="text-center text-muted py-5">
+                        <i class="bi bi-search d-block mb-2 text-muted" style="font-size: 2rem; opacity: 0.5;"></i>
+                        Sin resultados para tu búsqueda
+                    </td>
+                </tr>
+            <% } else { %>
+                <% groupOrder.forEach(function(g) { 
+                    const rows = groups[g] || [];
+                    const subtotal = rows.reduce((acc, r) => acc + (Number(r.total) || 0), 0);
+                    const isToday = g === hoyColombiaFormat;
+                %>
+                    <!-- Group Header Row -->
+                    <tr class="table-group-header <%= isToday ? 'today' : '' %>">
+                        <td colspan="7">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="group-title">
+                                    <i class="<%= isToday ? 'bi bi-clock-fill' : 'bi bi-calendar3' %>"></i>
+                                    <%= getGroupTitle(g) %>
+                                </span>
+                                <span class="group-summary">
+                                    <%= rows.length %> facturas · <b><%= formatMoney(subtotal) %></b>
+                                </span>
+                            </div>
+                        </td>
+                    </tr>
+                    
+                    <!-- Group Data Rows -->
+                    <% rows.forEach(function(venta) { %>
+                        <tr class="venta-row" data-forma-pago="<%= (venta.forma_pago || '').toLowerCase() %>" data-total="<%= venta.total %>" data-neto="<%= Number(venta.total) - Number(venta.total_servicios_externos || 0) %>">
+                            <td data-label="Factura" class="factura-id">
+                                #<%= typeof venta.numero !== 'undefined' && venta.numero != null ? venta.numero : venta.id %>
+                            </td>
+                            <td data-label="Fecha" class="fecha-venta">
+                                <%= venta.fechaISO ? new Date(venta.fechaISO).toLocaleString('es-CO', { timeZone: 'America/Bogota', hour: '2-digit', minute: '2-digit', hour12: true }) : (venta.fecha ? new Date(venta.fecha).toLocaleString('es-CO', { timeZone: 'America/Bogota', hour: '2-digit', minute: '2-digit', hour12: true }) : '') %>
+                            </td>
+                            <td data-label="Cliente">
+                                <%= venta.cliente_nombre || 'Consumidor final' %>
+                            </td>
+                            <td data-label="Forma de pago">
+                                <% const fp = (venta.forma_pago || '').toLowerCase().trim(); %>
+                                <% if (fp === 'efectivo') { %>
+                                    <span class="pay-chip efectivo"><i class="bi bi-cash"></i> Efectivo</span>
+                                <% } else { %>
+                                    <span class="pay-chip transferencia"><i class="bi bi-bank"></i> Transferencia</span>
+                                <% } %>
+                            </td>
+                            <td data-label="Tipo">
+                                <span class="badge bg-light text-secondary border" style="font-size: 11.5px; font-weight: 700; padding: 4px 9px; border-radius: 7px;">
+                                    <%= venta.tipo_venta || (venta.evento_id ? 'Evento' : 'Venta diaria') %>
+                                </span>
+                            </td>
+                            <td data-label="Total" class="total-cell">
+                                $<%= (Number(venta.total) || 0).toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) %>
+                            </td>
+                            <td data-label="Acciones" style="text-align: center;">
+                                <div class="d-flex gap-2 justify-content-center">
+                                    <button class="btn-premium-view btn-detalles" data-factura-id="<%= venta.id %>" data-factura-numero="<%= typeof venta.numero !== 'undefined' && venta.numero != null ? venta.numero : venta.id %>">
+                                        <i class="bi bi-eye"></i> Ver
+                                    </button>
+                                    <button class="btn-premium-print btn-reimprimir" data-factura-id="<%= venta.id %>" data-factura-numero="<%= typeof venta.numero !== 'undefined' && venta.numero != null ? venta.numero : venta.id %>">
+                                        <i class="bi bi-printer"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    <% }); %>
+                <% }); %>
+            <% } %>
+        </tbody>
+    </table>
+</div>

@@ -1,0 +1,21 @@
+<%
+const colorMap = {
+    'Comidas': 'var(--accent)',
+    'Bebidas': '#0ea5e9',
+    'Postres': '#f59e0b',
+    'Cócteles': '#8b5cf6',
+    'Acompañamientos': '#64748b'
+};
+%>
+<div class="category-filter-container" id="categoryFilterContainer">
+    <button type="button" class="category-filter-btn active" data-categoria-id="" data-color="var(--accent)" style="background: var(--accent); color: #fff; border-color: transparent; box-shadow: 0 4px 10px -6px var(--accent);">
+        Todas
+    </button>
+    <% (categorias || []).forEach(function(cat) { 
+        const col = colorMap[cat.nombre] || '#64748b';
+    %>
+        <button type="button" class="category-filter-btn" data-categoria-id="<%= cat.id %>" data-color="<%= col %>">
+            <%= cat.nombre %>
+        </button>
+    <% }); %>
+</div>

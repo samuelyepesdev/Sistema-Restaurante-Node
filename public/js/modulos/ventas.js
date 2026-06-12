@@ -11,7 +11,7 @@ function mostrarAlerta(mensaje, tipo) {
     tipo = tipo || 'success';
     var alertaDiv = document.createElement('div');
     alertaDiv.className = 'custom-alert ' + tipo;
-    alertaDiv.innerHTML = '<div class="alert-content"><i class="bi ' + (tipo === 'success' ? 'bi-check-circle' : tipo === 'error' ? 'bi-x-circle' : 'bi-exclamation-triangle') + ' me-2"></i>' + mensaje + '</div><button type="button" class="btn-close btn-close-white ms-3" onclick="this.parentElement.remove()"></button>';
+    alertaDiv.innerHTML = '<div class="alert-content"><i class="bi ' + (tipo === 'success' ? 'bi-check-circle' : tipo === 'error' ? 'bi-x-circle' : 'bi-exclamation-triangle') + ' me-2"></i>' + mensaje + '</div><button type="button" class="btn-close ms-3" onclick="this.parentElement.remove()"></button>';
     document.body.appendChild(alertaDiv);
     setTimeout(function () { alertaDiv.remove(); }, 5000);
 }
@@ -78,8 +78,10 @@ function imprimirFactura() {
     if (frame && frame.contentWindow) frame.contentWindow.print();
 }
 
-document.querySelectorAll('.ventasTablaBody').forEach(tbody => {
-    tbody.addEventListener('click', function (e) {
+// Global delegated click handler for details & printing inside the grouped table
+const tableBody = document.getElementById('ventasTablaGrouped');
+if (tableBody) {
+    tableBody.addEventListener('click', function (e) {
         var btnDet = e.target.closest('.btn-detalles');
         var btnReim = e.target.closest('.btn-reimprimir');
         if (btnDet) {
@@ -92,8 +94,9 @@ document.querySelectorAll('.ventasTablaBody').forEach(tbody => {
             if (id) mostrarFactura(id, numero != null && numero !== '' ? numero : undefined);
         }
     });
-});
+}
 
+// Server date range filter trigger
 document.getElementById('filtrarVentas').addEventListener('click', function () {
     const desde = document.getElementById('fechaDesde').value;
     const hasta = document.getElementById('fechaHasta').value;
@@ -108,6 +111,7 @@ document.getElementById('filtrarVentas').addEventListener('click', function () {
     window.location.href = `/ventas?${params.toString()}`;
 });
 
+// Clean filter parameters
 document.getElementById('limpiarFiltrosVentas').addEventListener('click', function () {
     const params = new URLSearchParams(window.location.search);
     params.delete('desde');
@@ -116,6 +120,7 @@ document.getElementById('limpiarFiltrosVentas').addEventListener('click', functi
     window.location.href = (params.toString() ? '/ventas?' + params.toString() : '/ventas');
 });
 
+// Excel download click trigger
 const btnExportar = document.getElementById('exportarVentas');
 if (btnExportar) {
     btnExportar.addEventListener('click', function () {
@@ -131,6 +136,134 @@ if (btnExportar) {
     });
 }
 
+// Local live filters logic
+function rowMatchesSearch(row) {
+    const q = (document.getElementById('buscarVentas').value || '').trim().toLowerCase();
+    if (!q) return true;
+    
+    const invoiceId = row.querySelector('.factura-id')?.textContent.toLowerCase() || '';
+    const clientName = row.cells[2]?.textContent.toLowerCase() || '';
+    
+    return invoiceId.includes(q) || clientName.includes(q);
+}
+
+function recalculateVisibleStats() {
+    let visibleEfectivo = 0;
+    let visibleTransferencia = 0;
+    let visibleTotal = 0;
+    let visibleCount = 0;
+    
+    const groupHeaders = document.querySelectorAll('.table-group-header');
+    groupHeaders.forEach(header => {
+        let next = header.nextElementSibling;
+        let groupTotal = 0;
+        let groupCount = 0;
+        
+        while (next && !next.classList.contains('table-group-header')) {
+            if (next.style.display !== 'none') {
+                const total = Number(next.getAttribute('data-total') || 0);
+                const fp = next.getAttribute('data-forma-pago') || '';
+                
+                groupTotal += total;
+                groupCount++;
+                
+                visibleTotal += total;
+                visibleCount++;
+                if (fp === 'efectivo') {
+                    visibleEfectivo += total;
+                } else {
+                    visibleTransferencia += total;
+                }
+            }
+            next = next.nextElementSibling;
+        }
+        
+        const summarySpan = header.querySelector('.group-summary');
+        if (summarySpan) {
+            summarySpan.innerHTML = groupCount + ' facturas · <b>$ ' + Math.round(groupTotal).toLocaleString('es-CO') + '</b>';
+        }
+        
+        if (groupCount === 0) {
+            header.style.setProperty('display', 'none', 'important');
+        } else {
+            header.style.setProperty('display', 'table-row', 'important');
+        }
+    });
+    
+    const fmt = (n) => '$ ' + Math.round(n).toLocaleString('es-CO');
+    
+    const elEfectivo = document.getElementById('totalEfectivoVal');
+    if (elEfectivo) elEfectivo.textContent = fmt(visibleEfectivo);
+    
+    const elTransf = document.getElementById('totalTransferenciaVal');
+    if (elTransf) elTransf.textContent = fmt(visibleTransferencia);
+    
+    const elTotal = document.getElementById('totalGeneralVal');
+    if (elTotal) elTotal.textContent = fmt(visibleTotal);
+    
+    const elCount = document.getElementById('facturasHoyVal');
+    if (elCount) {
+        let hoyCount = 0;
+        document.querySelectorAll('.venta-row').forEach(row => {
+            if (row.style.display !== 'none') {
+                let prev = row.previousElementSibling;
+                while (prev && !prev.classList.contains('table-group-header')) {
+                    prev = prev.previousElementSibling;
+                }
+                if (prev && prev.classList.contains('today')) {
+                    hoyCount++;
+                }
+            }
+        });
+        elCount.textContent = hoyCount;
+    }
+}
+
+// Payment method segment click handler
+$(document).on('click', '.payment-segment-btn', function() {
+    $('.payment-segment-btn').removeClass('active');
+    $(this).addClass('active');
+    
+    const selectedPay = $(this).data('pay');
+    
+    document.querySelectorAll('.venta-row').forEach(row => {
+        const rowPay = row.getAttribute('data-forma-pago');
+        const matchesSearch = rowMatchesSearch(row);
+        const matchesPay = (selectedPay === 'todos' || rowPay === selectedPay);
+        
+        if (matchesSearch && matchesPay) {
+            row.style.setProperty('display', 'table-row', 'important');
+        } else {
+            row.style.setProperty('display', 'none', 'important');
+        }
+    });
+    
+    recalculateVisibleStats();
+});
+
+// Search input key press local trigger
+const searchInput = document.getElementById('buscarVentas');
+if (searchInput) {
+    searchInput.addEventListener('input', function() {
+        const selectedPay = document.querySelector('.payment-segment-btn.active')?.getAttribute('data-pay') || 'todos';
+        
+        document.querySelectorAll('.venta-row').forEach(row => {
+            const rowPay = row.getAttribute('data-forma-pago');
+            const matchesSearch = rowMatchesSearch(row);
+            const matchesPay = (selectedPay === 'todos' || rowPay === selectedPay);
+            
+            if (matchesSearch && matchesPay) {
+                row.style.setProperty('display', 'table-row', 'important');
+            } else {
+                row.style.setProperty('display', 'none', 'important');
+            }
+        });
+        
+        recalculateVisibleStats();
+    });
+}
+
+// Initialize filters from query params
 (function initFiltrosDesdeURL() {
     const p = new URLSearchParams(window.location.search);
     const desde = p.get('desde');
@@ -148,53 +281,6 @@ if (btnExportar) {
     }
 })();
 
-var optsColombia = { timeZone: 'America/Bogota', dateStyle: 'short', timeStyle: 'medium' };
-document.querySelectorAll('.fecha-cell[data-fecha-iso]').forEach(function (cell) {
-    var iso = cell.getAttribute('data-fecha-iso');
-    var span = cell.querySelector('.fecha-venta-local');
-    if (iso && span) {
-        try {
-            var d = new Date(iso);
-            if (!isNaN(d.getTime())) span.textContent = d.toLocaleString('es-CO', optsColombia);
-        } catch (e) { }
-    }
-});
-
+// Bootstrap Tooltips initialization
 const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
 const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl));
-
-function fmtMoneda(n) { return (Number(n) || 0).toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
-function calcularTotales() {
-    let totalNeto = 0, tefNeto = 0, ttrNeto = 0;
-    document.querySelectorAll('.venta-row').forEach(tr => {
-        const totalEl = tr.querySelector('.total-cell');
-        if (!totalEl) return;
-
-        const neto = Number(totalEl.dataset.neto || 0);
-        const formaEl = tr.querySelector('.forma-pago-cell');
-        const forma = formaEl ? formaEl.innerText.trim().toLowerCase() : '';
-
-        totalNeto += neto;
-
-        if (forma === 'efectivo') tefNeto += neto;
-        else if (forma === 'transferencia') ttrNeto += neto;
-    });
-
-    const elNeto = document.getElementById('totalGeneral');
-    const elEfectivo = document.getElementById('totalEfectivo');
-    const elTransf = document.getElementById('totalTransferencia');
-
-    if (elNeto) elNeto.textContent = '$' + fmtMoneda(totalNeto);
-    if (elEfectivo) elEfectivo.textContent = '$' + fmtMoneda(tefNeto);
-    if (elTransf) elTransf.textContent = '$' + fmtMoneda(ttrNeto);
-
-    var resE = document.getElementById('totalEfectivoResumen');
-    var resT = document.getElementById('totalTransferenciaResumen');
-    var resG = document.getElementById('totalGeneralResumen');
-
-    if (resE) resE.textContent = '$' + fmtMoneda(tefNeto);
-    if (resT) resT.textContent = '$' + fmtMoneda(ttrNeto);
-    if (resG) resG.textContent = '$' + fmtMoneda(totalNeto);
-}
-
-calcularTotales();

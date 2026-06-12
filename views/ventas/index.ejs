@@ -8,116 +8,98 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <link rel="stylesheet" href="/css/modulos/ventas.css">
+    <style>
+        <% 
+        const activeAccent = (typeof tenant !== 'undefined' && tenant && tenant.config && tenant.config.colores && tenant.config.colores.primary) 
+            ? tenant.config.colores.primary 
+            : '#2e7d46';
+        %>
+        :root {
+            --accent: <%= activeAccent %>;
+            --accentDark: color-mix(in srgb, <%= activeAccent %> 80%, black);
+            --accentSoft: color-mix(in srgb, <%= activeAccent %> 8%, white);
+            --accentSofter: color-mix(in srgb, <%= activeAccent %> 4%, white);
+        }
+    </style>
 </head>
 
 <body>
-    <%- include('../partials/navbar', { user: typeof user !=='undefined' ? user : null, tenant: typeof tenant
-        !=='undefined' ? tenant : null }) %>
+    <%- include('../partials/navbar', { user: typeof user !== 'undefined' ? user : null, tenant: typeof tenant !== 'undefined' ? tenant : null }) %>
 
-        <div class="container">
-            <!-- Mesas Listas para Pagar -->
-            <% if (typeof mesasListas !=='undefined' && mesasListas.length> 0) { %>
-                <div class="card mb-4">
-                    <div class="card-header bg-success text-white">
-                        <h5 class="mb-0"><i class="bi bi-cash-coin me-2"></i>Mesas Listas para Pagar</h5>
-                    </div>
-                    <div class="card-body">
-                        <div class="row g-3">
-                            <% mesasListas.forEach(function(mesa) { %>
-                                <div class="col-md-4 col-lg-3">
-                                    <div class="card border-success">
-                                        <div class="card-body text-center">
-                                            <h5 class="card-title">Mesa <%= mesa.mesa_numero %>
-                                            </h5>
-                                            <p class="card-text">
-                                                <strong>Pedido #<%= mesa.pedido_id %></strong><br>
-                                                <span class="text-muted">Total: $<%= (Number(mesa.pedido_total) ||
-                                                        0).toLocaleString('es-CO', { minimumFractionDigits: 2,
-                                                        maximumFractionDigits: 2 }) %></span>
-                                            </p>
-                                            <button class="btn btn-success btn-sm"
-                                                onclick="window.location.href='/mesas?pedido=<%= mesa.pedido_id %>'">
-                                                <i class="bi bi-cash-stack"></i> Facturar
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                                <% }); %>
-                        </div>
-                    </div>
+    <div class="container animate__animated animate__fadeIn">
+        
+        <!-- Header Section -->
+        <div class="page-header-container">
+            <div class="page-title-section">
+                <span class="page-title-icon">
+                    <i class="bi bi-receipt-cutoff"></i>
+                </span>
+                <div class="page-title-text">
+                    <h1>Historial de ventas</h1>
+                    <p>Consulta y reimprime facturas por periodo</p>
                 </div>
-                <% } %>
-
-                    <!-- Historial de Ventas -->
-                    <div class="card">
-                        <div class="card-header">
-                            <div class="d-flex flex-column gap-3 w-100">
-                                <% if (typeof eventoFiltro !=='undefined' && eventoFiltro) { %>
-                                    <div
-                                        class="alert alert-info py-2 mb-0 d-flex align-items-center justify-content-between flex-wrap gap-2">
-                                        <span><i class="bi bi-calendar-event me-2"></i>Ventas del evento: <strong>
-                                                <%= eventoFiltro.nombre %>
-                                            </strong></span>
-                                        <a href="/ventas" class="btn btn-sm btn-outline-primary">Ver todas las
-                                            ventas</a>
-                                    </div>
-                                    <% } %>
-                                        <div
-                                            class="d-flex flex-column flex-md-row justify-content-between align-items-stretch align-items-md-center gap-3">
-                                            <div class="fw-semibold"><i class="bi bi-graph-up me-2"></i>Historial de
-                                                Ventas</div>
-                                            <div class="d-flex flex-wrap gap-2">
-                                                <button class="btn btn-primary" id="filtrarVentas"><i
-                                                        class="bi bi-funnel"></i> Filtrar</button>
-                                                <button class="btn btn-outline-secondary" id="limpiarFiltrosVentas"
-                                                    title="Quitar filtros y volver a cargar"><i
-                                                        class="bi bi-x-circle"></i> Limpiar filtros</button>
-                                                <% if (typeof allowedByPlan !=='undefined' && allowedByPlan &&
-                                                    allowedByPlan.plantillas && user && user.permisos &&
-                                                    user.permisos.includes('plantillas.ver')) { %>
-                                                    <button class="btn btn-success" id="exportarVentas"><i
-                                                            class="bi bi-file-earmark-excel"></i> Exportar</button>
-                                                    <% } %>
-                                            </div>
-                                        </div>
-                                        <div class="row g-2 align-items-center">
-                                            <div class="col-12 col-md-3">
-                                                <div class="input-group">
-                                                    <span class="input-group-text"><i
-                                                            class="bi bi-calendar3"></i></span>
-                                                    <input type="date" id="fechaDesde" class="form-control"
-                                                        placeholder="Desde">
-                                                </div>
-                                            </div>
-                                            <div class="col-12 col-md-3">
-                                                <div class="input-group">
-                                                    <span class="input-group-text"><i
-                                                            class="bi bi-calendar3"></i></span>
-                                                    <input type="date" id="fechaHasta" class="form-control"
-                                                        placeholder="Hasta">
-                                                </div>
-                                            </div>
-                                            <div class="col-12 col-md-3">
-                                                <div class="input-group">
-                                                    <span class="input-group-text"><i class="bi bi-search"></i></span>
-                                                    <input type="text" id="buscarVentas" class="form-control"
-                                                        placeholder="Buscar por cliente o # factura">
-                                                </div>
-                                            </div>
-                                        </div>
-                            </div>
-                        </div>
-                        <div class="card-body">
-                            <%- include('_table', { ventas: ventas }) %>
-                        </div>
-                    </div>
+            </div>
         </div>
 
-        <%- include('_modales') %>
+        <!-- Event Filter Banner -->
+        <% if (typeof eventoFiltro !== 'undefined' && eventoFiltro) { %>
+            <div class="alert alert-info py-3 mb-4 d-flex align-items-center justify-content-between flex-wrap gap-2 border-0 shadow-sm" style="border-radius: 12px; background: #eef2fb; color: #1e3a8a;">
+                <span>
+                    <i class="bi bi-calendar-event me-2" style="font-size: 16px;"></i>
+                    Ventas del evento: <strong><%= eventoFiltro.nombre %></strong>
+                </span>
+                <a href="/ventas" class="btn btn-sm btn-outline-primary" style="border-radius: 8px; font-weight: 700;">Ver todas las ventas</a>
+            </div>
+        <% } %>
 
-            <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-            <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-            <script src="/js/modulos/ventas.js"></script>
+        <!-- Tables Ready to Pay (Mesas Listas para Pagar) -->
+        <% if (typeof mesasListas !== 'undefined' && mesasListas.length > 0) { %>
+            <div class="premium-table-card mb-4" style="border-color: #10b981; overflow: hidden;">
+                <div class="p-3 text-white d-flex align-items-center gap-2" style="background: #10b981;">
+                    <i class="bi bi-cash-coin" style="font-size: 1.2rem;"></i>
+                    <h5 class="mb-0 fw-bold">Mesas Listas para Pagar</h5>
+                </div>
+                <div class="p-4" style="background: #fafbfc;">
+                    <div class="row g-3">
+                        <% mesasListas.forEach(function(mesa) { %>
+                            <div class="col-md-4 col-lg-3">
+                                <div class="card h-100 border-0 shadow-sm" style="border-radius: 12px; background: #fff; border: 1px solid #e2e5ea !important;">
+                                    <div class="card-body text-center p-3">
+                                        <h5 class="card-title fw-bold text-dark mb-1">Mesa <%= mesa.mesa_numero %></h5>
+                                        <p class="card-text mb-3" style="font-size: 13px; color: #64748b;">
+                                            <strong>Pedido #<%= mesa.pedido_id %></strong><br>
+                                            <span class="text-success fw-bold">Total: $<%= (Number(mesa.pedido_total) || 0).toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) %></span>
+                                        </p>
+                                        <button class="btn btn-success btn-sm w-100 py-2" style="border-radius: 8px; font-weight: 700; background: #10b981; border: none;" onclick="window.location.href='/mesas?pedido=<%= mesa.pedido_id %>'">
+                                            <i class="bi bi-cash-stack me-1"></i> Facturar
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        <% }); %>
+                    </div>
+                </div>
+            </div>
+        <% } %>
+
+        <!-- Filters Section -->
+        <%- include('_filters') %>
+
+        <!-- KPI Metrics Summary Cards -->
+        <%- include('_summary') %>
+
+        <!-- Main Grouped Sales Table -->
+        <%- include('_table_grouped') %>
+
+    </div>
+
+    <!-- Modals -->
+    <%- include('_modales') %>
+
+    <!-- Base Scripts -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/js/modulos/ventas.js"></script>
 </body>
 
 </html>

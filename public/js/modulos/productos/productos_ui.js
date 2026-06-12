@@ -37,11 +37,28 @@ ProductManager.prototype.init = function() {
     );
   }
 
-  // Setup category filter
-  const categoriaFilter = document.getElementById('filtroCategoria');
-  if (categoriaFilter) {
-    categoriaFilter.addEventListener('change', () => this.applyFilters());
-  }
+  // Setup category filter buttons click listener
+  const self = this;
+  $(document).on('click', '.category-filter-btn', function() {
+    const btn = $(this);
+    const color = btn.attr('data-color') || 'var(--accent)';
+    
+    $('.category-filter-btn').removeClass('active').css({
+      background: '#fff',
+      color: '#5b6573',
+      borderColor: '#e2e5ea',
+      boxShadow: 'none'
+    });
+    
+    btn.addClass('active').css({
+      background: color,
+      color: '#fff',
+      borderColor: 'transparent',
+      boxShadow: '0 4px 10px -6px ' + color
+    });
+    
+    self.applyFilters();
+  });
 
   // Setup keyboard shortcuts
   this.setupKeyboardShortcuts();

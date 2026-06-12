@@ -243,35 +243,51 @@ class ProductManager {
     if (!this.tableManager) return;
 
     const searchTerm = (document.getElementById('buscarProducto')?.value || '').toLowerCase();
-    const categoriaId = document.getElementById('filtroCategoria')?.value || '';
+    const activeBtn = document.querySelector('.category-filter-btn.active');
+    const categoriaId = activeBtn ? (activeBtn.getAttribute('data-categoria-id') || '') : '';
+
+    let visibleCount = 0;
+    let totalCount = 0;
 
     this.tableManager.filterRows((row) => {
+      totalCount++;
+      let visible = true;
+
       if (categoriaId) {
         const rowCategoriaId = row.getAttribute('data-categoria-id') || '';
         if (rowCategoriaId !== categoriaId) {
-          return false;
+          visible = false;
         }
       }
 
-      if (searchTerm) {
+      if (visible && searchTerm) {
         const codigo = row.cells[0]?.textContent.toLowerCase() || '';
         const nombre = row.cells[1]?.textContent.toLowerCase() || '';
         const categoria = row.cells[2]?.textContent.toLowerCase() || '';
         if (!codigo.includes(searchTerm) && !nombre.includes(searchTerm) && !categoria.includes(searchTerm)) {
-          return false;
+          visible = false;
         }
       }
 
-      return true;
+      if (visible) {
+        visibleCount++;
+      }
+      return visible;
     });
+
+    const countLabel = document.getElementById('productCountLabel');
+    if (countLabel) {
+      countLabel.textContent = `${visibleCount} de ${totalCount} productos en catálogo`;
+    }
   }
 
   clearSearch() {
     if (this.tableManager) {
       this.tableManager.clearFilters();
     }
-    if (document.getElementById('filtroCategoria')) {
-      document.getElementById('filtroCategoria').value = '';
+    const todasBtn = document.querySelector('.category-filter-btn[data-categoria-id=""]');
+    if (todasBtn) {
+      todasBtn.click();
     }
   }
 }

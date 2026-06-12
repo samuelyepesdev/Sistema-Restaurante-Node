@@ -1,61 +1,72 @@
-<div class="table-responsive">
-    <table class="table table-hover">
-        <thead class="table-light">
+<div class="premium-table-card">
+    <table class="premium-table">
+        <thead>
             <tr>
-                <th>Código</th>
+                <th style="width: 140px;">Código</th>
                 <th>Nombre</th>
-                <th>Categoría</th>
-                <th class="text-end">Precio Unitario</th>
-                <th class="text-center">Acciones</th>
+                <th style="width: 180px;">Categoría</th>
+                <th style="width: 160px; text-align: right;">Precio Unitario</th>
+                <th style="width: 160px; text-align: center;">Acciones</th>
             </tr>
         </thead>
         <tbody id="productosTabla">
-            <% const recetasMap=typeof recetasPorProducto !=='undefined' ? recetasPorProducto : {};
-                productos.forEach(function(producto) { const tieneReceta=recetasMap[producto.id]; %>
-                <tr data-categoria-id="<%= producto.categoria_id || '' %>" data-producto-id="<%= producto.id %>">
-                    <td>
+            <% 
+            const recetasMap = typeof recetasPorProducto !== 'undefined' ? recetasPorProducto : {};
+            const colorMap = {
+                'Comidas': 'var(--accent)',
+                'Bebidas': '#0ea5e9',
+                'Postres': '#f59e0b',
+                'Cócteles': '#8b5cf6',
+                'Acompañamientos': '#64748b'
+            };
+            
+            (productos || []).forEach(function(producto) { 
+                const tieneReceta = recetasMap[producto.id]; 
+                const catName = producto.categoria_nombre || 'Sin categoría';
+                const catColor = colorMap[catName] || '#64748b';
+            %>
+                <tr class="producto-row" data-categoria-id="<%= producto.categoria_id || '' %>" data-producto-id="<%= producto.id %>">
+                    <td data-label="Código" class="code-cell">
                         <%= producto.codigo %>
                     </td>
-                    <td>
-                        <button class="btn btn-sm btn-link p-0 me-1 btn-toggle-favorito" data-id="<%= producto.id %>"
-                            data-favorito="<%= producto.es_favorito %>"
-                            title="<%= producto.es_favorito ? 'Quitar de favoritos' : 'Agregar a favoritos' %>">
-                            <i
-                                class="bi <%= producto.es_favorito ? 'bi-star-fill text-warning' : 'bi-star text-muted' %>"></i>
-                        </button>
-                        <%= producto.nombre %>
+                    <td data-label="Nombre">
+                        <div class="d-flex align-items-center gap-2">
+                            <button class="btn-star-fav btn-toggle-favorito <%= producto.es_favorito ? 'active' : '' %>" data-id="<%= producto.id %>" data-favorito="<%= producto.es_favorito %>" title="<%= producto.es_favorito ? 'Quitar de favoritos' : 'Agregar a favoritos' %>">
+                                <i class="bi <%= producto.es_favorito ? 'bi-star-fill' : 'bi-star' %>"></i>
+                            </button>
+                            <span><%= producto.nombre %></span>
+                        </div>
                     </td>
-                    <td><span class="badge bg-secondary">
-                            <%= producto.categoria_nombre || 'Sin categoría' %>
-                        </span></td>
-                    <td class="text-end">$<%= (Number(producto.precio_unidad) || 0).toLocaleString('es-CO', {
-                            minimumFractionDigits: 2, maximumFractionDigits: 2 }) %>
+                    <td data-label="Categoría">
+                        <span class="category-badge-chip" style="background: color-mix(in srgb, <%= catColor %> 14%, white); color: color-mix(in srgb, <%= catColor %> 85%, black);">
+                            <span style="width: 7px; height: 7px; border-radius: 50%; background: <%= catColor %>;"></span>
+                            <%= catName %>
+                        </span>
                     </td>
-                    <td class="text-center">
-                        <div class="action-buttons">
+                    <td data-label="Precio Unitario" class="price-cell">
+                        $<%= (Number(producto.precio_unidad) || 0).toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) %>
+                    </td>
+                    <td data-label="Acciones" style="text-align: center;">
+                        <div class="d-flex gap-2 justify-content-center">
                             <% if (user && user.permisos && user.permisos.includes('costeo.ver') && tieneReceta) { %>
-                                <button class="btn btn-sm btn-outline-info me-1" data-id="<%= producto.id %>"
-                                    data-action="costeo" title="Ver costeo y precio sugerido">
+                                <button class="btn-premium-costeo" data-id="<%= producto.id %>" data-action="costeo" title="Ver costeo y precio sugerido">
                                     <i class="bi bi-calculator"></i>
                                 </button>
-                                <% } %>
-                                    <% if (user && user.permisos && user.permisos.includes('productos.editar')) { %>
-                                        <button class="btn btn-sm btn-outline-primary me-1" data-id="<%= producto.id %>"
-                                            data-action="editar">
-                                            <i class="bi bi-pencil"></i>
-                                        </button>
-                                        <% } %>
-                                            <% if (user && user.permisos &&
-                                                user.permisos.includes('productos.eliminar')) { %>
-                                                <button class="btn btn-sm btn-outline-danger"
-                                                    data-id="<%= producto.id %>" data-action="eliminar">
-                                                    <i class="bi bi-trash"></i>
-                                                </button>
-                                                <% } %>
+                            <% } %>
+                            <% if (user && user.permisos && user.permisos.includes('productos.editar')) { %>
+                                <button class="btn-premium-edit" data-id="<%= producto.id %>" data-action="editar" title="Editar producto">
+                                    <i class="bi bi-pencil"></i>
+                                </button>
+                            <% } %>
+                            <% if (user && user.permisos && user.permisos.includes('productos.eliminar')) { %>
+                                <button class="btn-premium-delete" data-id="<%= producto.id %>" data-action="eliminar" title="Eliminar producto">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            <% } %>
                         </div>
                     </td>
                 </tr>
-                <% }); %>
+            <% }); %>
         </tbody>
     </table>
 </div>

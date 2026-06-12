@@ -8,91 +8,92 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <link rel="stylesheet" href="/css/modulos/productos.css">
+    <style>
+        <% 
+        const activeAccent = (typeof tenant !== 'undefined' && tenant && tenant.config && tenant.config.colores && tenant.config.colores.primary) 
+            ? tenant.config.colores.primary 
+            : '#2e7d46';
+        %>
+        :root {
+            --accent: <%= activeAccent %>;
+            --accentDark: color-mix(in srgb, <%= activeAccent %> 80%, black);
+            --accentSoft: color-mix(in srgb, <%= activeAccent %> 8%, white);
+            --accentSofter: color-mix(in srgb, <%= activeAccent %> 4%, white);
+        }
+    </style>
 </head>
 
 <body>
-    <%- include('../partials/navbar', { user: typeof user !=='undefined' ? user : null, tenant: typeof tenant
-        !=='undefined' ? tenant : null }) %>
+    <%- include('../partials/navbar', { user: typeof user !== 'undefined' ? user : null, tenant: typeof tenant !== 'undefined' ? tenant : null }) %>
 
-        <div class="container">
-            <div class="card">
-                <div class="card-header">
-                    <div
-                        class="d-flex flex-column flex-md-row justify-content-between align-items-stretch align-items-md-center gap-2 gap-md-3 w-100">
-                        <div class="page-title fw-semibold">
-                            <i class="bi bi-box-fill me-2"></i>Gestión de Productos
-                        </div>
-                        <div class="d-flex flex-wrap gap-2">
-                            <% if (user && user.permisos && user.permisos.includes('productos.crear')) { %>
-                                <button class="btn btn-primary" data-bs-toggle="modal"
-                                    data-bs-target="#nuevoProductoModal">
-                                    <i class="bi bi-plus-lg me-1"></i>Nuevo Producto
-                                </button>
-                                <% } %>
-                                    <% if (typeof allowedByPlan !=='undefined' && allowedByPlan &&
-                                        allowedByPlan.plantillas && user && user.permisos &&
-                                        user.permisos.includes('plantillas.ver')) { %>
-                                        <button id="btnDescargarPlantilla" class="btn btn-outline-success">
-                                            <i class="bi bi-file-earmark-excel"></i> Plantilla Excel
-                                        </button>
-                                        <button id="btnImportarProductos" class="btn btn-outline-primary">
-                                            <i class="bi bi-upload"></i> Importar Excel
-                                        </button>
-                                        <input type="file" id="archivoImport" accept=".xlsx" class="d-none">
-                                        <% } %>
-                        </div>
-                    </div>
+    <div class="container animate__animated animate__fadeIn">
+        
+        <!-- Header Section -->
+        <div class="page-header-container">
+            <div class="page-title-section">
+                <span class="page-title-icon">
+                    <i class="bi bi-box-seam"></i>
+                </span>
+                <div class="page-title-text">
+                    <h1>Gestión de productos</h1>
+                    <p id="productCountLabel"><%= productos.length %> de <%= productos.length %> productos en catálogo</p>
                 </div>
-                <div class="card-body">
-                    <div class="row mb-4">
-                        <div class="col-md-4">
-                            <div class="input-group">
-                                <span class="input-group-text">
-                                    <i class="bi bi-tag"></i>
-                                </span>
-                                <select class="form-control" id="filtroCategoria">
-                                    <option value="">Todas las categorías</option>
-                                    <% categorias.forEach(function(categoria) { %>
-                                        <option value="<%= categoria.id %>">
-                                            <%= categoria.nombre %>
-                                        </option>
-                                        <% }); %>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="col-md-8">
-                            <div class="input-group search-box ms-auto">
-                                <span class="input-group-text">
-                                    <i class="bi bi-search"></i>
-                                </span>
-                                <input type="text" class="form-control" id="buscarProducto"
-                                    placeholder="Buscar producto por nombre o código...">
-                            </div>
-                        </div>
-                    </div>
-
-                    <%- include('_table', { productos: productos, recetasPorProducto: typeof recetasPorProducto
-                        !=='undefined' ? recetasPorProducto : {} }) %>
-                </div>
+            </div>
+            
+            <div class="header-actions">
+                <% if (typeof allowedByPlan !== 'undefined' && allowedByPlan && allowedByPlan.plantillas && user && user.permisos && user.permisos.includes('plantillas.ver')) { %>
+                    <button id="btnDescargarPlantilla" class="btn-premium-outline">
+                        <i class="bi bi-file-earmark-excel"></i> Plantilla Excel
+                    </button>
+                    <button id="btnImportarProductos" class="btn-premium-outline">
+                        <i class="bi bi-upload"></i> Importar Excel
+                    </button>
+                    <input type="file" id="archivoImport" accept=".xlsx" class="d-none">
+                <% } %>
+                <% if (user && user.permisos && user.permisos.includes('productos.crear')) { %>
+                    <button class="btn-premium-action" data-bs-toggle="modal" data-bs-target="#nuevoProductoModal">
+                        <i class="bi bi-plus-lg"></i> Nuevo producto
+                    </button>
+                <% } %>
             </div>
         </div>
 
-        <%- include('_modal_costeo') %>
-            <%- include('_modal_form', { categorias: categorias }) %>
+        <!-- Search & Filter Controls -->
+        <div class="filters-row">
+            <div class="search-input-wrapper">
+                <i class="bi bi-search"></i>
+                <input type="text" id="buscarProducto" placeholder="Buscar producto por nombre o código...">
+            </div>
+            
+            <!-- Category Filter Chips -->
+            <%- include('_category_filter') %>
+        </div>
 
-                <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-                <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-                <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-                <!-- Load modules -->
-                <script src="/js/core/modules/Utils.js"></script>
-                <script src="/js/core/modules/ApiClient.js"></script>
-                <script src="/js/core/modules/AlertManager.js"></script>
-                <script src="/js/core/modules/SearchManager.js"></script>
-                <script src="/js/core/modules/FormManager.js"></script>
-                <script src="/js/core/modules/TableManager.js"></script>
-                <!-- Load main script -->
-                <script src="/js/modulos/productos/productos_core.js"></script>
-                <script src="/js/modulos/productos/productos_ui.js"></script>
+        <!-- Products Table -->
+        <%- include('_table', { productos: productos, recetasPorProducto: typeof recetasPorProducto !== 'undefined' ? recetasPorProducto : {} }) %>
+
+    </div>
+
+    <!-- Modals -->
+    <%- include('_modal_costeo') %>
+    <%- include('_modal_form', { categorias: categorias }) %>
+
+    <!-- Base Scripts -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
+    <!-- Load modules -->
+    <script src="/js/core/modules/Utils.js"></script>
+    <script src="/js/core/modules/ApiClient.js"></script>
+    <script src="/js/core/modules/AlertManager.js"></script>
+    <script src="/js/core/modules/SearchManager.js"></script>
+    <script src="/js/core/modules/FormManager.js"></script>
+    <script src="/js/core/modules/TableManager.js"></script>
+    
+    <!-- Load main script -->
+    <script src="/js/modulos/productos/productos_core.js"></script>
+    <script src="/js/modulos/productos/productos_ui.js"></script>
 </body>
 
 </html>

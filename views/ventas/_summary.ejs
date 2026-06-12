@@ -1,0 +1,55 @@
+<%
+const formatoFechaLocal = new Intl.DateTimeFormat('es-CO', { timeZone: 'America/Bogota', year: 'numeric', month: '2-digit', day: '2-digit' });
+const hoyColombiaFormat = formatoFechaLocal.format(new Date());
+let facturasHoyCount = 0;
+(ventas || []).forEach(v => {
+    try {
+        const f = v.fechaISO ? new Date(v.fechaISO) : new Date(v.fecha);
+        if (formatoFechaLocal.format(f) === hoyColombiaFormat) {
+            facturasHoyCount++;
+        }
+    } catch (e) {
+        // ignore
+    }
+});
+
+const fmtNum = (n) => '$ ' + (Number(n) || 0).toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+%>
+
+<div class="kpis-grid">
+    <!-- Total Efectivo -->
+    <div class="kpi-card">
+        <div class="kpi-card-header">
+            <span class="kpi-card-icon" style="background: var(--accentSoft); color: var(--accent);"><i class="bi bi-cash"></i></span>
+            <span class="kpi-card-title">Efectivo</span>
+        </div>
+        <div class="kpi-card-value" id="totalEfectivoVal"><%= fmtNum(totalEfectivo) %></div>
+    </div>
+
+    <!-- Total Transferencia -->
+    <div class="kpi-card">
+        <div class="kpi-card-header">
+            <span class="kpi-card-icon" style="background: #eef2fb; color: #3257b0;"><i class="bi bi-bank"></i></span>
+            <span class="kpi-card-title">Transferencia</span>
+        </div>
+        <div class="kpi-card-value" id="totalTransferenciaVal"><%= fmtNum(totalTransferencia) %></div>
+    </div>
+
+    <!-- Total General (Venta Neta) -->
+    <div class="kpi-card-gradient">
+        <div class="kpi-card-header">
+            <span class="kpi-card-icon" style="background: rgba(255, 255, 255, 0.18); color: #fff;"><i class="bi bi-wallet2"></i></span>
+            <span class="kpi-card-title">Total Neto</span>
+        </div>
+        <div class="kpi-card-value" id="totalGeneralVal"><%= fmtNum(totalGeneral) %></div>
+    </div>
+
+    <!-- Facturas Hoy -->
+    <div class="kpi-card">
+        <div class="kpi-card-header">
+            <span class="kpi-card-icon" style="background: var(--accentSoft); color: var(--accent);"><i class="bi bi-receipt"></i></span>
+            <span class="kpi-card-title">Facturas Hoy</span>
+        </div>
+        <div class="kpi-card-value" id="facturasHoyVal"><%= facturasHoyCount %></div>
+    </div>
+</div>
