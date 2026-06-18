@@ -520,6 +520,9 @@ body.pos-terminal-body {
 }
 .pos-btn-confirmar-pago:disabled { opacity: .65; }
 
+/* El footer de versión no tiene sentido en la terminal POS (pantalla completa) */
+body.pos-terminal-body .system-version-footer { display: none; }
+
 /* ── Tabs móviles ─────────────────────────────────────── */
 .pos-mobile-tabs {
     display: none;
