@@ -14,6 +14,13 @@ body.pos-terminal-body {
     overflow: hidden;
     background: #f3f4f6;
     font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+    /* Anular el padding-bottom global de index.css que genera franja gris */
+    padding-bottom: 0 !important;
+}
+
+/* Neutralizar el mb-4 del navbar global dentro del POS */
+body.pos-terminal-body .navbar {
+    margin-bottom: 0 !important;
 }
 
 .pos-wrapper {
@@ -573,17 +580,21 @@ body.pos-terminal-body .system-version-footer { display: none; }
     .pos-main {
         grid-template-columns: 1fr;
         overflow: hidden;
+        flex: 1;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
     }
 
     /* Catálogo: visible por defecto en móvil */
-    .pos-catalog { border-right: none; height: 100%; min-height: 0; }
+    .pos-catalog { border-right: none; flex: 1; min-height: 0; }
 
     /* Carrito: oculto por defecto; visible cuando se activa su tab */
     .pos-cart-panel { display: none; }
 
     /* JS añade esta clase a .pos-main cuando se elige tab "carrito" */
     .pos-main.pos-mobile-show-cart .pos-catalog { display: none; }
-    .pos-main.pos-mobile-show-cart .pos-cart-panel { display: flex; }
+    .pos-main.pos-mobile-show-cart .pos-cart-panel { display: flex; flex: 1; min-height: 0; }
 
     .pos-search-area { padding: 12px 14px 10px; }
     .pos-product-area { padding: 12px 14px; }
