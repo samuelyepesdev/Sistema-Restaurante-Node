@@ -581,11 +581,17 @@ body.pos-terminal-body .system-version-footer { display: none; }
     /* Mostrar tab bar */
     .pos-mobile-tabs { display: flex; }
 
-    .pos-subheader { padding: 9px 14px; }
-    .pos-subheader-title { font-size: 15px; }
-    .pos-saved-btn { padding: 6px 10px; font-size: 12.5px; gap: 5px; }
+    /* ── Subheader compacto ── */
+    .pos-subheader { padding: 6px 14px; }
+    .pos-subheader-icon { width: 26px; height: 26px; border-radius: 7px; font-size: 13px; }
+    .pos-subheader-title { font-size: 14px; }
+    .pos-saved-btn { padding: 5px 10px; font-size: 12px; gap: 5px; border-radius: 8px; }
+    .pos-saved-badge { font-size: 11px; padding: 0 6px; border-radius: 5px; }
 
-    /* Una sola columna — JS alterna la visibilidad via .pos-mobile-show-cart */
+    /* ── Tabs compactos ── */
+    .pos-mobile-tab { padding: 9px 8px; font-size: 13px; gap: 6px; }
+
+    /* ── Layout principal ── */
     .pos-main {
         grid-template-columns: 1fr;
         overflow: hidden;
@@ -603,19 +609,46 @@ body.pos-terminal-body .system-version-footer { display: none; }
 
     /* JS añade esta clase a .pos-main cuando se elige tab "carrito" */
     .pos-main.pos-mobile-show-cart .pos-catalog { display: none; }
-    .pos-main.pos-mobile-show-cart .pos-cart-panel { display: flex; flex: 1; min-height: 0; }
+    .pos-main.pos-mobile-show-cart .pos-cart-panel { display: flex; flex: 1; min-height: 0; overflow: hidden; }
 
     .pos-search-area { padding: 12px 14px 10px; }
     .pos-product-area { padding: 12px 14px; }
     .pos-product-grid { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; }
 
-    .pos-cart-customer { padding: 11px 14px; }
-    .pos-cart-footer { padding: 12px 14px 14px; }
+    /* ── Cliente compacto ── */
+    .pos-cart-customer { padding: 8px 14px; gap: 10px; }
+    .pos-customer-avatar { width: 32px; height: 32px; flex: 0 0 32px; border-radius: 9px; font-size: 15px; }
+    .pos-customer-text { font-size: 13.5px; }
+    .pos-customer-label { font-size: 11px; }
+    .pos-customer-add-btn { width: 32px; height: 32px; border-radius: 9px; font-size: 14px; }
 
-    .pos-btn-charge { font-size: 14.5px; padding: 12px; }
-    .pos-btn-save { padding: 12px 14px; font-size: 13.5px; }
+    /* ── Items carrito compactos ── */
+    .pos-cart-item { padding: 7px 14px; }
+    .pci-body { gap: 8px; }
+    .pci-name { font-size: 12.5px; }
+    .pci-unit { font-size: 11.5px; margin-top: 1px; }
+    .pci-controls { gap: 6px; }
+    .pci-qty-group { padding: 2px; gap: 1px; border-radius: 8px; }
+    .pci-qty-btn { width: 26px; height: 26px; border-radius: 7px; font-size: 12px; }
+    .pci-qty-val { font-size: 13px; min-width: 22px; }
+    .pci-total { font-size: 13px; width: 64px; }
+    .pci-actions-row { margin-top: 1px; gap: 2px; }
+    .pci-action-btn { font-size: 11px; padding: 1px 5px; border-radius: 5px; }
 
-    .pos-total-amount { font-size: 22px; }
+    /* ── Footer compacto ── */
+    .pos-cart-footer { padding: 8px 14px 10px; }
+    .pos-totals { gap: 3px; margin-bottom: 8px; }
+    .pos-total-row { font-size: 12.5px; }
+    .pos-total-divider { margin: 1px 0; }
+    .pos-total-main > span:first-child { font-size: 14px; }
+    .pos-total-amount { font-size: 20px; }
+
+    .pos-cart-btns { gap: 8px; }
+    .pos-btn-charge { font-size: 14px; padding: 10px; border-radius: 11px; }
+    .pos-btn-save { padding: 10px 12px; font-size: 13px; border-radius: 11px; }
+
+    .pos-cart-clear-wrap { margin-top: 5px; }
+    .pos-btn-clear { font-size: 12px; gap: 4px; }
 }
 
 /* Teléfonos muy pequeños */
