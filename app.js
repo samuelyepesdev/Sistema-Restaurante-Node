@@ -59,16 +59,6 @@ app.get('/sitemap.xml', (req, res) => {
     res.send(sitemap);
 });
 
-// Seguridad: Rate Limit General
-const limiter = rateLimit({
-    windowMs: 15 * 60 * 1000,
-    max: 1000,
-    message: { error: 'Demasiadas peticiones desde esta IP, por favor intente más tarde.' },
-    standardHeaders: true,
-    legacyHeaders: false
-});
-app.use(limiter);
-
 // Middleware de Seguridad: Bloquear escaneos maliciosos (.env, .git, .php, etc)
 app.use((req, res, next) => {
     const maliciousPatterns = [
@@ -177,6 +167,16 @@ app.get('/favicon.ico', (req, res) => {
         res.status(204).end();
     }
 });
+
+// Seguridad: Rate Limit General (Solo para rutas dinámicas y APIs)
+const limiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 5000, // Aumentado a 5000 para evitar bloqueos por consultas repetitivas de mesas y múltiples dispositivos
+    message: { error: 'Demasiadas peticiones desde esta IP, por favor intente más tarde.' },
+    standardHeaders: true,
+    legacyHeaders: false
+});
+app.use(limiter);
 
 // Rutas de aplicación
 app.use('/', webRoutes);
