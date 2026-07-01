@@ -54,6 +54,10 @@ router.use('/api/qr', require('./qr_api'));
 // --- RUTA PRINCIPAL (Home & Redirección) ---
 router.get('/', optionalAuth, HomeController.index);
 
+// --- RUTAS LEGALES (públicas) ---
+router.get('/legal/privacidad', (req, res) => res.render('legal/privacidad'));
+router.get('/legal/terminos', (req, res) => res.render('legal/terminos'));
+
 // --- RUTAS DE TENANT (RESTAURANTE) ---
 router.use('/productos', requireAuthWithTenant, requirePlanFeature('productos'), productosRoutes);
 router.use('/perfil', requireAuthWithTenant, perfilRoutes);
